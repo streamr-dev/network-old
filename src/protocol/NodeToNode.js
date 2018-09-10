@@ -1,7 +1,7 @@
 const EventEmitter = require('events').EventEmitter
 const debug = require('debug')('streamr:node-node')
 
-module.exports = class TrackerServer extends EventEmitter {
+module.exports = class NodeToNode extends EventEmitter {
     constructor(connection) {
         super()
 
