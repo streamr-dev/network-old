@@ -27,7 +27,7 @@ const getAddress = (peerInfo) => {
     if (peerInfo instanceof PeerInfo) {
         return peerInfo.multiaddrs.toArray()[0].toString()
     }
-    throw new Error('Expected instance of PeerInfo')
+    throw new Error('Expected instance of PeerInfo, got ' + peerInfo)
 }
 
 const generateClientId = (suffix) => `streamr-${suffix}/v${version}/${os.platform()}-${os.arch()}/nodejs`

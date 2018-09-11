@@ -17,12 +17,12 @@ module.exports = class Tracker extends EventEmitter {
         }
 
         this.connection.once('node:ready', () => this.trackerReady())
-        this.listners.trackerServerListner.on('streamr:tracker:find-stream', ({ node, streamId }) => {
-            this.sendStreamInfo(node, streamId)
+        this.listners.trackerServerListner.on('streamr:tracker:find-stream', ({ sender, streamId }) => { // TODO: rename sender to requester/node
+            this.sendStreamInfo(sender, streamId)
         })
         this.listners.trackerServerListner.on('streamr:tracker:send-peers', (node) => this.sendListOfNodes(node))
-        this.listners.trackerServerListner.on('streamr:tracker:peer-status', ({ node, status }) => {
-            this.processNodeStatus(node, status)
+        this.listners.trackerServerListner.on('streamr:tracker:peer-status', ({ peer, status }) => { // TODO: rename peer to node
+            this.processNodeStatus(peer, status)
         })
     }
 
