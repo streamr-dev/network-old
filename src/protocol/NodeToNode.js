@@ -22,4 +22,8 @@ module.exports = class NodeToNode extends EventEmitter {
     subscribeToStream(streamId, messageHandler, doneHandler) {
         this.connection.node.pubsub.subscribe(streamId, messageHandler, doneHandler) // TODO: leaky abstraction
     }
+
+    publishToStream(streamId, data, cb) {
+        this.connection.node.pubsub.publish(streamId, Buffer.from(data), cb)
+    }
 }
