@@ -30,10 +30,7 @@ const getAddress = (peerInfo) => {
     throw new Error('Expected instance of PeerInfo')
 }
 
-const generateClientId = (prefix = '') => {
-    const prefixFixed = prefix ? '-' + prefix : ''
-    return `streamr${prefixFixed}/v${version}/${os.platform()}-${os.arch()}/nodejs`
-}
+const generateClientId = (suffix) => `streamr-${suffix}/v${version}/${os.platform()}-${os.arch()}/nodejs`
 
 const isTracker = (tracker) => BOOTNODES.includes(tracker)
 
