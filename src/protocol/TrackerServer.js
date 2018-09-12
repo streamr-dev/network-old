@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events')
 const debug = require('debug')('streamr:tracker-server')
+const connectionEvents = require('../connection/Connection').events
 const { isTracker } = require('../util')
 const encoder = require('../helpers/MessageEncoder')
 
@@ -16,8 +17,8 @@ class TrackerServer extends EventEmitter {
 
         this.connection = connection
 
-        this.connection.on('streamr:peer:connect', (peer) => this._onNewConnection(peer))
-        this.connection.on('streamr:message-received', ({ sender, message }) => this._onReceive(sender, message))
+        this.connection.on(connectionEvents.PEER_CONNECTED, (peer) => this._onNewConnection(peer))
+        this.connection.on(connectionEvents.MESSAGE_RECEIVED, ({ sender, message }) => this._onReceive(sender, message))
     }
 
     sendNodeList(receiverNode, nodeList) {
