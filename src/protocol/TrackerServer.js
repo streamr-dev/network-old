@@ -10,7 +10,7 @@ const events = Object.freeze({
     NODE_LIST_REQUESTED: 'streamr:tracker:send-peers'
 })
 
-module.exports = class TrackerServer extends EventEmitter {
+class TrackerServer extends EventEmitter {
     constructor(connection) {
         super()
 
@@ -61,3 +61,7 @@ module.exports = class TrackerServer extends EventEmitter {
         }
     }
 }
+
+TrackerServer.events = events
+
+module.exports = TrackerServer

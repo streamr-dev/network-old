@@ -10,7 +10,7 @@ const events = Object.freeze({
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream'
 })
 
-module.exports = class TrackerNode extends EventEmitter {
+class TrackerNode extends EventEmitter {
     constructor(connection) {
         super()
 
@@ -74,3 +74,7 @@ module.exports = class TrackerNode extends EventEmitter {
         }
     }
 }
+
+TrackerNode.events = events
+
+module.exports = TrackerNode
