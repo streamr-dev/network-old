@@ -15,7 +15,7 @@ connection.once('node:ready', () => {
     setInterval(() => {
         const msg = 'Hello world, ' + new Date().toLocaleString()
 
-        if (publisher.connection.isReady()) {
+        if (publisher.connection.isStarted()) {
             publisher.publish(streamId, msg, () => {})
         }
     }, ms('1s'))

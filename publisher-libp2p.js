@@ -15,7 +15,7 @@ connection.once('node:ready', () => {
     setInterval(() => {
         const msg = `Hello world, ${new Date().toLocaleString()}`
 
-        if (publisher.connection.isReady()) {
+        if (publisher.connection.isStarted()) {
             publisher.publishLibP2P(streamId, Buffer.from(msg), () => {})
         }
     }, ms('1s'))

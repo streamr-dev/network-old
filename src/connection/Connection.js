@@ -30,7 +30,6 @@ module.exports = class Connection extends EventEmitter {
         this.port = port
         this.privateKey = privateKey
         this.status = null
-        this.isStarted = false
 
         this._createNode(isNode)
 
@@ -58,13 +57,12 @@ module.exports = class Connection extends EventEmitter {
             }
 
             debug('node has started: %s', this.node.isStarted())
-            this.isStarted = this.node.isStarted()
 
             this.emit(events.READY)
         })
     }
 
-    isReady() {
+    isStarted() {
         return this.node && this.node.isStarted()
     }
 
