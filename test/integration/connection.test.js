@@ -1,36 +1,31 @@
 const assert = require('assert')
-const Connection = require('../../src/connection/Connection')
+const { createConnection, events } = require('../../src/connection/Connection')
 
 jest.setTimeout(30000)
 
 describe('create two connections and init connection between them', () => {
     it('should be able to start and stop successfully', (done) => {
-        const connection = new Connection('127.0.0.1', 30337)
+        let conn1
+        let conn2
 
-        connection.on('node:ready', () => {
-            assert.equal(connection.isStarted(), true)
+        createConnection('127.0.0.1', 30340).then((connection) => {
+            conn1 = connection
+        }).then(() => createConnection('127.0.0.1', 30341).then((connection2) => {
+            conn2 = connection2
 
-            // create second connection
-            const connection2 = new Connection('127.0.0.1', 30338)
+            assert.equal(conn1.getPeers().length, 0)
+            assert.equal(conn2.getPeers().length, 0)
 
-            connection2.on('node:ready', () => {
-                assert.equal(connection2.isStarted(), true)
+            conn1.connect(conn2.node.peerInfo)
 
-                assert.equal(connection.getPeers().length, 0)
-                assert.equal(connection2.getPeers().length, 0)
+            conn2.on(events.PEER_CONNECTED, () => {
+                assert.equal(conn1.getPeers().length, 1)
+                assert.equal(conn2.getPeers().length, 1)
 
-                connection.connect(connection2.node.peerInfo)
-
-                // wait when second connection emits event
-                connection2.on('streamr:peer:connect', () => {
-                    assert.equal(connection.getPeers().length, 1)
-                    assert.equal(connection2.getPeers().length, 1)
-
-                    connection2.node.stop(() => {
-                        connection.node.stop(() => done())
-                    })
+                conn1.node.stop(() => {
+                    conn2.node.stop(() => done())
                 })
             })
-        })
+        }))
     })
 })

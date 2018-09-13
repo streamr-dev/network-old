@@ -18,82 +18,26 @@ const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:message-received'
 })
 
-async function getPeerInfo(conn) {
-    return new Promise((resolve, reject) => conn.getPeerInfo((err, peerInfo) => (err ? reject(err) : resolve(peerInfo))))
-}
-
-module.exports = class Connection extends EventEmitter {
-    constructor(host, port, privateKey = '', isNode = false) {
+class Connection extends EventEmitter {
+    constructor(node) {
         super()
+        this.node = node
 
-        this.host = host
-        this.port = port
-        this.privateKey = privateKey
-        this.status = null
+        node.peerInfo.multiaddrs.forEach((ma) => debug('listening on: %s', ma.toString()))
 
-        this._createNode(isNode)
-
-        this.once(events.READY, () => this.onNodeReady())
-    }
-
-    async _createNode(isNode) {
-        let peerInfo
-
-        if (this.privateKey) {
-            const idPeer = await callbackToPromise(PeerId.createFromPrivKey, this.privateKey)
-            peerInfo = new PeerInfo(idPeer)
-        } else {
-            peerInfo = await callbackToPromise(PeerInfo.create)
-        }
-
-        peerInfo.multiaddrs.add(`/ip4/${this.host}/tcp/${this.port}`)
-
-        this.node = new Libp2pBundle(peerInfo, isNode)
-        this.node.handle(HANDLER, (protocol, conn) => this.onReceive(protocol, conn))
-
-        this.node.start((err) => {
-            if (err) {
-                throw err
-            }
-
-            debug('node has started: %s', this.node.isStarted())
-
-            this.emit(events.READY)
-        })
-    }
-
-    isStarted() {
-        return this.node && this.node.isStarted()
-    }
-
-    onNodeReady() {
-        this.node.peerInfo.multiaddrs.forEach((ma) => debug('listening on: %s', ma.toString()))
-
-        this._bindEvents()
-    }
-
-    _bindEvents() {
-        debug('binding events')
-
-        this.node.on('peer:discovery', (peer) => this.emit(events.PEER_DISCOVERED, peer))
-        this.node.on('peer:connect', (peer) => {
+        node.handle(HANDLER, (protocol, conn) => this.onReceive(protocol, conn))
+        node.on('peer:discovery', (peer) => this.emit(events.PEER_DISCOVERED, peer))
+        node.on('peer:connect', (peer) => {
             debug('new connection')
             this.emit(events.PEER_CONNECTED, peer)
         })
-        this.node.on('peer:disconnect', (peer) => this.emit(events.PEER_DISCONNECTED, peer))
-
-        this.on('streamr:send-message', ({ recipient,
-            message }) => this._onSend(recipient, message))
-    }
-
-    _onSend(recipient, message) {
-        this.send(recipient, message)
+        node.on('peer:disconnect', (peer) => this.emit(events.PEER_DISCONNECTED, peer))
     }
 
     send(recipient, message) {
         const messageDecoded = encoder.decode(message)
         debug('sending to the %s, message %s with data "%s"',
-            getAddress(recipient),
+            recipient instanceof PeerInfo ? getAddress(recipient) : '',
             encoder.getMsgPrefix(messageDecoded.code),
             JSON.stringify(messageDecoded.data))
 
@@ -113,7 +57,7 @@ module.exports = class Connection extends EventEmitter {
 
     async onReceive(protocol, conn) {
         try {
-            const sender = await getPeerInfo(conn)
+            const sender = await Connection.getPeerInfo(conn)
 
             pull(
                 conn,
@@ -163,5 +107,46 @@ module.exports = class Connection extends EventEmitter {
 
     getPeers() {
         return this.node.peerBook.getAllArray()
+    }
+
+    static async getPeerInfo(connection) {
+        return new Promise((resolve, reject) => {
+            return connection.getPeerInfo((err, peerInfo) => (err ? reject(err) : resolve(peerInfo)))
+        })
+    }
+}
+
+async function createPeerInfo(host, port, privateKey) {
+    let peerInfo
+
+    if (privateKey) {
+        const idPeer = await callbackToPromise(PeerId.createFromPrivKey, privateKey)
+        peerInfo = new PeerInfo(idPeer)
+    } else {
+        peerInfo = await callbackToPromise(PeerInfo.create)
+    }
+
+    peerInfo.multiaddrs.add(`/ip4/${host}/tcp/${port}`)
+    return peerInfo
+}
+
+async function startLibp2pNode(host, port, privateKey, isNode) {
+    const peerInfo = await createPeerInfo(host, port, privateKey)
+    const node = new Libp2pBundle(peerInfo, isNode)
+
+    return new Promise((resolve, reject) => {
+        node.start((err) => {
+            if (err) {
+                reject(err)
+            }
+            resolve(node)
+        })
+    })
+}
+
+module.exports = {
+    events,
+    async createConnection(host, port, privateKey, isNode = false) {
+        return startLibp2pNode(host, port, privateKey, isNode).then((n) => new Connection(n))
     }
 }

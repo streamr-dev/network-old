@@ -1,19 +1,38 @@
 const { EventEmitter } = require('events')
 const debug = require('debug')('streamr:node-node')
+const { getAddress } = require('../util')
+const encoder = require('../helpers/MessageEncoder')
 
 module.exports = class NodeToNode extends EventEmitter {
     constructor(connection) {
         super()
-
         this.connection = connection
-
-        this.on('streamr:node-node:connect', (peers) => this.onConnectNodes(peers))
     }
 
-    onConnectNodes(peers) {
-        peers.forEach((peer) => {
-            debug('connecting to new node %s', peer)
-            this.connection.connect(peer)
+    connectToNodes(nodes) {
+        nodes.forEach((node) => {
+            debug('connecting to new node %s', node)
+            this.connection.connect(node)
         })
+    }
+
+    sendData(receiverNode, streamId, data) {
+        this.connection.send(receiverNode, encoder.dataMessage(streamId, data))
+    }
+
+    subscribeToStream(streamId, messageHandler, doneHandler) {
+        this.connection.node.pubsub.subscribe(streamId, messageHandler, doneHandler) // TODO: leaky abstraction
+    }
+
+    publishToStream(streamId, data, cb) {
+        this.connection.node.pubsub.publish(streamId, Buffer.from(data), cb)
+    }
+
+    getAddress() {
+        return getAddress(this.connection.node.peerInfo)
+    }
+
+    stop(cb) {
+        this.connection.node.stop(() => cb())
     }
 }

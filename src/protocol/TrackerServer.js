@@ -1,6 +1,7 @@
 const { EventEmitter } = require('events')
 const debug = require('debug')('streamr:tracker-server')
-const { isTracker } = require('../util')
+const connectionEvents = require('../connection/Connection').events
+const { isTracker, getAddress } = require('../util')
 const encoder = require('../helpers/MessageEncoder')
 
 const events = Object.freeze({
@@ -10,30 +11,38 @@ const events = Object.freeze({
     NODE_LIST_REQUESTED: 'streamr:tracker:send-peers'
 })
 
-module.exports = class TrackerServer extends EventEmitter {
+class TrackerServer extends EventEmitter {
     constructor(connection) {
         super()
 
         this.connection = connection
 
-        this.connection.on('streamr:peer:connect', (peer) => this.onNewConnection(peer))
-        this.connection.on('streamr:message-received', ({ sender, message }) => this.onReceive(sender, message))
+        this.connection.on(connectionEvents.PEER_CONNECTED, (peer) => this._onNewConnection(peer))
+        this.connection.on(connectionEvents.MESSAGE_RECEIVED, ({ sender, message }) => this._onReceive(sender, message))
     }
 
-    onNewConnection(peer) {
+    sendNodeList(receiverNode, nodeList) {
+        this.connection.send(receiverNode, encoder.peersMessage(nodeList))
+    }
+
+    sendStreamInfo(receiverNode, streamId, nodeAddress) {
+        this.connection.send(receiverNode, encoder.streamMessage(streamId, nodeAddress))
+    }
+
+    _onNewConnection(peer) {
         if (!isTracker(peer)) {
             this.emit(events.NODE_CONNECTED, peer)
         }
     }
 
-    onReceive(peer, message) {
+    _onReceive(peer, message) {
         const { code, data } = encoder.decode(message)
 
         switch (code) {
             case encoder.STATUS:
                 this.emit(events.NODE_STATUS_RECEIVED, {
                     peer,
-                    data // status
+                    status: data
                 })
                 break
 
@@ -52,4 +61,16 @@ module.exports = class TrackerServer extends EventEmitter {
                 throw new Error('Unhandled message type')
         }
     }
+
+    getAddress() {
+        return getAddress(this.connection.node.peerInfo)
+    }
+
+    stop(cb) {
+        this.connection.node.stop(() => cb())
+    }
 }
+
+TrackerServer.events = events
+
+module.exports = TrackerServer
