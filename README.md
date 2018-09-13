@@ -49,9 +49,25 @@ to get messages by layers run:
 - logic layer `export DEBUG=streamr:logic*`
 - protocol layer `export DEBUG=streamr:protocol*`
 
+# Testing
+run tests
+
+`npm test`
+
+code coverage
+
+`./node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/**/*.js`
+
+run one test
+
+`./node_modules/jest/bin/jest.js test/integration/publisher.test.js`
+
+### node
+it's better to run integration tests one by one, for now they are using the same port for tracker, so it can cause `listen EADDRINUSE` errors  
+
 # TODO
 
-- disconnection
+- proper disconnection with blocking message sending
 - validation
 - tests
 - async
