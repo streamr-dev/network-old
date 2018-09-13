@@ -101,6 +101,10 @@ class Connection extends EventEmitter {
         return new Promise((resolve, reject) => this.node.dial(address, (err, peerInfo) => (err ? reject(err) : resolve(peerInfo))))
     }
 
+    async stop(callback = true) {
+        return new Promise((resolve, reject) => this.node.stop((err) => (err ? reject(err) : resolve(callback))))
+    }
+
     isConnected(peerInfo) {
         return this.node.peerBook.has(peerInfo)
     }

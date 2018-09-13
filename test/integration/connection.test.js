@@ -1,31 +1,44 @@
 const assert = require('assert')
 const { createConnection, events } = require('../../src/connection/Connection')
+const { getTestConnections } = require('../util')
 
-jest.setTimeout(30000)
+jest.setTimeout(60000)
 
 describe('create two connections and init connection between them', () => {
-    it('should be able to start and stop successfully', (done) => {
-        let conn1
-        let conn2
+    it('should be able to start and stop successfully', async (done) => {
+        const MAX = 5
 
-        createConnection('127.0.0.1', 30340).then((connection) => {
-            conn1 = connection
-        }).then(() => createConnection('127.0.0.1', 30341).then((connection2) => {
-            conn2 = connection2
+        // create MAX connections
+        const connections = await getTestConnections(MAX, 30690)
 
-            assert.equal(conn1.getPeers().length, 0)
-            assert.equal(conn2.getPeers().length, 0)
+        // check zero connections
+        for (let i = 0; i < MAX; i++) {
+            assert.equal(connections[i].getPeers().length, 0)
+        }
 
-            conn1.connect(conn2.node.peerInfo)
+        // connect current to the next, so all will have two connections
+        let promises = []
+        for (let i = 0; i < MAX; i++) {
+            const nextConnection = i + 1 === MAX ? connections[0] : connections[i + 1]
 
-            conn2.on(events.PEER_CONNECTED, () => {
-                assert.equal(conn1.getPeers().length, 1)
-                assert.equal(conn2.getPeers().length, 1)
+            // eslint-disable-next-line no-await-in-loop
+            promises.push(await connections[i].connect(nextConnection.node.peerInfo))
+        }
 
-                conn1.node.stop(() => {
-                    conn2.node.stop(() => done())
-                })
-            })
-        }))
+        // then wait a little bit, so first will receive connection from the last
+        await new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+            for (let i = 0; i < MAX; i++) {
+                assert.equal(connections[i].getPeers().length, 2)
+            }
+        })
+
+        promises = []
+        console.log('shutdown')
+        for (let i = 0; i < MAX; i++) {
+            // eslint-disable-next-line no-await-in-loop
+            promises.push(await connections[i].stop(console.log(`closing ${i} connection`)))
+        }
+
+        Promise.all(promises).then(() => done())
     })
 })
