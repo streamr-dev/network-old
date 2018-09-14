@@ -9,7 +9,7 @@ const events = Object.freeze({
     NODE_LIST_RECEIVED: 'streamr:node-node:connect',
     DATA_RECEIVED: 'streamr:node-node:stream-data',
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream',
-    STREAM_INFO_OWN_RECEIVED: 'streamr:node:found-own-stream',
+    STREAM_ASSIGNED: 'streamr:node:stream-assigned'
 })
 
 class TrackerNode extends EventEmitter {
@@ -69,7 +69,7 @@ class TrackerNode extends EventEmitter {
 
             case encoder.STREAM:
                 if (data[1] === getAddress(this.connection.node.peerInfo)) {
-                    this.emit(events.STREAM_INFO_OWN_RECEIVED, data[0])
+                    this.emit(events.STREAM_ASSIGNED, data[0])
                 } else {
                     this.emit(events.STREAM_INFO_RECEIVED, {
                         streamId: data[0],
