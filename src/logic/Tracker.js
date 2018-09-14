@@ -28,7 +28,7 @@ module.exports = class Tracker extends EventEmitter {
     sendListOfNodes(node) {
         debug('sending list of nodes')
 
-        const listOfNodes = getPeersTopology(this.nodes, getAddress(node))
+        const listOfNodes = getPeersTopology([...this.nodes.keys()], getAddress(node))
         this.protocols.trackerServer.sendNodeList(node, listOfNodes)
     }
 
