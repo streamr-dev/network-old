@@ -80,6 +80,10 @@ class Node extends EventEmitter {
     _isKnownStream(streamId) {
         return this.knownStreams.get(streamId) !== undefined
     }
+
+    stop(cb) {
+        this.protocols.nodeToNode.stop(cb)
+    }
 }
 
 Node.events = events
