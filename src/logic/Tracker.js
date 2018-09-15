@@ -11,7 +11,7 @@ module.exports = class Tracker extends EventEmitter {
         this.nodes = new Map()
         this.id = generateClientId('tracker')
         this.protocols = {
-            trackerServer: trackerServer
+            trackerServer
         }
 
         this.protocols.trackerServer.on(TrackerServer.events.STREAM_INFO_REQUESTED, ({ sender, streamId }) => { // TODO: rename sender to requester/node

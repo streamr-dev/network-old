@@ -22,8 +22,7 @@ class Node extends EventEmitter {
         }
 
         this.protocols = {
-            trackerNode: trackerNode,
-            nodeToNode: nodeToNode
+            trackerNode, nodeToNode
         }
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))

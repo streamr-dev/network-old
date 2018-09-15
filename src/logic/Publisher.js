@@ -10,7 +10,7 @@ module.exports = class Publisher extends EventEmitter {
         this.id = generateClientId('publisher')
         this.nodeAddress = nodeAddress
         this.protocols = {
-            nodeToNode: nodeToNode
+            nodeToNode
         }
 
         debug('node: %s is running\n\n\n', this.id)
