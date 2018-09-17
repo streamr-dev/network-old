@@ -95,7 +95,8 @@ layer and pushes new data to the Streamr network via the same layer.
 - A _peer_ is any participant in the peer-to-peer network.
 - A _tracker_ is a peer that assists nodes to discover other nodes.
 - A _node_ is a peer that forwards data in the Streamr network pub-sub.
-- A _broker_ is a node that includes client-facing functionality and interfaces.
+- A _broker_ is a node that also includes client-facing functionality and interfaces.
 - A _client_ is an end-user (software) that connects to a broker to use the Streamr network pub-sub.
+- A _stream_ is an ordered list of messages uniquely identified by an id (and a partition).
 - A _publisher_ is a client that connects to a node and publishes messages to stream(s).
 - A _subscriber_ is a client that connects to a node and subscribes to the messages of stream(s).
