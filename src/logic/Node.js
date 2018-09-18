@@ -80,7 +80,9 @@ class Node extends EventEmitter {
     }
 
     stop(cb) {
-        this.protocols.nodeToNode.stop(cb)
+        this.protocols.nodeToNode.stop(() => {
+            this.protocols.trackerNode.stop(cb)
+        })
     }
 
     _getStatus() {
