@@ -17,16 +17,13 @@ class Node extends EventEmitter {
         this.ownStreams = new Set()
 
         this.id = generateClientId('node')
-        this.status = {
-            streams: []
-        }
+        this.tracker = null
 
         this.protocols = {
             trackerNode: new TrackerNode(connection),
             nodeToNode: new NodeToNode(connection)
         }
 
-        connection.once('node:ready', () => this.onNodeReady())
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.DATA_RECEIVED, ({ streamId, data }) => this.onDataReceived(streamId, data))
         this.protocols.trackerNode.on(TrackerNode.events.NODE_LIST_RECEIVED, (nodes) => this.protocols.nodeToNode.connectToNodes(nodes))
@@ -37,18 +34,19 @@ class Node extends EventEmitter {
 
         debug('node: %s is running\n\n\n', this.id)
 
-        this.status.started = new Date().toLocaleString()
+        this.started = new Date().toLocaleString()
     }
 
     onConnectedToTracker(tracker) {
         debug('connected to tracker; sending status to tracker')
         this.tracker = tracker
-        this.protocols.trackerNode.sendStatus(tracker, this.status)
+        this._sendStatus(this.tracker)
     }
 
     addOwnStream(streamId) {
         debug('add to own streams streamId = %s', streamId)
         this.ownStreams.add(streamId)
+        this._sendStatus(this.tracker)
     }
 
     // add to cache of streams
@@ -64,7 +62,7 @@ class Node extends EventEmitter {
         } else if (this._isKnownStream(streamId)) {
             const receiverNode = this.knownStreams.get(streamId)
             this.protocols.nodeToNode.sendData(receiverNode, streamId, data)
-        } else if (this.tracker === undefined) {
+        } else if (this.tracker === null) {
             debug('no available trackers to ask about %s, waiting for discovery', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
         } else {
@@ -83,6 +81,19 @@ class Node extends EventEmitter {
 
     stop(cb) {
         this.protocols.nodeToNode.stop(cb)
+    }
+
+    _getStatus() {
+        return {
+            streams: [...this.ownStreams],
+            started: this.started
+        }
+    }
+
+    _sendStatus(tracker) {
+        if (tracker) {
+            this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
+        }
     }
 }
 

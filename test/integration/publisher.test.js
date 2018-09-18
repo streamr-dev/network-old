@@ -1,11 +1,11 @@
 const assert = require('assert')
-const { getTestConnections } = require('../util')
+const { getTestConnections, DEFAULT_TIMEOUT } = require('../util')
 const connectionEvents = require('../../src/connection/Connection').events
 const Node = require('../../src/logic/Node')
 const Publisher = require('../../src/logic/Publisher')
 const { version } = require('../../package.json')
 
-jest.setTimeout(40000)
+jest.setTimeout(DEFAULT_TIMEOUT)
 
 describe('publisher and node connection', () => {
     it('should be able to start publisher and node, send message, receive and then stop successfully', async (done) => {
