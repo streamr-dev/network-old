@@ -47,9 +47,10 @@ class TrackerNode extends EventEmitter {
 
     requestMorePeers() {
         if (this.peersInterval === null) {
+            this.connection.send(this.tracker, encoder.peersMessage([]))
             this.peersInterval = setInterval(() => {
                 this.connection.send(this.tracker, encoder.peersMessage([]))
-            }, 10000)
+            }, 5000)
         }
     }
 

@@ -1,7 +1,7 @@
-const LOCALHOST = '127.0.0.1'
 const { createConnection } = require('../src/connection/Connection')
 
 const DEFAULT_TIMEOUT = 60000
+const LOCALHOST = '127.0.0.1'
 
 const getTestConnections = async (numConn, basePort) => {
     const connections = []
