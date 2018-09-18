@@ -3,6 +3,9 @@ const { getTestConnections, DEFAULT_TIMEOUT } = require('../util')
 const connectionEvents = require('../../src/connection/Connection').events
 const Node = require('../../src/logic/Node')
 const Publisher = require('../../src/logic/Publisher')
+const TrackerNode = require('../../src/protocol/TrackerNode')
+const NodeToNode = require('../../src/protocol/NodeToNode')
+
 const { version } = require('../../package.json')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
@@ -16,8 +19,8 @@ describe('publisher and node connection', () => {
         const conn1 = connections[0]
         const conn2 = connections[1]
 
-        const node = new Node(conn1)
-        const publisher = new Publisher(conn2, conn1.node.peerInfo)
+        const node = new Node(new TrackerNode(conn1), new NodeToNode(conn1))
+        const publisher = new Publisher(new NodeToNode(conn2), conn1.node.peerInfo)
         const streamId = 'streamd-id'
 
         assert(!node.isOwnStream(streamId))

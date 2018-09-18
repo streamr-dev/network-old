@@ -9,7 +9,6 @@ const Libp2pBundle = require('./Libp2pBundle')
 const HANDLER = '/streamr/v1/'
 
 const events = Object.freeze({
-    READY: 'node:ready',
     PEER_DISCOVERED: 'streamr:peer:discovery',
     PEER_CONNECTED: 'streamr:peer:connect',
     PEER_DISCONNECTED: 'streamr:peer:disconnect',
@@ -124,9 +123,9 @@ async function createPeerInfo(host, port, privateKey) {
     return peerInfo
 }
 
-async function startLibp2pNode(host, port, privateKey, isNode) {
+async function startLibp2pNode(host, port, privateKey, enablePeerDiscovery, bootstrapNodes) {
     const peerInfo = await createPeerInfo(host, port, privateKey)
-    const node = new Libp2pBundle(peerInfo, isNode)
+    const node = new Libp2pBundle(peerInfo, enablePeerDiscovery, bootstrapNodes)
 
     return new Promise((resolve, reject) => {
         node.start((err) => {
@@ -140,7 +139,7 @@ async function startLibp2pNode(host, port, privateKey, isNode) {
 
 module.exports = {
     events,
-    async createConnection(host, port, privateKey, isNode = false) {
-        return startLibp2pNode(host, port, privateKey, isNode).then((n) => new Connection(n))
+    async createConnection(host, port, privateKey, enablePeerDiscovery = false, bootstrapNodes) {
+        return startLibp2pNode(host, port, privateKey, enablePeerDiscovery, bootstrapNodes).then((n) => new Connection(n))
     }
 }

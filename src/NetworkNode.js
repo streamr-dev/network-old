@@ -1,11 +1,11 @@
 const { EventEmitter } = require('events')
-const { createConnection } = require('./connection/Connection')
 const Node = require('./logic/Node')
+const { callbackToPromise } = require('./util')
 
 /*
 Convenience wrapper for broker/data-api. We can replace this with something else later.
  */
-class NetworkNode extends EventEmitter {
+module.exports = class NetworkNode extends EventEmitter {
     constructor(node) {
         super()
         this.node = node
@@ -37,10 +37,8 @@ class NetworkNode extends EventEmitter {
     addMessageListener(cb) {
         this.node.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => cb(streamId, 0, content))
     }
-}
 
-module.exports = async (host, port, key = '') => {
-    const connection = await createConnection(host, port, key, true)
-    const node = new Node(connection)
-    return new NetworkNode(node)
+    stop() {
+        return callbackToPromise(this.node.stop.bind(this.node))
+    }
 }

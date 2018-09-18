@@ -1,10 +1,10 @@
-const { createConnection } = require('./src/connection/Connection')
-const Node = require('./src/logic/Node')
+const { startNode } = require('./src/composition')
 
 const port = process.argv[2] || 30301
 
-createConnection('127.0.0.1', port, '', true).then((connection) => {
-    return new Node(connection)
-}).catch((err) => {
-    throw err
-})
+startNode('127.0.0.1', port)
+    .then(() => {})
+    .catch((err) => {
+        console.error(err)
+        process.exit(1)
+    })

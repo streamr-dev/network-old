@@ -1,5 +1,5 @@
 const assert = require('assert')
-const startNetworkNode = require('../../src/NetworkNode')
+const { startNetworkNode } = require('../../src/composition')
 const { LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
