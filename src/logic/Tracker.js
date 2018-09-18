@@ -31,8 +31,7 @@ module.exports = class Tracker extends EventEmitter {
         if (listOfNodes.length) {
             debug('sending list of nodes')
             this.protocols.trackerServer.sendNodeList(node, listOfNodes)
-        }
-        else {
+        } else {
             debug('no available nodes to send')
         }
     }
