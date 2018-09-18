@@ -13,9 +13,10 @@ check(
         }
 
         if (!results.isSatisfied) {
+            // eslint-disable-next-line no-restricted-syntax
             for (const packageName of Object.keys(results.versions)) {
                 if (!results.versions[packageName].isSatisfied) {
-                    console.error(`Required ${packageName} version ${engines[packageName]} not satisfied with current version ${results.versions[packageName].version.version}s\n\n`);
+                    console.error(`Required ${packageName} version ${engines[packageName]} not satisfied with current version ${results.versions[packageName].version.version}s\n\n`)
                 }
             }
 
