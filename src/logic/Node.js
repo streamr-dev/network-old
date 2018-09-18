@@ -41,6 +41,7 @@ class Node extends EventEmitter {
         debug('connected to tracker; sending status to tracker')
         this.tracker = tracker
         this._sendStatus(this.tracker)
+        this.protocols.trackerNode.requestMorePeers()
     }
 
     addOwnStream(streamId) {
