@@ -18,6 +18,7 @@
   ],
   "main": "./src/composition.js",
   "scripts": {
+    "generate-key": "node $NODE_DEBUG_OPTION bin/generate-private-key.js",
     "tracker": "node $NODE_DEBUG_OPTION tracker.js",
     "node": "node $NODE_DEBUG_OPTION node.js",
     "pub": "node $NODE_DEBUG_OPTION publisher.js",
