@@ -26,7 +26,7 @@
     "test-unit": "jest test/unit",
     "test-integration": "jest test/integration",
     "eslint": "eslint .",
-    "requirements-check": "node src/check-versions.js"
+    "requirements-check": "node bin/check-versions.js"
   },
   "author": "",
   "license": "",
