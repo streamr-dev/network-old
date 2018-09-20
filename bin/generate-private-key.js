@@ -12,4 +12,3 @@ crypto.keys.generateKeyPair('RSA', 2048, (err, key) => {
     console.log(key.bytes.toString('base64'))
 })
 
-
