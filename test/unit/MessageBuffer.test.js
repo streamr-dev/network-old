@@ -57,9 +57,8 @@ test('timeoutCb(id) is invoked on timeout', (done) => {
 })
 
 test('timeoutCb(id) is not invoked if messages popped before timeout', () => {
-    const buffer = new MessageBuffer(1000, (id) => {
-        fail('should not be invoked')
-    })
+    const timeoutCb = jest.fn()
+    const buffer = new MessageBuffer(1000, timeoutCb)
 
     buffer.put('stream-1', {})
     buffer.put('stream-1', {})
@@ -69,6 +68,7 @@ test('timeoutCb(id) is not invoked if messages popped before timeout', () => {
     buffer.popAll('stream-2')
 
     jest.runAllTimers()
+    expect(timeoutCb).not.toHaveBeenCalled()
 })
 
 test('messages are deleted after timeout', () => {
@@ -83,9 +83,8 @@ test('messages are deleted after timeout', () => {
 })
 
 test('clear() removes all messages and timeout callbacks', () => {
-    const buffer = new MessageBuffer(100, (id) => {
-        fail('should not be invoked')
-    })
+    const timeoutCb = jest.fn()
+    const buffer = new MessageBuffer(100, timeoutCb)
     buffer.put('stream-1', {})
     buffer.put('stream-1', {})
     buffer.put('stream-2', {})
@@ -96,6 +95,7 @@ test('clear() removes all messages and timeout callbacks', () => {
 
     expect(buffer.popAll('stream-1')).toEqual([])
     expect(buffer.popAll('stream-2')).toEqual([])
+    expect(timeoutCb).not.toHaveBeenCalled()
 })
 
 test('clearing and pushing to ids do not affect other ids', () => {
