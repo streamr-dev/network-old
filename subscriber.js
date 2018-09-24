@@ -1,5 +1,5 @@
 const { createEndpoint } = require('./src/connection/Libp2pEndpoint')
-const Publisher = require('./src/logic/Publisher')
+const Client = require('./src/logic/Client')
 const NodeToNode = require('./src/protocol/NodeToNode')
 
 const port = process.argv[2] || 30301
@@ -9,15 +9,14 @@ const streamIdParam = process.argv[4] || ''
 createEndpoint('127.0.0.1', port, '', true).then((endpoint) => {
     endpoint.connect(nodeAddress)
 
-    const publisher = new Publisher(new NodeToNode(endpoint), nodeAddress)
+    const client = new Client(new NodeToNode(endpoint), nodeAddress)
 
     const subscribeInterval = setInterval(() => {
-        publisher.subscribe(streamIdParam)
+        client.subscribe(streamIdParam)
     }, 1000)
 
-    publisher.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, ({ streamId, data }) => {
-        console.log(streamId)
-        console.log(data)
+    client.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, ({ streamId, data }) => {
+        console.log('received for streamdId ' + streamId + ', data ' + data)
 
         if (subscribeInterval !== null) {
             clearInterval(subscribeInterval)

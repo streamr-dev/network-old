@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const { getIdShort } = require('../util')
 
-module.exports = class Publisher extends EventEmitter {
+module.exports = class Client extends EventEmitter {
     constructor(nodeToNode, nodeAddress) {
         super()
 
@@ -12,7 +12,7 @@ module.exports = class Publisher extends EventEmitter {
             nodeToNode
         }
 
-        this.debug = createDebug(`streamr:logic:publisher:${this.id}`)
+        this.debug = createDebug(`streamr:logic:client:${this.id}`)
         this.debug('node: %s is running', this.id)
     }
 
