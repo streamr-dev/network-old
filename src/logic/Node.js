@@ -44,7 +44,7 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, ({ streamId, nodeAddress }) => {
             this.addKnownStreams(streamId, nodeAddress)
         })
-        this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, ({ streamId, data }) => this.onDataReceived(streamId, data))
+        this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, ({ streamId, data, number, previousNumber }) => this.onDataReceived(streamId, data, number, previousNumber))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, ({ streamId, sender }) => {
             this.onSubscribeRequest(streamId, sender)
         })
@@ -84,7 +84,7 @@ class Node extends EventEmitter {
         this._handleBufferedMessages(streamId)
     }
 
-    onDataReceived(streamId, data) {
+    onDataReceived(streamId, data, number, previousNumber) {
         if (this.streams.isLeaderOf(streamId)) {
             this.debug('received data for own stream %s', streamId)
             this.emit(events.MESSAGE_RECEIVED, streamId, data)
