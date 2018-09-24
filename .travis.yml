@@ -10,12 +10,16 @@ before_install:
 - npm i -g npm@6.4.1
 jobs:
   include:
-  - stage: eslint
+  - stage: tests
+    env:
+    - DESCRIPTION=ESLINT
     script:
-      - npm run eslint
-  - stage: unit tests
+    - npm run eslint
+    env:
+    - DESCRIPTION=UNIT_TEST
     script:
     - npm run test-unit
-  - stage: Integration tests
+    env:
+    - DESCRIPTION=INTEGRATION_TEST
     script:
     - npm run test-integration
