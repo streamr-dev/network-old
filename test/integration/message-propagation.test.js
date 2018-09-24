@@ -75,23 +75,13 @@ describe('message propagation in network', () => {
         await callbackToPromise(n3.subscribe.bind(n3), 'stream-1', 0)
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
-        for (let i = 0, j = 0; i < 5 || j < 5;) {
-            if (i < 5) {
-                const success = n1.publish('stream-1', 0, {
-                    messageNo: i
-                })
-                if (success) {
-                    i += 1
-                }
-            }
-            if (j < 5) {
-                const success = n4.publish('stream-2', 0, {
-                    messageNo: i * 100
-                })
-                if (success) {
-                    j += 1
-                }
-            }
+        for (let i = 0; i < 5; ++i) {
+            n1.publish('stream-1', 0, {
+                messageNo: i
+            })
+            n4.publish('stream-2', 0, {
+                messageNo: i * 100
+            })
             // eslint-disable-next-line no-await-in-loop
             await wait(500)
         }
@@ -132,14 +122,7 @@ describe('message propagation in network', () => {
                 content: {
                     messageNo: 4
                 }
-            },
-            {
-                streamId: 'stream-1',
-                partition: 0,
-                content: {
-                    messageNo: 5
-                }
-            },
+            }
         ])
         expect(n3Messages).toEqual(n2Messages)
         expect(n4Messages).toEqual([
