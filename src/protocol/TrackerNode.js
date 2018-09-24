@@ -7,7 +7,6 @@ const EndpointListener = require('./EndpointListener')
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:peer:send-status',
     NODE_LIST_RECEIVED: 'streamr:node-node:connect',
-    DATA_RECEIVED: 'streamr:node-node:stream-data',
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream',
     STREAM_ASSIGNED: 'streamr:node:stream-assigned'
 })
@@ -68,13 +67,6 @@ class TrackerNode extends EventEmitter {
                 }
                 break
 
-            case encoder.DATA:
-                this.emit(events.DATA_RECEIVED, {
-                    streamId: data[0],
-                    data: data[1]
-                })
-                break
-
             case encoder.STREAM:
                 if (data[1] === getAddress(this.endpoint.node.peerInfo)) {
                     this.emit(events.STREAM_ASSIGNED, data[0])
@@ -87,7 +79,7 @@ class TrackerNode extends EventEmitter {
                 break
 
             default:
-                throw new Error('Unhandled message type')
+                break
         }
     }
 
