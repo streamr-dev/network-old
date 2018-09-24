@@ -95,6 +95,9 @@ class TrackerNode extends EventEmitter {
             })
         }
     }
+
+    async onPeerDisconnected(peer) {
+    }
 }
 
 TrackerNode.events = events
