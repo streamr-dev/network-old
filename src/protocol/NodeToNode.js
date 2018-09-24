@@ -26,8 +26,8 @@ class NodeToNode extends EventEmitter {
         })
     }
 
-    sendData(receiverNode, streamId, data) {
-        this.endpoint.send(receiverNode, encoder.dataMessage(streamId, data))
+    sendData(receiverNode, streamId, data, number, previousNumber) {
+        this.endpoint.send(receiverNode, encoder.dataMessage(streamId, data, number, previousNumber))
     }
 
     sendSubscribe(receiverNode, streamId) {
@@ -72,7 +72,9 @@ class NodeToNode extends EventEmitter {
             case encoder.DATA:
                 this.emit(events.DATA_RECEIVED, {
                     streamId: data[0],
-                    data: data[1]
+                    data: data[1],
+                    number: data[2],
+                    previousNumber: data[3]
                 })
                 break
 

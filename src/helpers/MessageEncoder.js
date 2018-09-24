@@ -38,7 +38,7 @@ module.exports = {
     decode,
     peersMessage: (peers) => encode(msgTypes.PEERS, peers),
     statusMessage: (status) => encode(msgTypes.STATUS, status),
-    dataMessage: (streamId, data) => encode(msgTypes.DATA, [streamId, data]),
+    dataMessage: (streamId, data, number = null, previousNumber = null) => encode(msgTypes.DATA, [streamId, data, number, previousNumber]),
     subscribeMessage: (streamId) => encode(msgTypes.SUBSCRIBE, streamId),
     unsubscribeMessage: (streamId) => encode(msgTypes.UNSUBSCRIBE, streamId),
     streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, [streamId, nodeAddress]),

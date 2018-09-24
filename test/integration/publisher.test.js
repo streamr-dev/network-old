@@ -28,7 +28,7 @@ describe('publisher and node connection', () => {
         client.publish(streamId, 'Hello world, from Publisher ' + endpoint2.node.peerInfo.id.toB58String(), () => {})
 
         endpoint1.on(endpointEvents.MESSAGE_RECEIVED, ({ sender, message }) => {
-            assert.equal(message, `{"version":"${version}","code":2,"data":["${streamId}","Hello world, from Publisher ${endpoint2.node.peerInfo.id.toB58String()}"]}`)
+            assert.equal(message, `{"version":"${version}","code":2,"data":["${streamId}","Hello world, from Publisher ${endpoint2.node.peerInfo.id.toB58String()}",null,null]}`)
             assert(!node.streams.isLeaderOf(streamId))
 
             endpoint1.node.stop(() => {
