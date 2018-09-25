@@ -12,7 +12,9 @@ module.exports = class NetworkNode extends Node {
     }
 
     addMessageListener(cb) {
-        this.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => cb(streamId, 0, content))
+        this.on(Node.events.MESSAGE_RECEIVED, (streamId, content, number, previousNumber) => {
+            cb(streamId, 0, content, number, previousNumber)
+        })
     }
 
     subscribe(streamId, streamPartition) {
