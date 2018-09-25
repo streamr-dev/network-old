@@ -8,7 +8,8 @@ const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:peer:send-status',
     NODE_LIST_RECEIVED: 'streamr:node-node:connect',
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream',
-    STREAM_ASSIGNED: 'streamr:node:stream-assigned'
+    STREAM_ASSIGNED: 'streamr:node:stream-assigned',
+    NODE_DISCONNECTED: 'streamr:tracker:node-disconnected'
 })
 
 class TrackerNode extends EventEmitter {

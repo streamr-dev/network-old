@@ -23,6 +23,7 @@
     "tracker": "node $NODE_DEBUG_OPTION tracker.js",
     "node": "node $NODE_DEBUG_OPTION node.js",
     "pub": "node $NODE_DEBUG_OPTION publisher.js",
+    "sub": "node $NODE_DEBUG_OPTION subscriber.js",
     "test": "jest",
     "test-unit": "jest test/unit",
     "test-integration": "jest test/integration",

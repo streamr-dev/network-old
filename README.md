@@ -48,21 +48,21 @@ or
 
 and etc
 
-# run publisher-libp2p
-
-`npm run pub-libp2p port libp2p-address streamId`
-
-example:
-
-`npm run pub-libp2p 30310 /ip4/127.0.0.1/tcp/30301/ipfs/QmSfv54RY4v1tzJbQgkZbJzuFggYfJTnY8C2sZLafWkrWN 5637cf21-b286-11e8-8f3e-8b5d43958c3e`
-
 # run publisher
 
 `npm run pub port libp2p-address streamId`
 
 example:
 
-`npm run pub 30310 /ip4/127.0.0.1/tcp/30301/ipfs/QmSfv54RY4v1tzJbQgkZbJzuFggYfJTnY8C2sZLafWkrWN 5637cf21-b286-11e8-8f3e-8b5d43958c3e`
+`npm run pub 30310 /ip4/127.0.0.1/tcp/30301/ipfs/QmSfv54RY4v1tzJbQgkZbJzuFggYfJTnY8C2sZLafWkrWN 5637cf21-b286-11e8-8f3e-8b5d43958c3e STREAM-ID`
+
+# run subscriber
+
+`npm run sub port libp2p-address streamId`
+
+example:
+
+`npm run sub 30310 /ip4/127.0.0.1/tcp/30301/ipfs/QmSfv54RY4v1tzJbQgkZbJzuFggYfJTnY8C2sZLafWkrWN 5637cf21-b286-11e8-8f3e-8b5d43958c3e STREAM-ID`
 
 # Debugging
 to get all streamr network debug messages `export DEBUG=streamr*`
@@ -95,8 +95,11 @@ it's better to run integration tests one by one, for now they are using the same
 
 - proper disconnection with blocking message sending
 - validation
-- tests
+- tests:
+    - disconnect event
+    - unsubscribing
 - async
+- event list?
 
 # Architecture
 

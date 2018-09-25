@@ -39,6 +39,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, ({ streamId, sender }) => {
             this.onUnsubscribeRequest(streamId, sender)
         })
+        this.protocols.nodeToNode.on(TrackerNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
 
         this.debug = createDebug(`streamr:logic:node:${this.id}`)
         this.debug('started %s', this.id)
@@ -115,11 +116,15 @@ class Node extends EventEmitter {
 
     onUnsubscribeRequest(streamId, nodeAddress) {
         this.debug('node %s unsubscribed from the stream %s', nodeAddress, streamId)
-        if (this.subsribers.has(streamId) && this.subsribers.get(streamId).length > 1) {
+        this._unsubscribeNode(streamId, nodeAddress)
+    }
+
+    _unsubscribeNode(streamId, nodeAddress) {
+        if (this.subsribers.has(streamId)) {
             this.subsribers.set(streamId, [...this.subsribers.get(streamId)].filter((node) => node !== nodeAddress))
-        } else {
-            this.subsribers.delete(streamId)
         }
+
+        // check and unsubscribe from that stream
     }
 
     isOwnStream(streamId) {
@@ -168,6 +173,17 @@ class Node extends EventEmitter {
         if (tracker) {
             this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
         }
+    }
+
+    onNodeDisconnected(node) {
+        this.debug('removing node %s from all subscriptions', getIdShort(node))
+        this.nodes.delete(getAddress(node))
+
+        const nodeAddress = getAddress(node)
+
+        this.subsribers.forEach((streamId) => {
+            this._unsubscribeNode(streamId, nodeAddress)
+        })
     }
 }
 
