@@ -17,7 +17,7 @@ class Node extends EventEmitter {
 
         this.knownStreams = new Map()
         this.ownStreams = new Set()
-        this.subsribers = new Map()
+        this.subscribers = new Map()
         this.messageBuffer = new MessageBuffer(60 * 1000, (streamId) => {
             this.debug('failed to deliver buffered messages of stream %s because leader not found', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
@@ -94,7 +94,7 @@ class Node extends EventEmitter {
     }
 
     _sendToSubscribers(streamId, data) {
-        const subscribers = this.subsribers.get(streamId)
+        const subscribers = this.subscribers.get(streamId)
 
         if (subscribers === undefined) {
             this.debug('no subscribers for stream %s', streamId)
@@ -129,8 +129,8 @@ class Node extends EventEmitter {
     }
 
     _unsubscribeNode(streamId, nodeAddress) {
-        if (this.subsribers.has(streamId)) {
-            this.subsribers.set(streamId, [...this.subsribers.get(streamId)].filter((node) => node !== nodeAddress))
+        if (this.subscribers.has(streamId)) {
+            this.subscribers.set(streamId, [...this.subscribers.get(streamId)].filter((node) => node !== nodeAddress))
         }
 
         // check and unsubscribe from that stream
@@ -153,15 +153,15 @@ class Node extends EventEmitter {
 
     _addToSubscribers(streamId, nodeAddress) {
         if (this._checkPermissions(streamId, nodeAddress)) {
-            if (this.subsribers.has(streamId)) {
-                const currentSubscribersForTheStream = [...this.subsribers.get(streamId)]
+            if (this.subscribers.has(streamId)) {
+                const currentSubscribersForTheStream = [...this.subscribers.get(streamId)]
 
                 if (!currentSubscribersForTheStream.includes(nodeAddress)) {
                     this.debug('node %s added as a subscriber for the stream %s', nodeAddress, streamId)
-                    this.subsribers.set(streamId, [...currentSubscribersForTheStream, nodeAddress])
+                    this.subscribers.set(streamId, [...currentSubscribersForTheStream, nodeAddress])
                 }
             } else {
-                this.subsribers.set(streamId, [nodeAddress])
+                this.subscribers.set(streamId, [nodeAddress])
             }
         }
     }
@@ -191,7 +191,7 @@ class Node extends EventEmitter {
 
         const nodeAddress = getAddress(node)
 
-        this.subsribers.forEach((streamId) => {
+        this.subscribers.forEach((streamId) => {
             this._unsubscribeNode(streamId, nodeAddress)
         })
     }

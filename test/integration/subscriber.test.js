@@ -7,7 +7,7 @@ const NodeToNode = require('../../src/protocol/NodeToNode')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
-describe('tracker, two nodes, publisher and two subscribers', () => {
+describe('Selecting leader for the stream and sending messages to two subscribers', () => {
     let tracker
     let nodeOne
     let nodeTwo
@@ -17,7 +17,7 @@ describe('tracker, two nodes, publisher and two subscribers', () => {
 
     const streamId = 'stream-2018'
 
-    it('should be able to start tracker, two nodes, publisher and two subscribers, receive messages and the stop', async (done) => {
+    it('should be select leader and get two active subscribers', async (done) => {
         tracker = await startTracker(LOCALHOST, 32300)
         BOOTNODES.push(tracker.getAddress())
 
@@ -63,7 +63,7 @@ describe('tracker, two nodes, publisher and two subscribers', () => {
             waitForEvent(subscriber2.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED)
         ]).then((res) => {
             console.log('==================================')
-            expect(nodeTwo.subsribers.get(streamId).length).toEqual(2)
+            expect(nodeTwo.subscribers.get(streamId).length).toEqual(2)
             clearInterval(subscribeInterval1)
             clearInterval(subscribeInterval2)
             clearInterval(publisherInterval)
