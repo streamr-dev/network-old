@@ -86,7 +86,7 @@ code coverage
 
 run one test
 
-`./node_modules/jest/bin/jest.js test/integration/client.test.js`
+`./node_modules/jest/bin/jest.js test/integration/publisher.test.js`
 
 ### node
 it's better to run integration tests one by one, for now they are using the same port for tracker, so it can cause `listen EADDRINUSE` errors  
