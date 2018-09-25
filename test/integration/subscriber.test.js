@@ -1,6 +1,6 @@
 const { startClient, startNode, startTracker } = require('../../src/composition')
-const { callbackToPromise, BOOTNODES } = require('../../src/util')
-const { wait, waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('..//util')
+const { BOOTNODES } = require('../../src/util')
+const { waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const NodeToNode = require('../../src/protocol/NodeToNode')
