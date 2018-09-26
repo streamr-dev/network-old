@@ -13,15 +13,19 @@ module.exports = class SubscriptionManager {
         this.pendingSubscriptions.add(streamId)
     }
 
-    getPendingSubscriptions() {
-        return [...this.pendingSubscriptions]
+    removeSubscription(streamId) {
+        this.subscriptions.delete(streamId)
+    }
+
+    hasSubscription(streamId) {
+        return this.subscriptions.has(streamId)
     }
 
     hasPendingSubscription(streamId) {
         return this.pendingSubscriptions.has(streamId)
     }
 
-    removeSubscription(streamId) {
-        this.subscriptions.delete(streamId)
+    getPendingSubscriptions() {
+        return [...this.pendingSubscriptions]
     }
 }

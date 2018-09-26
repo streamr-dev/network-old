@@ -44,8 +44,8 @@ describe('message buffering of Node', () => {
             done()
         })
 
-        destinationNode._subscribeToStream('stream-id')
-        await wait(2000)
+        destinationNode.subscribeToStream('stream-id')
+        await wait(500) // TODO: required to not encounter issue #99 (concurrent subscription)
 
         // "Client" pushes data
         sourceNode.onDataReceived('stream-id', {

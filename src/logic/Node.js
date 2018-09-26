@@ -20,7 +20,7 @@ class Node extends EventEmitter {
         this.knownStreams = new Map()
         this.ownStreams = new Set()
         this.subscribers = new SubscriberManager(
-            this._subscribeToStream.bind(this),
+            this.subscribeToStream.bind(this),
             this._unsubscribeFromStream.bind(this)
         )
         this.subscriptions = new SubscriptionManager()
@@ -126,8 +126,10 @@ class Node extends EventEmitter {
         this.debug('node %s unsubscribed from the stream %s', nodeAddress, streamId)
     }
 
-    _subscribeToStream(streamId) {
-        if (this.isOwnStream(streamId)) {
+    subscribeToStream(streamId) {
+        if (this.subscriptions.hasSubscription(streamId)) {
+            this.debug('already subscribed to stream %s', streamId)
+        } else if (this.isOwnStream(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
         } else if (this._isKnownStream(streamId)) {
@@ -192,13 +194,13 @@ class Node extends EventEmitter {
 
     _handlePendingSubscriptions() {
         this.subscriptions.getPendingSubscriptions().forEach((pendingStreamId) => {
-            this._subscribeToStream(pendingStreamId)
+            this.subscribeToStream(pendingStreamId)
         })
     }
 
     _handlePossiblePendingSubscription(pendingStreamId) {
         if (this.subscriptions.hasPendingSubscription(pendingStreamId)) {
-            this._subscribeToStream(pendingStreamId)
+            this.subscribeToStream(pendingStreamId)
         }
     }
 }
