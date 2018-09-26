@@ -91,7 +91,9 @@ class Node extends EventEmitter {
             this._sendToSubscribers(streamId, data)
         } else if (this._isKnownStream(streamId)) {
             this.debug('received data for known stream %s', streamId)
-            this._sendToSubscribers(streamId, data)
+            const receiverNode = this.knownStreams.get(streamId)
+            this.protocols.nodeToNode.sendData(receiverNode, streamId, data) // TODO: only send to leader if not numbered
+            this._sendToSubscribers(streamId, data) // TODO: should only send if numbered
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
