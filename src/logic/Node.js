@@ -11,6 +11,7 @@ const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
     MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed',
     NO_AVAILABLE_TRACKERS: 'streamr:node:no-trackers',
+    SUBSCRIBED_TO_STREAM: 'streamr:node:subscribed-to-stream'
 })
 
 class Node extends EventEmitter {
@@ -129,13 +130,16 @@ class Node extends EventEmitter {
     subscribeToStream(streamId) {
         if (this.subscriptions.hasSubscription(streamId)) {
             this.debug('already subscribed to stream %s', streamId)
+            this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this.isOwnStream(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
+            this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this._isKnownStream(streamId)) {
             this.debug('stream %s is in known; sending subscribe request to nodeAddress %s', streamId, this.knownStreams.get(streamId))
             this.protocols.nodeToNode.sendSubscribe(this.knownStreams.get(streamId), streamId)
             this.subscriptions.addSubscription(streamId) // Assuming subscribe went through
+            this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
