@@ -1,7 +1,9 @@
 const { startNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
 const { callbackToPromise } = require('../../src/util')
-const { waitForEvent, wait, LOCALHOST, DEFAULT_TIMEOUT, PRIVATE_KEY } = require('../util')
+const {
+    waitForEvent, wait, LOCALHOST, DEFAULT_TIMEOUT, PRIVATE_KEY
+} = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const NodeToNode = require('../../src/protocol/NodeToNode')
