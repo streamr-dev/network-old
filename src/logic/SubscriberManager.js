@@ -1,8 +1,8 @@
 module.exports = class SubscriberManager {
-    constructor(onFirstSubscriber = () => {}, onNoMoreListeners = () => {}) {
+    constructor(onFirstSubscriber = () => {}, onNoMoreSubscribers = () => {}) {
         this.subscribers = new Map()
         this.onFirstSubscriber = onFirstSubscriber
-        this.onNoMoreListeners = onNoMoreListeners
+        this.onNoMoreSubscribers = onNoMoreSubscribers
     }
 
     subscribersForStream(streamId) {
@@ -38,7 +38,7 @@ module.exports = class SubscriberManager {
 
             if (newList.length === 0) {
                 this.subscribers.delete(streamId)
-                this.onNoMoreListeners(streamId)
+                this.onNoMoreSubscribers(streamId)
             }
         }
     }
