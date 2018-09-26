@@ -1,66 +1,60 @@
 const { startNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
+const TrackerNode = require('../../src/protocol/TrackerNode')
+const TrackerServer = require('../../src/protocol/TrackerServer')
+const NodeToNode = require('../../src/protocol/NodeToNode')
 const { BOOTNODES, callbackToPromise } = require('../../src/util')
-const { LOCALHOST } = require('../../test/util')
+const { LOCALHOST, waitForEvent, wait } = require('../../test/util')
 
 jest.setTimeout(30 * 1000)
 
 describe('message numbering', () => {
     let tracker
-    let node
+    let sourceNode
+    let destinationNode
 
-    beforeAll(async (done) => {
+    beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 33340)
         BOOTNODES.push(tracker.getAddress())
-        node = await startNode(LOCALHOST, 33341)
-
-        // TODO: use p-event to listen to TrackerNode.events.NODE_LIST_RECEIVED when issue #86 merged
-        setTimeout(done, 8000)
+        sourceNode = await startNode(LOCALHOST, 33341)
+        destinationNode = await startNode(LOCALHOST, 33342)
+        await Promise.all([
+            waitForEvent(sourceNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
+            waitForEvent(destinationNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
+        ])
     })
 
     afterAll(async (done) => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        await callbackToPromise(node.stop.bind(node))
+        await wait(500)
+        await callbackToPromise(sourceNode.stop.bind(sourceNode))
+        await callbackToPromise(destinationNode.stop.bind(destinationNode))
         tracker.stop(done)
     })
 
     test('messages without numbering are assigned sequential numbers', async (done) => {
         const actualNumbers = []
         const actualPreviousNumbers = []
-        node.on(Node.events.MESSAGE_RECEIVED, (streamId, data, number, previousNumber) => {
+        destinationNode.on(Node.events.MESSAGE_RECEIVED, (streamId, data, number, previousNumber) => {
             actualNumbers.push(number)
             actualPreviousNumbers.push(previousNumber)
 
             if (actualNumbers.length === 4) {
                 expect(actualNumbers).toEqual([1, 2, 3, 4])
-                expect(actualPreviousNumbers).toEqual([0, 1, 2, 3])
+                expect(actualPreviousNumbers).toEqual([null, 1, 2, 3])
                 done()
             }
         })
 
-        node.onDataReceived('stream-id', {})
-        node.onDataReceived('stream-id', {})
-        node.onDataReceived('stream-id', {})
-        node.onDataReceived('stream-id', {})
-    })
+        // Ensure that sourceNode becomes leader by subscribing 1st
+        sourceNode.subscribeToStream('stream-id')
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
-    test('messages with numbers are not re-assigned numbers', async (done) => {
-        const actualNumbers = []
-        const actualPreviousNumbers = []
-        node.on(Node.events.MESSAGE_RECEIVED, (streamId, data, number, previousNumber) => {
-            actualNumbers.push(number)
-            actualPreviousNumbers.push(previousNumber)
+        destinationNode.subscribeToStream('stream-id')
+        await waitForEvent(sourceNode.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
-            if (actualNumbers.length === 4) {
-                expect(actualNumbers).toEqual([666, 777, 888, 999])
-                expect(actualPreviousNumbers).toEqual([null, 666, 777, 888])
-                done()
-            }
-        })
-
-        node.onDataReceived('stream-id', {}, 666, null)
-        node.onDataReceived('stream-id', {}, 777, 666)
-        node.onDataReceived('stream-id', {}, 888, 777)
-        node.onDataReceived('stream-id', {}, 999, 888)
+        sourceNode.onDataReceived('stream-id', {})
+        sourceNode.onDataReceived('stream-id', {})
+        sourceNode.onDataReceived('stream-id', {})
+        sourceNode.onDataReceived('stream-id', {})
     })
 })
