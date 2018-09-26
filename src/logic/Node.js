@@ -6,6 +6,7 @@ const SubscriberManager = require('../logic/SubscriberManager')
 const SubscriptionManager = require('../logic/SubscriptionManager')
 const MessageBuffer = require('../helpers/MessageBuffer')
 const { getAddress, getIdShort } = require('../util')
+const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
@@ -17,8 +18,7 @@ class Node extends EventEmitter {
     constructor(trackerNode, nodeToNode) {
         super()
 
-        this.knownStreams = new Map()
-        this.ownStreams = new Set()
+        this.streams = new StreamManager()
         this.subscribers = new SubscriberManager(
             this.subscribeToStream.bind(this),
             this._unsubscribeFromStream.bind(this)
@@ -70,7 +70,7 @@ class Node extends EventEmitter {
 
     addOwnStream(streamId) {
         this.debug('stream %s added to own streams', streamId)
-        this.ownStreams.add(streamId)
+        this.streams.addOwnStream(streamId)
         this._sendStatus(this.tracker)
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
@@ -79,19 +79,19 @@ class Node extends EventEmitter {
     // add to cache of streams
     addKnownStreams(streamId, nodeAddress) {
         this.debug('stream %s added to known streams for address %s', streamId, nodeAddress)
-        this.knownStreams.set(streamId, nodeAddress)
+        this.streams.addKnownStream(streamId, nodeAddress)
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
 
     onDataReceived(streamId, data) {
-        if (this.isOwnStream(streamId)) {
+        if (this.streams.isOwnStream(streamId)) {
             this.debug('received data for own stream %s', streamId)
             this.emit(events.MESSAGE_RECEIVED, streamId, data)
             this._sendToSubscribers(streamId, data)
-        } else if (this._isKnownStream(streamId)) {
+        } else if (this.streams.isKnownStream(streamId)) {
             this.debug('received data for known stream %s', streamId)
-            const receiverNode = this.knownStreams.get(streamId)
+            const receiverNode = this.streams.getAddressForStream(streamId)
             this.protocols.nodeToNode.sendData(receiverNode, streamId, data) // TODO: only send to leader if not numbered
             this._sendToSubscribers(streamId, data) // TODO: should only send if numbered
         } else if (this.tracker === null) {
@@ -129,12 +129,13 @@ class Node extends EventEmitter {
     subscribeToStream(streamId) {
         if (this.subscriptions.hasSubscription(streamId)) {
             this.debug('already subscribed to stream %s', streamId)
-        } else if (this.isOwnStream(streamId)) {
+        } else if (this.streams.isOwnStream(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
-        } else if (this._isKnownStream(streamId)) {
-            this.debug('stream %s is in known; sending subscribe request to nodeAddress %s', streamId, this.knownStreams.get(streamId))
-            this.protocols.nodeToNode.sendSubscribe(this.knownStreams.get(streamId), streamId)
+        } else if (this.streams.isKnownStream(streamId)) {
+            const receiverAddress = this.streams.getAddressForStream(streamId)
+            this.debug('stream %s is in known; sending subscribe request to nodeAddress %s', streamId, receiverAddress)
+            this.protocols.nodeToNode.sendSubscribe(receiverAddress, streamId)
             this.subscriptions.addSubscription(streamId) // Assuming subscribe went through
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
@@ -151,14 +152,6 @@ class Node extends EventEmitter {
         this.subscriptions.removeSubscription(streamId)
     }
 
-    isOwnStream(streamId) {
-        return this.ownStreams.has(streamId)
-    }
-
-    _isKnownStream(streamId) {
-        return this.knownStreams.get(streamId) !== undefined
-    }
-
     stop(cb) {
         this.debug('stopping')
         this.messageBuffer.clear()
@@ -168,7 +161,7 @@ class Node extends EventEmitter {
 
     _getStatus() {
         return {
-            streams: [...this.ownStreams],
+            streams: this.streams.getOwnStreams(),
             started: this.started
         }
     }
