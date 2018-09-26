@@ -4,23 +4,25 @@ module.exports = class StreamManager {
         this.knownStreams = new Map() // streamId => nodeAddress
     }
 
-    addOwnStream(streamId) {
+    markCurrentNodeAsLeaderOf(streamId) {
+        this.knownStreams.delete(streamId)
         this.ownStreams.add(streamId)
     }
 
-    addKnownStream(streamId, nodeAddress) {
+    markOtherNodeAsLeader(streamId, nodeAddress) {
+        this.ownStreams.delete(streamId)
         this.knownStreams.set(streamId, nodeAddress)
     }
 
-    getAddressForStream(streamId) {
+    getLeaderAddressFor(streamId) {
         return this.knownStreams.get(streamId)
     }
 
-    isOwnStream(streamId) {
+    isLeaderOf(streamId) {
         return this.ownStreams.has(streamId)
     }
 
-    isKnownStream(streamId) {
+    isOtherNodeLeaderOf(streamId) {
         return this.knownStreams.has(streamId)
     }
 

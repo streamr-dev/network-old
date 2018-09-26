@@ -70,29 +70,28 @@ class Node extends EventEmitter {
 
     addOwnStream(streamId) {
         this.debug('stream %s added to own streams', streamId)
-        this.streams.addOwnStream(streamId)
+        this.streams.markCurrentNodeAsLeaderOf(streamId)
         this._sendStatus(this.tracker)
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
 
-    // add to cache of streams
     addKnownStreams(streamId, nodeAddress) {
         this.debug('stream %s added to known streams for address %s', streamId, nodeAddress)
-        this.streams.addKnownStream(streamId, nodeAddress)
+        this.streams.markOtherNodeAsLeader(streamId, nodeAddress)
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
 
     onDataReceived(streamId, data) {
-        if (this.streams.isOwnStream(streamId)) {
+        if (this.streams.isLeaderOf(streamId)) {
             this.debug('received data for own stream %s', streamId)
             this.emit(events.MESSAGE_RECEIVED, streamId, data)
             this._sendToSubscribers(streamId, data)
-        } else if (this.streams.isKnownStream(streamId)) {
+        } else if (this.streams.isOtherNodeLeaderOf(streamId)) {
             this.debug('received data for known stream %s', streamId)
-            const receiverNode = this.streams.getAddressForStream(streamId)
-            this.protocols.nodeToNode.sendData(receiverNode, streamId, data) // TODO: only send to leader if not numbered
+            const leaderNode = this.streams.getLeaderAddressFor(streamId)
+            this.protocols.nodeToNode.sendData(leaderNode, streamId, data) // TODO: only send to leader if not numbered
             this._sendToSubscribers(streamId, data) // TODO: should only send if numbered
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
@@ -129,13 +128,13 @@ class Node extends EventEmitter {
     subscribeToStream(streamId) {
         if (this.subscriptions.hasSubscription(streamId)) {
             this.debug('already subscribed to stream %s', streamId)
-        } else if (this.streams.isOwnStream(streamId)) {
+        } else if (this.streams.isLeaderOf(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
-        } else if (this.streams.isKnownStream(streamId)) {
-            const receiverAddress = this.streams.getAddressForStream(streamId)
-            this.debug('stream %s is in known; sending subscribe request to nodeAddress %s', streamId, receiverAddress)
-            this.protocols.nodeToNode.sendSubscribe(receiverAddress, streamId)
+        } else if (this.streams.isOtherNodeLeaderOf(streamId)) {
+            const leaderAddress = this.streams.getLeaderAddressFor(streamId)
+            this.debug('stream %s is known; sending subscribe request to leader %s', streamId, leaderAddress)
+            this.protocols.nodeToNode.sendSubscribe(leaderAddress, streamId)
             this.subscriptions.addSubscription(streamId) // Assuming subscribe went through
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
