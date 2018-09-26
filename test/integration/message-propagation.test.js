@@ -1,6 +1,7 @@
+const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { startTracker, startNetworkNode } = require('../../src/composition')
+const { startTracker, startNode } = require('../../src/composition')
 const { callbackToPromise, BOOTNODES } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST } = require('../../test/util')
 
@@ -18,27 +19,27 @@ describe('message propagation in network', () => {
         BOOTNODES.push(tracker.getAddress())
 
         await Promise.all([
-            startNetworkNode('127.0.0.1', 33312, null),
-            startNetworkNode('127.0.0.1', 33313, null),
-            startNetworkNode('127.0.0.1', 33314, null),
-            startNetworkNode('127.0.0.1', 33315, null)
+            startNode('127.0.0.1', 33312, null),
+            startNode('127.0.0.1', 33313, null),
+            startNode('127.0.0.1', 33314, null),
+            startNode('127.0.0.1', 33315, null)
         ]).then((res) => {
             [n1, n2, n3, n4] = res
         })
 
         await Promise.all([
-            waitForEvent(n1.node.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
-            waitForEvent(n2.node.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
-            waitForEvent(n3.node.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
-            waitForEvent(n4.node.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED)
+            waitForEvent(n1.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
+            waitForEvent(n2.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
+            waitForEvent(n3.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
+            waitForEvent(n4.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED)
         ])
     })
 
     afterAll(async (done) => {
-        await n1.stop()
-        await n2.stop()
-        await n3.stop()
-        await n4.stop()
+        await callbackToPromise(n1.stop.bind(n1))
+        await callbackToPromise(n1.stop.bind(n2))
+        await callbackToPromise(n1.stop.bind(n3))
+        await callbackToPromise(n1.stop.bind(n4))
         tracker.stop(done)
     })
 
@@ -48,38 +49,34 @@ describe('message propagation in network', () => {
         const n3Messages = []
         const n4Messages = []
 
-        n1.addMessageListener((streamId, partition, content) => n1Messages.push({
+        n1.on('MESSAGE_RECEIVED', (streamId, content) => n1Messages.push({
             streamId,
-            partition,
             content
         }))
-        n2.addMessageListener((streamId, partition, content) => n2Messages.push({
+        n2.on('MESSAGE_RECEIVED', (streamId, content) => n2Messages.push({
             streamId,
-            partition,
             content
         }))
-        n3.addMessageListener((streamId, partition, content) => n3Messages.push({
+        n3.on('MESSAGE_RECEIVED', (streamId, content) => n3Messages.push({
             streamId,
-            partition,
             content
         }))
-        n4.addMessageListener((streamId, partition, content) => n4Messages.push({
+        n4.on('MESSAGE_RECEIVED', (streamId, content) => n4Messages.push({
             streamId,
-            partition,
             content
         }))
 
-        await callbackToPromise(n2.subscribe.bind(n2), 'stream-1', 0)
+        n2.subscribeToStream('stream-1')
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
-        await callbackToPromise(n3.subscribe.bind(n3), 'stream-1', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        n3.subscribeToStream('stream-1')
+        await waitForEvent(n2.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
         for (let i = 0; i < 5; ++i) {
-            n1.publish('stream-1', 0, {
+            n1.onDataReceived('stream-1', {
                 messageNo: i
             })
-            n4.publish('stream-2', 0, {
+            n4.onDataReceived('stream-2', {
                 messageNo: i * 100
             })
             // eslint-disable-next-line no-await-in-loop
@@ -90,35 +87,30 @@ describe('message propagation in network', () => {
         expect(n2Messages).toEqual([
             {
                 streamId: 'stream-1',
-                partition: 0,
                 content: {
                     messageNo: 0
                 }
             },
             {
                 streamId: 'stream-1',
-                partition: 0,
                 content: {
                     messageNo: 1
                 }
             },
             {
                 streamId: 'stream-1',
-                partition: 0,
                 content: {
                     messageNo: 2
                 }
             },
             {
                 streamId: 'stream-1',
-                partition: 0,
                 content: {
                     messageNo: 3
                 }
             },
             {
                 streamId: 'stream-1',
-                partition: 0,
                 content: {
                     messageNo: 4
                 }
@@ -130,35 +122,30 @@ describe('message propagation in network', () => {
                 content: {
                     messageNo: 100
                 },
-                partition: 0,
                 streamId: 'stream-2'
             },
             {
                 content: {
                     messageNo: 200
                 },
-                partition: 0,
                 streamId: 'stream-2'
             },
             {
                 content: {
                     messageNo: 300
                 },
-                partition: 0,
                 streamId: 'stream-2'
             },
             {
                 content: {
                     messageNo: 400
                 },
-                partition: 0,
                 streamId: 'stream-2'
             },
             {
                 content: {
                     messageNo: 500
                 },
-                partition: 0,
                 streamId: 'stream-2'
             }
         ])
