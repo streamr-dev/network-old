@@ -25,7 +25,7 @@ module.exports = class SubscriberManager {
     }
 
     removeSubscriberFromAllStreams(nodeAddress) {
-        this.subscribers.forEach((streamId) => {
+        this.subscribers.forEach((_, streamId) => {
             this.removeSubscriber(streamId, nodeAddress)
         })
     }
