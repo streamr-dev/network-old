@@ -1,3 +1,4 @@
+const Node = require('../../src/logic/Node')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
@@ -49,19 +50,19 @@ describe('message propagation in network', () => {
         const n3Messages = []
         const n4Messages = []
 
-        n1.on('MESSAGE_RECEIVED', (streamId, content) => n1Messages.push({
+        n1.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n1Messages.push({
             streamId,
             content
         }))
-        n2.on('MESSAGE_RECEIVED', (streamId, content) => n2Messages.push({
+        n2.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n2Messages.push({
             streamId,
             content
         }))
-        n3.on('MESSAGE_RECEIVED', (streamId, content) => n3Messages.push({
+        n3.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n3Messages.push({
             streamId,
             content
         }))
-        n4.on('MESSAGE_RECEIVED', (streamId, content) => n4Messages.push({
+        n4.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n4Messages.push({
             streamId,
             content
         }))
@@ -117,37 +118,6 @@ describe('message propagation in network', () => {
             }
         ])
         expect(n3Messages).toEqual(n2Messages)
-        expect(n4Messages).toEqual([
-            {
-                content: {
-                    messageNo: 100
-                },
-                streamId: 'stream-2'
-            },
-            {
-                content: {
-                    messageNo: 200
-                },
-                streamId: 'stream-2'
-            },
-            {
-                content: {
-                    messageNo: 300
-                },
-                streamId: 'stream-2'
-            },
-            {
-                content: {
-                    messageNo: 400
-                },
-                streamId: 'stream-2'
-            },
-            {
-                content: {
-                    messageNo: 500
-                },
-                streamId: 'stream-2'
-            }
-        ])
+        expect(n4Messages).toEqual([])
     })
 })
