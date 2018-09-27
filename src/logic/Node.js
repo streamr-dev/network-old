@@ -52,7 +52,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, ({ streamId, sender }) => {
             this.onUnsubscribeRequest(streamId, sender)
         })
-        this.protocols.nodeToNode.on(TrackerNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
+        this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
 
         this.debug = createDebug(`streamr:logic:node:${this.id}`)
         this.debug('started %s', this.id)
@@ -177,10 +177,10 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
-        this.nodes.delete(getAddress(node))
         const nodeAddress = getAddress(node)
         this.subscribers.removeSubscriberFromAllStreams(nodeAddress)
-        this.debug('removed node %s from all subscriptions', getIdShort(node))
+        this.debug('removed all subscriptions of node %s', getIdShort(node))
+    }
     }
 
     _handleBufferedMessages(streamId) {
