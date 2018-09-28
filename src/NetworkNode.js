@@ -15,7 +15,9 @@ module.exports = class NetworkNode extends EventEmitter {
         if (streamPartition !== 0) {
             throw new Error('Stream partitions not yet supported.')
         }
-        this.node.onDataReceived(streamId, content)
+        this.node.onDataReceived({
+            streamId, payload: content
+        })
     }
 
     subscribe(streamId, streamPartition, cb) {
@@ -35,7 +37,7 @@ module.exports = class NetworkNode extends EventEmitter {
     }
 
     addMessageListener(cb) {
-        this.node.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => cb(streamId, 0, content))
+        this.node.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => cb(dataMessage.getStreamId(), 0, dataMessage.getPayload()))
     }
 
     stop() {

@@ -1,4 +1,9 @@
 const CURRENT_VERSION = require('../../package.json').version
+const BasicMessage = require('../messages/BasicMessage')
+const StatusMessage = require('../messages/StatusMessage')
+const StreamMessage = require('../messages/StreamMessage')
+const DataMessage = require('../messages/DataMessage')
+const SubscribeMessage = require('../messages/SubscribeMessage')
 
 const msgTypes = {
     STATUS: 0x00,
@@ -11,7 +16,7 @@ const msgTypes = {
 }
 
 const encode = (type, data) => {
-    if (type < 0 || type > 7) {
+    if (type < 0 || type > 6) {
         throw new Error(`Unknown message type: ${type}`)
     }
 
@@ -22,14 +27,35 @@ const encode = (type, data) => {
     })
 }
 
-const decode = (message) => {
+const decode = (source, message) => {
     const { version, code, data } = JSON.parse(message)
-    return {
-        version,
-        code,
-        data
+
+    switch (code) {
+        case msgTypes.STATUS:
+            return Object.assign(new StatusMessage(), {
+                version, code, source, data
+            })
+        case msgTypes.STREAM:
+            return Object.assign(new StreamMessage(), {
+                version, code, source, data
+            })
+        case msgTypes.DATA:
+            return Object.assign(new DataMessage(), {
+                version, code, source, data
+            })
+        case msgTypes.SUBSCRIBE:
+        case msgTypes.UNSUBSCRIBE:
+            return Object.assign(new SubscribeMessage(), {
+                version, code, source, data
+            })
+        default:
+            return Object.assign(new BasicMessage(), {
+                version, code, source, data
+            })
     }
 }
+
+// const createMessage = (code) => new BasicMessage(CURRENT_VERSION, code)
 
 const getMsgPrefix = (msgCode) => Object.keys(msgTypes).find((key) => msgTypes[key] === msgCode)
 
@@ -42,5 +68,5 @@ module.exports = {
     subscribeMessage: (streamId) => encode(msgTypes.SUBSCRIBE, streamId),
     unsubscribeMessage: (streamId) => encode(msgTypes.UNSUBSCRIBE, streamId),
     streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, [streamId, nodeAddress]),
-    ...msgTypes,
+    ...msgTypes
 }
