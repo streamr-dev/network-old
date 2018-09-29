@@ -190,7 +190,7 @@ class Node extends EventEmitter {
                 dataMessage.setStreamId(streamId)
                 dataMessage.setPayload(payload)
 
-                // bad idea to call events directly
+                // TODO bad idea to call events directly
                 this.onDataReceived(dataMessage)
             })
     }

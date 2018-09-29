@@ -4,7 +4,6 @@ const PeerInfo = require('peer-info')
 const pull = require('pull-stream')
 const debug = require('debug')('streamr:connection:libp2pendpoint')
 const { callbackToPromise, getAddress } = require('../util')
-const encoder = require('../helpers/MessageEncoder')
 const Libp2pBundle = require('./Libp2pBundle')
 
 const HANDLER = '/streamr/v1/'
@@ -65,7 +64,10 @@ class Libp2pEndpoint extends EventEmitter {
                 pull.drain((message) => {
                     debug('received from peer %s message with data "%s"', sender instanceof PeerInfo ? getAddress(sender) : '', message)
 
-                    this.emit(events.MESSAGE_RECEIVED, encoder.decode(sender, message))
+                    this.emit(events.MESSAGE_RECEIVED, {
+                        sender,
+                        message
+                    })
                 })
             )
         } catch (err) {

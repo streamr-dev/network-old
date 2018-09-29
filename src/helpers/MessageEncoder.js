@@ -55,8 +55,6 @@ const decode = (source, message) => {
     }
 }
 
-// const createMessage = (code) => new BasicMessage(CURRENT_VERSION, code)
-
 const getMsgPrefix = (msgCode) => Object.keys(msgTypes).find((key) => msgTypes[key] === msgCode)
 
 module.exports = {
