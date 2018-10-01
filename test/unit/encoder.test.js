@@ -24,9 +24,9 @@ describe('encoder', () => {
         done()
     })
 
-    it('check streamMessage encoding/decoding', (done) => {
-        const json = encoder.streamMessage('stream-id', 'node-address')
-        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"payload":["stream-id","node-address"]}`)
+    it('check streamMessage encoding/decoding', () => {
+        const json = encoder.streamMessage('stream-id', 'leader', ['repeater-1', 'repeater-2'])
+        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"payload":["stream-id","leader",["repeater-1","repeater-2"]]}`)
 
         const source = null
         const streamMessage = encoder.decode(source, json)
@@ -34,14 +34,13 @@ describe('encoder', () => {
             version,
             code: encoder.STREAM,
             source,
-            payload: ['stream-id', 'node-address']
+            payload: ['stream-id', 'leader', ['repeater-1', 'repeater-2']]
         })
 
         expect(streamMessage.constructor.name).toEqual('StreamMessage')
         expect(streamMessage.getStreamId()).toEqual('stream-id')
-        expect(streamMessage.getNodeAddress()).toEqual('node-address')
-
-        done()
+        expect(streamMessage.getLeaderAddress()).toEqual('leader')
+        expect(streamMessage.getRepeaterAddresses()).toEqual(['repeater-1', 'repeater-2'])
     })
 
     it('creates expected dataMessage format (without numbers)', () => {

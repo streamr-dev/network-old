@@ -65,6 +65,6 @@ module.exports = {
     dataMessage: (streamId, payload, number = null, previousNumber = null) => encode(msgTypes.DATA, [streamId, payload, number, previousNumber]),
     subscribeMessage: (streamId) => encode(msgTypes.SUBSCRIBE, streamId),
     unsubscribeMessage: (streamId) => encode(msgTypes.UNSUBSCRIBE, streamId),
-    streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, [streamId, nodeAddress]),
+    streamMessage: (streamId, leaderAddress, repeaterAddresses) => encode(msgTypes.STREAM, [streamId, leaderAddress, repeaterAddresses]),
     ...msgTypes
 }

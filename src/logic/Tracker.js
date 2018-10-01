@@ -50,21 +50,32 @@ module.exports = class Tracker extends EventEmitter {
 
         this.debug('looking for stream %s', streamId)
 
-        let nodeAddress
-        this.nodes.forEach((status, knownNodeAddress) => {
+        let leaderNode = null
+        const repeaterNodes = []
+        this.nodes.forEach((status, nodeAddress) => {
             if (status.leaderOfStreams.includes(streamId)) {
-                nodeAddress = knownNodeAddress
+                if (leaderNode) {
+                    throw new Error('Duplicate leaders detected.')
+                }
+                leaderNode = nodeAddress
+                repeaterNodes.push(nodeAddress)
+            } else if (status.subscribedToStreams.includes(streamId)) {
+                repeaterNodes.push(nodeAddress)
             }
         })
 
-        if (nodeAddress === undefined) {
-            this.debug('stream %s assigned to %s', streamId, getIdShort(source))
-            nodeAddress = getAddress(source)
+        let selectedRepeaters
+        if (leaderNode === null) {
+            leaderNode = getAddress(source)
+            selectedRepeaters = [leaderNode]
+            this.debug('stream %s not found; assigning %s as leader', streamId, getIdShort(source))
         } else {
-            this.debug('stream %s found, responding to %s', streamId, getIdShort(source))
+            selectedRepeaters = getPeersTopology(repeaterNodes, source)
+            this.debug('stream %s found; responding to %s with leader %s and repeaters %j',
+                streamId, getIdShort(source), getIdShort(leaderNode), selectedRepeaters.map((s) => getIdShort(s)))
         }
 
-        this.protocols.trackerServer.sendStreamInfo(source, streamId, nodeAddress)
+        this.protocols.trackerServer.sendStreamInfo(source, streamId, leaderNode, selectedRepeaters)
     }
 
     stop(cb) {
