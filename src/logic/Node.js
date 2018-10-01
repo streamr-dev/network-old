@@ -159,12 +159,14 @@ class Node extends EventEmitter {
         } else if (this.streams.isLeaderOf(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
+            this._sendStatus(this.tracker)
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this.streams.isOtherNodeLeaderOf(streamId)) {
             const leaderAddress = this.streams.getLeaderAddressFor(streamId)
             this.debug('stream %s is known; sending subscribe request to leader %s', streamId, getIdShort(leaderAddress))
             this.protocols.nodeToNode.sendSubscribe(leaderAddress, streamId)
             this.subscriptions.addSubscription(streamId) // Assuming subscribe went through
+            this._sendStatus(this.tracker)
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
