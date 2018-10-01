@@ -15,7 +15,7 @@ const msgTypes = {
     STREAM: 0x06
 }
 
-const encode = (type, data) => {
+const encode = (type, payload) => {
     if (type < 0 || type > 6) {
         throw new Error(`Unknown message type: ${type}`)
     }
@@ -23,34 +23,34 @@ const encode = (type, data) => {
     return JSON.stringify({
         version: CURRENT_VERSION,
         code: type,
-        data
+        payload
     })
 }
 
 const decode = (source, message) => {
-    const { version, code, data } = JSON.parse(message)
+    const { version, code, payload } = JSON.parse(message)
 
     switch (code) {
         case msgTypes.STATUS:
             return Object.assign(new StatusMessage(), {
-                version, code, source, data
+                version, code, source, payload
             })
         case msgTypes.STREAM:
             return Object.assign(new StreamMessage(), {
-                version, code, source, data
+                version, code, source, payload
             })
         case msgTypes.DATA:
             return Object.assign(new DataMessage(), {
-                version, code, source, data
+                version, code, source, payload
             })
         case msgTypes.SUBSCRIBE:
         case msgTypes.UNSUBSCRIBE:
             return Object.assign(new SubscribeMessage(), {
-                version, code, source, data
+                version, code, source, payload
             })
         default:
             return Object.assign(new BasicMessage(), {
-                version, code, source, data
+                version, code, source, payload
             })
     }
 }

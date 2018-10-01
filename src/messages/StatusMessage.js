@@ -2,10 +2,10 @@ const BasicMessage = require('./BasicMessage')
 
 module.exports = class StatusMessage extends BasicMessage {
     getStatus() {
-        return this.data
+        return this.payload
     }
 
     setStatus(status) {
-        this.data = status
+        this.payload = status
     }
 }

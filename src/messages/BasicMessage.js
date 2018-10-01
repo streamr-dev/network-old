@@ -1,9 +1,9 @@
 module.exports = class BasicMessage {
-    constructor(version, code, source, data) {
+    constructor(version, code, source, payload) {
         this.version = version || ''
         this.code = code || ''
         this.source = source || ''
-        this.data = data || []
+        this.payload = payload || []
     }
 
     getVersion() {
@@ -22,12 +22,12 @@ module.exports = class BasicMessage {
         this.code = code
     }
 
-    getData() {
-        return this.data
+    getPayload() {
+        return this.payload
     }
 
-    setData(data) {
-        this.data = data
+    setPayload(payload) {
+        this.payload = payload
     }
 
     getSource() {
@@ -43,7 +43,7 @@ module.exports = class BasicMessage {
             version: this.getVersion(),
             code: this.getCode(),
             source: this.getSource(),
-            data: this.getData()
+            payload: this.getPayload()
         }
     }
 }

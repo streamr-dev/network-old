@@ -26,7 +26,7 @@ describe('encoder', () => {
 
     it('check streamMessage encoding/decoding', (done) => {
         const json = encoder.streamMessage('stream-id', 'node-address')
-        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"data":["stream-id","node-address"]}`)
+        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"payload":["stream-id","node-address"]}`)
 
         const source = null
         const streamMessage = encoder.decode(source, json)
@@ -34,7 +34,7 @@ describe('encoder', () => {
             version,
             code: encoder.STREAM,
             source,
-            data: ['stream-id', 'node-address']
+            payload: ['stream-id', 'node-address']
         })
 
         expect(streamMessage.constructor.name).toEqual('StreamMessage')

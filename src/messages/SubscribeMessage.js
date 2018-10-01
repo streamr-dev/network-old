@@ -2,11 +2,11 @@ const BasicMessage = require('./BasicMessage')
 
 module.exports = class StreamMessage extends BasicMessage {
     getStreamId() {
-        return this.data
+        return this.payload
     }
 
     setStreamId(streamId) {
-        this.data = streamId
+        this.payload = streamId
     }
 
     getSender() {

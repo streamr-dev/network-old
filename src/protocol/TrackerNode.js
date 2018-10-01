@@ -55,7 +55,7 @@ class TrackerNode extends EventEmitter {
 
     onMessageReceived(message) {
         const code = message.getCode()
-        const data = message.getData()
+        const data = message.getPayload()
 
         switch (code) {
             case encoder.PEERS:
