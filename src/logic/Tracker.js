@@ -52,7 +52,7 @@ module.exports = class Tracker extends EventEmitter {
 
         let nodeAddress
         this.nodes.forEach((status, knownNodeAddress) => {
-            if (status.streams.includes(streamId)) {
+            if (status.leaderOfStreams.includes(streamId)) {
                 nodeAddress = knownNodeAddress
             }
         })

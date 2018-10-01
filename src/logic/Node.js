@@ -192,8 +192,8 @@ class Node extends EventEmitter {
 
     _getStatus() {
         return {
-            streams: this.streams.getOwnStreams(), // Leader of these (TODO: rename)
-            subscriptions: this.subscriptions.getSubscriptions(), // Subscriptions to these
+            leaderOfStreams: this.streams.getOwnStreams(),
+            subscribedToStreams: this.subscriptions.getSubscriptions(),
             started: this.started
         }
     }
