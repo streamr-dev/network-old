@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const createDebug = require('debug')
-const TrackerNode = require('../protocol/TrackerNode')
 const NodeToNode = require('../protocol/NodeToNode')
+const TrackerNode = require('../protocol/TrackerNode')
 const SubscriberManager = require('../logic/SubscriberManager')
 const SubscriptionManager = require('../logic/SubscriptionManager')
 const MessageBuffer = require('../helpers/MessageBuffer')
