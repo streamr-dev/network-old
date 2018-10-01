@@ -9,11 +9,19 @@ module.exports = class StreamMessage extends BasicMessage {
         this.payload[0] = streamId
     }
 
-    getNodeAddress() {
+    getLeaderAddress() {
         return this.payload[1]
     }
 
-    setNodeAddress(nodeAddress) {
+    setLeaderAddress(nodeAddress) {
         this.payload[1] = nodeAddress
+    }
+
+    getRepeaterAddresses() {
+        return this.payload[2]
+    }
+
+    setRepeaterAddresses(nodeAddresses) {
+        this.payload[2] = nodeAddresses
     }
 }

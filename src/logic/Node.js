@@ -65,7 +65,7 @@ class Node extends EventEmitter {
     }
 
     addOwnStream(streamId) {
-        this.debug('stream %s added to own streams', streamId)
+        this.debug('set self as leader of stream %s', streamId)
         this.streams.markCurrentNodeAsLeaderOf(streamId)
         this._sendStatus()
         this._handlePossiblePendingSubscription(streamId)
@@ -74,10 +74,14 @@ class Node extends EventEmitter {
 
     addKnownStreams(streamMessage) {
         const streamId = streamMessage.getStreamId()
-        const nodeAddress = streamMessage.getNodeAddress()
+        const leaderAddress = streamMessage.getLeaderAddress()
+        const repeaterAddresses = streamMessage.getRepeaterAddresses()
 
-        this.debug('stream %s added to known streams for leader %s', streamId, getIdShort(nodeAddress))
-        this.streams.markOtherNodeAsLeader(streamId, nodeAddress)
+        this.streams.markOtherNodeAsLeader(streamId, leaderAddress)
+        this.debug('stream %s leader set to %s', streamId, getIdShort(leaderAddress))
+        this.streams.markRepeaterNodes(streamId, repeaterAddresses)
+        this.debug('stream %s repeater nodes set to %j', streamId, repeaterAddresses.map((a) => getIdShort(a)))
+
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
