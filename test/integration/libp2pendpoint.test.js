@@ -1,46 +1,49 @@
-const { DEFAULT_TIMEOUT, LOCALHOST, wait } = require('../util')
-const { startNode } = require('../../src/composition')
+const { DEFAULT_TIMEOUT, LOCALHOST, waitForEvent, wait } = require('../util')
+const endpointEvents = require('../../src/connection/Libp2pEndpoint').events
+const { createEndpoint } = require('../../src/connection/Libp2pEndpoint')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
 describe('create two endpoints and init connection between them', () => {
-    let nodes
+    const MAX = 5
+    let promises = []
+    const endpoints = []
 
     it('should be able to start and stop successfully', async (done) => {
-        const MAX = 5
-
-        nodes = await Promise.all([
-            startNode(LOCALHOST, 30690, null),
-            startNode(LOCALHOST, 30691, null),
-            startNode(LOCALHOST, 30692, null),
-            startNode(LOCALHOST, 30693, null),
-            startNode(LOCALHOST, 30694, null),
-        ])
-
-        // check zero endpoints
         for (let i = 0; i < MAX; i++) {
-            expect(nodes[i].protocols.nodeToNode.endpoint.getPeers().length).toEqual(0)
+            // eslint-disable-next-line no-await-in-loop
+            const endpoint = await createEndpoint(LOCALHOST, 30690 + i, '', true).catch((err) => { throw err })
+            endpoints.push(endpoint)
         }
 
-        let promises = []
         for (let i = 0; i < MAX; i++) {
-            const nextNode = i + 1 === MAX ? nodes[0] : nodes[i + 1]
-            promises.push(nodes[i].protocols.nodeToNode.endpoint.connect(nextNode.protocols.nodeToNode.endpoint.node.peerInfo))
+            expect(endpoints[i].getPeers().length).toEqual(0)
         }
 
-        await Promise.all(promises)
-
-        await wait(3000)
-
         for (let i = 0; i < MAX; i++) {
-            expect(nodes[i].protocols.nodeToNode.endpoint.getPeers().length).toEqual(2)
+            const nextEndpoint = i + 1 === MAX ? endpoints[0] : endpoints[i + 1]
+
+            // eslint-disable-next-line no-await-in-loop
+            endpoints[i].connect(nextEndpoint.node.peerInfo)
         }
 
         promises = []
         for (let i = 0; i < MAX; i++) {
-            promises.push(nodes[i].protocols.nodeToNode.endpoint.stop(() => console.log(`closing ${i} endpoint`)))
+            promises.push(waitForEvent(endpoints[i], endpointEvents.PEER_CONNECTED))
         }
 
-        await Promise.all(promises).then(() => done())
+        await wait(1000)
+
+        for (let i = 0; i < MAX; i++) {
+            expect(endpoints[i].getPeers().length).toEqual(2)
+        }
+
+        promises = []
+        for (let i = 0; i < MAX; i++) {
+            // eslint-disable-next-line no-await-in-loop
+            promises.push(await endpoints[i].stop(console.log(`closing ${i} endpoint`)))
+        }
+
+        Promise.all(promises).then(() => done())
     })
 })
