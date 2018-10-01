@@ -51,7 +51,7 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            data: [
+            payload: [
                 'stream-id',
                 {
                     hello: 'world',
@@ -69,7 +69,7 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            data: [
+            payload: [
                 'stream-id',
                 {
                     hello: 'world',
