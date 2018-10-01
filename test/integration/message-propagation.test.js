@@ -2,6 +2,7 @@ const Node = require('../../src/logic/Node')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
+const DataMessage = require('../../src/messages/DataMessage')
 const { startTracker, startNode } = require('../../src/composition')
 const { callbackToPromise, BOOTNODES } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST } = require('../../test/util')
@@ -50,21 +51,21 @@ describe('message propagation in network', () => {
         const n3Messages = []
         const n4Messages = []
 
-        n1.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n1Messages.push({
-            streamId,
-            content
+        n1.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => n1Messages.push({
+            streamId: dataMessage.getStreamId(),
+            payload: dataMessage.getPayload()
         }))
-        n2.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n2Messages.push({
-            streamId,
-            content
+        n2.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => n2Messages.push({
+            streamId: dataMessage.getStreamId(),
+            payload: dataMessage.getPayload()
         }))
-        n3.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n3Messages.push({
-            streamId,
-            content
+        n3.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => n3Messages.push({
+            streamId: dataMessage.getStreamId(),
+            payload: dataMessage.getPayload()
         }))
-        n4.on(Node.events.MESSAGE_RECEIVED, (streamId, content) => n4Messages.push({
-            streamId,
-            content
+        n4.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => n4Messages.push({
+            streamId: dataMessage.getStreamId(),
+            payload: dataMessage.getPayload()
         }))
 
         n2.subscribeToStream('stream-1')
@@ -74,12 +75,20 @@ describe('message propagation in network', () => {
         await waitForEvent(n2.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
         for (let i = 0; i < 5; ++i) {
-            n1.onDataReceived('stream-1', {
+            const dataMessage = new DataMessage()
+            dataMessage.setStreamId('stream-1')
+            dataMessage.setPayload({
                 messageNo: i
             })
-            n4.onDataReceived('stream-2', {
+            n1.onDataReceived(dataMessage)
+
+            const dataMessage2 = new DataMessage()
+            dataMessage2.setStreamId('stream-2')
+            dataMessage2.setPayload({
                 messageNo: i * 100
             })
+            n4.onDataReceived(dataMessage2)
+
             // eslint-disable-next-line no-await-in-loop
             await wait(500)
         }
@@ -88,31 +97,31 @@ describe('message propagation in network', () => {
         expect(n2Messages).toEqual([
             {
                 streamId: 'stream-1',
-                content: {
+                payload: {
                     messageNo: 0
                 }
             },
             {
                 streamId: 'stream-1',
-                content: {
+                payload: {
                     messageNo: 1
                 }
             },
             {
                 streamId: 'stream-1',
-                content: {
+                payload: {
                     messageNo: 2
                 }
             },
             {
                 streamId: 'stream-1',
-                content: {
+                payload: {
                     messageNo: 3
                 }
             },
             {
                 streamId: 'stream-1',
-                content: {
+                payload: {
                     messageNo: 4
                 }
             }
