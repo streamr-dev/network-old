@@ -13,7 +13,7 @@ jobs:
   - stage: tests
     name: lint
     script: npm run eslint
-  - script: npm run test-unit
-    name: unit tests
-  - script: npm run test-integration
-    name: integration tests
+  - name: unit tests
+    script: npm run test-unit
+  - name: integration tests
+    script: npm run test-integration
