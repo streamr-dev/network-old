@@ -1,7 +1,7 @@
 module.exports = class StreamManager {
     constructor() {
         this.ownStreams = {} // streamId => lastNumber
-        this.knownStreams = new Map() // streamId => nodeAddress
+        this.knownLeaders = new Map() // streamId => nodeAddress
     }
 
     fetchNextNumbers(streamId) {
@@ -17,17 +17,17 @@ module.exports = class StreamManager {
     }
 
     markCurrentNodeAsLeaderOf(streamId) {
-        this.knownStreams.delete(streamId)
+        this.knownLeaders.delete(streamId)
         this.ownStreams[streamId] = null
     }
 
     markOtherNodeAsLeader(streamId, nodeAddress) {
         delete this.ownStreams[streamId]
-        this.knownStreams.set(streamId, nodeAddress)
+        this.knownLeaders.set(streamId, nodeAddress)
     }
 
     getLeaderAddressFor(streamId) {
-        return this.knownStreams.get(streamId)
+        return this.knownLeaders.get(streamId)
     }
 
     isLeaderOf(streamId) {
@@ -35,7 +35,7 @@ module.exports = class StreamManager {
     }
 
     isOtherNodeLeaderOf(streamId) {
-        return this.knownStreams.has(streamId)
+        return this.knownLeaders.has(streamId)
     }
 
     getOwnStreams() {
