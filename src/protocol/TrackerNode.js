@@ -9,7 +9,7 @@ const events = Object.freeze({
     NODE_LIST_RECEIVED: 'streamr:node-node:connect',
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream',
     STREAM_ASSIGNED: 'streamr:node:stream-assigned',
-    NODE_DISCONNECTED: 'streamr:tracker:node-disconnected'
+    TRACKER_DISCONNECTED: 'streamr:tracker-node:tracker-disconnected'
 })
 
 class TrackerNode extends EventEmitter {
@@ -17,7 +17,7 @@ class TrackerNode extends EventEmitter {
         super()
 
         this.endpoint = endpoint
-
+        this.tracker = null
         this._endpointListener = new EndpointListener()
         this._endpointListener.implement(this, endpoint)
 
@@ -50,12 +50,12 @@ class TrackerNode extends EventEmitter {
         this._clearPeerRequestInterval()
     }
 
-    // EndpointListener implementation
     onPeerConnected(peer) {
     }
 
-    onMessageReceived(sender, message) {
-        const { code, data } = encoder.decode(message)
+    onMessageReceived(message) {
+        const code = message.getCode()
+        const data = message.getPayload()
 
         switch (code) {
             case encoder.PEERS:
@@ -69,13 +69,10 @@ class TrackerNode extends EventEmitter {
                 break
 
             case encoder.STREAM:
-                if (data[1] === getAddress(this.endpoint.node.peerInfo)) {
-                    this.emit(events.STREAM_ASSIGNED, data[0])
+                if (message.getNodeAddress() === getAddress(this.endpoint.node.peerInfo)) {
+                    this.emit(events.STREAM_ASSIGNED, message.getStreamId())
                 } else {
-                    this.emit(events.STREAM_INFO_RECEIVED, {
-                        streamId: data[0],
-                        nodeAddress: data[1]
-                    })
+                    this.emit(events.STREAM_INFO_RECEIVED, message)
                 }
                 break
 
@@ -98,6 +95,12 @@ class TrackerNode extends EventEmitter {
     }
 
     async onPeerDisconnected(peer) {
+        if (isTracker(getAddress(peer))) {
+            debug('tracker disconnected, clearing info and loop...')
+            this._clearPeerRequestInterval()
+            this.tracker = null
+            this.emit(events.TRACKER_DISCONNECTED)
+        }
     }
 }
 

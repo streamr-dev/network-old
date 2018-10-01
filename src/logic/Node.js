@@ -5,6 +5,7 @@ const TrackerNode = require('../protocol/TrackerNode')
 const SubscriberManager = require('../logic/SubscriberManager')
 const SubscriptionManager = require('../logic/SubscriptionManager')
 const MessageBuffer = require('../helpers/MessageBuffer')
+const DataMessage = require('../messages/DataMessage')
 const { getAddress, getIdShort } = require('../util')
 const StreamManager = require('./StreamManager')
 
@@ -41,18 +42,12 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.NODE_LIST_RECEIVED, (nodes) => this.protocols.nodeToNode.connectToNodes(nodes))
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_ASSIGNED, (streamId) => this.addOwnStream(streamId))
-        this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, ({ streamId, nodeAddress }) => {
-            this.addKnownStreams(streamId, nodeAddress)
-        })
-        this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, ({ streamId, data, number, previousNumber }) => this.onDataReceived(streamId, data, number, previousNumber))
-        this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, ({ streamId, sender }) => {
-            this.onSubscribeRequest(streamId, sender)
-        })
-
-        this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, ({ streamId, sender }) => {
-            this.onUnsubscribeRequest(streamId, sender)
-        })
-        this.protocols.nodeToNode.on(TrackerNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
+        this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, (streamMessage) => this.addKnownStreams(streamMessage))
+        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, () => this.onTrackerDisconnected())
+        this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (dataMessage) => this.onDataReceived(dataMessage))
+        this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage) => this.onSubscribeRequest(subscribeMessage))
+        this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage) => this.onUnsubscribeRequest(unsubscribeMessage))
+        this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
 
         this.debug = createDebug(`streamr:logic:node:${this.id}`)
         this.debug('started %s', this.id)
@@ -77,14 +72,22 @@ class Node extends EventEmitter {
         this._handleBufferedMessages(streamId)
     }
 
-    addKnownStreams(streamId, nodeAddress) {
+    addKnownStreams(streamMessage) {
+        const streamId = streamMessage.getStreamId()
+        const nodeAddress = streamMessage.getNodeAddress()
+
         this.debug('stream %s added to known streams for leader %s', streamId, getIdShort(nodeAddress))
         this.streams.markOtherNodeAsLeader(streamId, nodeAddress)
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
 
-    onDataReceived(streamId, data, number, previousNumber) {
+    onDataReceived(dataMessage) {
+        const streamId = dataMessage.getStreamId()
+        const payload = dataMessage.getPayload()
+        const number = dataMessage.getNumber()
+        const previousNumber = dataMessage.getPreviousNumber()
+
         if (number == null && previousNumber != null) {
             this.debug('received invalid data with null number but non-null previous number %s; dropping', previousNumber)
         } else if (this.streams.isLeaderOf(streamId)) {
@@ -93,44 +96,55 @@ class Node extends EventEmitter {
             } else {
                 this.debug('received data for own stream %s', streamId)
                 const assignment = this.streams.fetchNextNumbers(streamId)
-                this._sendToSubscribers(streamId, data, assignment.number, assignment.previousNumber)
+                dataMessage.setNumber(assignment.number)
+                dataMessage.setPreviousNumber(assignment.previousNumber)
+                this._sendToSubscribers(dataMessage)
             }
         } else if (this.streams.isOtherNodeLeaderOf(streamId)) {
             this.debug('received data (#%s) for known stream %s', number, streamId)
             if (number == null) {
                 const leaderAddress = this.streams.getLeaderAddressFor(streamId)
-                this.protocols.nodeToNode.sendData(leaderAddress, streamId, data)
+                this.protocols.nodeToNode.sendData(leaderAddress, streamId, payload, number, previousNumber)
             } else {
-                this._sendToSubscribers(streamId, data, number, previousNumber)
+                this._sendToSubscribers(dataMessage)
             }
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
         } else {
-            this.messageBuffer.put(streamId, data)
+            this.messageBuffer.put(streamId, {
+                payload,
+                number,
+                previousNumber
+            })
             this.debug('ask tracker %s who is responsible for stream %s', getIdShort(this.tracker), streamId)
             this.protocols.trackerNode.requestStreamInfo(this.tracker, streamId)
         }
     }
 
-    _sendToSubscribers(streamId, data, number, previousNumber) {
+    _sendToSubscribers(dataMessage) {
+        const streamId = dataMessage.getStreamId()
+        const payload = dataMessage.getPayload()
+        const number = dataMessage.getNumber()
+        const previousNumber = dataMessage.getPreviousNumber()
+
         const subscribers = this.subscribers.subscribersForStream(streamId)
         this.debug('sending data (#%s) for stream %s to %d subscribers', number, streamId, subscribers.length)
         subscribers.forEach((subscriber) => {
-            this.protocols.nodeToNode.sendData(subscriber, streamId, data, number, previousNumber)
+            this.protocols.nodeToNode.sendData(subscriber, streamId, payload, number, previousNumber)
         })
         if (this.subscriptions.hasSubscription(streamId)) {
-            this.emit(events.MESSAGE_RECEIVED, streamId, data, number, previousNumber)
+            this.emit(events.MESSAGE_RECEIVED, dataMessage)
         }
     }
 
-    onSubscribeRequest(streamId, sender) {
-        this.subscribers.addSubscriber(streamId, getAddress(sender))
-        this.debug('node %s added as a subscriber for stream %s', getIdShort(sender), streamId)
+    onSubscribeRequest(subscribeMessage) {
+        this.subscribers.addSubscriber(subscribeMessage.getStreamId(), getAddress(subscribeMessage.getSource()))
+        this.debug('node %s added as a subscriber for stream %s', getIdShort(subscribeMessage.getSource()), subscribeMessage.getStreamId()) // TODO: verify that works
     }
 
-    onUnsubscribeRequest(streamId, nodeAddress) {
-        this._removeSubscriber(streamId, nodeAddress)
+    onUnsubscribeRequest(unsubscribeMessage) {
+        this._removeSubscriber(unsubscribeMessage.getStreamId(), unsubscribeMessage.getSender())
     }
 
     _removeSubscriber(streamId, nodeAddress) {
@@ -189,15 +203,27 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
-        this.nodes.delete(getAddress(node))
         const nodeAddress = getAddress(node)
         this.subscribers.removeSubscriberFromAllStreams(nodeAddress)
-        this.debug('removed node %s from all subscriptions', getIdShort(node))
+        this.debug('removed all subscriptions of node %s', getIdShort(node))
+    }
+
+    onTrackerDisconnected() {
+        this.tracker = null
+        this.debug('no tracker available')
     }
 
     _handleBufferedMessages(streamId) {
         this.messageBuffer.popAll(streamId)
-            .forEach((data) => this.onDataReceived(streamId, data))
+            .forEach((content) => {
+                const dataMessage = new DataMessage()
+                dataMessage.setStreamId(streamId)
+                dataMessage.setPayload(content.payload)
+                dataMessage.setNumber(content.number)
+                dataMessage.setPreviousNumber(content.previousNumber)
+                // TODO bad idea to call events directly
+                this.onDataReceived(dataMessage)
+            })
     }
 
     _handlePendingSubscriptions() {

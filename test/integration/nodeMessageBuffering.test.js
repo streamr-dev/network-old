@@ -1,12 +1,11 @@
 const { startNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
-const { callbackToPromise } = require('../../src/util')
-const {
-    waitForEvent, wait, LOCALHOST, DEFAULT_TIMEOUT, PRIVATE_KEY
-} = require('../util')
+const { callbackToPromise, BOOTNODES } = require('../../src/util')
+const { waitForEvent, wait, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const NodeToNode = require('../../src/protocol/NodeToNode')
+
+const DataMessage = require('../../src/messages/DataMessage')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
@@ -21,7 +20,8 @@ describe('message buffering of Node', () => {
     let destinationNode
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30300, PRIVATE_KEY)
+        tracker = await startTracker(LOCALHOST, 30320)
+        BOOTNODES.push(tracker.getAddress())
         sourceNode = await startNode(LOCALHOST, 30321)
         destinationNode = await startNode(LOCALHOST, 30322)
 
@@ -31,27 +31,32 @@ describe('message buffering of Node', () => {
         ])
     })
 
-    afterAll(async (done) => {
+    afterAll(async () => {
         await callbackToPromise(sourceNode.stop.bind(sourceNode))
         await callbackToPromise(destinationNode.stop.bind(destinationNode))
-        tracker.stop(done)
+        await callbackToPromise(tracker.stop.bind(tracker))
     })
 
     test('first message to unknown stream eventually gets delivered', async (done) => {
-        destinationNode.on(Node.events.MESSAGE_RECEIVED, (streamId, data) => {
-            expect(streamId).toEqual('stream-id')
-            expect(data).toEqual({
+        destinationNode.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => {
+            expect(dataMessage.getStreamId()).toEqual('stream-id')
+            expect(dataMessage.getPayload()).toEqual({
                 hello: 'world'
             })
             done()
         })
 
         destinationNode.subscribeToStream('stream-id')
-        await wait(500) // TODO: required to not encounter issue #99 (concurrent subscription)
+        await waitForEvent(destinationNode, Node.events.SUBSCRIBED_TO_STREAM)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
         // "Client" pushes data
-        sourceNode.onDataReceived('stream-id', {
+        const dataMessage = new DataMessage()
+        dataMessage.setStreamId('stream-id')
+        dataMessage.setPayload({
             hello: 'world'
         })
+
+        sourceNode.onDataReceived(dataMessage)
     })
 })

@@ -3,10 +3,18 @@ const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const NodeToNode = require('../../src/protocol/NodeToNode')
+const DataMessage = require('../../src/messages/DataMessage')
 const { BOOTNODES, callbackToPromise } = require('../../src/util')
 const { LOCALHOST, waitForEvent, wait } = require('../../test/util')
 
 jest.setTimeout(30 * 1000)
+
+function createDataMessage() {
+    const dataMessage = new DataMessage()
+    dataMessage.setStreamId('stream-id')
+    dataMessage.setPayload({})
+    return dataMessage
+}
 
 describe('message numbering', () => {
     let tracker
@@ -34,9 +42,9 @@ describe('message numbering', () => {
     test('messages without numbering are assigned sequential numbers', async (done) => {
         const actualNumbers = []
         const actualPreviousNumbers = []
-        destinationNode.on(Node.events.MESSAGE_RECEIVED, (streamId, data, number, previousNumber) => {
-            actualNumbers.push(number)
-            actualPreviousNumbers.push(previousNumber)
+        destinationNode.on(Node.events.MESSAGE_RECEIVED, (dataMessage) => {
+            actualNumbers.push(dataMessage.getNumber())
+            actualPreviousNumbers.push(dataMessage.getPreviousNumber())
 
             if (actualNumbers.length === 4) {
                 expect(actualNumbers).toEqual([1, 2, 3, 4])
@@ -52,9 +60,9 @@ describe('message numbering', () => {
         destinationNode.subscribeToStream('stream-id')
         await waitForEvent(sourceNode.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
-        sourceNode.onDataReceived('stream-id', {})
-        sourceNode.onDataReceived('stream-id', {})
-        sourceNode.onDataReceived('stream-id', {})
-        sourceNode.onDataReceived('stream-id', {})
+        sourceNode.onDataReceived(createDataMessage())
+        sourceNode.onDataReceived(createDataMessage())
+        sourceNode.onDataReceived(createDataMessage())
+        sourceNode.onDataReceived(createDataMessage())
     })
 })
