@@ -8,7 +8,7 @@ module.exports = class PeersMessage {
         this.version = CURRENT_VERSION
         this.code = msgTypes.PEERS
         this.source = source
-        this.peers = peers || ''
+        this.peers = peers
     }
 
     getVersion() {
@@ -44,10 +44,5 @@ module.exports = class PeersMessage {
             source: this.getSource(),
             peers: this.getPeers()
         }
-    }
-
-    static fromJSON(json) {
-        const { peers, source } = json
-        return new this(peers, source)
     }
 }

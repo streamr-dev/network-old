@@ -25,9 +25,8 @@ const decode = (source, message) => {
             return new PeersMessage(payload, source)
 
         case msgTypes.STATUS:
-            return Object.assign(new StatusMessage(), {
-                version, code, source, payload
-            })
+            return new StatusMessage(payload, source)
+
         case msgTypes.STREAM:
             return Object.assign(new StreamMessage(), {
                 version, code, source, payload
