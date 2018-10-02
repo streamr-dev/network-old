@@ -34,7 +34,8 @@ describe('encoder', () => {
             version,
             code: encoder.STREAM,
             source,
-            payload: ['stream-id', 'node-address']
+            streamId: 'stream-id',
+            nodeAddress: 'node-address'
         })
 
         expect(streamMessage.constructor.name).toEqual('StreamMessage')

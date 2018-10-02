@@ -1,19 +1,60 @@
-const BasicMessage = require('./BasicMessage')
+const { msgTypes, CURRENT_VERSION } = require('./messageTypes')
 
-module.exports = class StreamMessage extends BasicMessage {
+module.exports = class StreamMessage {
+    constructor(streamId, nodeAddress = '', source = null) {
+        if (typeof streamId === 'undefined') {
+            throw new Error('streamId cant be undefined')
+        }
+        this.version = CURRENT_VERSION
+        this.code = msgTypes.STREAM
+        this.source = source
+
+        this.streamId = streamId
+        this.nodeAddress = nodeAddress
+    }
+
+    getVersion() {
+        return this.version
+    }
+
+    getCode() {
+        return this.code
+    }
+
+    getSource() {
+        return this.source
+    }
+
+    setSource(source) {
+        this.source = source
+        return this
+    }
+
     getStreamId() {
-        return this.payload[0]
+        return this.streamId
     }
 
     setStreamId(streamId) {
-        this.payload[0] = streamId
+        this.streamId = streamId
+        return this
     }
 
     getNodeAddress() {
-        return this.payload[1]
+        return this.nodeAddress
     }
 
     setNodeAddress(nodeAddress) {
-        this.payload[1] = nodeAddress
+        this.nodeAddress = nodeAddress
+        return this
+    }
+
+    toJSON() {
+        return {
+            version: this.getVersion(),
+            code: this.getCode(),
+            source: this.getSource(),
+            streamId: this.getStreamId(),
+            nodeAddress: this.getNodeAddress()
+        }
     }
 }

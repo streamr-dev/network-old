@@ -28,9 +28,8 @@ const decode = (source, message) => {
             return new StatusMessage(payload, source)
 
         case msgTypes.STREAM:
-            return Object.assign(new StreamMessage(), {
-                version, code, source, payload
-            })
+            return new StreamMessage(payload[0], payload[1], source)
+
         case msgTypes.DATA:
             return Object.assign(new DataMessage(), {
                 version, code, source, payload
