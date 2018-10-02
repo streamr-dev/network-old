@@ -28,7 +28,8 @@ const decode = (source, message) => {
             return new StatusMessage(payload, source)
 
         case msgTypes.STREAM:
-            return new StreamMessage(payload[0], payload[1], source)
+            const { streamId, nodeAddress } = payload
+            return new StreamMessage(streamId, nodeAddress, source)
 
         case msgTypes.DATA:
             return Object.assign(new DataMessage(), {
@@ -54,7 +55,9 @@ module.exports = {
     dataMessage: (streamId, payload, number = null, previousNumber = null) => encode(msgTypes.DATA, [streamId, payload, number, previousNumber]),
     subscribeMessage: (streamId) => encode(msgTypes.SUBSCRIBE, streamId),
     unsubscribeMessage: (streamId) => encode(msgTypes.UNSUBSCRIBE, streamId),
-    streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, [streamId, nodeAddress]),
+    streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, {
+        streamId, nodeAddress
+    }),
     ...msgTypes,
     CURRENT_VERSION
 }
