@@ -1,19 +1,9 @@
-const CURRENT_VERSION = require('../../package.json').version
-const BasicMessage = require('../messages/BasicMessage')
+const PeersMessage = require('../messages/PeersMessage')
 const StatusMessage = require('../messages/StatusMessage')
 const StreamMessage = require('../messages/StreamMessage')
 const DataMessage = require('../messages/DataMessage')
 const SubscribeMessage = require('../messages/SubscribeMessage')
-
-const msgTypes = {
-    STATUS: 0x00,
-    PEERS: 0x01,
-    DATA: 0x02,
-    SUBSCRIBE: 0x03,
-    UNSUBSCRIBE: 0x04,
-    PUBLISH: 0x05,
-    STREAM: 0x06
-}
+const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
     if (type < 0 || type > 6) {
@@ -31,6 +21,9 @@ const decode = (source, message) => {
     const { version, code, payload } = JSON.parse(message)
 
     switch (code) {
+        case msgTypes.PEERS:
+            return new PeersMessage(payload, source)
+
         case msgTypes.STATUS:
             return Object.assign(new StatusMessage(), {
                 version, code, source, payload
@@ -49,9 +42,7 @@ const decode = (source, message) => {
                 version, code, source, payload
             })
         default:
-            return Object.assign(new BasicMessage(), {
-                version, code, source, payload
-            })
+            throw new Error(`Unknown message type: ${code}`)
     }
 }
 
@@ -66,5 +57,6 @@ module.exports = {
     subscribeMessage: (streamId) => encode(msgTypes.SUBSCRIBE, streamId),
     unsubscribeMessage: (streamId) => encode(msgTypes.UNSUBSCRIBE, streamId),
     streamMessage: (streamId, nodeAddress) => encode(msgTypes.STREAM, [streamId, nodeAddress]),
-    ...msgTypes
+    ...msgTypes,
+    CURRENT_VERSION
 }
