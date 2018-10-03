@@ -24,9 +24,9 @@ describe('encoder', () => {
         done()
     })
 
-    it('check streamMessage encoding/decoding', () => {
+    it('check streamMessage encoding/decoding', (done) => {
         const json = encoder.streamMessage('stream-id', 'leader', ['repeater-1', 'repeater-2'])
-        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"payload":["stream-id","leader",["repeater-1","repeater-2"]]}`)
+        expect(json).toEqual(`{"version":"${version}","code":${encoder.STREAM},"payload":{"streamId":"stream-id","nodeAddress":"node-address"}}`)
 
         const source = null
         const streamMessage = encoder.decode(source, json)
@@ -34,8 +34,15 @@ describe('encoder', () => {
             version,
             code: encoder.STREAM,
             source,
-            payload: ['stream-id', 'leader', ['repeater-1', 'repeater-2']]
+            streamId: 'stream-id',
+            leaderAddress: 'leader-address',
+            repeaterAddresses: [
+                'repeater-1',
+                'repeater-2'
+            ]
         })
+
+        // TODO: payload: ['stream-id', 'leader', ['repeater-1', 'repeater-2']]
 
         expect(streamMessage.constructor.name).toEqual('StreamMessage')
         expect(streamMessage.getStreamId()).toEqual('stream-id')
@@ -50,14 +57,14 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            payload: [
-                'stream-id',
-                {
+            payload: {
+                streamId: 'stream-id',
+                data: {
                     hello: 'world',
                 },
-                null,
-                null
-            ]
+                number: null,
+                previousNumber: null
+            }
         })
     })
 
@@ -68,14 +75,14 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            payload: [
-                'stream-id',
-                {
+            payload: {
+                streamId: 'stream-id',
+                data: {
                     hello: 'world',
                 },
-                958004,
-                958000
-            ]
+                number: 958004,
+                previousNumber: 958000
+            }
         })
     })
 })
