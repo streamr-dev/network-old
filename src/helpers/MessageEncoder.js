@@ -29,7 +29,7 @@ const decode = (source, message) => {
             return new StatusMessage(payload, source)
 
         case msgTypes.STREAM:
-            return new StreamMessage(payload.streamId, payload.nodeAddress, source)
+            return new StreamMessage(payload.streamId, payload.leaderAddress, payload.repeaterAddresses, source)
 
         case msgTypes.DATA:
             return new DataMessage(payload.streamId, payload.data, payload.number, payload.previousNumber)
