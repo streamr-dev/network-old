@@ -3,6 +3,7 @@ const StatusMessage = require('../messages/StatusMessage')
 const StreamMessage = require('../messages/StreamMessage')
 const DataMessage = require('../messages/DataMessage')
 const SubscribeMessage = require('../messages/SubscribeMessage')
+const UnsubscribeMessage = require('../messages/UnsubscribeMessage')
 const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
@@ -18,7 +19,7 @@ const encode = (type, payload) => {
 }
 
 const decode = (source, message) => {
-    const { version, code, payload } = JSON.parse(message)
+    const { code, payload } = JSON.parse(message)
 
     switch (code) {
         case msgTypes.PEERS:
@@ -34,10 +35,11 @@ const decode = (source, message) => {
             return new DataMessage(payload.streamId, payload.data, payload.number, payload.previousNumber)
 
         case msgTypes.SUBSCRIBE:
+            return new SubscribeMessage(payload, source)
+
         case msgTypes.UNSUBSCRIBE:
-            return Object.assign(new SubscribeMessage(), {
-                version, code, source, payload
-            })
+            return new UnsubscribeMessage(payload, source)
+
         default:
             throw new Error(`Unknown message type: ${code}`)
     }

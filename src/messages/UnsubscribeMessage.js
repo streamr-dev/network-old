@@ -1,12 +1,12 @@
 const { msgTypes, CURRENT_VERSION } = require('./messageTypes')
 
-module.exports = class SubscribeMessage {
+module.exports = class UnsubscribeMessage {
     constructor(streamId, source = null) {
         if (typeof streamId === 'undefined') {
             throw new Error('streamId cant be undefined')
         }
         this.version = CURRENT_VERSION
-        this.code = msgTypes.SUBSCRIBE
+        this.code = msgTypes.UNSUBSCRIBE
         this.source = source
 
         this.streamId = streamId
