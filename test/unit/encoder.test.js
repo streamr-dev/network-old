@@ -52,14 +52,14 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            payload: [
-                'stream-id',
-                {
+            payload: {
+                streamId: 'stream-id',
+                data: {
                     hello: 'world',
                 },
-                null,
-                null
-            ]
+                number: null,
+                previousNumber: null
+            }
         })
     })
 
@@ -70,14 +70,14 @@ describe('encoder', () => {
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
             version,
-            payload: [
-                'stream-id',
-                {
+            payload: {
+                streamId: 'stream-id',
+                data: {
                     hello: 'world',
                 },
-                958004,
-                958000
-            ]
+                number: 958004,
+                previousNumber: 958000
+            }
         })
     })
 })

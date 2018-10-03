@@ -56,6 +56,7 @@ class TrackerNode extends EventEmitter {
     onMessageReceived(message) {
         switch (message.getCode()) {
             case encoder.PEERS:
+                // eslint-disable-next-line no-case-declarations
                 const peers = message.getPeers()
                 // ask tacker again
                 if (!peers.length && this.tracker && this.endpoint.isConnected(this.tracker)) { // data = peers
