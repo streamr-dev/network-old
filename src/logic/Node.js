@@ -110,7 +110,12 @@ class Node extends EventEmitter {
                 const leaderAddress = this.streams.getLeaderAddressFor(streamId)
                 this.protocols.nodeToNode.sendData(leaderAddress, streamId, data, number, previousNumber)
             } else {
-                this._sendToSubscribers(dataMessage)
+                const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber)
+                if (isUnseen) {
+                    this._sendToSubscribers(dataMessage)
+                } else {
+                    this.debug('ignoring duplicate data (#%s) for stream %s', number, streamId)
+                }
             }
         } else if (this.tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
