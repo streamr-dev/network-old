@@ -56,10 +56,11 @@ describe('duplicate message detection and avoidance', () => {
 
         // Set up 1st test case
         numOfReceivedMessages = [0, 0, 0, 0, 0]
+        const updater = (i) => () => {
+            numOfReceivedMessages[i] += 1
+        }
         for (let i = 0; i < repeaterNodes.length; ++i) {
-            repeaterNodes[i].addMessageListener(() => {
-                numOfReceivedMessages[i] += 1
-            })
+            repeaterNodes[i].addMessageListener(updater(i))
         }
 
         // Produce data
