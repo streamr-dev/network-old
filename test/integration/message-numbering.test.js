@@ -1,4 +1,4 @@
-const { startNode, startTracker } = require('../../src/composition')
+const { startNode, startTracker } = require('../../src/composition-ws')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')

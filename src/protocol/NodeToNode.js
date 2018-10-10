@@ -45,7 +45,7 @@ class NodeToNode extends EventEmitter {
     }
 
     stop(cb) {
-        this.endpoint.node.stop(() => cb())
+        this.endpoint.node.close(cb)
     }
 
     onPeerConnected(peer) {

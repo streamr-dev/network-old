@@ -6,7 +6,7 @@ module.exports = class Client extends EventEmitter {
     constructor(nodeToNode, nodeAddress) {
         super()
 
-        this.id = getIdShort(nodeToNode.endpoint.node.peerInfo) // TODO: better way?
+        this.id = getIdShort(nodeToNode.endpoint.id)
         this.nodeAddress = nodeAddress
         this.protocols = {
             nodeToNode
@@ -35,6 +35,7 @@ module.exports = class Client extends EventEmitter {
     }
 
     stop(cb) {
+        this.debug('stopping client')
         this.protocols.nodeToNode.stop(cb)
     }
 

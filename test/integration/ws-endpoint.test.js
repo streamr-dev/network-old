@@ -1,6 +1,6 @@
 const { DEFAULT_TIMEOUT, LOCALHOST, waitForEvent, wait } = require('../util')
 const endpointEvents = require('../../src/connection/Endpoint').events
-const { createEndpoint } = require('../../src/connection/Libp2pEndpoint')
+const { createEndpoint } = require('../../src/connection/WsEndpoint')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
@@ -17,14 +17,14 @@ describe('create two endpoints and init connection between them', () => {
         }
 
         for (let i = 0; i < MAX; i++) {
-            expect(endpoints[i].getPeers().length).toEqual(0)
+            expect(endpoints[i].getPeers().size).toBe(0)
         }
 
         for (let i = 0; i < MAX; i++) {
             const nextEndpoint = i + 1 === MAX ? endpoints[0] : endpoints[i + 1]
 
             // eslint-disable-next-line no-await-in-loop
-            endpoints[i].connect(nextEndpoint.node.peerInfo)
+            endpoints[i].connect(nextEndpoint.getAddress())
         }
 
         promises = []
@@ -35,7 +35,7 @@ describe('create two endpoints and init connection between them', () => {
         await wait(1000)
 
         for (let i = 0; i < MAX; i++) {
-            expect(endpoints[i].getPeers().length).toEqual(2)
+            expect(endpoints[i].getPeers().size).toEqual(1)
         }
 
         promises = []
@@ -44,6 +44,9 @@ describe('create two endpoints and init connection between them', () => {
             promises.push(await endpoints[i].stop(console.log(`closing ${i} endpoint`)))
         }
 
-        Promise.all(promises).then(() => done())
+        // TODO Unhandled promise rejection
+        Promise.all(promises).then(() => {
+            done()
+        }).catch((err) => { throw err })
     })
 })

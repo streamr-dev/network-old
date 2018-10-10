@@ -30,11 +30,11 @@ class TrackerServer extends EventEmitter {
     }
 
     getAddress() {
-        return getAddress(this.endpoint.node.peerInfo)
+        return this.endpoint.getAddress()
     }
 
     stop(cb) {
-        this.endpoint.node.stop(() => cb())
+        this.endpoint.node.close(cb)
     }
 
     onPeerConnected(peer) {

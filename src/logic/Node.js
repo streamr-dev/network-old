@@ -31,7 +31,7 @@ class Node extends EventEmitter {
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
 
-        this.id = getIdShort(nodeToNode.endpoint.node.peerInfo) // TODO: better way?
+        this.id = getIdShort(nodeToNode.endpoint.id)
         this.tracker = null
 
         this.protocols = {

@@ -81,15 +81,9 @@ class TrackerNode extends EventEmitter {
     }
 
     async onPeerDiscovered(peer) {
-        if (isTracker(getAddress(peer)) && !this.endpoint.isConnected(peer)) {
-            await this.endpoint.connect(peer).then(() => {
-                this.tracker = peer
-                this.emit(events.CONNECTED_TO_TRACKER, peer)
-            }).catch((err) => {
-                if (err) {
-                    debug('cannot connect to the tracker: ' + err)
-                }
-            })
+        if (isTracker(peer)) {
+            this.tracker = peer
+            this.emit(events.CONNECTED_TO_TRACKER, peer)
         }
     }
 

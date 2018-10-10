@@ -9,7 +9,8 @@ module.exports = class Tracker extends EventEmitter {
         super()
 
         this.nodes = new Map()
-        this.id = getIdShort(trackerServer.endpoint.node.peerInfo) // TODO: Better way?
+
+        this.id = getIdShort(trackerServer.endpoint.id)
         this.protocols = {
             trackerServer
         }
@@ -36,7 +37,7 @@ module.exports = class Tracker extends EventEmitter {
 
     processNodeStatus(statusMessage) {
         this.debug('received from %s status %s', getIdShort(statusMessage.getSource()), JSON.stringify(statusMessage.getStatus()))
-        this.nodes.set(getAddress(statusMessage.getSource()), statusMessage.getStatus())
+        this.nodes.set(statusMessage.getSource(), statusMessage.getStatus())
     }
 
     onNodeDisconnected(node) {
@@ -79,7 +80,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     stop(cb) {
-        this.debug('stopping')
+        this.debug('stopping tracker')
         this.protocols.trackerServer.stop(cb)
     }
 
