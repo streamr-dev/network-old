@@ -2,7 +2,7 @@
 // const { createEndpoint } = require('../../src/connection/WsEndpoint')
 const { LOCALHOST } = require('../util')
 // const NodeToNode = require('../../src/protocol/NodeToNode')
-const { startClient } = require('../../src/composition-ws')
+const { startClient } = require('../../src/composition')
 
 describe('publisher creation', () => {
     it('should be able to start and stop successfully', async (done) => {

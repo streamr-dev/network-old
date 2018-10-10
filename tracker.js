@@ -1,4 +1,4 @@
-const { startTracker } = require('./src/composition-ws')
+const { startTracker } = require('./src/composition')
 
 startTracker('127.0.0.1', 30300, 'tracker')
     .then(() => {})

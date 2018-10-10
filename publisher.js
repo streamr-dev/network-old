@@ -1,4 +1,4 @@
-const { startClient } = require('./src/composition-ws')
+const { startClient } = require('./src/composition')
 
 const port = process.argv[2] || 30301
 const nodeAddress = process.argv[3] || ''

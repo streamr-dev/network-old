@@ -1,4 +1,4 @@
-const { createEndpoint } = require('./src/connection/Libp2pEndpoint')
+const { createEndpoint } = require('./src/connection/WsEndpoint')
 const Client = require('./src/logic/Client')
 const NodeToNode = require('./src/protocol/NodeToNode')
 

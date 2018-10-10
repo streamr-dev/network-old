@@ -1,8 +1,8 @@
 const { EventEmitter } = require('events')
 
+const url = require('url')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
-const url = require('url')
 const uuidv4 = require('uuid/v4')
 const { BOOTNODES, isTracker } = require('../util')
 
@@ -35,6 +35,7 @@ class WsEndpoint extends EventEmitter {
 
             // console.log(remoteAddress)
 
+            // eslint-disable-next-line no-param-reassign
             ws.peerId = peerId
 
             this.connections.set(peerId, ws)

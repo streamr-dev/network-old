@@ -3,7 +3,7 @@ const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const DataMessage = require('../../src/messages/DataMessage')
-const { startTracker, startNode } = require('../../src/composition-ws')
+const { startTracker, startNode } = require('../../src/composition')
 const { callbackToPromise, BOOTNODES } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST } = require('../../test/util')
 

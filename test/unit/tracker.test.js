@@ -1,5 +1,5 @@
 const { LOCALHOST } = require('../util')
-const { startTracker } = require('../../src/composition-ws')
+const { startTracker } = require('../../src/composition')
 
 describe('tracker creation', () => {
     it('should be able to start and stop successfully', async (done) => {
