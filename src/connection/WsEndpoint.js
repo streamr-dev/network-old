@@ -9,11 +9,6 @@ const { BOOTNODES, isTracker } = require('../util')
 const HANDLER = '/v1/'
 
 const Endpoint = require('./Endpoint')
-// const Libp2pBundle = require('./Libp2pBundle')
-// const { callbackToPromise, getAddress } = require('../util')
-// const PeerId = require('peer-id')
-// const PeerInfo = require('peer-info')
-// const pull = require('pull-stream')
 
 class WsEndpoint extends EventEmitter {
     constructor(node, id, enablePeerDiscovery, bootstrapNodes = BOOTNODES) {
@@ -31,9 +26,6 @@ class WsEndpoint extends EventEmitter {
         this.node.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
             const peerId = parameters.query.address
-            // const remoteAddress = parameters.query.address
-
-            // console.log(remoteAddress)
 
             // eslint-disable-next-line no-param-reassign
             ws.peerId = peerId
@@ -69,23 +61,6 @@ class WsEndpoint extends EventEmitter {
                 })
             }, 3000)
         }
-
-        // this.node()
-
-        // node.handle(HANDLER, (protocol, conn) => this.onReceive(protocol, conn))
-        // node.on('peer:discovery', (peer) => {
-        //     debug('peer %s discovered', getAddress(peer))
-        //     this.emit(Endpoint.events.PEER_DISCOVERED, peer)
-        // })
-        // node.on('peer:connect', (peer) => {
-        //     debug('peer %s connected', getAddress(peer))
-        //     this.emit(Endpoint.events.PEER_CONNECTED, peer)
-        // })
-        // node.on('peer:disconnect', (peer) => {
-        //     debug('peer %s disconnected', getAddress(peer))
-        //     this.emit(Endpoint.events.PEER_DISCONNECTED, peer)
-        //
-        // })
     }
 
     send(recipient, message) {
@@ -109,19 +84,6 @@ class WsEndpoint extends EventEmitter {
         }
 
         return true
-
-        // this.node.dialProtocol(recipient, HANDLER, (err, conn) => {
-        //     if (err) {
-        //         throw err
-        //     }
-        //
-        //     pull(pull.values([message]), conn)
-        //
-        //     this.emit(Endpoint.events.MESSAGE_SENT, {
-        //         recipient,
-        //         message
-        //     })
-        // })
     }
 
     async onReceive(sender, message) {
@@ -131,25 +93,6 @@ class WsEndpoint extends EventEmitter {
             sender,
             message
         })
-
-        // try {
-        //     const sender = await Libp2pEndpoint.getPeerInfo(conn)
-        //
-        //     pull(
-        //         conn,
-        //         pull.map((message) => message.toString('utf8')),
-        //         pull.drain((message) => {
-        //             debug('received from peer %s message with data "%s"', sender instanceof PeerInfo ? getAddress(sender) : '', message)
-        //
-        //             this.emit(Endpoint.events.MESSAGE_RECEIVED, {
-        //                 sender,
-        //                 message
-        //             })
-        //         })
-        //     )
-        // } catch (err) {
-        //     console.log(err)
-        // }
     }
 
     connect(peerAddress) {
@@ -179,28 +122,8 @@ class WsEndpoint extends EventEmitter {
             this.onReceive(ws.peerId, message)
             console.log('message from tracker: ' + message)
         })
-
-        // let address = ''
-        // if (typeof peerInfo === 'string') {
-        //     address = peerInfo
-        // } else if (PeerInfo.isPeerInfo(peerInfo)) {
-        //     // peer.id.toB58String()
-        //     address = getAddress(peerInfo)
-        // } else {
-        //     throw new Error('not valid PeerId or PeerInfo, or B58Str')
-        // }
-        //
-        // if (!this.isConnected(address)) {
-        //     await this._dial(address)
-        //     debug('connected to %s', address)
-        // }
     }
 
-    //
-    // async _dial(address) {
-    //     return new Promise((resolve, reject) => this.node.dial(address, (err, peerInfo) => (err ? reject(err) : resolve(peerInfo))))
-    // }
-    //
     async stop(callback = true) {
         if (this._peerDiscoveryTimer) {
             clearInterval(this._peerDiscoveryTimer)
@@ -219,11 +142,6 @@ class WsEndpoint extends EventEmitter {
         this.node.close(callback)
     }
 
-    //
-    // isConnected(peerInfo) {
-    //     return this.node.peerBook.has(peerInfo)
-    // }
-    //
     getAddress() {
         const socketAddress = this.node.address()
         // eslint-disable-next-line prefer-destructuring
@@ -234,12 +152,6 @@ class WsEndpoint extends EventEmitter {
     getPeers() {
         return this.connections
     }
-    //
-    // static async getPeerInfo(endpoint) {
-    //     return new Promise((resolve, reject) => {
-    //         return endpoint.getPeerInfo((err, peerInfo) => (err ? reject(err) : resolve(peerInfo)))
-    //     })
-    // }
 }
 
 async function WsNode(host, port) {
