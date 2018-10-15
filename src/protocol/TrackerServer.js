@@ -34,7 +34,7 @@ class TrackerServer extends EventEmitter {
     }
 
     stop(cb) {
-        this.endpoint.node.close(cb)
+        this.endpoint.wss.close(cb)
     }
 
     onPeerConnected(peer) {

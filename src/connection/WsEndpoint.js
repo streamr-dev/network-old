@@ -11,7 +11,7 @@ const Endpoint = require('./Endpoint')
 module.exports = class WsEndpoint extends EventEmitter {
     constructor(node, id, enablePeerDiscovery, bootstrapNodes = BOOTNODES) {
         super()
-        this.node = node
+        this.wss = node
         this.id = id || uuidv4()
         this.bootstrapNodes = bootstrapNodes
 
@@ -21,7 +21,7 @@ module.exports = class WsEndpoint extends EventEmitter {
         this.connections = new Map()
         this.trackers = new Map()
 
-        this.node.on('connection', (ws, req) => {
+        this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
             const peerId = parameters.query.address
 
@@ -141,18 +141,18 @@ module.exports = class WsEndpoint extends EventEmitter {
             tracker.terminate()
         })
 
-        this.node.clients.forEach((client) => {
+        this.wss.clients.forEach((client) => {
             client.terminate()
         })
 
         return new Promise((resolve, reject) => {
-            this.node.close(resolve)
-            this.node.on('error', (err) => reject(err))
+            this.wss.close(resolve)
+            this.wss.on('error', (err) => reject(err))
         })
     }
 
     getAddress() {
-        const socketAddress = this.node.address()
+        const socketAddress = this.wss.address()
         return `ws://${socketAddress.address}:${socketAddress.port}`
     }
 
