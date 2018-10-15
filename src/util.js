@@ -28,6 +28,11 @@ const isTracker = (tracker) => BOOTNODES.includes(tracker)
 
 const isNode = (peer) => !isTracker(peer)
 
+const getSocketAddress = (ws) => {
+    console.log(ws._socket._peername)
+    return `ws://${ws.upgradeReq.connection.remoteAddress}:${ws._socket._peername.port}`
+}
+
 module.exports = {
     callbackToPromise,
     getAddress,
@@ -36,5 +41,6 @@ module.exports = {
     generateClientId,
     isTracker,
     isNode,
-    BOOTNODES
+    BOOTNODES,
+    getSocketAddress
 }

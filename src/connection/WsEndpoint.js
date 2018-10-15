@@ -25,20 +25,15 @@ module.exports = class WsEndpoint extends EventEmitter {
             const parameters = url.parse(req.url, true)
             const peerId = parameters.query.address
 
-            ws.remoteAddress = ws._socket.remoteAddress
-            console.log(ws._socket.address())
-            console.log('user connected: ', ws.remoteAddress)
-
             // eslint-disable-next-line no-param-reassign
             ws.peerId = peerId
-
             this.connections.set(peerId, ws)
 
             debug('new connection: %s', peerId)
 
             ws.on('message', (message) => {
                 // TODO check message.type [utf8|binary]
-                debug('received from peer %s message with data "%s"', ws.peerId, message)
+                // debug('received from peer %s message with data "%s"', getSocketAddress(ws), message)
 
                 this.emit(Endpoint.events.MESSAGE_RECEIVED, {
                     sender: ws.peerId,
@@ -88,6 +83,10 @@ module.exports = class WsEndpoint extends EventEmitter {
         return true
     }
 
+    isConnected(socketAddress) {
+        return this.connections.has(socketAddress) || this.trackers.has(socketAddress)
+    }
+
     async onReceive(sender, message) {
         debug('received from peer %s message with data "%s"', sender, message)
 
@@ -107,6 +106,7 @@ module.exports = class WsEndpoint extends EventEmitter {
         ws.on('open', () => {
             debug('connected to %s', peerAddress)
             this.trackers.set(peerAddress, ws)
+            ws.peerId = peerAddress
 
             // TODO remove
             if (isTracker(peerAddress)) {

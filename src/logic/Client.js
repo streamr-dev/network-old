@@ -14,6 +14,10 @@ module.exports = class Client extends EventEmitter {
 
         this.debug = createDebug(`streamr:logic:client:${this.id}`)
         this.debug('node: %s is running', this.id)
+
+        if (this.nodeAddress) {
+            this.protocols.nodeToNode.endpoint.connect(this.nodeAddress)
+        }
     }
 
     publish(streamId, data) {
