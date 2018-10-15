@@ -1,12 +1,36 @@
-const { createEndpoint } = require('./connection/WsEndpoint')
-
+const WebSocket = require('ws')
 const TrackerServer = require('./protocol/TrackerServer')
 const TrackerNode = require('./protocol/TrackerNode')
 const NodeToNode = require('./protocol/NodeToNode')
 const Tracker = require('./logic/Tracker')
 const Node = require('./logic/Node')
 const Client = require('./logic/Client')
-// const NetworkNode = require('./NetworkNode')
+const NetworkNode = require('./NetworkNode')
+const WsEndpoint = require('./connection/WsEndpoint')
+
+async function WsNode(host, port) {
+    return new Promise((resolve, reject) => {
+        const wss = new WebSocket.Server(
+            {
+                host,
+                port,
+                clientTracking: true
+            }
+        )
+
+        wss.on('error', (err) => {
+            reject(err)
+        })
+
+        wss.on('listening', () => {
+            resolve(wss)
+        })
+    })
+}
+
+async function createEndpoint(host, port, id, enablePeerDiscovery = false, bootstrapNodes) {
+    return WsNode(host, port).then((n) => new WsEndpoint(n, id, enablePeerDiscovery, bootstrapNodes))
+}
 
 async function startTracker(host, port, id) {
     return createEndpoint(host, port, id, false).then((endpoint) => {
@@ -31,18 +55,19 @@ async function startClient(host, port, id, nodeAddress) {
         throw err
     })
 }
-//
-// async function startNetworkNode(host, port, privateKey, bootstrapTrackers) {
-//     return createEndpoint(host, port, privateKey, true, bootstrapTrackers).then((endpoint) => {
-//         return new NetworkNode(new TrackerNode(endpoint), new NodeToNode(endpoint))
-//     }).catch((err) => {
-//         throw err
-//     })
-// }
+
+async function startNetworkNode(host, port, id, bootstrapTrackers) {
+    return createEndpoint(host, port, id, true, bootstrapTrackers).then((endpoint) => {
+        return new NetworkNode(new TrackerNode(endpoint), new NodeToNode(endpoint))
+    }).catch((err) => {
+        throw err
+    })
+}
 
 module.exports = {
     startTracker,
     startNode,
-    startClient
-    // startNetworkNode
+    startClient,
+    startNetworkNode,
+    createEndpoint
 }

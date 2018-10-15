@@ -21,8 +21,8 @@ describe('message numbering', () => {
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 33340)
         BOOTNODES.push(tracker.getAddress())
-        sourceNode = await startNode(LOCALHOST, 33341)
-        destinationNode = await startNode(LOCALHOST, 33342)
+        sourceNode = await startNode(LOCALHOST, 33341, 'node1')
+        destinationNode = await startNode(LOCALHOST, 33342, 'node2')
         await Promise.all([
             waitForEvent(sourceNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),
             waitForEvent(destinationNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),

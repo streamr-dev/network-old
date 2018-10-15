@@ -1,4 +1,4 @@
-const { createEndpoint } = require('./src/connection/WsEndpoint')
+const { createEndpoint } = require('./src/composition')
 const Client = require('./src/logic/Client')
 const NodeToNode = require('./src/protocol/NodeToNode')
 

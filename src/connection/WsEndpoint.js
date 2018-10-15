@@ -6,11 +6,9 @@ const WebSocket = require('ws')
 const uuidv4 = require('uuid/v4')
 const { BOOTNODES, isTracker } = require('../util')
 
-const HANDLER = '/v1/'
-
 const Endpoint = require('./Endpoint')
 
-class WsEndpoint extends EventEmitter {
+module.exports = class WsEndpoint extends EventEmitter {
     constructor(node, id, enablePeerDiscovery, bootstrapNodes = BOOTNODES) {
         super()
         this.node = node
@@ -26,6 +24,10 @@ class WsEndpoint extends EventEmitter {
         this.node.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
             const peerId = parameters.query.address
+
+            ws.remoteAddress = ws._socket.remoteAddress
+            console.log(ws._socket.address())
+            console.log('user connected: ', ws.remoteAddress)
 
             // eslint-disable-next-line no-param-reassign
             ws.peerId = peerId
@@ -120,7 +122,7 @@ class WsEndpoint extends EventEmitter {
         })
         ws.on('message', (message) => {
             this.onReceive(ws.peerId, message)
-            console.log('message from tracker: ' + message)
+            debug('received message %s', message)
         })
     }
 
@@ -132,51 +134,29 @@ class WsEndpoint extends EventEmitter {
 
         // close all connections
         this.connections.forEach((connection) => {
-            connection.close()
+            connection.terminate()
         })
 
         this.trackers.forEach((tracker) => {
-            tracker.close()
+            tracker.terminate()
         })
 
-        this.node.close(callback)
+        this.node.clients.forEach((client) => {
+            client.terminate()
+        })
+
+        return new Promise((resolve, reject) => {
+            this.node.close(resolve)
+            this.node.on('error', (err) => reject(err))
+        })
     }
 
     getAddress() {
         const socketAddress = this.node.address()
-        // eslint-disable-next-line prefer-destructuring
-        const path = this.node.options.path
-        return `ws://${socketAddress.address}:${socketAddress.port}${path}`
+        return `ws://${socketAddress.address}:${socketAddress.port}`
     }
 
     getPeers() {
         return this.connections
-    }
-}
-
-async function WsNode(host, port) {
-    return new Promise((resolve, reject) => {
-        const wss = new WebSocket.Server(
-            {
-                host,
-                port,
-                path: HANDLER,
-                clientTracking: true
-            }
-        )
-
-        wss.on('error', (err) => {
-            reject(err)
-        })
-
-        wss.on('listening', () => {
-            resolve(wss)
-        })
-    })
-}
-
-module.exports = {
-    async createEndpoint(host, port, id, enablePeerDiscovery = false, bootstrapNodes) {
-        return WsNode(host, port).then((n) => new WsEndpoint(n, id, enablePeerDiscovery, bootstrapNodes))
     }
 }

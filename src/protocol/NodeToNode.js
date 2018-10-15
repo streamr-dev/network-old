@@ -41,7 +41,7 @@ class NodeToNode extends EventEmitter {
     }
 
     getAddress() {
-        return getAddress(this.endpoint.node.peerInfo)
+        return getAddress(this.endpoint.getAddress())
     }
 
     stop(cb) {

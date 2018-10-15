@@ -22,17 +22,17 @@ describe('Selecting leader for the stream and sending messages to two subscriber
         BOOTNODES.push(tracker.getAddress())
 
         await Promise.all([
-            startNode(LOCALHOST, 32312, null),
-            startNode(LOCALHOST, 32313, null)
+            startNode(LOCALHOST, 32312, 'node1'),
+            startNode(LOCALHOST, 32313, 'node2')
         ]).then((res) => {
             [nodeOne, nodeTwo] = res
         })
 
-        publisher = await startClient(LOCALHOST, 32301, nodeOne.protocols.nodeToNode.getAddress())
+        publisher = await startClient(LOCALHOST, 32301, 'publisher1', nodeOne.protocols.nodeToNode.getAddress())
 
         await Promise.all([
-            startClient(LOCALHOST, 32302, nodeTwo.protocols.nodeToNode.getAddress()),
-            startClient(LOCALHOST, 32303, nodeTwo.protocols.nodeToNode.getAddress())
+            startClient(LOCALHOST, 32302, 'subscriber1', nodeTwo.protocols.nodeToNode.getAddress()),
+            startClient(LOCALHOST, 32303, 'subscriber2', nodeTwo.protocols.nodeToNode.getAddress())
         ]).then((res) => {
             [subscriber1, subscriber2] = res
         })
