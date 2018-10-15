@@ -29,7 +29,7 @@ const isTracker = (tracker) => BOOTNODES.includes(tracker)
 const isNode = (peer) => !isTracker(peer)
 
 const getSocketAddress = (ws) => {
-    console.log(ws._socket._peername)
+    // eslint-disable-next-line no-underscore-dangle
     return `ws://${ws.upgradeReq.connection.remoteAddress}:${ws._socket._peername.port}`
 }
 
