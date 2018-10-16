@@ -141,14 +141,7 @@ module.exports = class WsEndpoint extends EventEmitter {
             tracker.terminate()
         })
 
-        this.wss.clients.forEach((client) => {
-            client.terminate()
-        })
-
-        return new Promise((resolve, reject) => {
-            this.wss.close(resolve)
-            this.wss.on('error', (err) => reject(err))
-        })
+        return this.wss.close(callback)
     }
 
     getAddress() {
