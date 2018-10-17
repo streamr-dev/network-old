@@ -88,7 +88,6 @@ module.exports = class WsEndpoint extends EventEmitter {
         this.connections.set(peerId, ws)
 
         debug('connected -> %s', ws.peerId)
-        this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
 
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
@@ -98,7 +97,10 @@ module.exports = class WsEndpoint extends EventEmitter {
         ws.on('close', () => {
             debug('disconnected -> %s', ws.peerId)
             this.connections.delete(ws.peerId)
+            this.emit(Endpoint.events.PEER_DISCONNECTED, ws.peerId)
         })
+
+        this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
     }
 
     async stop(callback = true) {
