@@ -153,7 +153,7 @@ class Node extends EventEmitter {
 
     onSubscribeRequest(subscribeMessage) {
         this.subscribers.addSubscriber(subscribeMessage.getStreamId(), getAddress(subscribeMessage.getSource()))
-        this.debug('node %s added as a subscriber for stream %s', getIdShort(subscribeMessage.getSource()), subscribeMessage.getStreamId()) // TODO: verify that works
+        this.debug('node %s added as a subscriber for stream %s', getIdShort(subscribeMessage.getSource()), subscribeMessage.getStreamId())
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
@@ -225,6 +225,8 @@ class Node extends EventEmitter {
         this.debug('sending status to tracker %s', getIdShort(tracker))
         if (tracker) {
             this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
+        } else {
+            this.debug('cannot send status because tracker is not set')
         }
     }
 
