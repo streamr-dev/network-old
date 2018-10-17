@@ -62,9 +62,6 @@ class TrackerServer extends EventEmitter {
         }
     }
 
-    async onPeerDiscovered(peer) {
-    }
-
     async onPeerDisconnected(node) {
         this.emit(events.NODE_DISCONNECTED, node)
     }

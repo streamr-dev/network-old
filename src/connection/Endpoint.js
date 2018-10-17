@@ -1,5 +1,4 @@
 const events = Object.freeze({
-    PEER_DISCOVERED: 'streamr:peer:discovery',
     PEER_CONNECTED: 'streamr:peer:connect',
     PEER_DISCONNECTED: 'streamr:peer:disconnect',
     MESSAGE_SENT: 'streamr:message-sent',

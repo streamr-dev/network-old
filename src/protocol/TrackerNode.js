@@ -33,9 +33,6 @@ class TrackerNode extends EventEmitter {
         this.endpoint.send(tracker, encoder.streamMessage(streamId, ''))
     }
 
-    onPeerConnected(peer) {
-    }
-
     onMessageReceived(message) {
         switch (message.getCode()) {
             case encoder.PEERS:
@@ -62,7 +59,7 @@ class TrackerNode extends EventEmitter {
         }
     }
 
-    async onPeerDiscovered(peer) {
+    async onPeerConnected(peer) {
         if (isTracker(peer)) {
             this.emit(events.CONNECTED_TO_TRACKER, peer)
         }

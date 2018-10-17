@@ -30,10 +30,10 @@ module.exports = class WsEndpoint extends EventEmitter {
             this.connections.set(peerId, ws)
 
             debug('new connection: %s', peerId)
+            this.emit(Endpoint.events.PEER_CONNECTED, peerId)
 
             ws.on('message', (message) => {
                 // TODO check message.type [utf8|binary]
-                // debug('received from peer %s message with data "%s"', getSocketAddress(ws), message)
 
                 this.emit(Endpoint.events.MESSAGE_RECEIVED, {
                     sender: ws.peerId,
@@ -108,10 +108,7 @@ module.exports = class WsEndpoint extends EventEmitter {
             this.trackers.set(peerAddress, ws)
             ws.peerId = peerAddress
 
-            // TODO remove
-            if (isTracker(peerAddress)) {
-                this.emit(Endpoint.events.PEER_DISCOVERED, peerAddress)
-            }
+            this.emit(Endpoint.events.PEER_CONNECTED, peerAddress)
         })
         ws.on('error', (err) => {
             debug('failed to connect to %s, error: %o', peerAddress, err)

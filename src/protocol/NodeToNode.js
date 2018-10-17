@@ -70,9 +70,6 @@ class NodeToNode extends EventEmitter {
         }
     }
 
-    async onPeerDiscovered(peer) {
-    }
-
     async onPeerDisconnected(peer) {
         if (isNode(peer)) {
             this.emit(events.NODE_DISCONNECTED, peer)
