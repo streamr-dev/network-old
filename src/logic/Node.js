@@ -34,7 +34,7 @@ class Node extends EventEmitter {
         })
 
         this.id = getIdShort(nodeToNode.endpoint.id)
-        this.tracker = null
+        this.trackers = new Map()
 
         this.protocols = {
             trackerNode,
@@ -48,7 +48,7 @@ class Node extends EventEmitter {
         })
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_ASSIGNED, (streamId) => this.addOwnStream(streamId))
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, (streamMessage) => this.addKnownStreams(streamMessage))
-        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, () => this.onTrackerDisconnected())
+        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (tracker) => this.onTrackerDisconnected(tracker))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (dataMessage) => this.onDataReceived(dataMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage) => this.onSubscribeRequest(subscribeMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage) => this.onUnsubscribeRequest(unsubscribeMessage))
@@ -62,7 +62,7 @@ class Node extends EventEmitter {
 
     onConnectedToTracker(tracker) {
         this.debug('connected to tracker %s', getIdShort(tracker))
-        this.tracker = tracker
+        this.trackers.set(tracker, tracker)
         this._sendStatus()
         this.debug('requesting more peers from tracker %s', getIdShort(tracker))
         this.requestMorePeers()
@@ -96,6 +96,7 @@ class Node extends EventEmitter {
         const data = dataMessage.getData()
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
+        const tracker = this._getTracker()
 
         if (number == null && previousNumber != null) {
             this.debug('received invalid data with null number but non-null previous number %s; dropping', previousNumber)
@@ -117,7 +118,7 @@ class Node extends EventEmitter {
             } else {
                 this._sendToSubscribers(dataMessage)
             }
-        } else if (this.tracker === null) {
+        } else if (tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
         } else {
@@ -127,8 +128,8 @@ class Node extends EventEmitter {
                 number,
                 previousNumber
             })
-            this.debug('ask tracker %s who is responsible for stream %s', getIdShort(this.tracker), streamId)
-            this.protocols.trackerNode.requestStreamInfo(this.tracker, streamId)
+            this.debug('ask tracker %s who is responsible for stream %s', getIdShort(tracker), streamId)
+            this.protocols.trackerNode.requestStreamInfo(tracker, streamId)
         }
     }
 
@@ -163,6 +164,8 @@ class Node extends EventEmitter {
     }
 
     subscribeToStream(streamId) {
+        const tracker = this._getTracker()
+
         if (this.subscriptions.hasSubscription(streamId)) {
             this.debug('already subscribed to stream %s', streamId)
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
@@ -181,13 +184,13 @@ class Node extends EventEmitter {
             this.subscriptions.addSubscription(streamId) // Assuming subscribes went through
             this._sendStatus()
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
-        } else if (this.tracker === null) {
+        } else if (tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
             this.emit(events.NO_AVAILABLE_TRACKERS)
             this.subscriptions.addPendingSubscription(streamId)
         } else {
             this.debug('unknown stream %s; asking tracker about any info', streamId)
-            this.protocols.trackerNode.requestStreamInfo(this.tracker, streamId)
+            this.protocols.trackerNode.requestStreamInfo(tracker, streamId)
             this.subscriptions.addPendingSubscription(streamId)
         }
     }
@@ -212,9 +215,11 @@ class Node extends EventEmitter {
     }
 
     _sendStatus() {
-        this.debug('sending status to tracker %s', getIdShort(this.tracker))
-        if (this.tracker) {
-            this.protocols.trackerNode.sendStatus(this.tracker, this._getStatus())
+        const tracker = this._getTracker()
+
+        this.debug('sending status to tracker %s', getIdShort(tracker))
+        if (tracker) {
+            this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
         }
     }
 
@@ -224,8 +229,8 @@ class Node extends EventEmitter {
         this.debug('removed all subscriptions of node %s', getIdShort(node))
     }
 
-    onTrackerDisconnected() {
-        this.tracker = null
+    onTrackerDisconnected(tracker) {
+        this.trackers.delete(tracker)
         this.debug('no tracker available')
         this._clearPeerRequestInterval()
     }
@@ -257,12 +262,18 @@ class Node extends EventEmitter {
     }
 
     requestMorePeers() {
+        const tracker = this._getTracker()
+
         if (this.peersInterval === null) {
-            this.protocols.trackerNode.sendPeerMessage(this.tracker)
+            this.protocols.trackerNode.sendPeerMessage(tracker)
             this.peersInterval = setInterval(() => {
-                this.protocols.trackerNode.sendPeerMessage(this.tracker)
+                this.protocols.trackerNode.sendPeerMessage(tracker)
             }, 5000)
         }
+    }
+
+    _getTracker() {
+        return this.trackers.get([...this.trackers.keys()][Math.floor(Math.random() * this.trackers.size)])
     }
 }
 

@@ -71,7 +71,7 @@ class TrackerNode extends EventEmitter {
     async onPeerDisconnected(peer) {
         if (isTracker(getAddress(peer))) {
             debug('tracker disconnected, clearing info and loop...')
-            this.emit(events.TRACKER_DISCONNECTED)
+            this.emit(events.TRACKER_DISCONNECTED, peer)
         }
     }
 }
