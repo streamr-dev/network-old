@@ -20,6 +20,8 @@ class Node extends EventEmitter {
     constructor(trackerNode, nodeToNode) {
         super()
 
+        this.peersInterval = null
+
         this.streams = new StreamManager()
         this.subscribers = new SubscriberManager(
             this.subscribeToStream.bind(this),
@@ -40,7 +42,10 @@ class Node extends EventEmitter {
         }
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
-        this.protocols.trackerNode.on(TrackerNode.events.NODE_LIST_RECEIVED, (peersMessage) => this.protocols.nodeToNode.connectToNodes(peersMessage))
+        this.protocols.trackerNode.on(TrackerNode.events.NODE_LIST_RECEIVED, (peersMessage) => {
+            this._clearPeerRequestInterval()
+            this.protocols.nodeToNode.connectToNodes(peersMessage)
+        })
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_ASSIGNED, (streamId) => this.addOwnStream(streamId))
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, (streamMessage) => this.addKnownStreams(streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, () => this.onTrackerDisconnected())
@@ -60,7 +65,7 @@ class Node extends EventEmitter {
         this.tracker = tracker
         this._sendStatus()
         this.debug('requesting more peers from tracker %s', getIdShort(tracker))
-        this.protocols.trackerNode.requestMorePeers()
+        this.requestMorePeers()
         this._handlePendingSubscriptions()
     }
 
@@ -193,8 +198,8 @@ class Node extends EventEmitter {
 
     stop(cb) {
         this.debug('stopping')
+        this._clearPeerRequestInterval()
         this.messageBuffer.clear()
-        this.protocols.trackerNode.stop(cb)
         this.protocols.nodeToNode.stop(cb)
     }
 
@@ -222,6 +227,7 @@ class Node extends EventEmitter {
     onTrackerDisconnected() {
         this.tracker = null
         this.debug('no tracker available')
+        this._clearPeerRequestInterval()
     }
 
     _handleBufferedMessages(streamId) {
@@ -242,6 +248,20 @@ class Node extends EventEmitter {
     _handlePossiblePendingSubscription(pendingStreamId) {
         if (this.subscriptions.hasPendingSubscription(pendingStreamId)) {
             this.subscribeToStream(pendingStreamId)
+        }
+    }
+
+    _clearPeerRequestInterval() {
+        clearInterval(this.peersInterval)
+        this.peersInterval = null
+    }
+
+    requestMorePeers() {
+        if (this.peersInterval === null) {
+            this.protocols.trackerNode.sendPeerMessage(this.tracker)
+            this.peersInterval = setInterval(() => {
+                this.protocols.trackerNode.sendPeerMessage(this.tracker)
+            }, 5000)
         }
     }
 }

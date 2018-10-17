@@ -20,34 +20,18 @@ class TrackerNode extends EventEmitter {
         this.tracker = null
         this._endpointListener = new EndpointListener()
         this._endpointListener.implement(this, endpoint)
-
-        this.peersInterval = null
-    }
-
-    _clearPeerRequestInterval() {
-        clearInterval(this.peersInterval)
-        this.peersInterval = null
     }
 
     sendStatus(tracker, status) {
         this.endpoint.send(tracker, encoder.statusMessage(status))
     }
 
+    sendPeerMessage(tracker) {
+        this.endpoint.send(tracker, encoder.peersMessage([]))
+    }
+
     requestStreamInfo(tracker, streamId) {
         this.endpoint.send(tracker, encoder.streamMessage(streamId, ''))
-    }
-
-    requestMorePeers() {
-        if (this.peersInterval === null) {
-            this.endpoint.send(this.tracker, encoder.peersMessage([]))
-            this.peersInterval = setInterval(() => {
-                this.endpoint.send(this.tracker, encoder.peersMessage([]))
-            }, 5000)
-        }
-    }
-
-    stop() {
-        this._clearPeerRequestInterval()
     }
 
     onPeerConnected(peer) {
@@ -59,11 +43,10 @@ class TrackerNode extends EventEmitter {
                 // eslint-disable-next-line no-case-declarations
                 const peers = message.getPeers()
                 // ask tacker again
-                if (!peers.length && this.tracker) { // data = peers
+                if (!peers.length && this.tracker) {
                     debug('no available peers, ask again tracker')
                 } else if (peers.length) {
                     this.emit(events.NODE_LIST_RECEIVED, message)
-                    this._clearPeerRequestInterval()
                 }
                 break
 
@@ -90,7 +73,6 @@ class TrackerNode extends EventEmitter {
     async onPeerDisconnected(peer) {
         if (isTracker(getAddress(peer))) {
             debug('tracker disconnected, clearing info and loop...')
-            this._clearPeerRequestInterval()
             this.tracker = null
             this.emit(events.TRACKER_DISCONNECTED)
         }
