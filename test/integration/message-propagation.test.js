@@ -27,6 +27,10 @@ describe('message propagation in network', () => {
             startNode('127.0.0.1', 33315, null)
         ]).then((res) => {
             [n1, n2, n3, n4] = res
+            n1.setBootnodes(BOOTNODES)
+            n2.setBootnodes(BOOTNODES)
+            n3.setBootnodes(BOOTNODES)
+            n4.setBootnodes(BOOTNODES)
         })
 
         await Promise.all([

@@ -28,8 +28,8 @@ async function WsNode(host, port) {
     })
 }
 
-async function createEndpoint(host, port, id, enablePeerDiscovery = false, bootstrapNodes) {
-    return WsNode(host, port).then((n) => new WsEndpoint(n, id, enablePeerDiscovery, bootstrapNodes))
+async function createEndpoint(host, port, id) {
+    return WsNode(host, port).then((n) => new WsEndpoint(n, id))
 }
 
 async function startTracker(host, port, id) {
@@ -40,8 +40,8 @@ async function startTracker(host, port, id) {
     })
 }
 
-async function startNode(host, port, id, bootstrapTrackers) {
-    return createEndpoint(host, port, id, true, bootstrapTrackers).then((endpoint) => {
+async function startNode(host, port, id) {
+    return createEndpoint(host, port, id, true).then((endpoint) => {
         return new Node(new TrackerNode(endpoint), new NodeToNode(endpoint))
     }).catch((err) => {
         throw err
@@ -49,15 +49,15 @@ async function startNode(host, port, id, bootstrapTrackers) {
 }
 
 async function startClient(host, port, id, nodeAddress) {
-    return createEndpoint(host, port, id, false).then((endpoint) => {
+    return createEndpoint(host, port, id).then((endpoint) => {
         return new Client(new NodeToNode(endpoint), nodeAddress)
     }).catch((err) => {
         throw err
     })
 }
 
-async function startNetworkNode(host, port, id, bootstrapTrackers) {
-    return createEndpoint(host, port, id, true, bootstrapTrackers).then((endpoint) => {
+async function startNetworkNode(host, port, id) {
+    return createEndpoint(host, port, id).then((endpoint) => {
         return new NetworkNode(new TrackerNode(endpoint), new NodeToNode(endpoint))
     }).catch((err) => {
         throw err

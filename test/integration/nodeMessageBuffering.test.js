@@ -22,8 +22,12 @@ describe('message buffering of Node', () => {
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 30320)
         BOOTNODES.push(tracker.getAddress())
+
         sourceNode = await startNode(LOCALHOST, 30321)
+        sourceNode.setBootnodes(BOOTNODES)
+
         destinationNode = await startNode(LOCALHOST, 30322)
+        destinationNode.setBootnodes(BOOTNODES)
 
         await Promise.all([
             waitForEvent(sourceNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),

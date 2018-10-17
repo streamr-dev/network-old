@@ -26,6 +26,8 @@ describe('Selecting leader for the stream and sending messages to two subscriber
             startNode(LOCALHOST, 32313, 'node2')
         ]).then((res) => {
             [nodeOne, nodeTwo] = res
+            nodeOne.setBootnodes(BOOTNODES)
+            nodeTwo.setBootnodes(BOOTNODES)
         })
 
         publisher = await startClient(LOCALHOST, 32301, 'publisher1', nodeOne.protocols.nodeToNode.getAddress())

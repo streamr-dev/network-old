@@ -4,16 +4,14 @@ const url = require('url')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
 const uuidv4 = require('uuid/v4')
-const { BOOTNODES } = require('../util')
 
 const Endpoint = require('./Endpoint')
 
 module.exports = class WsEndpoint extends EventEmitter {
-    constructor(node, id, enablePeerDiscovery, bootstrapNodes = BOOTNODES) {
+    constructor(node, id) {
         super()
         this.wss = node
         this.id = id || uuidv4()
-        this.bootstrapNodes = bootstrapNodes
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
@@ -29,15 +27,6 @@ module.exports = class WsEndpoint extends EventEmitter {
 
         debug('node started')
         debug('listening on: %s', this.getAddress())
-
-        // TODO => tracker discovery module
-        if (enablePeerDiscovery) {
-            this._peerDiscoveryTimer = setInterval(() => {
-                this.bootstrapNodes.forEach((bootstrapNode) => {
-                    this.connect(bootstrapNode)
-                })
-            }, 3000)
-        }
     }
 
     send(recipient, message) {
@@ -113,11 +102,6 @@ module.exports = class WsEndpoint extends EventEmitter {
     }
 
     async stop(callback = true) {
-        if (this._peerDiscoveryTimer) {
-            clearInterval(this._peerDiscoveryTimer)
-            this._peerDiscoveryTimer = null
-        }
-
         // close all connections
         this.connections.forEach((connection) => {
             connection.terminate()

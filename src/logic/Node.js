@@ -201,6 +201,7 @@ class Node extends EventEmitter {
 
     stop(cb) {
         this.debug('stopping')
+        this._clearTrackerDiscoveryInterval()
         this._clearPeerRequestInterval()
         this.messageBuffer.clear()
         this.protocols.nodeToNode.stop(cb)
@@ -257,8 +258,28 @@ class Node extends EventEmitter {
     }
 
     _clearPeerRequestInterval() {
-        clearInterval(this.peersInterval)
-        this.peersInterval = null
+        if (this.peersInterval) {
+            clearInterval(this.peersInterval)
+            this.peersInterval = null
+        }
+    }
+
+    setBootnodes(bootstrapNodes, delay = 3000) {
+        // TODO validate ws path
+        this.bootstrapNodes = bootstrapNodes
+
+        this._peerDiscoveryTimer = setInterval(() => {
+            this.bootstrapNodes.forEach((bootstrapNode) => {
+                this.protocols.trackerNode.connectToTracker(bootstrapNode)
+            })
+        }, delay)
+    }
+
+    _clearTrackerDiscoveryInterval() {
+        if (this._peerDiscoveryTimer) {
+            clearInterval(this._peerDiscoveryTimer)
+            this._peerDiscoveryTimer = null
+        }
     }
 
     requestMorePeers() {
