@@ -4,7 +4,7 @@ const url = require('url')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
 const uuidv4 = require('uuid/v4')
-const { BOOTNODES, isTracker } = require('../util')
+const { BOOTNODES } = require('../util')
 
 const Endpoint = require('./Endpoint')
 
@@ -19,32 +19,12 @@ module.exports = class WsEndpoint extends EventEmitter {
         this.endpoint.implement(this)
 
         this.connections = new Map()
-        this.trackers = new Map()
 
         this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
             const peerId = parameters.query.address
 
-            // eslint-disable-next-line no-param-reassign
-            ws.peerId = peerId
-            this.connections.set(peerId, ws)
-
-            debug('new connection: %s', peerId)
-            this.emit(Endpoint.events.PEER_CONNECTED, peerId)
-
-            ws.on('message', (message) => {
-                // TODO check message.type [utf8|binary]
-
-                this.emit(Endpoint.events.MESSAGE_RECEIVED, {
-                    sender: ws.peerId,
-                    message
-                })
-            })
-
-            ws.on('close', (reasonCode, description) => {
-                debug('%s disconnected', ws.peerId)
-                this.connections.delete(ws.peerId)
-            })
+            this._onConnected(ws, peerId)
         })
 
         debug('tracker started')
@@ -67,8 +47,6 @@ module.exports = class WsEndpoint extends EventEmitter {
 
         if (this.connections.has(recipient)) {
             ws = this.connections.get(recipient)
-        } else if (this.trackers.has(recipient)) {
-            ws = this.trackers.get(recipient)
         } else {
             debug('trying to send not existing socket %s', recipient)
             return false
@@ -84,11 +62,11 @@ module.exports = class WsEndpoint extends EventEmitter {
     }
 
     isConnected(socketAddress) {
-        return this.connections.has(socketAddress) || this.trackers.has(socketAddress)
+        return this.connections.has(socketAddress)
     }
 
     async onReceive(sender, message) {
-        debug('received from peer %s message with data "%s"', sender, message)
+        // debug('received from peer %s message with data "%s"', sender, message)
 
         this.emit(Endpoint.events.MESSAGE_RECEIVED, {
             sender,
@@ -97,29 +75,40 @@ module.exports = class WsEndpoint extends EventEmitter {
     }
 
     connect(peerAddress) {
-        if (this.trackers.has(peerAddress)) {
+        if (this.connections.has(peerAddress)) {
             return
         }
 
-        const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
+        try {
+            const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
 
-        ws.on('open', () => {
-            debug('connected to %s', peerAddress)
-            this.trackers.set(peerAddress, ws)
-            ws.peerId = peerAddress
-
-            this.emit(Endpoint.events.PEER_CONNECTED, peerAddress)
-        })
-        ws.on('error', (err) => {
+            ws.on('open', () => {
+                this._onConnected(ws, peerAddress)
+            })
+            ws.on('error', (err) => {
+                debug('failed to connect to %s, error: %o', peerAddress, err)
+            })
+        } catch (err) {
             debug('failed to connect to %s, error: %o', peerAddress, err)
-        })
-        ws.on('close', () => {
-            debug('disconnected from %s', peerAddress)
-            this.trackers.delete(peerAddress)
-        })
+        }
+    }
+
+    _onConnected(ws, peerId) {
+        // eslint-disable-next-line no-param-reassign
+        ws.peerId = peerId
+        this.connections.set(peerId, ws)
+
+        debug('connected to %s', ws.peerId)
+        this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
+
         ws.on('message', (message) => {
+            // TODO check message.type [utf8|binary]
             this.onReceive(ws.peerId, message)
-            debug('received message %s', message)
+        })
+
+        ws.on('close', () => {
+            debug('disconnected from %s', ws.peerId)
+            this.connections.delete(ws.peerId)
         })
     }
 
@@ -132,10 +121,6 @@ module.exports = class WsEndpoint extends EventEmitter {
         // close all connections
         this.connections.forEach((connection) => {
             connection.terminate()
-        })
-
-        this.trackers.forEach((tracker) => {
-            tracker.terminate()
         })
 
         return this.wss.close(callback)

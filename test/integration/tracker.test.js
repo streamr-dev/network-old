@@ -1,5 +1,5 @@
 const { startNode, startTracker } = require('../../src/composition')
-const { LOCALHOST, waitForEvent, wait } = require('../../test/util')
+const { LOCALHOST, waitForEvent } = require('../../test/util')
 const { BOOTNODES, callbackToPromise } = require('../../src/util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
@@ -22,7 +22,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         expect(tracker.nodes.size).toBe(1)
         expect(tracker.protocols.trackerServer.endpoint.connections.size).toBe(1)
 
-        expect(node1.protocols.trackerNode.endpoint.trackers.size).toBe(1)
+        expect(node1.protocols.trackerNode.endpoint.connections.size).toBe(1)
 
         node2 = await startNode(LOCALHOST, 33372, 'node2')
 
