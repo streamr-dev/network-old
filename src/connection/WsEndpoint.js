@@ -27,7 +27,7 @@ module.exports = class WsEndpoint extends EventEmitter {
             this._onConnected(ws, peerId)
         })
 
-        debug('tracker started')
+        debug('node started')
         debug('listening on: %s', this.getAddress())
 
         // TODO => tracker discovery module

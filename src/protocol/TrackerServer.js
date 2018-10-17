@@ -1,5 +1,4 @@
 const { EventEmitter } = require('events')
-const { isTracker, getAddress } = require('../util')
 const encoder = require('../helpers/MessageEncoder')
 const EndpointListener = require('./EndpointListener')
 
@@ -38,9 +37,7 @@ class TrackerServer extends EventEmitter {
     }
 
     onPeerConnected(peer) {
-        if (!isTracker(peer)) {
-            this.emit(events.NODE_CONNECTED, peer)
-        }
+        this.emit(events.NODE_CONNECTED, peer)
     }
 
     onMessageReceived(message) {
