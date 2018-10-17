@@ -17,7 +17,6 @@ class TrackerNode extends EventEmitter {
         super()
 
         this.endpoint = endpoint
-        this.tracker = null
         this._endpointListener = new EndpointListener()
         this._endpointListener.implement(this, endpoint)
     }
@@ -43,7 +42,7 @@ class TrackerNode extends EventEmitter {
                 // eslint-disable-next-line no-case-declarations
                 const peers = message.getPeers()
                 // ask tacker again
-                if (!peers.length && this.tracker) {
+                if (!peers.length) {
                     debug('no available peers, ask again tracker')
                 } else if (peers.length) {
                     this.emit(events.NODE_LIST_RECEIVED, message)
@@ -65,7 +64,6 @@ class TrackerNode extends EventEmitter {
 
     async onPeerDiscovered(peer) {
         if (isTracker(peer)) {
-            this.tracker = peer
             this.emit(events.CONNECTED_TO_TRACKER, peer)
         }
     }
@@ -73,7 +71,6 @@ class TrackerNode extends EventEmitter {
     async onPeerDisconnected(peer) {
         if (isTracker(getAddress(peer))) {
             debug('tracker disconnected, clearing info and loop...')
-            this.tracker = null
             this.emit(events.TRACKER_DISCONNECTED)
         }
     }
