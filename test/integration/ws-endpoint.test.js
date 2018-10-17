@@ -1,10 +1,10 @@
-const { DEFAULT_TIMEOUT, LOCALHOST, waitForEvent, wait } = require('../util')
+const { DEFAULT_TIMEOUT, LOCALHOST, waitForEvent } = require('../util')
 const endpointEvents = require('../../src/connection/Endpoint').events
 const { createEndpoint } = require('../../src/composition')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
-describe('create two endpoints and init connection between them', () => {
+describe('create five endpoints and init connection between them', () => {
     const MAX = 5
     let promises = []
     const endpoints = []
@@ -31,7 +31,8 @@ describe('create two endpoints and init connection between them', () => {
 
         promises = []
         for (let i = 0; i < MAX; i++) {
-            promises.push(waitForEvent(endpoints[i], endpointEvents.PEER_CONNECTED))
+            // eslint-disable-next-line no-await-in-loop
+            promises.push(await waitForEvent(endpoints[i], endpointEvents.PEER_CONNECTED))
         }
 
         Promise.all(promises)

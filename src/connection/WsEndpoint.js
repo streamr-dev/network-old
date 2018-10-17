@@ -87,7 +87,7 @@ module.exports = class WsEndpoint extends EventEmitter {
         ws.peerId = peerId
         this.connections.set(peerId, ws)
 
-        debug('connected to %s', ws.peerId)
+        debug('connected -> %s', ws.peerId)
         this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
 
         ws.on('message', (message) => {
@@ -96,7 +96,7 @@ module.exports = class WsEndpoint extends EventEmitter {
         })
 
         ws.on('close', () => {
-            debug('disconnected from %s', ws.peerId)
+            debug('disconnected -> %s', ws.peerId)
             this.connections.delete(ws.peerId)
         })
     }

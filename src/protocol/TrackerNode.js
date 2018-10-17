@@ -1,6 +1,6 @@
 const { EventEmitter } = require('events')
 const debug = require('debug')('streamr:protocol:tracker-node')
-const { isTracker, getAddress } = require('../util')
+const { getAddress } = require('../util')
 const encoder = require('../helpers/MessageEncoder')
 const EndpointListener = require('./EndpointListener')
 
@@ -64,16 +64,12 @@ class TrackerNode extends EventEmitter {
     }
 
     async onPeerConnected(peer) {
-        if (isTracker(peer)) {
-            this.emit(events.CONNECTED_TO_TRACKER, peer)
-        }
+        // TODO just on peer connected?
+        this.emit(events.CONNECTED_TO_TRACKER, peer)
     }
 
     async onPeerDisconnected(peer) {
-        if (isTracker(getAddress(peer))) {
-            debug('tracker disconnected, clearing info and loop...')
-            this.emit(events.TRACKER_DISCONNECTED, peer)
-        }
+        this.emit(events.TRACKER_DISCONNECTED, peer)
     }
 }
 

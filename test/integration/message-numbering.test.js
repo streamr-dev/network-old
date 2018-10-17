@@ -4,7 +4,7 @@ const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const DataMessage = require('../../src/messages/DataMessage')
-const { BOOTNODES, callbackToPromise } = require('../../src/util')
+const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST, waitForEvent, wait } = require('../../test/util')
 
 jest.setTimeout(60 * 1000)
@@ -17,6 +17,7 @@ describe('message numbering', () => {
     let tracker
     let sourceNode
     let destinationNode
+    const BOOTNODES = []
 
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 33340, 'tracker')

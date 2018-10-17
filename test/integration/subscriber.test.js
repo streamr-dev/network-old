@@ -1,5 +1,5 @@
 const { startClient, startNode, startTracker } = require('../../src/composition')
-const { callbackToPromise, BOOTNODES } = require('../../src/util')
+const { callbackToPromise } = require('../../src/util')
 const { waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
@@ -14,11 +14,12 @@ describe('Selecting leader for the stream and sending messages to two subscriber
     let publisher
     let subscriber1
     let subscriber2
+    const BOOTNODES = []
 
     const streamId = 'stream-2018'
 
     it('should be select leader and get two active subscribers', async (done) => {
-        tracker = await startTracker(LOCALHOST, 32300)
+        tracker = await startTracker(LOCALHOST, 32300, 'tracker')
         BOOTNODES.push(tracker.getAddress())
 
         await Promise.all([

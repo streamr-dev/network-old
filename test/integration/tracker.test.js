@@ -1,6 +1,6 @@
 const { startNode, startTracker } = require('../../src/composition')
 const { LOCALHOST, waitForEvent } = require('../../test/util')
-const { BOOTNODES, callbackToPromise } = require('../../src/util')
+const { callbackToPromise } = require('../../src/util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 
@@ -10,6 +10,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
     let tracker
     let node1
     let node2
+    const BOOTNODES = []
 
     it('should be able to start tracker, two nodes, receive statuses, then stop them successfully', async (done) => {
         tracker = await startTracker(LOCALHOST, 32400, 'tracker')

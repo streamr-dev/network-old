@@ -4,7 +4,7 @@ const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const DataMessage = require('../../src/messages/DataMessage')
 const { startTracker, startNode } = require('../../src/composition')
-const { callbackToPromise, BOOTNODES } = require('../../src/util')
+const { callbackToPromise } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST } = require('../../test/util')
 
 jest.setTimeout(90000)
@@ -15,6 +15,7 @@ describe('message propagation in network', () => {
     let n2
     let n3
     let n4
+    const BOOTNODES = []
 
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 33300)

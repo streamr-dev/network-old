@@ -61,18 +61,20 @@ class Node extends EventEmitter {
     }
 
     onConnectedToTracker(tracker) {
-        this.debug('connected to tracker %s', getIdShort(tracker))
-        this.trackers.set(tracker, tracker)
-        this._sendStatus()
-        this.debug('requesting more peers from tracker %s', getIdShort(tracker))
-        this.requestMorePeers()
-        this._handlePendingSubscriptions()
+        if (this._isTracker(tracker)) {
+            this.debug('connected to tracker %s', getIdShort(tracker))
+            this.trackers.set(tracker, tracker)
+            this._sendStatus(tracker)
+            this.debug('requesting more peers from tracker %s', getIdShort(tracker))
+            this.requestMorePeers()
+            this._handlePendingSubscriptions()
+        }
     }
 
     addOwnStream(streamId) {
         this.debug('set self as leader of stream %s', streamId)
         this.streams.markCurrentNodeAsLeaderOf(streamId)
-        this._sendStatus()
+        this._sendStatusToAllTrackers()
         this._handlePossiblePendingSubscription(streamId)
         this._handleBufferedMessages(streamId)
     }
@@ -172,7 +174,7 @@ class Node extends EventEmitter {
         } else if (this.streams.isLeaderOf(streamId)) {
             this.debug('stream %s is own stream; new subscriber will receive data', streamId)
             this.subscriptions.addSubscription(streamId) // Subscription to "self"
-            this._sendStatus()
+            this._sendStatusToAllTrackers()
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (this.streams.isAnyRepeaterKnownFor(streamId)) {
             const repeaterAddresses = this.streams.getRepeatersFor(streamId)
@@ -182,7 +184,7 @@ class Node extends EventEmitter {
                 this.protocols.nodeToNode.sendSubscribe(address, streamId)
             })
             this.subscriptions.addSubscription(streamId) // Assuming subscribes went through
-            this._sendStatus()
+            this._sendStatusToAllTrackers()
             this.emit(events.SUBSCRIBED_TO_STREAM, streamId)
         } else if (tracker === null) {
             this.debug('no trackers available; attempted to ask about stream %s', streamId)
@@ -215,9 +217,11 @@ class Node extends EventEmitter {
         }
     }
 
-    _sendStatus() {
-        const tracker = this._getTracker()
+    _sendStatusToAllTrackers() {
+        this.trackers.forEach((tracker, _) => this._sendStatus(tracker))
+    }
 
+    _sendStatus(tracker) {
         this.debug('sending status to tracker %s', getIdShort(tracker))
         if (tracker) {
             this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
@@ -225,15 +229,22 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
-        const nodeAddress = getAddress(node)
-        this.subscribers.removeSubscriberFromAllStreams(nodeAddress)
-        this.debug('removed all subscriptions of node %s', getIdShort(node))
+        if (this._isNode(node)) {
+            const nodeAddress = getAddress(node)
+            this.subscribers.removeSubscriberFromAllStreams(nodeAddress)
+            this.debug('removed all subscriptions of node %s', getIdShort(node))
+        }
     }
 
     onTrackerDisconnected(tracker) {
-        this.trackers.delete(tracker)
-        this.debug('no tracker available')
-        this._clearPeerRequestInterval()
+        if (this._isTracker(tracker)) {
+            this.trackers.delete(tracker)
+
+            if (this.trackers.size === 0) {
+                this.debug('no tracker available')
+                this._clearPeerRequestInterval()
+            }
+        }
     }
 
     _handleBufferedMessages(streamId) {
@@ -295,6 +306,14 @@ class Node extends EventEmitter {
 
     _getTracker() {
         return this.trackers.get([...this.trackers.keys()][Math.floor(Math.random() * this.trackers.size)])
+    }
+
+    _isTracker(tracker) {
+        return this.bootstrapNodes.includes(tracker)
+    }
+
+    _isNode(peer) {
+        return !this._isTracker(peer)
     }
 }
 
