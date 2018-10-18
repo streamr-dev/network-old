@@ -7,9 +7,9 @@ const WebSocket = require('ws')
 const Endpoint = require('./Endpoint')
 
 class WsEndpoint extends EventEmitter {
-    constructor(node) {
+    constructor(wss) {
         super()
-        this.wss = node
+        this.wss = wss
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
