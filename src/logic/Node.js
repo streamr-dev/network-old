@@ -225,11 +225,7 @@ class Node extends EventEmitter {
 
     _sendStatus(tracker) {
         this.debug('sending status to tracker %s', getIdShort(tracker))
-        if (tracker) {
-            this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
-        } else {
-            this.debug('cannot send status because tracker is not set')
-        }
+        this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
     }
 
     onNodeDisconnected(node) {
