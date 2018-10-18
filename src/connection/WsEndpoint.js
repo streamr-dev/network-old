@@ -3,15 +3,13 @@ const { EventEmitter } = require('events')
 const url = require('url')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
-const uuidv4 = require('uuid/v4')
 
 const Endpoint = require('./Endpoint')
 
 class WsEndpoint extends EventEmitter {
-    constructor(node, id) {
+    constructor(node) {
         super()
         this.wss = node
-        this.id = id || uuidv4()
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
@@ -20,11 +18,11 @@ class WsEndpoint extends EventEmitter {
 
         this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
-            const { id: peerId, address } = parameters.query
+            const { address } = parameters.query
 
-            if (!address || !peerId) {
+            if (!address) {
                 ws.terminate()
-                debug('dropped connection to me because address/id parameters not given')
+                debug('dropped connection to me because address parameters not given')
             } else {
                 debug('%s connected to me', address)
                 this._onConnected(ws, address)
@@ -71,7 +69,7 @@ class WsEndpoint extends EventEmitter {
                 resolve()
             } else {
                 try {
-                    const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
+                    const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`)
 
                     ws.on('open', () => {
                         this._onConnected(ws, peerAddress)
@@ -148,8 +146,8 @@ async function startWebsocketServer(host, port) {
     })
 }
 
-async function startEndpoint(host, port, id) {
-    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n, id))
+async function startEndpoint(host, port) {
+    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n))
 }
 
 module.exports = {

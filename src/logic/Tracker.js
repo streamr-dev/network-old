@@ -1,16 +1,17 @@
 const { EventEmitter } = require('events')
+const uuidv4 = require('uuid/v4')
 const createDebug = require('debug')
 const { getAddress, getIdShort } = require('../util')
 const TrackerServer = require('../protocol/TrackerServer')
 const { getPeersTopology } = require('../helpers/TopologyStrategy')
 
 module.exports = class Tracker extends EventEmitter {
-    constructor(trackerServer) {
+    constructor(id, trackerServer) {
         super()
 
         this.nodes = new Map()
 
-        this.id = getIdShort(trackerServer.endpoint.id)
+        this.id = id || uuidv4()
         this.protocols = {
             trackerServer
         }

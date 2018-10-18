@@ -1,4 +1,5 @@
 const { EventEmitter } = require('events')
+const uuidv4 = require('uuid/v4')
 const createDebug = require('debug')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
@@ -17,7 +18,7 @@ const events = Object.freeze({
 })
 
 class Node extends EventEmitter {
-    constructor(trackerNode, nodeToNode) {
+    constructor(id, trackerNode, nodeToNode) {
         super()
 
         this.peersInterval = null
@@ -33,7 +34,7 @@ class Node extends EventEmitter {
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
 
-        this.id = getIdShort(nodeToNode.endpoint.id)
+        this.id = id || uuidv4()
         this.trackers = new Map()
 
         this.protocols = {
