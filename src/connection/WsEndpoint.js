@@ -22,7 +22,7 @@ class WsEndpoint extends EventEmitter {
 
             if (!address) {
                 ws.terminate()
-                debug('dropped connection to me because address parameters not given')
+                debug('dropped connection to me because address parameter not given')
             } else {
                 debug('%s connected to me', address)
                 this._onConnected(ws, address)
