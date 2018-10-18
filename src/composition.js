@@ -8,7 +8,7 @@ const NetworkNode = require('./NetworkNode')
 const { startEndpoint } = require('./connection/WsEndpoint')
 
 async function startTracker(host, port, id) {
-    return startEndpoint(host, port, id, false).then((endpoint) => {
+    return startEndpoint(host, port, id).then((endpoint) => {
         return new Tracker(new TrackerServer(endpoint))
     }).catch((err) => {
         throw err
@@ -16,7 +16,7 @@ async function startTracker(host, port, id) {
 }
 
 async function startNode(host, port, id) {
-    return startEndpoint(host, port, id, true).then((endpoint) => {
+    return startEndpoint(host, port, id).then((endpoint) => {
         return new Node(new TrackerNode(endpoint), new NodeToNode(endpoint))
     }).catch((err) => {
         throw err
