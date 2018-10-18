@@ -57,9 +57,7 @@ class WsEndpoint extends EventEmitter {
         return this.connections.has(address)
     }
 
-    async onReceive(sender, message) {
-        // debug('received from peer %s message with data "%s"', sender, message)
-
+    onReceive(sender, message) {
         this.emit(Endpoint.events.MESSAGE_RECEIVED, {
             sender,
             message
