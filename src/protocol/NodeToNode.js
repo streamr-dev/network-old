@@ -22,10 +22,12 @@ class NodeToNode extends EventEmitter {
 
     connectToNodes(peersMessage) {
         const nodes = peersMessage.getPeers()
+        const promises = []
         nodes.forEach((node) => {
             debug('connecting to new node %s', node)
-            this.endpoint.connect(node)
+            promises.push(this.endpoint.connect(node))
         })
+        return Promise.all(promises)
     }
 
     sendData(receiverNode, streamId, payload, number, previousNumber) {

@@ -3,15 +3,13 @@ const { EventEmitter } = require('events')
 const url = require('url')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
-const uuidv4 = require('uuid/v4')
 
 const Endpoint = require('./Endpoint')
 
-module.exports = class WsEndpoint extends EventEmitter {
-    constructor(node, id) {
+class WsEndpoint extends EventEmitter {
+    constructor(wss) {
         super()
-        this.wss = node
-        this.id = id || uuidv4()
+        this.wss = wss
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
@@ -20,43 +18,50 @@ module.exports = class WsEndpoint extends EventEmitter {
 
         this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
-            const peerId = parameters.query.address
+            const { address } = parameters.query
 
-            this._onConnected(ws, peerId)
+            if (!address) {
+                ws.terminate()
+                debug('dropped connection to me because address parameter not given')
+            } else {
+                debug('%s connected to me', address)
+                this._onConnected(ws, address)
+            }
         })
 
         debug('node started')
         debug('listening on: %s', this.getAddress())
     }
 
-    send(recipient, message) {
-        debug('sending to peer %s message with data "%s"', recipient, message)
-
-        let ws
-
-        if (this.connections.has(recipient)) {
-            ws = this.connections.get(recipient)
-        } else {
-            debug('trying to send not existing socket %s', recipient)
-            return false
-        }
-
-        try {
-            ws.send(message)
-        } catch (e) {
-            console.error('Sorry, the web socket at "%s" is un-available')
-        }
-
-        return true
+    async send(recipientAddress, message) {
+        return new Promise((resolve, reject) => {
+            if (!this.isConnected(recipientAddress)) {
+                debug('cannot send to %s because not in peer book', recipientAddress)
+                reject(new Error(`cannot send to ${recipientAddress} because not in peer book`))
+            } else {
+                try {
+                    const ws = this.connections.get(recipientAddress)
+                    ws.send(message, (err) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            debug('sent to %s message "%s"', recipientAddress, message)
+                            resolve()
+                        }
+                    })
+                } catch (e) {
+                    console.error('sending to %s failed because of %s', recipientAddress, e)
+                    reject(e)
+                }
+            }
+        })
     }
 
-    isConnected(socketAddress) {
-        return this.connections.has(socketAddress)
+    isConnected(address) {
+        return this.connections.has(address)
     }
 
-    async onReceive(sender, message) {
-        // debug('received from peer %s message with data "%s"', sender, message)
-
+    onReceive(sender, message) {
         this.emit(Endpoint.events.MESSAGE_RECEIVED, {
             sender,
             message
@@ -64,43 +69,48 @@ module.exports = class WsEndpoint extends EventEmitter {
     }
 
     connect(peerAddress) {
-        if (this.connections.has(peerAddress)) {
-            return
-        }
+        return new Promise((resolve, reject) => {
+            if (this.isConnected(peerAddress)) {
+                debug('found %s already in peer book', peerAddress)
+                resolve()
+            } else {
+                try {
+                    const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`)
 
-        try {
-            const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
+                    ws.on('open', () => {
+                        this._onConnected(ws, peerAddress)
+                        resolve()
+                    })
 
-            ws.on('open', () => {
-                this._onConnected(ws, peerAddress)
-            })
-            ws.on('error', (err) => {
-                debug('failed to connect to %s, error: %o', peerAddress, err)
-            })
-        } catch (err) {
-            debug('failed to connect to %s, error: %o', peerAddress, err)
-        }
+                    ws.on('error', (err) => {
+                        debug('failed to connect to %s, error: %o', peerAddress, err)
+                        reject(err)
+                    })
+                } catch (err) {
+                    debug('failed to connect to %s, error: %o', peerAddress, err)
+                    reject(err)
+                }
+            }
+        })
     }
 
-    _onConnected(ws, peerId) {
-        // eslint-disable-next-line no-param-reassign
-        ws.peerId = peerId
-        this.connections.set(peerId, ws)
-
-        debug('connected -> %s', ws.peerId)
-
+    _onConnected(ws, address) {
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
-            this.onReceive(ws.peerId, message)
+            this.onReceive(address, message)
         })
 
-        ws.on('close', () => {
-            debug('disconnected -> %s', ws.peerId)
-            this.connections.delete(ws.peerId)
-            this.emit(Endpoint.events.PEER_DISCONNECTED, ws.peerId)
+        ws.on('close', (code, reason) => {
+            debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+            this.connections.delete(address)
+            debug('removed %s from peer book', address)
+            this.emit(Endpoint.events.PEER_DISCONNECTED, address)
         })
 
-        this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
+        this.connections.set(address, ws)
+        debug('added %s to peer book', address)
+
+        this.emit(Endpoint.events.PEER_CONNECTED, address)
     }
 
     async stop(callback = true) {
@@ -120,4 +130,33 @@ module.exports = class WsEndpoint extends EventEmitter {
     getPeers() {
         return this.connections
     }
+}
+
+async function startWebsocketServer(host, port) {
+    return new Promise((resolve, reject) => {
+        const wss = new WebSocket.Server(
+            {
+                host,
+                port,
+                clientTracking: true
+            }
+        )
+
+        wss.on('error', (err) => {
+            reject(err)
+        })
+
+        wss.on('listening', () => {
+            resolve(wss)
+        })
+    })
+}
+
+async function startEndpoint(host, port) {
+    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n))
+}
+
+module.exports = {
+    WsEndpoint,
+    startEndpoint
 }

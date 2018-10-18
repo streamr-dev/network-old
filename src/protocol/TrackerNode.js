@@ -25,7 +25,7 @@ class TrackerNode extends EventEmitter {
         this.endpoint.send(tracker, encoder.statusMessage(status))
     }
 
-    sendPeerMessage(tracker) {
+    requestPeers(tracker) {
         this.endpoint.send(tracker, encoder.peersMessage([]))
     }
 
@@ -60,7 +60,7 @@ class TrackerNode extends EventEmitter {
     }
 
     connectToTracker(tracker) {
-        this.endpoint.connect(tracker)
+        return this.endpoint.connect(tracker)
     }
 
     async onPeerConnected(peer) {
