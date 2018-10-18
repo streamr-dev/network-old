@@ -25,7 +25,7 @@ class TrackerNode extends EventEmitter {
         this.endpoint.send(tracker, encoder.statusMessage(status))
     }
 
-    sendPeerMessage(tracker) {
+    requestPeers(tracker) {
         this.endpoint.send(tracker, encoder.peersMessage([]))
     }
 

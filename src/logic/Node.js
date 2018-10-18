@@ -300,9 +300,9 @@ class Node extends EventEmitter {
     requestMorePeers() {
         const tracker = this._getTracker()
         if (this.nodeRequestInterval === null) {
-            this.protocols.trackerNode.sendPeerMessage(tracker)
+            this.protocols.trackerNode.requestPeers(tracker)
             this.nodeRequestInterval = setInterval(() => {
-                this.protocols.trackerNode.sendPeerMessage(this._getTracker())
+                this.protocols.trackerNode.requestPeers(this._getTracker())
             }, 5000)
         }
     }
