@@ -33,22 +33,28 @@ class WsEndpoint extends EventEmitter {
         debug('listening on: %s', this.getAddress())
     }
 
-    send(recipientAddress, message) {
-        if (!this.isConnected(recipientAddress)) {
-            debug('cannot send to %s because not in peer book', recipientAddress)
-            return false
-        }
-
-        const ws = this.connections.get(recipientAddress)
-
-        try {
-            ws.send(message)
-            debug('sent to %s message "%s"', recipientAddress, message)
-            return true
-        } catch (e) {
-            console.error('sending to %s failed because of %s', recipientAddress, e)
-            return false
-        }
+    async send(recipientAddress, message) {
+        return new Promise((resolve, reject) => {
+            if (!this.isConnected(recipientAddress)) {
+                debug('cannot send to %s because not in peer book', recipientAddress)
+                reject(new Error(`cannot send to ${recipientAddress} because not in peer book`))
+            } else {
+                try {
+                    const ws = this.connections.get(recipientAddress)
+                    ws.send(message, (err) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            debug('sent to %s message "%s"', recipientAddress, message)
+                            resolve()
+                        }
+                    })
+                } catch (e) {
+                    console.error('sending to %s failed because of %s', recipientAddress, e)
+                    reject(e)
+                }
+            }
+        })
     }
 
     isConnected(address) {
