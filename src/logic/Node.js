@@ -21,7 +21,8 @@ class Node extends EventEmitter {
     constructor(id, trackerNode, nodeToNode) {
         super()
 
-        this.peersInterval = null
+        this.nodeRequestInterval = null
+        this.trackerDiscoveryInterval = null
 
         this.streams = new StreamManager()
         this.subscribers = new SubscriberManager(
@@ -44,7 +45,7 @@ class Node extends EventEmitter {
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.NODE_LIST_RECEIVED, (peersMessage) => {
-            this._clearPeerRequestInterval()
+            this._clearNodeRequestInterval()
             this.protocols.nodeToNode.connectToNodes(peersMessage)
         })
         this.protocols.trackerNode.on(TrackerNode.events.STREAM_ASSIGNED, (streamId) => this.addOwnStream(streamId))
@@ -205,7 +206,7 @@ class Node extends EventEmitter {
     stop(cb) {
         this.debug('stopping')
         this._clearTrackerDiscoveryInterval()
-        this._clearPeerRequestInterval()
+        this._clearNodeRequestInterval()
         this.messageBuffer.clear()
         this.protocols.nodeToNode.stop(cb)
     }
@@ -245,7 +246,7 @@ class Node extends EventEmitter {
 
             if (this.trackers.size === 0) {
                 this.debug('no tracker available')
-                this._clearPeerRequestInterval()
+                this._clearNodeRequestInterval()
             }
         }
     }
@@ -271,10 +272,10 @@ class Node extends EventEmitter {
         }
     }
 
-    _clearPeerRequestInterval() {
-        if (this.peersInterval) {
-            clearInterval(this.peersInterval)
-            this.peersInterval = null
+    _clearNodeRequestInterval() {
+        if (this.nodeRequestInterval) {
+            clearInterval(this.nodeRequestInterval)
+            this.nodeRequestInterval = null
         }
     }
 
@@ -282,7 +283,7 @@ class Node extends EventEmitter {
         // TODO validate ws path
         this.bootstrapNodes = bootstrapNodes
 
-        this._peerDiscoveryTimer = setInterval(() => {
+        this.trackerDiscoveryInterval = setInterval(() => {
             this.bootstrapNodes.forEach((bootstrapNode) => {
                 this.protocols.trackerNode.connectToTracker(bootstrapNode)
             })
@@ -290,17 +291,17 @@ class Node extends EventEmitter {
     }
 
     _clearTrackerDiscoveryInterval() {
-        if (this._peerDiscoveryTimer) {
-            clearInterval(this._peerDiscoveryTimer)
-            this._peerDiscoveryTimer = null
+        if (this.trackerDiscoveryInterval) {
+            clearInterval(this.trackerDiscoveryInterval)
+            this.trackerDiscoveryInterval = null
         }
     }
 
     requestMorePeers() {
         const tracker = this._getTracker()
-        if (this.peersInterval === null) {
+        if (this.nodeRequestInterval === null) {
             this.protocols.trackerNode.sendPeerMessage(tracker)
-            this.peersInterval = setInterval(() => {
+            this.nodeRequestInterval = setInterval(() => {
                 this.protocols.trackerNode.sendPeerMessage(this._getTracker())
             }, 5000)
         }
