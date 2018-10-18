@@ -64,7 +64,7 @@ class WsEndpoint extends EventEmitter {
 
     connect(peerAddress) {
         return new Promise((resolve, reject) => {
-            if (this.connections.has(peerAddress)) {
+            if (this.isConnected(peerAddress)) {
                 debug('found %s already in peer book', peerAddress)
                 resolve()
             } else {
