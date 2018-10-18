@@ -24,10 +24,10 @@ describe('message numbering', () => {
         BOOTNODES.push(tracker.getAddress())
 
         sourceNode = await startNode(LOCALHOST, 33341, 'node1')
-        sourceNode.setBootnodes(BOOTNODES)
+        sourceNode.setBootstrapTrackers(BOOTNODES)
 
         destinationNode = await startNode(LOCALHOST, 33342, 'node2')
-        destinationNode.setBootnodes(BOOTNODES)
+        destinationNode.setBootstrapTrackers(BOOTNODES)
 
         await Promise.all([
             waitForEvent(sourceNode.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),

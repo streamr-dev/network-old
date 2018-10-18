@@ -19,7 +19,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         expect(tracker.protocols.trackerServer.endpoint.connections.size).toBe(0)
 
         node1 = await startNode(LOCALHOST, 33371, 'node1')
-        node1.setBootnodes(BOOTNODES)
+        node1.setBootstrapTrackers(BOOTNODES)
 
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         expect(tracker.nodes.size).toBe(1)
@@ -28,7 +28,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         expect(node1.protocols.trackerNode.endpoint.connections.size).toBe(1)
 
         node2 = await startNode(LOCALHOST, 33372, 'node2')
-        node2.setBootnodes(BOOTNODES)
+        node2.setBootstrapTrackers(BOOTNODES)
 
         await Promise.all([
             waitForEvent(node1.protocols.trackerNode, TrackerNode.events.NODE_LIST_RECEIVED),

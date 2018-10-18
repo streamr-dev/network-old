@@ -23,6 +23,7 @@ class Node extends EventEmitter {
 
         this.nodeRequestInterval = null
         this.trackerDiscoveryInterval = null
+        this.bootstrapTrackers = []
 
         this.streams = new StreamManager()
         this.subscribers = new SubscriberManager(
@@ -275,13 +276,13 @@ class Node extends EventEmitter {
         }
     }
 
-    setBootnodes(bootstrapNodes) {
+    setBootstrapTrackers(bootstrapTrackers) {
         // TODO validate ws path
-        this.bootstrapNodes = bootstrapNodes
+        this.bootstrapTrackers = bootstrapTrackers
 
         const discoverTrackers = () => {
-            this.bootstrapNodes.forEach((bootstrapNode) => {
-                this.protocols.trackerNode.connectToTracker(bootstrapNode)
+            this.bootstrapTrackers.forEach((tracker) => {
+                this.protocols.trackerNode.connectToTracker(tracker)
             })
         }
 
@@ -311,7 +312,7 @@ class Node extends EventEmitter {
     }
 
     _isTracker(tracker) {
-        return this.bootstrapNodes.includes(tracker)
+        return this.bootstrapTrackers.includes(tracker)
     }
 
     _isNode(peer) {

@@ -5,7 +5,7 @@ const port = process.argv[2] || 30301
 
 startNode('127.0.0.1', port, 'node' + port)
     .then((node) => {
-        node.setBootnodes(BOOTNODES)
+        node.setBootstrapTrackers(BOOTNODES)
     })
     .catch((err) => {
         console.error(err)
