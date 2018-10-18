@@ -20,9 +20,15 @@ class WsEndpoint extends EventEmitter {
 
         this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
-            const peerId = parameters.query.address
+            const { id: peerId, address } = parameters.query
 
-            this._onConnected(ws, peerId)
+            if (!address || !peerId) {
+                ws.terminate()
+                debug('dropped connection to me because address/id parameters not given')
+            } else {
+                debug('%s connected to me', address)
+                this._onConnected(ws, address)
+            }
         })
 
         debug('node started')
