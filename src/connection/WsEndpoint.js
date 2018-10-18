@@ -65,22 +65,29 @@ class WsEndpoint extends EventEmitter {
     }
 
     connect(peerAddress) {
-        if (this.connections.has(peerAddress)) {
-            return
-        }
+        return new Promise((resolve, reject) => {
+            if (this.connections.has(peerAddress)) {
+                debug('found %s already in peer book', peerAddress)
+                resolve()
+            } else {
+                try {
+                    const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
 
-        try {
-            const ws = new WebSocket(`${peerAddress}?id=${this.id}&address=${this.getAddress()}`)
+                    ws.on('open', () => {
+                        this._onConnected(ws, peerAddress)
+                        resolve()
+                    })
 
-            ws.on('open', () => {
-                this._onConnected(ws, peerAddress)
-            })
-            ws.on('error', (err) => {
-                debug('failed to connect to %s, error: %o', peerAddress, err)
-            })
-        } catch (err) {
-            debug('failed to connect to %s, error: %o', peerAddress, err)
-        }
+                    ws.on('error', (err) => {
+                        debug('failed to connect to %s, error: %o', peerAddress, err)
+                        reject(err)
+                    })
+                } catch (err) {
+                    debug('failed to connect to %s, error: %o', peerAddress, err)
+                    reject(err)
+                }
+            }
+        })
     }
 
     _onConnected(ws, address) {
