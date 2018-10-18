@@ -88,25 +88,23 @@ class WsEndpoint extends EventEmitter {
         }
     }
 
-    _onConnected(ws, peerId) {
-        // eslint-disable-next-line no-param-reassign
-        ws.peerId = peerId
-        this.connections.set(peerId, ws)
-
-        debug('connected -> %s', ws.peerId)
-
+    _onConnected(ws, address) {
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
-            this.onReceive(ws.peerId, message)
+            this.onReceive(address, message)
         })
 
-        ws.on('close', () => {
-            debug('disconnected -> %s', ws.peerId)
-            this.connections.delete(ws.peerId)
-            this.emit(Endpoint.events.PEER_DISCONNECTED, ws.peerId)
+        ws.on('close', (code, reason) => {
+            debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+            this.connections.delete(address)
+            debug('removed %s from peer book', address)
+            this.emit(Endpoint.events.PEER_DISCONNECTED, address)
         })
 
-        this.emit(Endpoint.events.PEER_CONNECTED, ws.peerId)
+        this.connections.set(address, ws)
+        debug('added %s to peer book', address)
+
+        this.emit(Endpoint.events.PEER_CONNECTED, address)
     }
 
     async stop(callback = true) {
