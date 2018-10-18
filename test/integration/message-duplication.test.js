@@ -1,5 +1,5 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { callbackToPromise, BOOTNODES } = require('../../src/util')
+const { callbackToPromise } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
@@ -16,16 +16,20 @@ describe('duplicate message detection and avoidance', () => {
     let numOfReceivedMessages
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30350)
-        BOOTNODES.push(tracker.getAddress())
-        leaderNode = await startNetworkNode(LOCALHOST, 30351)
+        tracker = await startTracker(LOCALHOST, 30350, 'tracker')
+        leaderNode = await startNetworkNode(LOCALHOST, 30351, 'leaderNode')
+        leaderNode.setBootstrapTrackers([tracker.getAddress()])
+
         repeaterNodes = await Promise.all([
-            startNetworkNode(LOCALHOST, 30352),
-            startNetworkNode(LOCALHOST, 30353),
-            startNetworkNode(LOCALHOST, 30354),
-            startNetworkNode(LOCALHOST, 30355),
-            startNetworkNode(LOCALHOST, 30356),
+            startNetworkNode(LOCALHOST, 30352, 'repeaterNode-1'),
+            startNetworkNode(LOCALHOST, 30353, 'repeaterNode-2'),
+            startNetworkNode(LOCALHOST, 30354, 'repeaterNode-3'),
+            startNetworkNode(LOCALHOST, 30355, 'repeaterNode-4'),
+            startNetworkNode(LOCALHOST, 30356, 'repeaterNode-5'),
         ])
+        repeaterNodes.forEach((repeaterNode) => {
+            repeaterNode.setBootstrapTrackers([tracker.getAddress()])
+        })
 
         // Wait for nodes to connect to each other
         await Promise.all([
