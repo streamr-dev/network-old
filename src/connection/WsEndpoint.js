@@ -35,29 +35,26 @@ class WsEndpoint extends EventEmitter {
         debug('listening on: %s', this.getAddress())
     }
 
-    send(recipient, message) {
-        debug('sending to peer %s message with data "%s"', recipient, message)
-
-        let ws
-
-        if (this.connections.has(recipient)) {
-            ws = this.connections.get(recipient)
-        } else {
-            debug('trying to send not existing socket %s', recipient)
+    send(recipientAddress, message) {
+        if (!this.isConnected(recipientAddress)) {
+            debug('cannot send to %s because not in peer book', recipientAddress)
             return false
         }
 
+        const ws = this.connections.get(recipientAddress)
+
         try {
             ws.send(message)
+            debug('sent to %s message "%s"', recipientAddress, message)
+            return true
         } catch (e) {
-            console.error('Sorry, the web socket at "%s" is un-available')
+            console.error('sending to %s failed because of %s', recipientAddress, e)
+            return false
         }
-
-        return true
     }
 
-    isConnected(socketAddress) {
-        return this.connections.has(socketAddress)
+    isConnected(address) {
+        return this.connections.has(address)
     }
 
     async onReceive(sender, message) {
