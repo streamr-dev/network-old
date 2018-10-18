@@ -279,15 +279,18 @@ class Node extends EventEmitter {
         }
     }
 
-    setBootnodes(bootstrapNodes, delay = 3000) {
+    setBootnodes(bootstrapNodes) {
         // TODO validate ws path
         this.bootstrapNodes = bootstrapNodes
 
-        this.trackerDiscoveryInterval = setInterval(() => {
+        const discoverTrackers = () => {
             this.bootstrapNodes.forEach((bootstrapNode) => {
                 this.protocols.trackerNode.connectToTracker(bootstrapNode)
             })
-        }, delay)
+        }
+
+        discoverTrackers()
+        this.trackerDiscoveryInterval = setInterval(discoverTrackers, 5000)
     }
 
     _clearTrackerDiscoveryInterval() {
