@@ -1,6 +1,6 @@
 const { DEFAULT_TIMEOUT, LOCALHOST, waitForEvent } = require('../util')
 const endpointEvents = require('../../src/connection/Endpoint').events
-const { createEndpoint } = require('../../src/composition')
+const { startEndpoint } = require('../../src/connection/WsEndpoint')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
@@ -12,7 +12,7 @@ describe('create five endpoints and init connection between them', () => {
     it('should be able to start and stop successfully', async (done) => {
         for (let i = 0; i < MAX; i++) {
             // eslint-disable-next-line no-await-in-loop
-            const endpoint = await createEndpoint(LOCALHOST, 30690 + i, '', true).catch((err) => { throw err })
+            const endpoint = await startEndpoint(LOCALHOST, 30690 + i, '', true).catch((err) => { throw err })
             endpoints.push(endpoint)
         }
 

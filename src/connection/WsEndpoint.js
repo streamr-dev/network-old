@@ -7,7 +7,7 @@ const uuidv4 = require('uuid/v4')
 
 const Endpoint = require('./Endpoint')
 
-module.exports = class WsEndpoint extends EventEmitter {
+class WsEndpoint extends EventEmitter {
     constructor(node, id) {
         super()
         this.wss = node
@@ -120,4 +120,33 @@ module.exports = class WsEndpoint extends EventEmitter {
     getPeers() {
         return this.connections
     }
+}
+
+async function startWebsocketServer(host, port) {
+    return new Promise((resolve, reject) => {
+        const wss = new WebSocket.Server(
+            {
+                host,
+                port,
+                clientTracking: true
+            }
+        )
+
+        wss.on('error', (err) => {
+            reject(err)
+        })
+
+        wss.on('listening', () => {
+            resolve(wss)
+        })
+    })
+}
+
+async function startEndpoint(host, port, id) {
+    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n, id))
+}
+
+module.exports = {
+    WsEndpoint,
+    startEndpoint
 }
