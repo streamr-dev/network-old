@@ -12,7 +12,7 @@ describe('create five endpoints and init connection between them', () => {
     it('should be able to start and stop successfully', async () => {
         for (let i = 0; i < MAX; i++) {
             // eslint-disable-next-line no-await-in-loop
-            const endpoint = await startEndpoint(LOCALHOST, 30690 + i, '', true).catch((err) => { throw err })
+            const endpoint = await startEndpoint(LOCALHOST, 30690 + i, {}).catch((err) => { throw err })
             endpoints.push(endpoint)
         }
 

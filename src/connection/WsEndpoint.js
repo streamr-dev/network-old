@@ -7,9 +7,18 @@ const WebSocket = require('ws')
 const Endpoint = require('./Endpoint')
 
 class WsEndpoint extends EventEmitter {
-    constructor(wss) {
+    constructor(wss, customHeaders) {
         super()
+
+        if (!wss) {
+            throw new Error('wss not given')
+        }
+        if (!customHeaders) {
+            throw new Error('customHeaders not given')
+        }
+
         this.wss = wss
+        this.customHeaders = customHeaders
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
@@ -75,7 +84,9 @@ class WsEndpoint extends EventEmitter {
                 resolve()
             } else {
                 try {
-                    const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`)
+                    const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`, {
+                        headers: this.customHeaders
+                    })
 
                     ws.on('open', () => {
                         this._onConnected(ws, peerAddress)
@@ -152,8 +163,8 @@ async function startWebsocketServer(host, port) {
     })
 }
 
-async function startEndpoint(host, port) {
-    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n))
+async function startEndpoint(host, port, customHeaders) {
+    return startWebsocketServer(host, port).then((n) => new WsEndpoint(n, customHeaders))
 }
 
 module.exports = {
