@@ -6,6 +6,40 @@ const WebSocket = require('ws')
 
 const Endpoint = require('./Endpoint')
 
+class CustomHeaders {
+    constructor(headers) {
+        this.headers = this._transformToObjectWithLowerCaseKeys(headers)
+    }
+
+    pluckCustomHeadersFromObject(object) {
+        const headerNames = Object.keys(this.headers)
+        const objectWithLowerCaseKeys = this._transformToObjectWithLowerCaseKeys(object)
+        return headerNames.reduce((acc, headerName) => {
+            return {
+                ...acc,
+                [headerName]: objectWithLowerCaseKeys[headerName]
+            }
+        }, {})
+    }
+
+    asObject() {
+        return this.headers
+    }
+
+    asArray() {
+        return Object.entries(this.headers)
+            .map(([name, value]) => `${name}: ${value}`)
+    }
+
+    _transformToObjectWithLowerCaseKeys(o) {
+        const transformedO = {}
+        Object.entries(o).forEach(([k, v]) => {
+            transformedO[k.toLowerCase()] = v
+        })
+        return transformedO
+    }
+}
+
 class WsEndpoint extends EventEmitter {
     constructor(wss, customHeaders) {
         super()
@@ -18,7 +52,7 @@ class WsEndpoint extends EventEmitter {
         }
 
         this.wss = wss
-        this.customHeaders = customHeaders
+        this.customHeaders = new CustomHeaders(customHeaders)
 
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
@@ -40,10 +74,7 @@ class WsEndpoint extends EventEmitter {
 
         // Add identity to server response headers before they are sent to client
         this.wss.on('headers', (headers) => {
-            Object.keys(this.customHeaders).forEach((headerName) => {
-                const headerValue = this.customHeaders[headerName]
-                headers.push(`${headerName}: ${headerValue}`)
-            })
+            headers.push(...this.customHeaders.asArray())
         })
 
         debug('node started')
@@ -93,7 +124,7 @@ class WsEndpoint extends EventEmitter {
             } else {
                 try {
                     const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`, {
-                        headers: this.customHeaders
+                        headers: this.customHeaders.asObject()
                     })
 
                     ws.on('open', () => {
@@ -176,6 +207,7 @@ async function startEndpoint(host, port, customHeaders) {
 }
 
 module.exports = {
+    CustomHeaders,
     WsEndpoint,
     startEndpoint
 }
