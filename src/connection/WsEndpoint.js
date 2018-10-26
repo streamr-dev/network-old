@@ -38,6 +38,14 @@ class WsEndpoint extends EventEmitter {
             }
         })
 
+        // Add identity to server response headers before they are sent to client
+        this.wss.on('headers', (headers) => {
+            Object.keys(this.customHeaders).forEach((headerName) => {
+                const headerValue = this.customHeaders[headerName]
+                headers.push(`${headerName}: ${headerValue}`)
+            })
+        })
+
         debug('node started')
         debug('listening on: %s', this.getAddress())
     }
