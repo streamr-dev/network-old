@@ -62,13 +62,14 @@ class WsEndpoint extends EventEmitter {
         this.wss.on('connection', (ws, req) => {
             const parameters = url.parse(req.url, true)
             const { address } = parameters.query
+            const customHeadersOfClient = this.customHeaders.pluckCustomHeadersFromObject(req.headers)
 
             if (!address) {
                 ws.terminate()
                 debug('dropped connection to me because address parameter not given')
             } else {
                 debug('%s connected to me', address)
-                this._onConnected(ws, address)
+                this._onConnected(ws, address, customHeadersOfClient)
             }
         })
 
@@ -123,13 +124,22 @@ class WsEndpoint extends EventEmitter {
                 resolve()
             } else {
                 try {
+                    let customHeadersOfServer
                     const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`, {
                         headers: this.customHeaders.asObject()
                     })
 
+                    ws.on('upgrade', (response) => {
+                        customHeadersOfServer = this.customHeaders.pluckCustomHeadersFromObject(response.headers)
+                    })
+
                     ws.on('open', () => {
-                        this._onConnected(ws, peerAddress)
-                        resolve()
+                        if (!customHeadersOfServer) {
+                            reject(new Error('upgrade event never received?'))
+                        } else {
+                            this._onConnected(ws, peerAddress, customHeadersOfServer)
+                            resolve()
+                        }
                     })
 
                     ws.on('error', (err) => {
@@ -144,7 +154,7 @@ class WsEndpoint extends EventEmitter {
         })
     }
 
-    _onConnected(ws, address) {
+    _onConnected(ws, address, customHeaders) {
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
             this.onReceive(address, message)
@@ -158,9 +168,9 @@ class WsEndpoint extends EventEmitter {
         })
 
         this.connections.set(address, ws)
-        debug('added %s to peer book', address)
+        debug('added %s to peer book (headers %o)', address, customHeaders)
 
-        this.emit(Endpoint.events.PEER_CONNECTED, address)
+        this.emit(Endpoint.events.PEER_CONNECTED, address, customHeaders)
     }
 
     async stop(callback = () => {}) {
