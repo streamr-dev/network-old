@@ -1,5 +1,4 @@
 const { EventEmitter } = require('events')
-const uuidv4 = require('uuid/v4')
 const createDebug = require('debug')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
@@ -36,7 +35,7 @@ class Node extends EventEmitter {
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
 
-        this.id = id || uuidv4()
+        this.id = id
         this.trackers = new Map()
 
         this.protocols = {

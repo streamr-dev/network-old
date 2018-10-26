@@ -1,5 +1,4 @@
 const { EventEmitter } = require('events')
-const uuidv4 = require('uuid/v4')
 const createDebug = require('debug')
 const { getIdShort } = require('../util')
 
@@ -7,7 +6,7 @@ module.exports = class Client extends EventEmitter {
     constructor(id, nodeToNode, nodeAddress) {
         super()
 
-        this.id = id || uuidv4()
+        this.id = id
         this.nodeAddress = nodeAddress
         this.protocols = {
             nodeToNode

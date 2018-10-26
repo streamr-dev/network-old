@@ -1,3 +1,4 @@
+const uuidv4 = require('uuid/v4')
 const TrackerServer = require('./protocol/TrackerServer')
 const TrackerNode = require('./protocol/TrackerNode')
 const NodeToNode = require('./protocol/NodeToNode')
@@ -7,7 +8,7 @@ const Client = require('./logic/Client')
 const NetworkNode = require('./NetworkNode')
 const { startEndpoint } = require('./connection/WsEndpoint')
 
-async function startTracker(host, port, id) {
+async function startTracker(host, port, id = uuidv4()) {
     return startEndpoint(host, port).then((endpoint) => {
         return new Tracker(id, new TrackerServer(endpoint))
     }).catch((err) => {
@@ -15,7 +16,7 @@ async function startTracker(host, port, id) {
     })
 }
 
-async function startNode(host, port, id) {
+async function startNode(host, port, id = uuidv4()) {
     return startEndpoint(host, port).then((endpoint) => {
         return new Node(id, new TrackerNode(endpoint), new NodeToNode(endpoint))
     }).catch((err) => {
@@ -23,7 +24,7 @@ async function startNode(host, port, id) {
     })
 }
 
-async function startClient(host, port, id, nodeAddress) {
+async function startClient(host, port, id = uuidv4(), nodeAddress) {
     return startEndpoint(host, port).then((endpoint) => {
         return new Client(id, new NodeToNode(endpoint), nodeAddress)
     }).catch((err) => {
@@ -31,7 +32,7 @@ async function startClient(host, port, id, nodeAddress) {
     })
 }
 
-async function startNetworkNode(host, port, id) {
+async function startNetworkNode(host, port, id = uuidv4()) {
     return startEndpoint(host, port).then((endpoint) => {
         return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint))
     }).catch((err) => {

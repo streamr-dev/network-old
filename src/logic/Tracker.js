@@ -1,5 +1,4 @@
 const { EventEmitter } = require('events')
-const uuidv4 = require('uuid/v4')
 const createDebug = require('debug')
 const { getAddress, getIdShort } = require('../util')
 const TrackerServer = require('../protocol/TrackerServer')
@@ -11,7 +10,7 @@ module.exports = class Tracker extends EventEmitter {
 
         this.nodes = new Map()
 
-        this.id = id || uuidv4()
+        this.id = id
         this.protocols = {
             trackerServer
         }
