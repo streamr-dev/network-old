@@ -17,7 +17,7 @@ const events = Object.freeze({
 })
 
 class Node extends EventEmitter {
-    constructor(id, trackerNode, nodeToNode) {
+    constructor(id, peerBook, trackerNode, nodeToNode) {
         super()
 
         this.nodeRequestInterval = null
@@ -36,6 +36,7 @@ class Node extends EventEmitter {
         })
 
         this.id = id
+        this.peerBook = peerBook
         this.trackers = new Map()
 
         this.protocols = {

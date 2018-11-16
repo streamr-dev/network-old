@@ -3,10 +3,11 @@ const createDebug = require('debug')
 const { getIdShort } = require('../util')
 
 module.exports = class Client extends EventEmitter {
-    constructor(id, nodeToNode, nodeAddress) {
+    constructor(id, peerBook, nodeToNode, nodeAddress) {
         super()
 
         this.id = id
+        this.peerBook = peerBook
         this.nodeAddress = nodeAddress
         this.protocols = {
             nodeToNode

@@ -5,12 +5,13 @@ const TrackerServer = require('../protocol/TrackerServer')
 const { getPeersTopology } = require('../helpers/TopologyStrategy')
 
 module.exports = class Tracker extends EventEmitter {
-    constructor(id, trackerServer) {
+    constructor(id, peerBook, trackerServer) {
         super()
 
         this.nodes = new Map()
 
         this.id = id
+        this.peerBook = peerBook
         this.protocols = {
             trackerServer
         }
