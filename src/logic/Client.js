@@ -1,6 +1,5 @@
 const { EventEmitter } = require('events')
 const createDebug = require('debug')
-const { getIdShort } = require('../util')
 
 module.exports = class Client extends EventEmitter {
     constructor(id, peerBook, nodeToNode, nodeAddress) {

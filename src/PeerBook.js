@@ -9,4 +9,8 @@ module.exports = class PeerBook {
             this.addressToType[peer] = customHeaders['streamr-peer-type']
         })
     }
+
+    getShortId(address) {
+        return this.addressToId[address]
+    }
 }
