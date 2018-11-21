@@ -6,7 +6,7 @@ const Tracker = require('./logic/Tracker')
 const Node = require('./logic/Node')
 const Client = require('./logic/Client')
 const NetworkNode = require('./NetworkNode')
-const PeerBook = require('./PeerBook')
+const PeerBook = require('./protocol/PeerBook')
 const { startEndpoint } = require('./connection/WsEndpoint')
 
 async function startTracker(host, port, id = uuidv4()) {
