@@ -51,15 +51,15 @@ class TrackerNode extends EventEmitter {
     }
 
     onPeerConnected(peerId) {
-        this.emit(events.CONNECTED_TO_TRACKER, peerId)
+        if (this.peerBook.isTracker(peerId)) {
+            this.emit(events.CONNECTED_TO_TRACKER, peerId)
+        }
     }
 
     onPeerDisconnected(peerId) {
-        this.emit(events.TRACKER_DISCONNECTED, peerId)
-    }
-
-    isTracker(peerId) {
-        return this.peerBook.hasPeerId(peerId) && this.peerBook.getType(peerId) === 'tracker'
+        if (this.peerBook.isTracker(peerId)) {
+            this.emit(events.TRACKER_DISCONNECTED, peerId)
+        }
     }
 }
 

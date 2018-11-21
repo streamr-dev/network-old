@@ -62,12 +62,10 @@ class Node extends EventEmitter {
     }
 
     onConnectedToTracker(tracker) {
-        if (this._isTracker(tracker)) {
-            this.debug('connected to tracker %s', tracker)
-            this.trackers.add(tracker)
-            this._sendStatus(tracker)
-            this._handlePendingSubscriptions()
-        }
+        this.debug('connected to tracker %s', tracker)
+        this.trackers.add(tracker)
+        this._sendStatus(tracker)
+        this._handlePendingSubscriptions()
     }
 
     addOwnStream(streamId) {
@@ -146,7 +144,7 @@ class Node extends EventEmitter {
         const streamId = subscribeMessage.getStreamId()
         const source = subscribeMessage.getSource()
         this.subscribers.addSubscriber(streamId, source)
-        this.debug('node %s added as a subscriber for stream %s', subscribeMessage, streamId)
+        this.debug('node %s added as a subscriber for stream %s', source, streamId)
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
@@ -217,16 +215,12 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
-        if (this._isNode(node)) {
-            this.subscribers.removeSubscriberFromAllStreams(node)
-            this.debug('removed all subscriptions of node %s', node)
-        }
+        this.subscribers.removeSubscriberFromAllStreams(node)
+        this.debug('removed all subscriptions of node %s', node)
     }
 
     onTrackerDisconnected(tracker) {
-        if (this._isTracker(tracker)) {
-            this.trackers.delete(tracker)
-        }
+        this.trackers.delete(tracker)
     }
 
     _handleBufferedMessages(streamId) {
@@ -276,14 +270,6 @@ class Node extends EventEmitter {
 
     _getTracker() {
         return [...this.trackers][Math.floor(Math.random() * this.trackers.size)]
-    }
-
-    _isTracker(tracker) {
-        return this.protocols.trackerNode.isTracker(tracker)
-    }
-
-    _isNode(peer) {
-        return !this._isTracker(peer)
     }
 }
 

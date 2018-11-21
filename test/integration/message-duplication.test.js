@@ -34,12 +34,12 @@ describe('duplicate message detection and avoidance', () => {
 
         // Wait for nodes to connect to each other
         await Promise.all([
-            waitForEvent(contactNode.protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
-            waitForEvent(otherNodes[0].protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
-            waitForEvent(otherNodes[1].protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
-            waitForEvent(otherNodes[2].protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
-            waitForEvent(otherNodes[3].protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
-            waitForEvent(otherNodes[4].protocols.nodeToNode, NodeToNode.events.NODE_CONNECTED),
+            waitForEvent(contactNode.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(otherNodes[0].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(otherNodes[1].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(otherNodes[2].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(otherNodes[3].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(otherNodes[4].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
         ])
 
         // Make contactNode responsible for stream
