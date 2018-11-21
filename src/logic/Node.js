@@ -34,7 +34,7 @@ class Node extends EventEmitter {
         })
 
         this.id = id
-        this.trackers = new Map()
+        this.trackers = new Set()
 
         this.protocols = {
             trackerNode,
@@ -64,7 +64,7 @@ class Node extends EventEmitter {
     onConnectedToTracker(tracker) {
         if (this._isTracker(tracker)) {
             this.debug('connected to tracker %s', tracker)
-            this.trackers.set(tracker, tracker)
+            this.trackers.add(tracker)
             this._sendStatus(tracker)
             this._handlePendingSubscriptions()
         }
@@ -208,7 +208,7 @@ class Node extends EventEmitter {
     }
 
     _sendStatusToAllTrackers() {
-        this.trackers.forEach((tracker, _) => this._sendStatus(tracker))
+        this.trackers.forEach((tracker) => this._sendStatus(tracker))
     }
 
     _sendStatus(tracker) {
@@ -275,7 +275,7 @@ class Node extends EventEmitter {
     }
 
     _getTracker() {
-        return this.trackers.get([...this.trackers.keys()][Math.floor(Math.random() * this.trackers.size)])
+        return [...this.trackers][Math.floor(Math.random() * this.trackers.size)]
     }
 
     _isTracker(tracker) {
