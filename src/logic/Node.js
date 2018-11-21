@@ -79,10 +79,11 @@ class Node extends EventEmitter {
         this._handleBufferedMessages(streamId)
     }
 
-    addKnownStream(streamMessage) {
+    async addKnownStream(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
 
+        await this.protocols.nodeToNode.connectToNodes(nodeAddresses)
         this.streams.markKnownStream(streamId, nodeAddresses)
         this.debug('known stream %s nodes set to %j', streamId, nodeAddresses.map((a) => this.peerBook.getShortId(a)))
 
