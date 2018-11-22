@@ -103,7 +103,7 @@ class Node extends EventEmitter {
     }
 
     _isReady(streamId) {
-        return this.streams.getInboundNodesForStream(streamId).length > 0
+        return this.streams.getOutboundNodesForStream(streamId).length > 0
     }
 
     _isSubscribed(streamId) {
