@@ -7,8 +7,7 @@ const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
-    MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed',
-    SUBSCRIBED_TO_STREAM: 'streamr:node:subscribed-to-stream'
+    MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed'
 })
 
 class Node extends EventEmitter {
@@ -126,7 +125,6 @@ class Node extends EventEmitter {
         if (!leechOnly) {
             this.streams.addInboundNode(streamId, source)
         }
-        this.emit(events.SUBSCRIBED_TO_STREAM, streamId, source) // TODO: only when acknowledged??
         this._handleBufferedMessages(streamId)
         this.debug('node %s subscribed to stream %s', source, streamId)
     }
@@ -170,7 +168,6 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.sendSubscribe(node, streamId, false)
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-        this.emit(events.SUBSCRIBED_TO_STREAM, streamId, node) // TODO: only when acknowledged??
         this._handleBufferedMessages(streamId) // TODO:
     }
 

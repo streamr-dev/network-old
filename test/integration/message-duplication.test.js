@@ -28,17 +28,12 @@ describe('duplicate message detection and avoidance', () => {
         ])
         await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
 
-        // Make contactNode responsible for stream
-        contactNode.publish('stream-id', 0, {}, 90, null)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-
         // Become subscribers (one-by-one, for well connected graph)
-        await otherNodes[0].subscribe('stream-id', 0)
-        await otherNodes[1].subscribe('stream-id', 0)
-        await otherNodes[2].subscribe('stream-id', 0)
-        await otherNodes[3].subscribe('stream-id', 0)
-        await otherNodes[4].subscribe('stream-id', 0)
-        await wait(500) // TODO: remove when ack
+        otherNodes[0].subscribe('stream-id', 0)
+        otherNodes[1].subscribe('stream-id', 0)
+        otherNodes[2].subscribe('stream-id', 0)
+        otherNodes[3].subscribe('stream-id', 0)
+        otherNodes[4].subscribe('stream-id', 0)
 
         // Set up 1st test case
         numOfReceivedMessages = [0, 0, 0, 0, 0]
