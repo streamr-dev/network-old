@@ -7,7 +7,6 @@ const PeerBook = require('./PeerBook')
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:peer:send-status',
     STREAM_INFO_RECEIVED: 'streamr:node:found-stream',
-    STREAM_ASSIGNED: 'streamr:node:stream-assigned',
     TRACKER_DISCONNECTED: 'streamr:tracker-node:tracker-disconnected'
 })
 
@@ -35,11 +34,7 @@ class TrackerNode extends EventEmitter {
     onMessageReceived(message) {
         switch (message.getCode()) {
             case encoder.STREAM:
-                if (message.getNodeAddresses().includes(this.endpoint.getAddress())) { // TODO: wtf to do there
-                    this.emit(events.STREAM_ASSIGNED, message.getStreamId())
-                } else {
-                    this.emit(events.STREAM_INFO_RECEIVED, message)
-                }
+                this.emit(events.STREAM_INFO_RECEIVED, message)
                 break
             default:
                 break

@@ -1,11 +1,10 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
-const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 
-jest.setTimeout(DEFAULT_TIMEOUT * 600) // TODO: remove 600
+jest.setTimeout(DEFAULT_TIMEOUT)
 
 /**
  * This test verifies that on receiving a duplicate message, it is not re-emitted to the node's subscribers.
@@ -44,20 +43,15 @@ describe('duplicate message detection and avoidance', () => {
 
         // Make contactNode responsible for stream
         contactNode.publish('stream-id', 0, {}, 90, null)
-        await waitForEvent(contactNode.protocols.trackerNode, TrackerNode.events.STREAM_ASSIGNED)
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
         // Become subscribers (one-by-one, for well connected graph)
         await otherNodes[0].subscribe('stream-id', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         await otherNodes[1].subscribe('stream-id', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         await otherNodes[2].subscribe('stream-id', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         await otherNodes[3].subscribe('stream-id', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         await otherNodes[4].subscribe('stream-id', 0)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await wait(500) // TODO: remove when ack
 
         // Set up 1st test case
         numOfReceivedMessages = [0, 0, 0, 0, 0]

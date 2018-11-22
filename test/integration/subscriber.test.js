@@ -1,7 +1,6 @@
 const { startClient, startNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
 const { waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
-const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 
@@ -46,7 +45,6 @@ describe('Selecting leader for the stream and sending messages to two subscriber
 
         await waitForEvent(nodeOne.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED)
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.STREAM_INFO_REQUESTED)
-        await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.STREAM_ASSIGNED)
 
         subscriber1.subscribe(streamId)
         subscriber2.subscribe(streamId)
@@ -55,7 +53,8 @@ describe('Selecting leader for the stream and sending messages to two subscriber
             waitForEvent(subscriber1.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED),
             waitForEvent(subscriber2.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED)
         ]).then(() => {
-            expect(nodeTwo.subscribers.subscribersForStream(streamId).length).toEqual(2)
+            expect(nodeTwo.streams.getOutboundNodesForStream(streamId)).toContain('subscriber-1')
+            expect(nodeTwo.streams.getOutboundNodesForStream(streamId)).toContain('subscriber-2')
             clearInterval(publisherInterval)
 
             done()

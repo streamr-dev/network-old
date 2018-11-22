@@ -79,6 +79,8 @@ describe('message propagation in network', () => {
         n3.subscribeToStream('stream-1')
         await waitForEvent(n2.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
+        await wait(1000)
+
         for (let i = 0; i < 5; ++i) {
             const dataMessage = new DataMessage('stream-1', {
                 messageNo: i
@@ -94,8 +96,7 @@ describe('message propagation in network', () => {
             await wait(500)
         }
 
-        expect(n1Messages).toEqual([])
-        expect(n2Messages).toEqual([
+        expect(n1Messages).toEqual([
             {
                 streamId: 'stream-1',
                 payload: {
@@ -127,6 +128,7 @@ describe('message propagation in network', () => {
                 }
             }
         ])
+        expect(n2Messages).toEqual(n1Messages)
         expect(n3Messages).toEqual(n2Messages)
         expect(n4Messages).toEqual([])
     })

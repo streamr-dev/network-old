@@ -3,7 +3,6 @@ const Node = require('../../src/logic/Node')
 const { callbackToPromise } = require('../../src/util')
 const { waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const TrackerServer = require('../../src/protocol/TrackerServer')
 
 const DataMessage = require('../../src/messages/DataMessage')
 
@@ -21,13 +20,13 @@ describe('message buffering of Node', () => {
     const BOOTNODES = []
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30320)
+        tracker = await startTracker(LOCALHOST, 30320, 'tracker')
         BOOTNODES.push(tracker.getAddress())
 
-        sourceNode = await startNode(LOCALHOST, 30321)
+        sourceNode = await startNode(LOCALHOST, 30321, 'source-node')
         sourceNode.setBootstrapTrackers(BOOTNODES)
 
-        destinationNode = await startNode(LOCALHOST, 30322)
+        destinationNode = await startNode(LOCALHOST, 30322, 'destination-node')
         destinationNode.setBootstrapTrackers(BOOTNODES)
 
         await Promise.all([
@@ -52,13 +51,12 @@ describe('message buffering of Node', () => {
         })
 
         destinationNode.subscribeToStream('stream-id')
-        await waitForEvent(destinationNode, Node.events.SUBSCRIBED_TO_STREAM)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
         // "Client" pushes data
         const dataMessage = new DataMessage('stream-id', {
             hello: 'world'
         }, 1, null)
         sourceNode.onDataReceived(dataMessage)
+        await waitForEvent(sourceNode, Node.events.MESSAGE_RECEIVED)
     })
 })
