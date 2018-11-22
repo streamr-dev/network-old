@@ -1,7 +1,6 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
-const { wait, waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { wait, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 

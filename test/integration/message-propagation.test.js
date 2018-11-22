@@ -1,10 +1,8 @@
 const Node = require('../../src/logic/Node')
-const NodeToNode = require('../../src/protocol/NodeToNode')
-const TrackerServer = require('../../src/protocol/TrackerServer')
 const DataMessage = require('../../src/messages/DataMessage')
 const { startTracker, startNode } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
-const { wait, waitForEvent, LOCALHOST } = require('../../test/util')
+const { wait, LOCALHOST } = require('../../test/util')
 
 jest.setTimeout(90000)
 
@@ -67,10 +65,7 @@ describe('message propagation in network', () => {
         }))
 
         n2.subscribeToStreamIfNeeded('stream-1')
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-
         n3.subscribeToStreamIfNeeded('stream-1')
-        await waitForEvent(n2.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
         await wait(1000)
 
