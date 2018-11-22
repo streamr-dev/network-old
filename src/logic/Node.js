@@ -77,7 +77,6 @@ class Node extends EventEmitter {
 
     onDataReceived(dataMessage) {
         const streamId = dataMessage.getStreamId()
-        const data = dataMessage.getData()
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
 
@@ -91,11 +90,7 @@ class Node extends EventEmitter {
                 this.metrics.received.duplicates += 1
             }
         } else {
-            this.messageBuffer.put(streamId, {
-                data,
-                number,
-                previousNumber
-            })
+            this.messageBuffer.put(streamId, dataMessage)
             if (!this._isSubscribed(streamId)) {
                 this.subscribeToStream(streamId)
             }
@@ -196,8 +191,7 @@ class Node extends EventEmitter {
 
     _handleBufferedMessages(streamId) {
         this.messageBuffer.popAll(streamId)
-            .forEach((content) => {
-                const dataMessage = new DataMessage(streamId, content.data, content.number, content.previousNumber)
+            .forEach((dataMessage) => {
                 // TODO bad idea to call events directly
                 this.onDataReceived(dataMessage)
             })
