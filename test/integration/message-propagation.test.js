@@ -1,6 +1,5 @@
 const Node = require('../../src/logic/Node')
 const NodeToNode = require('../../src/protocol/NodeToNode')
-const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const DataMessage = require('../../src/messages/DataMessage')
 const { startTracker, startNode } = require('../../src/composition')
@@ -15,11 +14,9 @@ describe('message propagation in network', () => {
     let n2
     let n3
     let n4
-    const BOOTNODES = []
 
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 33300, 'tracker')
-        BOOTNODES.push(tracker.getAddress())
 
         await Promise.all([
             startNode('127.0.0.1', 33312, 'node-1'),
@@ -28,17 +25,13 @@ describe('message propagation in network', () => {
             startNode('127.0.0.1', 33315, 'node-4')
         ]).then((res) => {
             [n1, n2, n3, n4] = res
-            n1.setBootstrapTrackers(BOOTNODES)
-            n2.setBootstrapTrackers(BOOTNODES)
-            n3.setBootstrapTrackers(BOOTNODES)
-            n4.setBootstrapTrackers(BOOTNODES)
         })
 
         await Promise.all([
-            waitForEvent(n1.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(n2.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(n3.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(n4.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER)
+            n1.addBootstrapTracker(tracker.getAddress()),
+            n2.addBootstrapTracker(tracker.getAddress()),
+            n3.addBootstrapTracker(tracker.getAddress()),
+            n4.addBootstrapTracker(tracker.getAddress())
         ])
     })
 

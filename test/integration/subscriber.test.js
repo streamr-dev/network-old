@@ -24,9 +24,10 @@ describe('Selecting leader for the stream and sending messages to two subscriber
             startNode(LOCALHOST, 32313, 'node-2')
         ]).then((res) => {
             [nodeOne, nodeTwo] = res
-            nodeOne.setBootstrapTrackers([tracker.getAddress()])
-            nodeTwo.setBootstrapTrackers([tracker.getAddress()])
         })
+
+        await nodeOne.addBootstrapTracker(tracker.getAddress())
+        await nodeTwo.addBootstrapTracker(tracker.getAddress())
 
         publisher = await startClient(LOCALHOST, 32301, 'publisher-1', nodeOne.protocols.nodeToNode.getAddress())
 

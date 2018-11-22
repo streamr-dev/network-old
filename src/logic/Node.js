@@ -16,7 +16,7 @@ class Node extends EventEmitter {
     constructor(id, trackerNode, nodeToNode) {
         super()
 
-        this.trackerDiscoveryInterval = null
+        this._trackerConnectInterval = null
         this.bootstrapTrackerAddresses = []
 
         this.streams = new StreamManager()
@@ -151,7 +151,7 @@ class Node extends EventEmitter {
 
     stop(cb) {
         this.debug('stopping')
-        this._clearTrackerDiscoveryInterval()
+        this._clearTrackerConnectionInterval()
         this.messageBuffer.clear()
         this.protocols.nodeToNode.stop(cb)
     }
@@ -203,28 +203,25 @@ class Node extends EventEmitter {
             })
     }
 
-    setBootstrapTrackers(bootstrapTrackerAddresses) {
-        // TODO validate ws path
-        this.bootstrapTrackerAddresses = bootstrapTrackerAddresses
-
-        const discoverTrackers = () => {
-            this.bootstrapTrackerAddresses.forEach((address) => {
-                this.protocols.trackerNode.connectToTracker(address)
-                    .catch((err) => {
-                        console.error(`Could not connect to tracker ${address} because '${err}'`)
-                    })
-            })
+    async addBootstrapTracker(trackerAddress) {
+        this.bootstrapTrackerAddresses.push(trackerAddress)
+        if (this._trackerConnectInterval === null) {
+            this._trackerConnectInterval = setInterval(() => {
+                this.bootstrapTrackerAddresses.forEach((address) => {
+                    this.protocols.trackerNode.connectToTracker(address)
+                        .catch((err) => {
+                            console.error(`Could not connect to tracker ${address} because '${err}'`)
+                        })
+                })
+            }, 5000)
         }
-
-        discoverTrackers()
-        this._clearTrackerDiscoveryInterval()
-        this.trackerDiscoveryInterval = setInterval(discoverTrackers, 5000)
+        await this.protocols.trackerNode.connectToTracker(trackerAddress)
     }
 
-    _clearTrackerDiscoveryInterval() {
-        if (this.trackerDiscoveryInterval) {
-            clearInterval(this.trackerDiscoveryInterval)
-            this.trackerDiscoveryInterval = null
+    _clearTrackerConnectionInterval() {
+        if (this._trackerConnectInterval) {
+            clearInterval(this._trackerConnectInterval)
+            this._trackerConnectInterval = null
         }
     }
 

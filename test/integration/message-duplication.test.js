@@ -1,7 +1,6 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
 const { wait, waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
-const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
@@ -18,7 +17,7 @@ describe('duplicate message detection and avoidance', () => {
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 30350, 'tracker')
         contactNode = await startNetworkNode(LOCALHOST, 30351, 'node-0')
-        contactNode.setBootstrapTrackers([tracker.getAddress()])
+        await contactNode.addBootstrapTracker(tracker.getAddress())
 
         otherNodes = await Promise.all([
             startNetworkNode(LOCALHOST, 30352, 'node-1'),
@@ -27,19 +26,7 @@ describe('duplicate message detection and avoidance', () => {
             startNetworkNode(LOCALHOST, 30355, 'node-4'),
             startNetworkNode(LOCALHOST, 30356, 'node-5'),
         ])
-        otherNodes.forEach((node) => {
-            node.setBootstrapTrackers([tracker.getAddress()])
-        })
-
-        // Wait for nodes to connect to each other
-        await Promise.all([
-            waitForEvent(contactNode.protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(otherNodes[0].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(otherNodes[1].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(otherNodes[2].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(otherNodes[3].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-            waitForEvent(otherNodes[4].protocols.trackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
-        ])
+        await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
 
         // Make contactNode responsible for stream
         contactNode.publish('stream-id', 0, {}, 90, null)
