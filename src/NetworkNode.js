@@ -32,7 +32,7 @@ module.exports = class NetworkNode extends Node {
                 }
             }
             this.on(Node.events.SUBSCRIBED_TO_STREAM, subscribeCb)
-            this.subscribeToStream(streamId)
+            this.subscribeToStreamIfNeeded(streamId)
         })
     }
 

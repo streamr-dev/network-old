@@ -66,10 +66,10 @@ describe('message propagation in network', () => {
             payload: dataMessage.getData()
         }))
 
-        n2.subscribeToStream('stream-1')
+        n2.subscribeToStreamIfNeeded('stream-1')
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
-        n3.subscribeToStream('stream-1')
+        n3.subscribeToStreamIfNeeded('stream-1')
         await waitForEvent(n2.protocols.nodeToNode, NodeToNode.events.SUBSCRIBE_REQUEST)
 
         await wait(1000)

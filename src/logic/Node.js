@@ -3,7 +3,6 @@ const createDebug = require('debug')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
-const DataMessage = require('../messages/DataMessage')
 const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
@@ -58,11 +57,13 @@ class Node extends EventEmitter {
         this._sendStatus(tracker)
     }
 
-    subscribeToStream(streamId) {
-        this.debug('add %s to own streams', streamId)
-        this.streams.setUpStream(streamId)
-        this._sendStatusToAllTrackers()
-        this._requestStreamInfo(streamId)
+    subscribeToStreamIfNeeded(streamId) {
+        if (!this.streams.isOwnStream(streamId)) {
+            this.debug('add %s to own streams', streamId)
+            this.streams.setUpStream(streamId)
+            this._sendStatusToAllTrackers()
+            this._requestStreamInfo(streamId)
+        }
     }
 
     async onStreamInfoReceived(streamMessage) {
@@ -80,7 +81,9 @@ class Node extends EventEmitter {
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
 
-        if (this._isSubscribed(streamId) && this._isReady(streamId)) {
+        this.subscribeToStreamIfNeeded(streamId)
+
+        if (this._isReadyToPropagate(streamId)) {
             const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber)
             if (isUnseen) {
                 this.debug('received data (#%s) for own stream %s', number, streamId)
@@ -91,18 +94,11 @@ class Node extends EventEmitter {
             }
         } else {
             this.messageBuffer.put(streamId, dataMessage)
-            if (!this._isSubscribed(streamId)) {
-                this.subscribeToStream(streamId)
-            }
         }
     }
 
-    _isReady(streamId) {
+    _isReadyToPropagate(streamId) {
         return this.streams.getOutboundNodesForStream(streamId).length > 0
-    }
-
-    _isSubscribed(streamId) {
-        return this.streams.isOwnStream(streamId)
     }
 
     _propagateMessage(dataMessage) {
@@ -124,9 +120,7 @@ class Node extends EventEmitter {
         const source = subscribeMessage.getSource()
         const leechOnly = subscribeMessage.getLeechOnly()
 
-        if (!this._isSubscribed(streamId)) {
-            this.subscribeToStream(streamId)
-        }
+        this.subscribeToStreamIfNeeded(streamId)
 
         this.streams.addOutboundNode(streamId, source)
         if (!leechOnly) {
