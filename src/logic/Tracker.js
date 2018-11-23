@@ -26,7 +26,7 @@ module.exports = class Tracker extends EventEmitter {
     processNodeStatus(statusMessage) {
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        this._addNode(source, status.ownStreams)
+        this._addNode(source, status.streams)
     }
 
     onNodeDisconnected(node) {

@@ -6,7 +6,7 @@ module.exports = class StreamManager {
     }
 
     setUpStream(streamId) {
-        if (this.isOwnStream(streamId)) {
+        if (this.isSetUp(streamId)) {
             throw new Error(`Stream ${streamId} already set up`)
         }
         this.streams.set(streamId, {
@@ -17,25 +17,25 @@ module.exports = class StreamManager {
     }
 
     markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         const { duplicateDetector } = this.streams.get(streamId)
         return duplicateDetector.markAndCheck(previousNumber, number)
     }
 
     addInboundNode(streamId, node) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         const { inboundNodes } = this.streams.get(streamId)
         inboundNodes.add(node)
     }
 
     addOutboundNode(streamId, node) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         const { outboundNodes } = this.streams.get(streamId)
         outboundNodes.add(node)
     }
 
     removeNodeFromStream(streamId, node) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         const { inboundNodes, outboundNodes } = this.streams.get(streamId)
         inboundNodes.delete(node)
         outboundNodes.delete(node)
@@ -47,26 +47,26 @@ module.exports = class StreamManager {
         })
     }
 
-    isOwnStream(streamId) {
+    isSetUp(streamId) {
         return this.streams.has(streamId)
     }
 
-    getOwnStreams() {
+    getStreams() {
         return [...this.streams.keys()]
     }
 
     getOutboundNodesForStream(streamId) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         return [...this.streams.get(streamId).outboundNodes]
     }
 
     getInboundNodesForStream(streamId) {
-        this._verifyIsOwnStream(streamId)
+        this._verifyThatIsSetUp(streamId)
         return [...this.streams.get(streamId).inboundNodes]
     }
 
-    _verifyIsOwnStream(streamId) {
-        if (!this.isOwnStream(streamId)) {
+    _verifyThatIsSetUp(streamId) {
+        if (!this.isSetUp(streamId)) {
             throw new Error(`Stream ${streamId} is not set up`)
         }
     }

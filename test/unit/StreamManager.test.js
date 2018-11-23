@@ -8,17 +8,17 @@ describe('StreamManager', () => {
     })
 
     test('starts out empty', () => {
-        expect(manager.isOwnStream('stream-id')).toEqual(false)
-        expect(manager.getOwnStreams()).toEqual([])
+        expect(manager.isSetUp('stream-id')).toEqual(false)
+        expect(manager.getStreams()).toEqual([])
     })
 
-    test('setting up own streams', () => {
+    test('setting up streams', () => {
         manager.setUpStream('stream-1')
         manager.setUpStream('stream-2')
 
-        expect(manager.isOwnStream('stream-1')).toEqual(true)
-        expect(manager.isOwnStream('stream-2')).toEqual(true)
-        expect(manager.getOwnStreams()).toEqual(['stream-1', 'stream-2'])
+        expect(manager.isSetUp('stream-1')).toEqual(true)
+        expect(manager.isSetUp('stream-2')).toEqual(true)
+        expect(manager.getStreams()).toEqual(['stream-1', 'stream-2'])
         expect(manager.getInboundNodesForStream('stream-1')).toEqual([])
         expect(manager.getOutboundNodesForStream('stream-1')).toEqual([])
         expect(manager.getInboundNodesForStream('stream-2')).toEqual([])
@@ -33,7 +33,7 @@ describe('StreamManager', () => {
         }).toThrowError('Stream stream-id already set up')
     })
 
-    test('can duplicate detect on own stream', () => {
+    test('can duplicate detect on previously set up stream', () => {
         manager.setUpStream('stream-id')
 
         expect(() => {

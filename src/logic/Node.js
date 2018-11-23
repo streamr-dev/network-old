@@ -57,8 +57,8 @@ class Node extends EventEmitter {
     }
 
     subscribeToStreamIfNeeded(streamId) {
-        if (!this.streams.isOwnStream(streamId)) {
-            this.debug('add %s to own streams', streamId)
+        if (!this.streams.isSetUp(streamId)) {
+            this.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
             this._sendStatusToAllTrackers()
             this._requestStreamInfo(streamId)
@@ -85,7 +85,7 @@ class Node extends EventEmitter {
         if (this._isReadyToPropagate(streamId)) {
             const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber)
             if (isUnseen) {
-                this.debug('received data (#%s) for own stream %s', number, streamId)
+                this.debug('received data (#%s) for stream %s', number, streamId)
                 this._propagateMessage(dataMessage)
             } else {
                 this.debug('ignoring duplicate data (#%s) for stream %s', number, streamId)
@@ -145,7 +145,7 @@ class Node extends EventEmitter {
 
     _getStatus() {
         return {
-            ownStreams: this.streams.getOwnStreams(),
+            streams: this.streams.getStreams(),
             started: this.started
         }
     }
