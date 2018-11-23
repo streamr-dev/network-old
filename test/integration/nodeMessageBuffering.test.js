@@ -8,9 +8,10 @@ const DataMessage = require('../../src/messages/DataMessage')
 jest.setTimeout(DEFAULT_TIMEOUT)
 
 /**
- * When a node receives a message for a stream it doesn't recognize, it asks the
- * tracker who is responsible for that stream. In this test we verify that the
- * initial message that causes this is also eventually delivered.
+ * When a node receives a message for a stream it hasn't still subscribed to, it
+ * subscribes to the stream and then asks the tracker who else is participating
+ * in the stream. In this test we verify that the initial message that causes
+ * this whole process is itself eventually delivered.
  */
 describe('message buffering of Node', () => {
     let tracker
