@@ -71,7 +71,7 @@ class Node extends EventEmitter {
 
         nodeAddresses.forEach(async (nodeAddress) => {
             const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
-            return this._subscribeToStream(node, streamId)
+            return this._subscribeToStreamOnNode(node, streamId)
         })
     }
 
@@ -164,7 +164,7 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.requestStreamInfo(randomTracker, streamId)
     }
 
-    async _subscribeToStream(node, streamId) {
+    async _subscribeToStreamOnNode(node, streamId) {
         await this.protocols.nodeToNode.sendSubscribe(node, streamId, false)
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
