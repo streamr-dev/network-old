@@ -65,7 +65,7 @@ class Node extends EventEmitter {
         }
     }
 
-    async onStreamInfoReceived(streamMessage) {
+    onStreamInfoReceived(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
 
