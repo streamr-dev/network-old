@@ -56,7 +56,7 @@ class Node extends EventEmitter {
         this._sendStatus(tracker)
     }
 
-    subscribeToStreamIfNeeded(streamId) {
+    subscribeToStreamIfHaveNotYet(streamId) {
         if (!this.streams.isSetUp(streamId)) {
             this.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
@@ -80,7 +80,7 @@ class Node extends EventEmitter {
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
 
-        this.subscribeToStreamIfNeeded(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
         if (this._isReadyToPropagate(streamId)) {
             const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber)
@@ -119,7 +119,7 @@ class Node extends EventEmitter {
         const source = subscribeMessage.getSource()
         const leechOnly = subscribeMessage.getLeechOnly()
 
-        this.subscribeToStreamIfNeeded(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
         this.streams.addOutboundNode(streamId, source)
         if (!leechOnly) {

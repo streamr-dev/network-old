@@ -24,7 +24,7 @@ module.exports = class NetworkNode extends Node {
         if (streamPartition !== 0) {
             throw new Error('Stream partitions not yet supported.')
         }
-        this.subscribeToStreamIfNeeded(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId)
     }
 
     unsubscribe(streamId, streamPartition) {

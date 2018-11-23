@@ -42,7 +42,7 @@ describe('message buffering of Node', () => {
             done()
         })
 
-        destinationNode.subscribeToStreamIfNeeded('stream-id')
+        destinationNode.subscribeToStreamIfHaveNotYet('stream-id')
 
         // "Client" pushes data
         const dataMessage = new DataMessage('stream-id', {

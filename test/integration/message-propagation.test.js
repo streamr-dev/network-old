@@ -64,8 +64,8 @@ describe('message propagation in network', () => {
             payload: dataMessage.getData()
         }))
 
-        n2.subscribeToStreamIfNeeded('stream-1')
-        n3.subscribeToStreamIfNeeded('stream-1')
+        n2.subscribeToStreamIfHaveNotYet('stream-1')
+        n3.subscribeToStreamIfHaveNotYet('stream-1')
 
         await wait(1000)
 
