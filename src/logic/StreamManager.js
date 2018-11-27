@@ -3,7 +3,7 @@ const DuplicateMessageDetector = require('./DuplicateMessageDetector')
 
 module.exports = class StreamManager {
     constructor() {
-        this.streams = {} // id => partition => {}
+        this.streams = new Map() // streamId => {}
     }
 
     setUpStream(streamId) {
@@ -13,74 +13,61 @@ module.exports = class StreamManager {
         if (this.isSetUp(streamId)) {
             throw new Error(`Stream ${streamId} already set up`)
         }
-        if (!this.streams[streamId.id]) {
-            this.streams[streamId.id] = {}
-        }
-        this.streams[streamId.id][streamId.partition] = {
+        this.streams.set(streamId.key(), {
             duplicateDetector: new DuplicateMessageDetector(),
             inboundNodes: new Set(), // Nodes that I am subscribed to for messages
             outboundNodes: new Set() // Nodes (and clients) that subscribe to me for messages
-        }
+        })
     }
 
     markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber) {
         this._verifyThatIsSetUp(streamId)
-        const { duplicateDetector } = this.streams[streamId.id][streamId.partition]
+        const { duplicateDetector } = this.streams.get(streamId.key())
         return duplicateDetector.markAndCheck(previousNumber, number)
     }
 
     addInboundNode(streamId, node) {
         this._verifyThatIsSetUp(streamId)
-        const { inboundNodes } = this.streams[streamId.id][streamId.partition]
+        const { inboundNodes } = this.streams.get(streamId.key())
         inboundNodes.add(node)
     }
 
     addOutboundNode(streamId, node) {
         this._verifyThatIsSetUp(streamId)
-        const { outboundNodes } = this.streams[streamId.id][streamId.partition]
+        const { outboundNodes } = this.streams.get(streamId.key())
         outboundNodes.add(node)
     }
 
     removeNodeFromStream(streamId, node) {
         this._verifyThatIsSetUp(streamId)
-        const { inboundNodes, outboundNodes } = this.streams[streamId.id][streamId.partition]
+        const { inboundNodes, outboundNodes } = this.streams.get(streamId.key())
         inboundNodes.delete(node)
         outboundNodes.delete(node)
     }
 
     removeNodeFromAllStreams(node) {
-        Object.keys(this.streams).forEach((id) => {
-            Object.keys(this.streams[id]).forEach((partition) => {
-                const { inboundNodes, outboundNodes } = this.streams[id][partition]
-                inboundNodes.delete(node)
-                outboundNodes.delete(node)
-            })
+        this.streams.forEach(({ inboundNodes, outboundNodes }) => {
+            inboundNodes.delete(node)
+            outboundNodes.delete(node)
         })
     }
 
     isSetUp(streamId) {
-        return this.streams[streamId.id] !== undefined
-            && this.streams[streamId.id][streamId.partition] !== undefined
+        return this.streams.has(streamId.key())
     }
 
     getStreams() {
-        const streams = []
-        Object.keys(this.streams).forEach((id) => {
-            Object.keys(this.streams[id]).forEach((partition) => {
-                streams.push((new StreamID(id, Number.parseInt(partition, 10))).toString())
-            })
-        })
-        return streams
+        return [...this.streams.keys()].sort()
     }
 
     getOutboundNodesForStream(streamId) {
         this._verifyThatIsSetUp(streamId)
-        return [...this.streams[streamId.id][streamId.partition].outboundNodes]
+        return [...this.streams.get(streamId.key()).outboundNodes]
     }
 
     getInboundNodesForStream(streamId) {
         this._verifyThatIsSetUp(streamId)
-        return [...this.streams[streamId.id][streamId.partition].inboundNodes]
+        return [...this.streams.get(streamId.key()).inboundNodes]
     }
 
     _verifyThatIsSetUp(streamId) {

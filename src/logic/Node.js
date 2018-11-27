@@ -19,7 +19,7 @@ class Node extends EventEmitter {
 
         this.streams = new StreamManager()
         this.messageBuffer = new MessageBuffer(60 * 1000, (streamId) => {
-            this.debug('failed to deliver buffered messages of stream %s because responsible nodes not found', streamId)
+            this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
 

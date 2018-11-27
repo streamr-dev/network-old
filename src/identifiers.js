@@ -10,6 +10,10 @@ class StreamID {
         this.partition = partition
     }
 
+    key() {
+        return this.toString()
+    }
+
     toString() {
         return `${this.id}::${this.partition}`
     }
