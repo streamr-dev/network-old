@@ -92,7 +92,7 @@ class Node extends EventEmitter {
                 this.metrics.received.duplicates += 1
             }
         } else {
-            this.messageBuffer.put(streamId, dataMessage)
+            this.messageBuffer.put(streamId.key(), dataMessage)
         }
     }
 
@@ -181,7 +181,7 @@ class Node extends EventEmitter {
     }
 
     _handleBufferedMessages(streamId) {
-        this.messageBuffer.popAll(streamId)
+        this.messageBuffer.popAll(streamId.key())
             .forEach((dataMessage) => {
                 // TODO bad idea to call events directly
                 this.onDataReceived(dataMessage)
