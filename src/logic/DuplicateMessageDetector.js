@@ -85,7 +85,7 @@ class DuplicateMessageDetector {
      */
     markAndCheck(previousNumber, number) {
         if (previousNumber === null) {
-            previousNumber = NULL_NUMBER_PAIR
+            previousNumber = NULL_NUMBER_PAIR // eslint-disable-line no-param-reassign
         }
         if (previousNumber.greaterThanOrEqual(number)) {
             throw new Error('pre-condition: previousNumber < number')

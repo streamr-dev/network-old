@@ -127,7 +127,7 @@ describe('erroneous messages that overlap gaps', () => {
         detector = new DuplicateMessageDetector()
         detector.markAndCheck(new NumberPair(1, 0), new NumberPair(10, 0))
         detector.markAndCheck(new NumberPair(20, 0), new NumberPair(40, 0))
-        detector.markAndCheck(new NumberPair(80,10), new NumberPair(100, 0))
+        detector.markAndCheck(new NumberPair(80, 10), new NumberPair(100, 0))
         expectedState = detector.toString()
         expect(expectedState).toEqual('(10|0, 20|0], (40|0, 80|10], (100|0, Infinity|Infinity]')
     })
