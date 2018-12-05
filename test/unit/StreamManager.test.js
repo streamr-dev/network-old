@@ -58,6 +58,24 @@ describe('StreamManager', () => {
         }).toThrowError('Stream stream-id::0 is not set up')
     })
 
+    test('duplicate detection is per publisher', () => {
+        manager.setUpStream(new StreamID('stream-id', 0))
+        manager.markNumbersAndCheckThatIsNotDuplicate(
+            new MessageID(new StreamID('stream-id', 0), 10, 0, 'publisher-1'),
+            new MessageReference(5, 0)
+        )
+
+        expect(manager.markNumbersAndCheckThatIsNotDuplicate(
+            new MessageID(new StreamID('stream-id', 0), 10, 0, 'publisher-1'),
+            new MessageReference(5, 0)
+        )).toEqual(false)
+
+        expect(manager.markNumbersAndCheckThatIsNotDuplicate(
+            new MessageID(new StreamID('stream-id', 0), 10, 0, 'publisher-2'),
+            new MessageReference(5, 0)
+        )).toEqual(true)
+    })
+
     test('adding inbound and outbound nodes to a set-up stream', () => {
         const streamId = new StreamID('stream-id', 0)
 
