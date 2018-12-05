@@ -1,5 +1,5 @@
 const { StreamID } = require('../identifiers')
-const DuplicateMessageDetector = require('./DuplicateMessageDetector')
+const { DuplicateMessageDetector, NumberPair } = require('./DuplicateMessageDetector')
 
 module.exports = class StreamManager {
     constructor() {
@@ -20,10 +20,15 @@ module.exports = class StreamManager {
         })
     }
 
-    markNumbersAndCheckThatIsNotDuplicate(streamId, number, previousNumber) {
-        this._verifyThatIsSetUp(streamId)
-        const { duplicateDetector } = this.streams.get(streamId.key())
-        return duplicateDetector.markAndCheck(previousNumber, number)
+    markNumbersAndCheckThatIsNotDuplicate(messageId, previousMessageReference) {
+        this._verifyThatIsSetUp(messageId.streamId)
+        const { duplicateDetector } = this.streams.get(messageId.streamId.key())
+        return duplicateDetector.markAndCheck(
+            previousMessageReference === null
+                ? null
+                : new NumberPair(previousMessageReference.timestamp, previousMessageReference.sequenceNo),
+            new NumberPair(messageId.timestamp, messageId.sequenceNo)
+        )
     }
 
     addInboundNode(streamId, node) {

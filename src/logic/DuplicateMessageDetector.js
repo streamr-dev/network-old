@@ -42,6 +42,15 @@ class NumberPair {
     }
 }
 
+const NULL_NUMBER_PAIR = new NumberPair(-Infinity, -Infinity)
+
+class GapMisMatchError extends Error {
+    constructor(...args) {
+        super(...args)
+        Error.captureStackTrace(this, GapMisMatchError) // exclude this constructor from stack trace
+    }
+}
+
 /**
  *
  * Keeps track of a stream's message numbers and reports already seen numbers
@@ -75,12 +84,15 @@ class DuplicateMessageDetector {
      * returns true if number has not yet been seen (i.e. is not a duplicate)
      */
     markAndCheck(previousNumber, number) {
-        if (previousNumber >= number) {
+        if (previousNumber === null) {
+            previousNumber = NULL_NUMBER_PAIR
+        }
+        if (previousNumber.greaterThanOrEqual(number)) {
             throw new Error('pre-condition: previousNumber < number')
         }
 
         if (this.gaps.length === 0) {
-            this.gaps.push([number, Infinity])
+            this.gaps.push([number, new NumberPair(Infinity, Infinity)])
             return true
         }
 
@@ -88,20 +100,20 @@ class DuplicateMessageDetector {
             const [lowerBound, upperBound] = this.gaps[i] // invariant: upperBound > lowerBound
 
             // implies nextNumber > upperBound (would've been handled in previous iteration if gap exists)
-            if (previousNumber >= upperBound) {
+            if (previousNumber.greaterThanOrEqual(upperBound)) {
                 return false
             }
-            if (previousNumber >= lowerBound) {
-                if (number > upperBound) {
-                    throw new Error('pre-condition: gap overlap in given numbers')
+            if (previousNumber.greaterThanOrEqual(lowerBound)) {
+                if (number.greaterThan(upperBound)) {
+                    throw new GapMisMatchError('pre-condition: gap overlap in given numbers')
                 }
-                if (previousNumber === lowerBound) {
-                    if (number === upperBound) {
+                if (previousNumber.equalTo(lowerBound)) {
+                    if (number.equalTo(upperBound)) {
                         this.gaps.splice(i, 1)
                     } else {
                         this.gaps[i] = [number, upperBound]
                     }
-                } else if (number === upperBound) {
+                } else if (number.equalTo(upperBound)) {
                     this.gaps[i] = [lowerBound, previousNumber]
                 } else {
                     this.gaps.splice(i, 1, [lowerBound, previousNumber], [number, upperBound])
@@ -117,8 +129,8 @@ class DuplicateMessageDetector {
                 this._dropLowestGapIfOverMaxNumberOfGaps()
                 return true
             }
-            if (number > lowerBound) {
-                throw new Error('pre-condition: gap overlap in given numbers')
+            if (number.greaterThan(lowerBound)) {
+                throw new GapMisMatchError('pre-condition: gap overlap in given numbers')
             }
         }
         return false
@@ -132,11 +144,12 @@ class DuplicateMessageDetector {
     }
 
     toString() {
-        return this.gaps.map(([lower, upper]) => `(${lower},${upper}]`).join(', ')
+        return this.gaps.map(([lower, upper]) => `(${lower}, ${upper}]`).join(', ')
     }
 }
 
 module.exports = {
     NumberPair,
+    GapMisMatchError,
     DuplicateMessageDetector
 }

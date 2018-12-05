@@ -1,5 +1,5 @@
 const StreamManager = require('../../src/logic/StreamManager')
-const { StreamID } = require('../../src/identifiers')
+const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
 
 describe('StreamManager', () => {
     let manager
@@ -42,13 +42,19 @@ describe('StreamManager', () => {
         manager.setUpStream(new StreamID('stream-id', 0))
 
         expect(() => {
-            manager.markNumbersAndCheckThatIsNotDuplicate(new StreamID('stream-id', 0), 2, 1)
+            manager.markNumbersAndCheckThatIsNotDuplicate(
+                new MessageID(new StreamID('stream-id', 0), 10, 0, 'publisher-id'),
+                new MessageReference(5, 0)
+            )
         }).not.toThrowError()
     })
 
     test('cannot duplicate detect on non-existing stream', () => {
         expect(() => {
-            manager.markNumbersAndCheckThatIsNotDuplicate(new StreamID('stream-id', 0), 2, 1)
+            manager.markNumbersAndCheckThatIsNotDuplicate(
+                new MessageID(new StreamID('stream-id', 0), 10, 0, 'publisher-id'),
+                new MessageReference(5, 0)
+            )
         }).toThrowError('Stream stream-id::0 is not set up')
     })
 

@@ -88,7 +88,7 @@ class Node extends EventEmitter {
         this.subscribeToStreamIfHaveNotYet(streamId)
 
         if (this._isReadyToPropagate(streamId)) {
-            const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(streamId, messageId.timestamp, previousMessageReference === null ? null : previousMessageReference.timestamp) // TODO: also sequenceNo
+            const isUnseen = this.streams.markNumbersAndCheckThatIsNotDuplicate(messageId, previousMessageReference)
             if (isUnseen) {
                 this.debug('received from %s data %s', dataMessage.getSource(), messageId)
                 this._propagateMessage(dataMessage)
