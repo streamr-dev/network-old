@@ -1,4 +1,48 @@
 /**
+ * Represent a pair of numbers (a,b). Ordering between two pairs is defined as
+ * follows. First compare first numbers. Compare second numbers if first are
+ * equal.
+ */
+class NumberPair {
+    constructor(a, b) {
+        this.a = a
+        this.b = b
+    }
+
+    greaterThanOrEqual(otherPair) {
+        return this.greaterThan(otherPair) || this.equalTo(otherPair)
+    }
+
+    greaterThan(otherPair) {
+        return this._compareTo(otherPair) === 1
+    }
+
+    equalTo(otherPair) {
+        return this._compareTo(otherPair) === 0
+    }
+
+    _compareTo(otherPair) {
+        if (this.a > otherPair.a) {
+            return 1
+        }
+        if (this.a < otherPair.a) {
+            return -1
+        }
+        if (this.b > otherPair.b) {
+            return 1
+        }
+        if (this.b < otherPair.b) {
+            return -1
+        }
+        return 0
+    }
+
+    toString() {
+        return `${this.a}|${this.b}`
+    }
+}
+
+/**
  *
  * Keeps track of a stream's message numbers and reports already seen numbers
  * as duplicates.
@@ -21,7 +65,7 @@
  * intervals when storage limits are hit.
  *
  */
-module.exports = class DuplicateMessageDetector {
+class DuplicateMessageDetector {
     constructor(maxNumberOfGaps = 10000) {
         this.maxNumberOfGaps = maxNumberOfGaps
         this.gaps = [] // ascending order of half-closed intervals (x,y] representing gaps that contain unseen message(s)
@@ -90,4 +134,9 @@ module.exports = class DuplicateMessageDetector {
     toString() {
         return this.gaps.map(([lower, upper]) => `(${lower},${upper}]`).join(', ')
     }
+}
+
+module.exports = {
+    NumberPair,
+    DuplicateMessageDetector
 }

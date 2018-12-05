@@ -1,5 +1,4 @@
-const NumberPair = require('../../src/logic/NumberPair')
-
+const { NumberPair } = require('../../src/logic/DuplicateMessageDetector')
 
 test('equalTo', () => {
     expect(new NumberPair(5, 2).equalTo(new NumberPair(5, 3))).toEqual(false)
