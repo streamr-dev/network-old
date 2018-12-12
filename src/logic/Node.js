@@ -7,6 +7,7 @@ const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
+    SUBSCRIPTION_RECEIVED: 'streamr:node:subscription-received',
     MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed'
 })
 
@@ -127,6 +128,7 @@ class Node extends EventEmitter {
         }
         this._handleBufferedMessages(streamId)
         this.debug('node %s subscribed to stream %s', source, streamId)
+        this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
