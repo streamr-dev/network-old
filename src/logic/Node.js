@@ -102,12 +102,13 @@ class Node extends EventEmitter {
     }
 
     _propagateMessage(dataMessage) {
+        const source = dataMessage.getSource()
         const streamId = dataMessage.getStreamId()
         const data = dataMessage.getData()
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
 
-        const subscribers = this.streams.getOutboundNodesForStream(streamId)
+        const subscribers = this.streams.getOutboundNodesForStream(streamId).filter((n) => n !== source)
         subscribers.forEach((subscriber) => {
             this.protocols.nodeToNode.sendData(subscriber, streamId, data, number, previousNumber)
         })
