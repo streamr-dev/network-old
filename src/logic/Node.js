@@ -7,14 +7,19 @@ const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
+    SUBSCRIPTION_RECEIVED: 'streamr:node:subscription-received',
     MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed'
 })
+
+const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
+const TARGET_NUM_OF_INBOUND_NODES_PER_STREAM = 3
 
 class Node extends EventEmitter {
     constructor(id, trackerNode, nodeToNode) {
         super()
 
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
+        this.maintainStreamsInterval = setInterval(this._maintainStreams.bind(this), 10000)
         this.bootstrapTrackerAddresses = []
 
         this.streams = new StreamManager()
@@ -97,16 +102,17 @@ class Node extends EventEmitter {
     }
 
     _isReadyToPropagate(streamId) {
-        return this.streams.getOutboundNodesForStream(streamId).length > 0
+        return this.streams.getOutboundNodesForStream(streamId).length >= MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION
     }
 
     _propagateMessage(dataMessage) {
+        const source = dataMessage.getSource()
         const streamId = dataMessage.getStreamId()
         const data = dataMessage.getData()
         const number = dataMessage.getNumber()
         const previousNumber = dataMessage.getPreviousNumber()
 
-        const subscribers = this.streams.getOutboundNodesForStream(streamId)
+        const subscribers = this.streams.getOutboundNodesForStream(streamId).filter((n) => n !== source)
         subscribers.forEach((subscriber) => {
             this.protocols.nodeToNode.sendData(subscriber, streamId, data, number, previousNumber)
         })
@@ -127,6 +133,7 @@ class Node extends EventEmitter {
         }
         this._handleBufferedMessages(streamId)
         this.debug('node %s subscribed to stream %s', source, streamId)
+        this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
@@ -139,6 +146,7 @@ class Node extends EventEmitter {
     stop(cb) {
         this.debug('stopping')
         this._clearConnectToBootstrapTrackersInterval()
+        this._clearMaintainStreamsInterval()
         this.messageBuffer.clear()
         this.protocols.nodeToNode.stop(cb)
     }
@@ -165,7 +173,9 @@ class Node extends EventEmitter {
     }
 
     async _subscribeToStreamOnNode(node, streamId) {
-        await this.protocols.nodeToNode.sendSubscribe(node, streamId, false)
+        if (!this.streams.hasInboundNode(streamId, node)) {
+            await this.protocols.nodeToNode.sendSubscribe(node, streamId, false)
+        }
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
         this._handleBufferedMessages(streamId)
@@ -202,10 +212,25 @@ class Node extends EventEmitter {
         })
     }
 
+    _maintainStreams() {
+        const streamsRequiringMoreNodes = this.streams.getStreams().filter((streamId) => {
+            return this.streams.getInboundNodesForStream(streamId).length < TARGET_NUM_OF_INBOUND_NODES_PER_STREAM
+        })
+        this.debug('searching for more nodes for streams %j', streamsRequiringMoreNodes)
+        streamsRequiringMoreNodes.forEach((streamId) => this._requestStreamInfo(streamId))
+    }
+
     _clearConnectToBootstrapTrackersInterval() {
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
+        }
+    }
+
+    _clearMaintainStreamsInterval() {
+        if (this.maintainStreamsInterval) {
+            clearInterval(this.maintainStreamsInterval)
+            this.maintainStreamsInterval = null
         }
     }
 
