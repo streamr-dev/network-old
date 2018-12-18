@@ -10,8 +10,8 @@ branches:
   - "/^v\\d+\\.\\d+(\\.\\d+)?(-\\S*)?$/"
 before_install:
 - npm i -g npm@6.4.1
-before_script:
-- cqlsh -e "CREATE KEYSPACE IF NOT EXISTS streamr_dev WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
+before_script: |-
+  cqlsh -e "CREATE KEYSPACE IF NOT EXISTS streamr_dev WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
 jobs:
   include:
   - stage: tests
