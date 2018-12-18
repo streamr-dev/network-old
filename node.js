@@ -1,11 +1,11 @@
-const { startNode } = require('./src/composition')
+const { startFullNode } = require('./src/composition')
 const { BOOTNODES } = require('./src/util')
 
 const port = process.argv[2] || 30301
 const ip = process.argv[3] || '127.0.0.1'
 const tracker = process.argv[4] || ''
 
-startNode(ip, port, 'node' + port)
+startFullNode(ip, port, 'node' + port)
     .then((node) => {
         if (tracker) {
             node.addBootstrapTracker(tracker)
