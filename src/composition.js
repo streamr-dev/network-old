@@ -8,6 +8,7 @@ const Client = require('./logic/Client')
 const NetworkNode = require('./NetworkNode')
 const { startEndpoint } = require('./connection/WsEndpoint')
 const { MessageID, MessageReference, StreamID } = require('./identifiers')
+const { startCassandraStorage } = require('./storage/Storage')
 
 async function startTracker(host, port, id = uuidv4()) {
     const identity = {
@@ -61,11 +62,27 @@ async function startNetworkNode(host, port, id = uuidv4()) {
     })
 }
 
+async function startFullNode(host, port, id = uuidv4()) {
+    const identity = {
+        'streamr-peer-id': id,
+        'streamr-peer-type': 'node'
+    }
+    return startEndpoint(host, port, identity).then(async (endpoint) => {
+        const node = new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint))
+        const storage = await startCassandraStorage(['127.0.0.1'], 'streamr_dev')
+        node.on(Node.events.MESSAGE_RECEIVED, storage.store.bind(storage))
+        return node
+    }).catch((err) => {
+        throw err
+    })
+}
+
 module.exports = {
     startTracker,
     startNode,
     startClient,
     startNetworkNode,
+    startFullNode,
     MessageID,
     MessageReference,
     StreamID
