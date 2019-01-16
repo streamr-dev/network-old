@@ -29,7 +29,7 @@ class NodeToNode extends EventEmitter {
 
     sendData(receiverNodeId, messageId, previousMessageReference, payload) {
         const receiverNodeAddress = this.peerBook.getAddress(receiverNodeId)
-        this.endpoint.send(receiverNodeAddress, encoder.dataMessage(messageId, previousMessageReference, payload))
+        return this.endpoint.send(receiverNodeAddress, encoder.dataMessage(messageId, previousMessageReference, payload))
     }
 
     sendSubscribe(receiverNodeId, streamId, leechOnly) {

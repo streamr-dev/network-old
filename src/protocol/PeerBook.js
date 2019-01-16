@@ -22,10 +22,11 @@ module.exports = class PeerBook {
     }
 
     getAddress(peerId) {
-        if (!this.hasPeerId(peerId)) {
-            throw new Error(`Id ${peerId} not found in peer book`)
+        if (this.hasPeerId(peerId)) {
+            return this.idToAddress[peerId]
         }
-        return this.idToAddress[peerId]
+        console.error(`Id ${peerId} not found in peer book`)
+        return false
     }
 
     getPeerId(address) {
