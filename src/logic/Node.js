@@ -208,9 +208,7 @@ class Node extends EventEmitter {
 
     async addBootstrapTracker(trackerAddress) {
         this.bootstrapTrackerAddresses.push(trackerAddress)
-        await this.protocols.trackerNode.connectToTracker(trackerAddress).catch((err) => {
-            console.error(`Could not connect to tracker ${trackerAddress} because '${err}'`)
-        })
+        return this.protocols.trackerNode.connectToTracker(trackerAddress)
     }
 
     _connectToBootstrapTrackers() {
