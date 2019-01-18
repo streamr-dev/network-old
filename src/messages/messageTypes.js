@@ -9,7 +9,12 @@ const msgTypes = {
     STREAM: 0x06
 }
 
+const disconnectionReasons = Object.freeze({
+    MAX_CONNECTIONS: 'streamr:node:max-connections'
+})
+
 module.exports = {
     msgTypes,
-    CURRENT_VERSION
+    CURRENT_VERSION,
+    disconnectionReasons
 }

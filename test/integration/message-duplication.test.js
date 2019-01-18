@@ -22,8 +22,7 @@ describe('duplicate message detection and avoidance', () => {
             startNetworkNode(LOCALHOST, 30352, 'node-1'),
             startNetworkNode(LOCALHOST, 30353, 'node-2'),
             startNetworkNode(LOCALHOST, 30354, 'node-3'),
-            startNetworkNode(LOCALHOST, 30355, 'node-4'),
-            startNetworkNode(LOCALHOST, 30356, 'node-5'),
+            startNetworkNode(LOCALHOST, 30355, 'node-4')
         ])
         await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
 
@@ -32,10 +31,9 @@ describe('duplicate message detection and avoidance', () => {
         otherNodes[1].subscribe('stream-id', 0)
         otherNodes[2].subscribe('stream-id', 0)
         otherNodes[3].subscribe('stream-id', 0)
-        otherNodes[4].subscribe('stream-id', 0)
 
         // Set up 1st test case
-        numOfReceivedMessages = [0, 0, 0, 0, 0]
+        numOfReceivedMessages = [0, 0, 0, 0]
         const updater = (i) => () => {
             numOfReceivedMessages[i] += 1
         }
@@ -60,12 +58,12 @@ describe('duplicate message detection and avoidance', () => {
     })
 
     test('same message is emitted by a node exactly once', () => {
-        expect(numOfReceivedMessages).toEqual([2, 2, 2, 2, 2])
+        expect(numOfReceivedMessages).toEqual([2, 2, 2, 2])
     })
 
     test('maximum times a node receives duplicates of message is bounded by total number of repeaters', () => {
         const numOfDuplicates = otherNodes.map((n) => n.metrics.received.duplicates)
-        expect(numOfDuplicates).toHaveLength(5)
+        expect(numOfDuplicates).toHaveLength(4)
         numOfDuplicates.forEach((n) => {
             expect(n).toBeLessThanOrEqual((otherNodes.length * 2)) // multiplier because 2 separate messages
         })

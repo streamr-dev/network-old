@@ -3,6 +3,7 @@ const createDebug = require('debug')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
+const { disconnectionReasons } = require('../messages/messageTypes')
 const StreamManager = require('./StreamManager')
 
 const events = Object.freeze({
@@ -14,6 +15,7 @@ const events = Object.freeze({
 
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 const TARGET_NUM_OF_INBOUND_NODES_PER_STREAM = 3
+const MAX_NUM_OF_NODES_PER_STREAM = 6
 
 class Node extends EventEmitter {
     constructor(id, trackerNode, nodeToNode) {
@@ -130,13 +132,18 @@ class Node extends EventEmitter {
 
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        this.streams.addOutboundNode(streamId, source)
-        if (!leechOnly) {
-            this.streams.addInboundNode(streamId, source)
+        if (this.streams.getInboundNodesForStream(streamId).length + this.streams.getOutboundNodesForStream(streamId).length >= MAX_NUM_OF_NODES_PER_STREAM) {
+            this.debug('reached max number "%d" of connections for stream %s', MAX_NUM_OF_NODES_PER_STREAM, streamId)
+            this.protocols.nodeToNode.sendDisconnectionMessage(source, disconnectionReasons.MAX_CONNECTIONS)
+        } else {
+            this.streams.addOutboundNode(streamId, source)
+            if (!leechOnly) {
+                this.streams.addInboundNode(streamId, source)
+            }
+            this._handleBufferedMessages(streamId)
+            this.debug('node %s subscribed to stream %s', source, streamId)
+            this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
         }
-        this._handleBufferedMessages(streamId)
-        this.debug('node %s subscribed to stream %s', source, streamId)
-        this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
