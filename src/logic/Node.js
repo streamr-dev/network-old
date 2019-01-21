@@ -132,9 +132,9 @@ class Node extends EventEmitter {
 
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        if (this.streams.getInboundNodesForStream(streamId).length + this.streams.getOutboundNodesForStream(streamId).length >= MAX_NUM_OF_NODES_PER_STREAM) {
+        if (this.streams.getInboundNodesForStream(streamId).length + this.streams.getOutboundNodesForStream(streamId).length >= MAX_NUM_OF_NODES_PER_STREAM / 2) {
             this.debug('reached max number "%d" of connections for stream %s', MAX_NUM_OF_NODES_PER_STREAM, streamId)
-            this.protocols.nodeToNode.sendDisconnectionMessage(source, disconnectionReasons.MAX_CONNECTIONS)
+            this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.MAX_CONNECTIONS)
         } else {
             this.streams.addOutboundNode(streamId, source)
             if (!leechOnly) {
