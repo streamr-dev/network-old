@@ -10,7 +10,8 @@ const msgTypes = {
 }
 
 const disconnectionReasons = Object.freeze({
-    MAX_CONNECTIONS: 'streamr:node:max-connections'
+    MAX_OUTBOUND_CONNECTIONS: 'streamr:node:max-outbound-connections',
+    MAX_INBOUND_CONNECTIONS: 'streamr:node:max-inbound-connections'
 })
 
 module.exports = {
