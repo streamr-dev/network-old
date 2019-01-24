@@ -152,6 +152,26 @@ class Node extends EventEmitter {
         this._handleBufferedMessages(streamId)
         this.debug('node %s subscribed to stream %s', source, streamId)
         this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
+
+        // if (this.streams.getOutboundNodesForStream(streamId).length > MAX_NUM_NODES_OUTBOUND_PER_STREAM) {
+        //     this.debug('reached max number "%d" for outbound connections for stream %s', MAX_NUM_NODES_OUTBOUND_PER_STREAM, streamId)
+        //     this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.MAX_OUTBOUND_CONNECTIONS)
+        // } else if (this.streams.getInboundNodesForStream(streamId).length > MAX_NUM_NODES_INBOUND_PER_STREAM) {
+        //     this.debug('reached max number "%d" for inbound connections for stream %s', MAX_NUM_NODES_INBOUND_PER_STREAM, streamId)
+        //     this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.MAX_INBOUND_CONNECTIONS)
+        // } else {
+        //     this.subscribeToStreamIfHaveNotYet(streamId)
+        //
+        //     this.streams.addOutboundNode(streamId, source)
+        //
+        //     if (!leechOnly) {
+        //         this.streams.addInboundNode(streamId, source)
+        //     }
+        //
+        //     this._handleBufferedMessages(streamId)
+        //     this.debug('node %s subscribed to stream %s', source, streamId)
+        //     this.emit(events.SUBSCRIPTION_RECEIVED, streamId, source)
+        // }
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
