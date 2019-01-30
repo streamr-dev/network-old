@@ -80,11 +80,11 @@ run integration tests
 
 code coverage
 
-`./node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/**/*.js`
+`./node_modules/jest/bin/jest.js --coverage`
 
 run one test
 
-`./node_modules/jest/bin/jest.js ./test/integration/publisher.test.js`
+`./node_modules/jest/bin/jest.js ./test/integration/message-duplication.test.js`
 
 # Architecture
 
