@@ -38,7 +38,7 @@ describe('create five endpoints and init connection between them', () => {
 
         for (let i = 0; i < MAX; i++) {
             // eslint-disable-next-line no-await-in-loop
-            await endpoints[i].stop(console.log(`stopping endpoint ${i}`))
+            await endpoints[i].stop()
         }
     })
 
