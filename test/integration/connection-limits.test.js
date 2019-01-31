@@ -1,10 +1,9 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
-const { LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
+const { wait, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const endpointEvents = require('../../src/connection/Endpoint').events
 const { disconnectionReasons } = require('../../src/messages/messageTypes')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const { StreamID } = require('../../src/identifiers')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
@@ -17,7 +16,7 @@ describe('check maxInBound and maxOutBound limits', () => {
     let otherNodes
     const streamId = 'stream-id'
 
-    it('should be able to start and stop successfully', async (done) => {
+    it('should be able to subscribe, increase connection limits and stop successfully', async (done) => {
         tracker = await startTracker(LOCALHOST, 30550, 'tracker')
         contactNode = await startNetworkNode(LOCALHOST, 30551, 'node-0')
         await contactNode.addBootstrapTracker(tracker.getAddress())
@@ -50,17 +49,15 @@ describe('check maxInBound and maxOutBound limits', () => {
             // update limits and connect again
             otherNodes.forEach((node) => {
                 const limits = node.getConnectionLimitsPerStream()
-                // console.log(limits)
                 node.setConnectionLimitsPerStream(limits.maxInBound + 2, limits.maxOutBound + 2)
-                console.log(node.getConnectionLimitsPerStream())
             })
 
-            otherNodes[7].protocols.trackerNode.once(TrackerNode.events.STREAM_INFO_RECEIVED, () => {
+            otherNodes[7].protocols.trackerNode.once(TrackerNode.events.STREAM_INFO_RECEIVED, async () => {
                 done()
             })
 
-            // otherNodes[7]._requestStreamInfo(new StreamID(streamId, 0), 0)
-            otherNodes[7].subscribe(streamId + '1', 0)
+            // eslint-disable-next-line no-underscore-dangle
+            otherNodes[7]._maintainStreams()
         })
 
         otherNodes[7].subscribe(streamId, 0)
@@ -68,6 +65,7 @@ describe('check maxInBound and maxOutBound limits', () => {
 
     afterAll(async () => {
         await callbackToPromise(contactNode.stop.bind(contactNode))
+        await wait(1000)
         await Promise.all(otherNodes.map((node) => callbackToPromise(node.stop.bind(node))))
         await callbackToPromise(tracker.stop.bind(tracker))
     })
