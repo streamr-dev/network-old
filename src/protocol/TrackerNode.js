@@ -22,9 +22,11 @@ class TrackerNode extends EventEmitter {
         this._endpointListener.implement(this, endpoint)
     }
 
-    sendStatus(trackerId, status) {
+    async sendStatus(trackerId, status) {
         const trackerAddress = this.peerBook.getAddress(trackerId)
-        this.endpoint.send(trackerAddress, encoder.statusMessage(status))
+        await this.endpoint.send(trackerAddress, encoder.statusMessage(status)).catch((err) => {
+            console.error(`Could not send status to tracker ${trackerAddress} because '${err}'`)
+        })
     }
 
     requestStreamInfo(trackerId, streamId) {
