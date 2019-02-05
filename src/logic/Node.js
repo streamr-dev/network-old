@@ -214,10 +214,14 @@ class Node extends EventEmitter {
     async _subscribeToStreamOnNode(node, streamId) {
         if (!this.streams.hasInboundNode(streamId, node)) {
             await this.protocols.nodeToNode.sendSubscribe(node, streamId, false)
+
+            this.streams.addInboundNode(streamId, node)
+            this.streams.addOutboundNode(streamId, node)
+            this._handleBufferedMessages(streamId)
+
+            // TODO get prove message from node that we successfully subscribed
+            this.emit(events.NODE_SUBSCRIBED)
         }
-        this.streams.addInboundNode(streamId, node)
-        this.streams.addOutboundNode(streamId, node)
-        this._handleBufferedMessages(streamId)
     }
 
     onNodeDisconnected(node) {
@@ -256,8 +260,11 @@ class Node extends EventEmitter {
         const streamsRequiringMoreNodes = this.streams.getStreams().filter((streamId) => {
             return this.streams.getInboundNodesForStream(streamId).length < TARGET_NUM_OF_INBOUND_NODES_PER_STREAM
         })
-        this.debug('searching for more nodes for streams %j', streamsRequiringMoreNodes)
-        streamsRequiringMoreNodes.forEach((streamId) => this._requestStreamInfo(streamId))
+
+        if (streamsRequiringMoreNodes.length) {
+            this.debug('searching for more nodes for streams %j', streamsRequiringMoreNodes)
+            streamsRequiringMoreNodes.forEach((streamId) => this._requestStreamInfo(streamId))
+        }
     }
 
     _clearConnectToBootstrapTrackersInterval() {
@@ -275,7 +282,7 @@ class Node extends EventEmitter {
     }
 
     _getTracker() {
-        return [...this.trackers][Math.floor(Math.random() * this.trackers.size)]
+        return this.trackers.size ? [...this.trackers][Math.floor(Math.random() * this.trackers.size)] : null
     }
 
     setConnectionLimitsPerStream(maxNumNodesInBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM, maxNumNodesOutBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM) {
