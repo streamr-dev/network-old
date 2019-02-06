@@ -1,7 +1,6 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
-const { wait, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const { LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 
@@ -16,11 +15,13 @@ describe('check status message flow between tracker and two nodes', () => {
     let nodeTwo
     const streamId = 'stream-1'
 
-    it('tracker should receive status message from node', async (done) => {
+    beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 30750, 'tracker')
         nodeOne = await startNetworkNode(LOCALHOST, 30752, 'node-1')
         nodeTwo = await startNetworkNode(LOCALHOST, 30753, 'node-2')
+    })
 
+    it('tracker should receive status message from node', async (done) => {
         tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => {
             expect(statusMessage.getSource()).toEqual(nodeOne.id)
             // eslint-disable-next-line no-underscore-dangle
@@ -47,8 +48,8 @@ describe('check status message flow between tracker and two nodes', () => {
             const status = nodeOne._getStatus()
 
             expect(status.streams).toEqual(['stream-1::0'])
-            expect(status.outBoundNodes).toEqual(['node-2'])
-            expect(status.inBoundNodes).toEqual(['node-2'])
+            expect(status.outboundNodes).toEqual(['node-2'])
+            expect(status.inboundNodes).toEqual(['node-2'])
 
             let receivedTotal = 0
             tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => {

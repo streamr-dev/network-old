@@ -138,7 +138,10 @@ class Node extends EventEmitter {
         const source = subscribeMessage.getSource()
         const leechOnly = subscribeMessage.getLeechOnly()
 
-        this.emit(events.SUBSCRIPTION_REQUEST, streamId, source)
+        this.emit(events.SUBSCRIPTION_REQUEST, {
+            streamId,
+            source
+        })
 
         const isSetup = this.streams.isSetUp(streamId)
 
@@ -187,8 +190,8 @@ class Node extends EventEmitter {
         return {
             streams: this.streams.getStreamsAsKeys(),
             started: this.started,
-            outBoundNodes: [...allOutboundNodes],
-            inBoundNodes: [...allInboundNodes],
+            outboundNodes: [...allOutboundNodes],
+            inboundNodes: [...allInboundNodes],
         }
     }
 
@@ -220,7 +223,10 @@ class Node extends EventEmitter {
             this._handleBufferedMessages(streamId)
 
             // TODO get prove message from node that we successfully subscribed
-            this.emit(events.NODE_SUBSCRIBED)
+            this.emit(events.NODE_SUBSCRIBED, {
+                streamId,
+                node
+            })
         }
     }
 

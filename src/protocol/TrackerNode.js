@@ -1,7 +1,6 @@
 const { EventEmitter } = require('events')
 const debug = require('debug')('streamr:protocol:tracker-node')
 const encoder = require('../helpers/MessageEncoder')
-const { disconnectionReasons } = require('../messages/messageTypes')
 const EndpointListener = require('./EndpointListener')
 const PeerBook = require('./PeerBook')
 
