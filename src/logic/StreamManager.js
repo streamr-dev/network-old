@@ -91,6 +91,10 @@ module.exports = class StreamManager {
         }
     }
 
+    getAllNodesSet() {
+        return new Set([...this.getAllInboundNodes(), ...this.getAllOutboundNodes()])
+    }
+
     getAllInboundNodes() {
         let allInboundNodes = new Set()
         this.streams.forEach(({ inboundNodes, _ }) => {

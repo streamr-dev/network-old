@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const TrackerServer = require('../protocol/TrackerServer')
-const { getPeersTopology } = require('../helpers/TopologyStrategy')
+const { getPeersTopology, filterOutRandomPeer } = require('../helpers/TopologyStrategy')
 
 module.exports = class Tracker extends EventEmitter {
     constructor(id, trackerServer) {
@@ -34,12 +34,27 @@ module.exports = class Tracker extends EventEmitter {
         this._removeNode(node)
     }
 
-    sendStreamInfo(streamMessage) {
+    async sendStreamInfo(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const source = streamMessage.getSource()
 
         const nodesForStream = this.streamKeyToNodes.get(streamId.key()) || new Set()
         const selectedNodes = getPeersTopology([...nodesForStream], source)
+
+        await Promise.all(selectedNodes.map((node) => {
+            let { outboundNodes } = this.connectionsToNodes.get(node)
+            if (outboundNodes.length) {
+                this.debug('original connections %j', outboundNodes)
+                outboundNodes = filterOutRandomPeer(outboundNodes)
+                outboundNodes.push(source)
+                this.debug('updated connections %j', outboundNodes)
+                this.debug('sending to node %s reconnection instructions', node)
+                return this.protocols.trackerServer.sendStreamInfo(node, streamId, outboundNodes)
+            }
+
+            return new Promise((resolve) => resolve())
+        }))
+
         this.protocols.trackerServer.sendStreamInfo(source, streamId, selectedNodes)
         this.debug('sent stream info to %s: stream %s with nodes %j', source, streamId, selectedNodes)
     }

@@ -90,9 +90,10 @@ class Node extends EventEmitter {
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
             const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             await this._subscribeToStreamOnNode(node, streamId)
-
             nodeIds.push(node)
-        }))
+        })).catch((err) => {
+            console.error(`Could not connect to the node because '${err}'`)
+        })
 
         const nodesToDisconnect = alreadyConnectedNode.filter((node) => !nodeIds.includes(node))
 
@@ -191,8 +192,19 @@ class Node extends EventEmitter {
         this.debug('stopping')
         this._clearConnectToBootstrapTrackersInterval()
         this._clearMaintainStreamsInterval()
+        this._disconnectFromAllNodes()
+        this._disconnectFromTrackers()
         this.messageBuffer.clear()
         this.protocols.nodeToNode.stop(cb)
+    }
+
+    _disconnectFromTrackers() {
+        this.trackers.forEach((tracker) => this.protocols.nodeToNode.disconnectFromNode(tracker, disconnectionReasons.GRACEFUL_SHUTDOWN))
+    }
+
+    _disconnectFromAllNodes() {
+        const nodes = this.streams.getAllNodesSet()
+        nodes.forEach((node) => this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.GRACEFUL_SHUTDOWN))
     }
 
     _getStatus() {
@@ -305,6 +317,7 @@ class Node extends EventEmitter {
     setConnectionLimitsPerStream(maxNumNodesInBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM, maxNumNodesOutBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM) {
         this.connectionLimits.maxInBound = maxNumNodesInBound
         this.connectionLimits.maxOutBound = maxNumNodesOutBound
+        this.debug('changed connection limits to %o', this.getConnectionLimitsPerStream())
     }
 
     getConnectionLimitsPerStream() {
