@@ -15,26 +15,19 @@ jest.setTimeout(DEFAULT_TIMEOUT)
  */
 describe('Check tracker instructions to node', () => {
     let tracker
-    let nodeOne
-    let nodeTwo
+    let otherNodes
     const streamId = 'stream-1'
 
     it('init tracker and nodes, tracker receives stream info', async (done) => {
         tracker = await startTracker(LOCALHOST, 30950, 'tracker')
-        nodeOne = await startNetworkNode(LOCALHOST, 30952, 'node-1')
-        nodeTwo = await startNetworkNode(LOCALHOST, 30953, 'node-2')
 
-        await nodeOne.addBootstrapTracker(tracker.getAddress())
-        await nodeTwo.addBootstrapTracker(tracker.getAddress())
-
-        nodeOne.subscribe(streamId, 0)
-        nodeTwo.subscribe(streamId, 0)
-
-        await Promise.all([
-            waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.STREAM_INFO_RECEIVED),
-            waitForEvent(nodeTwo.protocols.trackerNode, TrackerNode.events.STREAM_INFO_RECEIVED)
+        otherNodes = await Promise.all([
+            startNetworkNode(LOCALHOST, 30952, 'node-1'),
+            startNetworkNode(LOCALHOST, 30953, 'node-2')
         ])
-
+        await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
+        await Promise.all(otherNodes.map((node) => node.subscribe(streamId, 0)))
+        await Promise.all(otherNodes.map((node) => waitForEvent(node.protocols.trackerNode, TrackerNode.events.STREAM_INFO_RECEIVED)))
         done()
     })
 
@@ -43,34 +36,18 @@ describe('Check tracker instructions to node', () => {
         tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, () => {
             receivedTotal += 1
 
-            if (receivedTotal === 2) {
+            if (receivedTotal === otherNodes.length) {
                 done()
             }
         })
     })
 
-    it('node one and two should be connected to each other', async (done) => {
-        expect(nodeOne.streams.getAllNodes()).toEqual({
-            allInboundNodes: new Set(['node-2']),
-            allOutboundNodes: new Set(['node-2'])
-        })
-
-        expect(nodeTwo.streams.getAllNodes()).toEqual({
-            allInboundNodes: new Set(['node-1']),
-            allOutboundNodes: new Set(['node-1'])
-        })
-
-        done()
-    })
-
     it('tracker sends empty list of nodes, so node-one will disconnect from node two', async (done) => {
         // eslint-disable-next-line no-underscore-dangle
-        nodeOne._clearMaintainStreamsInterval()
-        // eslint-disable-next-line no-underscore-dangle
-        nodeTwo._clearMaintainStreamsInterval()
+        otherNodes.map((node) => node._clearMaintainStreamsInterval())
 
-        nodeTwo.protocols.nodeToNode.endpoint.once(endpointEvents.PEER_DISCONNECTED, ({ _, reason }) => {
-            expect(reason).toEqual(disconnectionReasons.TRACKER_INSTRUCTION)
+        otherNodes[1].protocols.nodeToNode.endpoint.once(endpointEvents.PEER_DISCONNECTED, ({ _, reason }) => {
+            expect(reason).toBe(disconnectionReasons.TRACKER_INSTRUCTION)
         })
 
         let receivedTotal = 0
@@ -83,17 +60,17 @@ describe('Check tracker instructions to node', () => {
             expect(status.inboundNodes).toEqual([])
 
             receivedTotal += 1
-            if (receivedTotal === 2) {
+            if (receivedTotal === otherNodes.length) {
                 done()
             }
         })
 
-        tracker.protocols.trackerServer.endpoint.send(nodeOne.protocols.nodeToNode.getAddress(), encoder.streamMessage(new StreamID(streamId, 0), []))
+        // send empty list
+        tracker.protocols.trackerServer.endpoint.send(otherNodes[0].protocols.nodeToNode.getAddress(), encoder.streamMessage(new StreamID(streamId, 0), []))
     })
 
     afterAll(async () => {
-        await callbackToPromise(nodeOne.stop.bind(nodeOne))
-        await callbackToPromise(nodeTwo.stop.bind(nodeTwo))
+        await Promise.all(otherNodes.map((node) => callbackToPromise(node.stop.bind(node))))
         await callbackToPromise(tracker.stop.bind(tracker))
     })
 })

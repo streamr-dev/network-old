@@ -59,7 +59,6 @@ describe('Selecting leader for the stream and sending messages to two subscriber
 
             done()
         })
-
     })
 
     // TODO test disconnect and more than one stream
