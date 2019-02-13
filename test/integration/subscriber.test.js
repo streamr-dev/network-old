@@ -1,8 +1,8 @@
-const { startClient, startNode, startTracker } = require('../../src/composition')
+const { startNetworkNode, startTracker } = require('../../src/composition')
 const { callbackToPromise } = require('../../src/util')
 const { waitForEvent, LOCALHOST, DEFAULT_TIMEOUT } = require('../util')
 const NodeToNode = require('../../src/protocol/NodeToNode')
-const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
+const { StreamID } = require('../../src/identifiers')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
@@ -11,17 +11,16 @@ describe('Selecting leader for the stream and sending messages to two subscriber
     let nodeOne
     let nodeTwo
     let publisher
-    let subscriber1
-    let subscriber2
 
-    const streamId = new StreamID('stream-id', 0)
+    const streamId = 'stream-id'
+    const streamIdObj = new StreamID(streamId, 0)
 
     it('should be select leader and get two active subscribers', async (done) => {
         tracker = await startTracker(LOCALHOST, 32300, 'tracker')
 
         await Promise.all([
-            startNode(LOCALHOST, 32312, 'node-1'),
-            startNode(LOCALHOST, 32313, 'node-2')
+            startNetworkNode(LOCALHOST, 32312, 'node-1'),
+            startNetworkNode(LOCALHOST, 32313, 'node-2')
         ]).then((res) => {
             [nodeOne, nodeTwo] = res
         })
@@ -29,33 +28,24 @@ describe('Selecting leader for the stream and sending messages to two subscriber
         await nodeOne.addBootstrapTracker(tracker.getAddress())
         await nodeTwo.addBootstrapTracker(tracker.getAddress())
 
-        publisher = await startClient(LOCALHOST, 32301, 'publisher-1', nodeOne.protocols.nodeToNode.getAddress())
+        publisher = await startNetworkNode(LOCALHOST, 32301, 'publisher-1', nodeOne.protocols.nodeToNode.getAddress())
+        await publisher.addBootstrapTracker(tracker.getAddress())
 
-        await Promise.all([
-            startClient(LOCALHOST, 32302, 'subscriber-1', nodeTwo.protocols.nodeToNode.getAddress()),
-            startClient(LOCALHOST, 32303, 'subscriber-2', nodeTwo.protocols.nodeToNode.getAddress())
-        ]).then((res) => {
-            [subscriber1, subscriber2] = res
-        })
+        nodeOne.subscribeToStreamIfHaveNotYet(streamIdObj)
+        nodeTwo.subscribeToStreamIfHaveNotYet(streamIdObj)
 
-        let timestamp = 1000
-        let previousMessageReference = null
         const publisherInterval = setInterval(() => {
-            const messageId = new MessageID(streamId, timestamp, 0, 'publisher-id')
-            publisher.publish(messageId, previousMessageReference, `Hello world ${timestamp}!`)
-            previousMessageReference = new MessageReference(timestamp, 0)
-            timestamp += 1000
+            publisher.publish('stream-id', 0, 100, 0, 'publisher', 99, 0, {
+                hello: 'world'
+            })
         }, 1000)
 
-        subscriber1.subscribe(streamId)
-        subscriber2.subscribe(streamId)
-
         await Promise.all([
-            waitForEvent(subscriber1.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED),
-            waitForEvent(subscriber2.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED)
+            waitForEvent(nodeOne.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED),
+            waitForEvent(nodeTwo.protocols.nodeToNode, NodeToNode.events.DATA_RECEIVED)
         ]).then(() => {
-            expect(nodeTwo.streams.getOutboundNodesForStream(streamId)).toContain('subscriber-1')
-            expect(nodeTwo.streams.getOutboundNodesForStream(streamId)).toContain('subscriber-2')
+            expect(nodeTwo.streams.getOutboundNodesForStream(streamIdObj)).toContain('node-1')
+            expect(nodeTwo.streams.getOutboundNodesForStream(streamIdObj)).toContain('publisher-1')
             clearInterval(publisherInterval)
 
             done()
@@ -67,8 +57,6 @@ describe('Selecting leader for the stream and sending messages to two subscriber
         await callbackToPromise(publisher.stop.bind(publisher))
         await callbackToPromise(nodeOne.stop.bind(nodeOne))
         await callbackToPromise(nodeTwo.stop.bind(nodeTwo))
-        await callbackToPromise(subscriber1.stop.bind(subscriber1))
-        await callbackToPromise(subscriber2.stop.bind(subscriber2))
         await callbackToPromise(tracker.stop.bind(tracker))
     })
 })

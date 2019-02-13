@@ -81,13 +81,24 @@ class Node extends EventEmitter {
         }
     }
 
-    onStreamInfoReceived(streamMessage) {
+    async onStreamInfoReceived(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
+        const alreadyConnectedNode = [...this.streams.getAllOutboundNodes()]
+        const nodeIds = []
 
-        nodeAddresses.forEach(async (nodeAddress) => {
+        await Promise.all(nodeAddresses.map(async (nodeAddress) => {
             const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
-            return this._subscribeToStreamOnNode(node, streamId)
+            await this._subscribeToStreamOnNode(node, streamId)
+
+            nodeIds.push(node)
+        }))
+
+        const nodesToDisconnect = alreadyConnectedNode.filter((node) => !nodeIds.includes(node))
+
+        nodesToDisconnect.forEach((node) => {
+            this.debug('disconnecting from node %s based on tracker instructions', node)
+            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.TRACKER_INSTRUCTION)
         })
     }
 
