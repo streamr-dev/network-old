@@ -192,6 +192,14 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onNewConnection(ws, address, customHeaders) {
+        // Handle scenario where two peers have opened a socket to each other at the same time. First socket opened will
+        // be kept, second closed.
+        if (this.isConnected(address)) {
+            debug('dropped new connection with %s because an existing connection already exists', address)
+            this.close(address, 'streamr:endpoint:duplicate-connection')
+            return
+        }
+
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
             this.onReceive(address, message)
