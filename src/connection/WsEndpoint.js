@@ -193,8 +193,8 @@ class WsEndpoint extends EventEmitter {
 
     _onNewConnection(ws, address, customHeaders) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
-        // Second condition is a tiebreaker to avoid both peers of simulatenously disconnecting their socket,
-        // thereby leaving no condition behind.
+        // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
+        // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             debug('dropped new connection with %s because an existing connection already exists', address)
             this.close(address, 'streamr:endpoint:duplicate-connection')
