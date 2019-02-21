@@ -192,9 +192,10 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onNewConnection(ws, address, customHeaders) {
-        // Handle scenario where two peers have opened a socket to each other at the same time. First socket opened will
-        // be kept, second closed.
-        if (this.isConnected(address)) {
+        // Handle scenario where two peers have opened a socket to each other at the same time.
+        // Second condition is a tiebreaker to avoid both peers of simulatenously disconnecting their socket,
+        // thereby leaving no condition behind.
+        if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             debug('dropped new connection with %s because an existing connection already exists', address)
             this.close(address, 'streamr:endpoint:duplicate-connection')
             return
@@ -246,5 +247,7 @@ async function startEndpoint(host, port, customHeaders) {
 
 module.exports = {
     CustomHeaders,
+    WsEndpoint,
+    startWebSocketServer,
     startEndpoint
 }
