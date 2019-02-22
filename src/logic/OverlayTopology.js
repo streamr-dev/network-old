@@ -60,7 +60,7 @@ module.exports = class OverlayTopology {
                 .filter(([n, neighbors]) => neighbors.size < this.maxNeighborsPerNode) // there are open slots
                 .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodeId is not already a neighbor
                 .filter(([n, _]) => n !== nodeId) // do not connect to self
-                .sort(([n1, neighbors1], [n2, neighbors2]) => neighbors1.size - neighbors2.size)
+                .sort(([n1, neighbors1], [n2, neighbors2]) => neighbors1.size - neighbors2.size) // sort by reserved slots (ascending)
                 .map(([n, _]) => n)
 
             const neighborsToConnectTo = this.shuffleArray(candidates).slice(0, missingNeighbors)
@@ -77,7 +77,7 @@ module.exports = class OverlayTopology {
 
         if (missingNeighbors > 0) {
             const candidates = Object.entries(this.nodes)
-                .filter(([n, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // there are open slots
+                .filter(([n, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // there are no open slots
                 .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodeId is not already a neighbor
                 .filter(([n, _]) => n !== nodeId) // do not connect to self
                 .map(([n, _]) => n)
