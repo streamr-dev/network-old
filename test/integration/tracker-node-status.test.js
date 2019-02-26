@@ -47,7 +47,6 @@ describe('check status message flow between tracker and two nodes', () => {
             // eslint-disable-next-line no-underscore-dangle
             const status = nodeOne._getStatus()
 
-            // console.log(status.streams)
             expect(status.streams).toEqual([{
                 streamId: 'stream-1::0',
                 inboundNodes: ['node-2'],
@@ -56,7 +55,6 @@ describe('check status message flow between tracker and two nodes', () => {
 
             let receivedTotal = 0
             tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => {
-                // console.log(statusMessage)
                 if (statusMessage.getSource() === nodeOne.id) {
                     // eslint-disable-next-line no-underscore-dangle
                     expect(statusMessage.getStatus()).toEqual(nodeOne._getStatus())
