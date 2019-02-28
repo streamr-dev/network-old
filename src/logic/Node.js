@@ -24,7 +24,6 @@ class Node extends EventEmitter {
         super()
 
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
-        this.maintainStreamsInterval = setInterval(this._maintainStreams.bind(this), 10000)
         this.bootstrapTrackerAddresses = []
 
         this.streams = new StreamManager()
@@ -42,7 +41,7 @@ class Node extends EventEmitter {
         }
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
-        this.protocols.trackerNode.on(TrackerNode.events.STREAM_INFO_RECEIVED, (streamMessage) => this.onStreamInfoReceived(streamMessage))
+        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (tracker) => this.onTrackerDisconnected(tracker))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (dataMessage) => this.onDataReceived(dataMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage) => this.onSubscribeRequest(subscribeMessage))
@@ -77,14 +76,13 @@ class Node extends EventEmitter {
             this.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
             this._sendStatusToAllTrackers()
-            this._requestStreamInfo(streamId)
         }
     }
 
-    async onStreamInfoReceived(streamMessage) {
+    async onTrackerInstructionReceived(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
-        const alreadyConnectedNode = this.streams.getAllNodes()
+        const currentNodes = this.streams.getAllNodes()
         const nodeIds = []
 
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
@@ -95,7 +93,7 @@ class Node extends EventEmitter {
             console.error(`Could not connect to the node because '${err}'`)
         })
 
-        const nodesToDisconnect = alreadyConnectedNode.filter((node) => !nodeIds.includes(node))
+        const nodesToDisconnect = currentNodes.filter((node) => !nodeIds.includes(node))
 
         nodesToDisconnect.forEach((node) => {
             this.debug('disconnecting from node %s based on tracker instructions', node)
@@ -191,7 +189,6 @@ class Node extends EventEmitter {
     stop(cb) {
         this.debug('stopping')
         this._clearConnectToBootstrapTrackersInterval()
-        this._clearMaintainStreamsInterval()
         this._disconnectFromAllNodes()
         this._disconnectFromTrackers()
         this.messageBuffer.clear()
@@ -224,16 +221,6 @@ class Node extends EventEmitter {
     _sendStatus(tracker) {
         this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
         this.debug('sent status to tracker %s', tracker)
-    }
-
-    _requestStreamInfo(streamId) {
-        const randomTracker = this._getTracker()
-
-        if (randomTracker) {
-            this.protocols.trackerNode.requestStreamInfo(randomTracker, streamId)
-        } else {
-            console.error('Not connected to any tracker')
-        }
     }
 
     async _subscribeToStreamOnNode(node, streamId) {
@@ -284,33 +271,11 @@ class Node extends EventEmitter {
         })
     }
 
-    _maintainStreams() {
-        const streamsRequiringMoreNodes = this.streams.getStreams().filter((streamId) => {
-            return this.streams.getInboundNodesForStream(streamId).length < TARGET_NUM_OF_INBOUND_NODES_PER_STREAM
-        })
-
-        if (streamsRequiringMoreNodes.length) {
-            this.debug('searching for more nodes for streams %j', streamsRequiringMoreNodes)
-            streamsRequiringMoreNodes.forEach((streamId) => this._requestStreamInfo(streamId))
-        }
-    }
-
     _clearConnectToBootstrapTrackersInterval() {
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
         }
-    }
-
-    _clearMaintainStreamsInterval() {
-        if (this.maintainStreamsInterval) {
-            clearInterval(this.maintainStreamsInterval)
-            this.maintainStreamsInterval = null
-        }
-    }
-
-    _getTracker() {
-        return this.trackers.size ? [...this.trackers][Math.floor(Math.random() * this.trackers.size)] : null
     }
 
     setConnectionLimitsPerStream(maxNumNodesInBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM, maxNumNodesOutBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM) {

@@ -52,12 +52,12 @@ describe('check maxInBound and maxOutBound limits', () => {
                 node.setConnectionLimitsPerStream(limits.maxInBound + 1, limits.maxOutBound + 1)
             })
 
-            otherNodes[7].protocols.trackerNode.once(TrackerNode.events.STREAM_INFO_RECEIVED, async () => {
+            otherNodes[7].protocols.trackerNode.once(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, async () => {
                 done()
             })
 
             // eslint-disable-next-line no-underscore-dangle
-            otherNodes[7]._maintainStreams()
+            otherNodes[7]._sendStatusToAllTrackers()
         })
 
         otherNodes[7].subscribe(streamId, 0)

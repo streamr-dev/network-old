@@ -1,7 +1,8 @@
 const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const TrackerServer = require('../protocol/TrackerServer')
-const { getPeersTopology, filterOutRandomPeer } = require('../helpers/TopologyStrategy')
+const { getPeersTopology } = require('../helpers/TopologyStrategy')
+const { StreamID } = require('../identifiers')
 
 module.exports = class Tracker extends EventEmitter {
     constructor(id, trackerServer) {
@@ -16,7 +17,6 @@ module.exports = class Tracker extends EventEmitter {
             trackerServer
         }
 
-        this.protocols.trackerServer.on(TrackerServer.events.STREAM_INFO_REQUESTED, (streamMessage) => this.sendStreamInfo(streamMessage))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => this.processNodeStatus(statusMessage))
 
@@ -28,21 +28,23 @@ module.exports = class Tracker extends EventEmitter {
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
         this._addNode(source, status)
+        Object.keys(this.nodeStatus.get(source)).forEach((streamKey) => {
+            this._formAndSendInstructions(source, StreamID.fromKey(streamKey))
+        })
     }
 
     onNodeDisconnected(node) {
         this._removeNode(node)
     }
 
-    sendStreamInfo(streamMessage) {
-        const streamId = streamMessage.getStreamId()
-        const source = streamMessage.getSource()
-
+    async _formAndSendInstructions(node, streamId) {
         const nodesForStream = this.streamKeyToNodes.get(streamId.key()) || new Set()
-        const selectedNodes = getPeersTopology([...nodesForStream], source)
+        const selectedNodes = getPeersTopology([...nodesForStream], node)
 
-        this.protocols.trackerServer.sendStreamInfo(source, streamId, selectedNodes)
-        this.debug('sent stream info to %s: stream %s with nodes %j', source, streamId, selectedNodes)
+        await this.protocols.trackerServer.sendInstruction(node, streamId, selectedNodes)
+        this.debug('sent instruction to node %s: %j', node, {
+            [streamId]: selectedNodes
+        })
     }
 
     stop(cb) {

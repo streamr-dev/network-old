@@ -6,7 +6,7 @@ const msgTypes = {
     SUBSCRIBE: 0x03,
     UNSUBSCRIBE: 0x04,
     PUBLISH: 0x05,
-    STREAM: 0x06
+    INSTRUCTION: 0x06
 }
 
 const disconnectionReasons = Object.freeze({

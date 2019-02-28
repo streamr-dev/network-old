@@ -18,7 +18,7 @@ describe('Check tracker instructions to node', () => {
     let otherNodes
     const streamId = 'stream-1'
 
-    it('init tracker and nodes, tracker receives stream info', async (done) => {
+    it('init tracker and nodes, tracker receives stream info', async () => {
         tracker = await startTracker(LOCALHOST, 30950, 'tracker')
 
         otherNodes = await Promise.all([
@@ -27,8 +27,9 @@ describe('Check tracker instructions to node', () => {
         ])
         await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
         await Promise.all(otherNodes.map((node) => node.subscribe(streamId, 0)))
-        await Promise.all(otherNodes.map((node) => waitForEvent(node.protocols.trackerNode, TrackerNode.events.STREAM_INFO_RECEIVED)))
-        done()
+        await Promise.all(otherNodes.map((node) => {
+            return waitForEvent(node.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        }))
     })
 
     it('tracker should receive statuses from both', async (done) => {
@@ -43,9 +44,6 @@ describe('Check tracker instructions to node', () => {
     })
 
     it('tracker sends empty list of nodes, so node-one will disconnect from node two', async (done) => {
-        // eslint-disable-next-line no-underscore-dangle
-        otherNodes.map((node) => node._clearMaintainStreamsInterval())
-
         otherNodes[1].protocols.nodeToNode.endpoint.once(endpointEvents.PEER_DISCONNECTED, ({ _, reason }) => {
             expect(reason).toBe(disconnectionReasons.TRACKER_INSTRUCTION)
         })
@@ -69,7 +67,7 @@ describe('Check tracker instructions to node', () => {
         })
 
         // send empty list
-        tracker.protocols.trackerServer.endpoint.send(otherNodes[0].protocols.nodeToNode.getAddress(), encoder.streamMessage(new StreamID(streamId, 0), []))
+        tracker.protocols.trackerServer.endpoint.send(otherNodes[0].protocols.nodeToNode.getAddress(), encoder.instructionMessage(new StreamID(streamId, 0), []))
     })
 
     afterAll(async () => {
