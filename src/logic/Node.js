@@ -199,12 +199,15 @@ class Node extends EventEmitter {
     }
 
     _disconnectFromTrackers() {
-        this.trackers.forEach((tracker) => this.protocols.nodeToNode.disconnectFromNode(tracker, disconnectionReasons.GRACEFUL_SHUTDOWN))
+        this.trackers.forEach((tracker) => {
+            this.protocols.nodeToNode.disconnectFromNode(tracker, disconnectionReasons.GRACEFUL_SHUTDOWN)
+        })
     }
 
     _disconnectFromAllNodes() {
-        const nodes = this.streams.getAllNodesSet()
-        nodes.forEach((node) => this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.GRACEFUL_SHUTDOWN))
+        this.streams.getAllNodes().forEach((node) => {
+            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.GRACEFUL_SHUTDOWN)
+        })
     }
 
     _getStatus() {

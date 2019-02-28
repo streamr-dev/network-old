@@ -3,7 +3,7 @@ const { DuplicateMessageDetector, NumberPair } = require('./DuplicateMessageDete
 
 module.exports = class StreamManager {
     constructor() {
-        this.streams = new Map() // streamId => {}
+        this.streams = new Map() // streamKey => {}
     }
 
     setUpStream(streamId) {
@@ -71,17 +71,13 @@ module.exports = class StreamManager {
     }
 
     getStreamsWithConnections() {
-        const result = []
-        this.streams.forEach(({ inboundNodes, outboundNodes }, stream) => {
-            const inboundNodesArr = new Array(...inboundNodes)
-            const outboundNodesArr = new Array(...outboundNodes)
-            result.push({
-                streamId: stream,
-                inboundNodes: inboundNodesArr,
-                outboundNodes: outboundNodesArr
-            })
+        const result = {}
+        this.streams.forEach(({ inboundNodes, outboundNodes }, streamKey) => {
+            result[streamKey] = {
+                inboundNodes: [...inboundNodes],
+                outboundNodes: [...outboundNodes]
+            }
         })
-
         return result
     }
 
@@ -100,14 +96,7 @@ module.exports = class StreamManager {
     }
 
     getAllNodes() {
-        return {
-            allInboundNodes: this.getAllInboundNodes(),
-            allOutboundNodes: this.getAllOutboundNodes()
-        }
-    }
-
-    getAllNodesSet() {
-        return new Set([...this.getAllInboundNodes(), ...this.getAllOutboundNodes()])
+        return [...new Set([...this.getAllInboundNodes(), ...this.getAllOutboundNodes()])]
     }
 
     getAllInboundNodes() {

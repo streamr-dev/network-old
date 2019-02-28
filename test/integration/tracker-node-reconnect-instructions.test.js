@@ -55,9 +55,12 @@ describe('Check tracker instructions to node', () => {
             // eslint-disable-next-line no-underscore-dangle
             const status = statusMessage.getStatus()
 
-            expect(status.streams).toEqual(['stream-1::0'])
-            expect(status.outboundNodes).toEqual([])
-            expect(status.inboundNodes).toEqual([])
+            expect(status.streams).toEqual({
+                'stream-1::0': {
+                    inboundNodes: [],
+                    outboundNodes: []
+                }
+            })
 
             receivedTotal += 1
             if (receivedTotal === otherNodes.length) {
