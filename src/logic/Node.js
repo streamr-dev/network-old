@@ -15,9 +15,6 @@ const events = Object.freeze({
 })
 
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
-const TARGET_NUM_OF_INBOUND_NODES_PER_STREAM = 3
-const MAX_NUM_NODES_INBOUND_PER_STREAM = 6
-const MAX_NUM_NODES_OUTBOUND_PER_STREAM = 6
 
 class Node extends EventEmitter {
     constructor(id, trackerNode, nodeToNode) {
@@ -57,11 +54,6 @@ class Node extends EventEmitter {
             received: {
                 duplicates: 0
             }
-        }
-
-        this.connectionLimits = {
-            maxInBound: MAX_NUM_NODES_INBOUND_PER_STREAM,
-            maxOutBound: MAX_NUM_NODES_OUTBOUND_PER_STREAM
         }
     }
 
@@ -153,30 +145,19 @@ class Node extends EventEmitter {
             source
         })
 
-        const isSetup = this.streams.isSetUp(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
-        if (isSetup && this.streams.getOutboundNodesForStream(streamId).length >= this.connectionLimits.maxOutBound) {
-            this.debug('reached max number "%d" for outbound connections for stream %s', this.connectionLimits.maxOutBound, streamId)
-            this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.MAX_OUTBOUND_CONNECTIONS)
-        } else if (isSetup && !leechOnly && this.streams.getInboundNodesForStream(streamId).length >= this.connectionLimits.maxInBound) {
-            this.debug('reached max number "%d" for inbound connections for stream %s', this.connectionLimits.maxInBound, streamId)
-            this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.MAX_INBOUND_CONNECTIONS)
-        } else {
-            this.subscribeToStreamIfHaveNotYet(streamId)
-
-            this.streams.addOutboundNode(streamId, source)
-
-            if (!leechOnly) {
-                this.streams.addInboundNode(streamId, source)
-            }
-
-            this._handleBufferedMessages(streamId)
-            this.debug('node %s subscribed to stream %s', source, streamId)
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                source
-            })
+        this.streams.addOutboundNode(streamId, source)
+        if (!leechOnly) {
+            this.streams.addInboundNode(streamId, source)
         }
+
+        this._handleBufferedMessages(streamId)
+        this.debug('node %s subscribed to stream %s', source, streamId)
+        this.emit(events.NODE_SUBSCRIBED, {
+            streamId,
+            source
+        })
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
@@ -276,16 +257,6 @@ class Node extends EventEmitter {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
         }
-    }
-
-    setConnectionLimitsPerStream(maxNumNodesInBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM, maxNumNodesOutBound = MAX_NUM_NODES_OUTBOUND_PER_STREAM) {
-        this.connectionLimits.maxInBound = maxNumNodesInBound
-        this.connectionLimits.maxOutBound = maxNumNodesOutBound
-        this.debug('changed connection limits to %o', this.getConnectionLimitsPerStream())
-    }
-
-    getConnectionLimitsPerStream() {
-        return this.connectionLimits
     }
 }
 
