@@ -96,25 +96,12 @@ module.exports = class StreamManager {
     }
 
     getAllNodes() {
-        return [...new Set([...this.getAllInboundNodes(), ...this.getAllOutboundNodes()])]
-    }
-
-    getAllInboundNodes() {
-        let allInboundNodes = new Set()
-        this.streams.forEach(({ inboundNodes, _ }) => {
-            allInboundNodes = new Set([...allInboundNodes, ...inboundNodes])
+        const nodes = []
+        this.streams.forEach(({ inboundNodes, outboundNodes }) => {
+            nodes.push(...inboundNodes)
+            nodes.push(...outboundNodes)
         })
-
-        return allInboundNodes
-    }
-
-    getAllOutboundNodes() {
-        let allOutboundNodes = new Set()
-        this.streams.forEach(({ _, outboundNodes }) => {
-            allOutboundNodes = new Set([...allOutboundNodes, ...outboundNodes])
-        })
-
-        return allOutboundNodes
+        return [...new Set(nodes)]
     }
 
     hasOutboundNode(streamId, node) {

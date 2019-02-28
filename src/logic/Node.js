@@ -84,7 +84,7 @@ class Node extends EventEmitter {
     async onStreamInfoReceived(streamMessage) {
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
-        const alreadyConnectedNode = [...this.streams.getAllOutboundNodes()]
+        const alreadyConnectedNode = this.streams.getAllNodes()
         const nodeIds = []
 
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
