@@ -62,10 +62,10 @@ module.exports = class OverlayTopology {
             }
         }
 
-        // At this point in code, if numOfMissingNeighbors > 0, we can assume that all nodes we aren't yet neighbors
-        // with are full. Disconnecting any existing link in this set of nodes will open 2 free slots into the network
-        // overall. Thus we want to make sure that we have at least 2 free slots ourselves otherwise we will leave one
-        // slot free which could lead to a chain of disconnects and connects, one node at a time.
+        // At this point in code, if numOfMissingNeighbors > 0, we can assume that all nodes that we aren't yet
+        // neighbor with are full. Disconnecting any existing link in this set of nodes will open 2 free slots into the
+        // network overall. Thus we want to make sure that we have at least 2 free slots ourselves otherwise we will
+        // leave one slot free which could lead to a never-ending chain of disconnects and connects, one node at a time.
         if (this._numOfMissingNeighbors(nodeId) > 1) {
             const candidates = Object.entries(this.nodes)
                 .filter(([n, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // full nodes
