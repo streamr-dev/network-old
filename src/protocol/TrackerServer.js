@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const encoder = require('../helpers/MessageEncoder')
 const EndpointListener = require('./EndpointListener')
-const PeerBook = require('./PeerBook')
+const { PeerBook } = require('./PeerBook')
 
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:tracker:send-peers',
