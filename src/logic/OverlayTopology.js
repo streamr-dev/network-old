@@ -26,8 +26,10 @@ module.exports = class OverlayTopology {
     }
 
     leave(nodeId) {
-        this.nodes[nodeId].forEach((neighbor) => this.nodes[neighbor].delete(nodeId)) // assumption: neighbor already initialized in tracker
-        delete this.nodes[nodeId]
+        if (this.nodes[nodeId] != null) {
+            this.nodes[nodeId].forEach((neighbor) => this.nodes[neighbor].delete(nodeId)) // assumption: neighbor already initialized in tracker
+            delete this.nodes[nodeId]
+        }
     }
 
     state() {
