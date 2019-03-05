@@ -212,6 +212,10 @@ class WsEndpoint extends EventEmitter {
         })
 
         ws.on('close', (code, reason) => {
+            if (reason === 'streamr:endpoint:duplicate-connection') {
+                debug('socket %s dropped from other side because existing connection already exists')
+                return
+            }
             debug('socket to %s closed (code %d, reason %s)', address, code, reason)
             this.connections.delete(address)
             debug('removed %s from connection list', address)
