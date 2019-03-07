@@ -38,7 +38,7 @@ describe('Selecting leader for the stream and sending messages to two subscriber
         let timestamp = 1000
         let previousMessageReference = null
         const publisherInterval = setInterval(() => {
-            const messageId = new MessageID(streamIdObj, timestamp, 0, 'publisher-id')
+            const messageId = new MessageID(streamIdObj, timestamp, 0, 'publisher-id', 'session-id')
             publisher.publish(messageId, previousMessageReference, `Hello world ${timestamp}!`)
             previousMessageReference = new MessageReference(timestamp, 0)
             timestamp += 1000

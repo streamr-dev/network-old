@@ -51,7 +51,7 @@ describe('encoder', () => {
 
     it('check dataMessage encoding (without previousMessageReference)', () => {
         const actual = encoder.dataMessage(
-            new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id'),
+            new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id', 'session-id'),
             null,
             {
                 hello: 'world'
@@ -70,7 +70,8 @@ describe('encoder', () => {
                     },
                     timestamp: 666666666,
                     sequenceNo: 133,
-                    publisherId: 'publisher-id'
+                    publisherId: 'publisher-id',
+                    msgChainId: 'session-id'
                 },
                 previousMessageReference: null,
                 data: {
@@ -84,7 +85,7 @@ describe('encoder', () => {
 
     it('check dataMessage encoding (with previousMessageReference)', () => {
         const actual = encoder.dataMessage(
-            new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id'),
+            new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id', 'session-id'),
             new MessageReference(555555555, 0),
             {
                 hello: 'world'
@@ -103,7 +104,8 @@ describe('encoder', () => {
                     },
                     timestamp: 666666666,
                     sequenceNo: 133,
-                    publisherId: 'publisher-id'
+                    publisherId: 'publisher-id',
+                    msgChainId: 'session-id'
                 },
                 previousMessageReference: {
                     timestamp: 555555555,
@@ -130,12 +132,15 @@ describe('encoder', () => {
                     },
                     timestamp: 666666666,
                     sequenceNo: 133,
-                    publisherId: 'publisher-id'
+                    publisherId: 'publisher-id',
+                    msgChainId: 'session-id'
                 },
                 previousMessageReference: null,
                 data: {
                     hello: 'world',
-                }
+                },
+                signature: 'signature',
+                signatureType: 2
             }
         }
 
@@ -144,11 +149,13 @@ describe('encoder', () => {
         expect(dataMessage).toBeInstanceOf(DataMessage)
         expect(dataMessage.getSource()).toEqual('source-id')
         expect(dataMessage.getMessageId())
-            .toEqual(new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id'))
+            .toEqual(new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id', 'session-id'))
         expect(dataMessage.getPreviousMessageReference()).toBeNull()
         expect(dataMessage.getData()).toEqual({
             hello: 'world'
         })
+        expect(dataMessage.getSignature()).toEqual('signature')
+        expect(dataMessage.getSignatureType()).toEqual(2)
     })
 
     it('decoding dataMessage json returns DataMessage (with previousMessageReference)', () => {
@@ -163,7 +170,8 @@ describe('encoder', () => {
                     },
                     timestamp: 666666666,
                     sequenceNo: 133,
-                    publisherId: 'publisher-id'
+                    publisherId: 'publisher-id',
+                    msgChainId: 'session-id'
                 },
                 previousMessageReference: {
                     timestamp: 555555555,
@@ -180,7 +188,7 @@ describe('encoder', () => {
         expect(dataMessage).toBeInstanceOf(DataMessage)
         expect(dataMessage.getSource()).toEqual('source-id')
         expect(dataMessage.getMessageId())
-            .toEqual(new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id'))
+            .toEqual(new MessageID(new StreamID('stream-id', 0), 666666666, 133, 'publisher-id', 'session-id'))
         expect(dataMessage.getPreviousMessageReference()).toEqual(new MessageReference(555555555, 0))
         expect(dataMessage.getData()).toEqual({
             hello: 'world'
