@@ -83,13 +83,20 @@ class Node extends EventEmitter {
         this.debug('received instructions for %s', streamId)
 
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
-            const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
+            let node
+            try {
+                node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
+            } catch (e) {
+                this.debug('failed to connect to node at %s (%s)', nodeAddress, e)
+                return
+            }
             try {
                 await this._subscribeToStreamOnNode(node, streamId)
-                nodeIds.push(node)
             } catch (e) {
-                this.debug('failed to subscribe to %s (%s)', node, e)
+                this.debug('failed to subscribe to node %s (%s)', node, e)
+                return
             }
+            nodeIds.push(node)
         }))
 
         this.debug('connected and subscribed to %j for stream %s', nodeIds, streamId)

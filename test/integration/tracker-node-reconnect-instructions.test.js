@@ -36,7 +36,7 @@ describe('Check tracker instructions to node', () => {
         await callbackToPromise(tracker.stop.bind(tracker))
     })
 
-    it('tracker should receive statuses from both nodes', async (done) => {
+    it('tracker should receive statuses from both nodes', (done) => {
         let receivedTotal = 0
         tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, () => {
             receivedTotal += 1
