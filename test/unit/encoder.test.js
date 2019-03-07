@@ -55,7 +55,9 @@ describe('encoder', () => {
             null,
             {
                 hello: 'world'
-            }
+            },
+            null,
+            0
         )
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
@@ -73,7 +75,9 @@ describe('encoder', () => {
                 previousMessageReference: null,
                 data: {
                     hello: 'world',
-                }
+                },
+                signature: null,
+                signatureType: 0
             }
         })
     })
@@ -84,7 +88,9 @@ describe('encoder', () => {
             new MessageReference(555555555, 0),
             {
                 hello: 'world'
-            }
+            },
+            'signature',
+            1
         )
         expect(JSON.parse(actual)).toEqual({
             code: encoder.DATA,
@@ -105,7 +111,9 @@ describe('encoder', () => {
                 },
                 data: {
                     hello: 'world',
-                }
+                },
+                signature: 'signature',
+                signatureType: 1
             }
         })
     })

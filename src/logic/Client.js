@@ -27,7 +27,7 @@ module.exports = class Client extends EventEmitter {
     publish(messageId, previousMessageReference, data) {
         if (this.nodeId) {
             this.debug('publishing data %s', messageId)
-            this.protocols.nodeToNode.sendData(this.nodeId, messageId, previousMessageReference, data).catch((err) => {
+            this.protocols.nodeToNode.sendData(this.nodeId, messageId, previousMessageReference, data, null, 0).catch((err) => {
                 console.error(`Failed to send data to node ${this.nodeId} because of ${err}, trying to reconnect`)
                 this.connectToNode(this.nodeAddress).catch((errr) => {
                     console.error(`Still problems "${errr}" with connection to ${this.nodeId}`)
