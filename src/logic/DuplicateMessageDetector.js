@@ -99,7 +99,7 @@ class DuplicateMessageDetector {
         for (let i = this.gaps.length - 1; i >= 0; --i) {
             const [lowerBound, upperBound] = this.gaps[i] // invariant: upperBound > lowerBound
 
-            // implies nextNumber > upperBound (would've been handled in previous iteration if gap exists)
+            // implies number > upperBound (would've been handled in previous iteration if gap exists)
             if (previousNumber.greaterThanOrEqual(upperBound)) {
                 return false
             }
