@@ -80,6 +80,8 @@ class Node extends EventEmitter {
         const currentNodes = this.streams.getAllNodes()
         const nodeIds = []
 
+        this.debug('received instructions for %s', streamId)
+
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
             const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             await this._subscribeToStreamOnNode(node, streamId)
@@ -90,9 +92,9 @@ class Node extends EventEmitter {
 
         const nodesToDisconnect = currentNodes.filter((node) => !nodeIds.includes(node))
 
-        nodesToDisconnect.forEach((node) => {
-            this.debug('disconnecting from node %s based on tracker instructions', node)
-            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.TRACKER_INSTRUCTION)
+        nodesToDisconnect.forEach(async (node) => {
+            await this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.TRACKER_INSTRUCTION)
+            this.debug('disconnected from node %s (tracker instruction)', node)
         })
     }
 
@@ -201,9 +203,10 @@ class Node extends EventEmitter {
         this.trackers.forEach((tracker) => this._sendStatus(tracker))
     }
 
-    _sendStatus(tracker) {
-        this.protocols.trackerNode.sendStatus(tracker, this._getStatus())
-        this.debug('sent status to tracker %s', tracker)
+    async _sendStatus(tracker) {
+        const status = this._getStatus()
+        await this.protocols.trackerNode.sendStatus(tracker, status)
+        this.debug('sent status %j to tracker %s', status.streams, tracker)
     }
 
     async _subscribeToStreamOnNode(node, streamId) {
