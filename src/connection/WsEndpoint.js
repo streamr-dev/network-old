@@ -5,6 +5,12 @@ const WebSocket = require('ws')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Endpoint = require('./Endpoint')
 
+class ReadyStateError extends Error {
+    constructor(readyState) {
+        super(`cannot send because socket.readyState=${readyState}`)
+    }
+}
+
 class CustomHeaders {
     constructor(headers) {
         this.headers = this._transformToObjectWithLowerCaseKeys(headers)
@@ -87,7 +93,7 @@ class WsEndpoint extends EventEmitter {
                         })
                     } else {
                         debug('sent failed because readyState of socket is %d', ws.readyState)
-                        resolve()
+                        reject(new ReadyStateError(ws.readyState))
                     }
                 } catch (e) {
                     console.error('sending to %s failed because of %s', recipientAddress, e)
