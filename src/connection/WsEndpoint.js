@@ -203,7 +203,7 @@ class WsEndpoint extends EventEmitter {
         // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             debug('dropped new connection with %s because an existing connection already exists', address)
-            this.close(address, disconnectionReasons.DUPLICATE_SOCKET)
+            ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
             return
         }
 
