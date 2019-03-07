@@ -44,7 +44,10 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage) => this.onSubscribeRequest(subscribeMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage) => this.onUnsubscribeRequest(unsubscribeMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
-        this.on(events.NODE_SUBSCRIBED, () => this._sendStatusToAllTrackers())
+        this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {
+            this._handleBufferedMessages(streamId)
+            this._sendStatusToAllTrackers()
+        })
 
         this.debug = createDebug(`streamr:logic:node:${this.id}`)
         this.debug('started %s', this.id)
@@ -152,7 +155,6 @@ class Node extends EventEmitter {
             this.streams.addInboundNode(streamId, source)
         }
 
-        this._handleBufferedMessages(streamId)
         this.debug('node %s subscribed to stream %s', source, streamId)
         this.emit(events.NODE_SUBSCRIBED, {
             streamId,
@@ -210,7 +212,6 @@ class Node extends EventEmitter {
 
             this.streams.addInboundNode(streamId, node)
             this.streams.addOutboundNode(streamId, node)
-            this._handleBufferedMessages(streamId)
 
             // TODO get prove message from node that we successfully subscribed
             this.emit(events.NODE_SUBSCRIBED, {
