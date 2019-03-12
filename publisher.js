@@ -13,7 +13,7 @@ startNetworkNode(host, port, id)
     .then(async (publisher) => {
         await Promise.all(trackers.map((trackerAddress) => publisher.addBootstrapTracker(trackerAddress)))
 
-        let lastTimestamp = 0
+        let lastTimestamp = null
 
         setInterval(() => {
             const timestamp = Date.now()
