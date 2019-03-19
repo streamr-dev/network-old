@@ -68,8 +68,12 @@ module.exports = class Tracker extends EventEmitter {
         Object.keys(streams).forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node)
             Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
-                await this.protocols.trackerServer.sendInstruction(nodeId, StreamID.fromKey(streamKey), newNeighbors)
-                this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
+                try {
+                    await this.protocols.trackerServer.sendInstruction(nodeId, StreamID.fromKey(streamKey), newNeighbors)
+                    this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
+                } catch (e) {
+                    this.debug('failed to send instruction %j for stream %s to node %s because of %s', newNeighbors, streamKey, nodeId, e)
+                }
             })
         })
     }
