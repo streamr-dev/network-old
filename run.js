@@ -7,7 +7,7 @@ const startingDebugPort = 9200
 let debug = false
 
 const productionEnv = Object.create(process.env)
-productionEnv.DEBUG = 'streamr:*'
+productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
 productionEnv.checkUncaughtException = true
 
 // create tracker
