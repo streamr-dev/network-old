@@ -44,15 +44,24 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _addNode(node, streams) {
+        let newNode = true
+
         Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
             if (this.overlayPerStream[streamKey] == null) {
                 this.overlayPerStream[streamKey] = new OverlayTopology(NEIGHBORS_PER_NODE)
             }
+
+            newNode = this.overlayPerStream[streamKey].hasNode(node)
+
             const neighbors = new Set([...inboundNodes, ...outboundNodes])
             this.overlayPerStream[streamKey].update(node, neighbors)
         })
 
-        this.debug('registered node %s for streams %j', node, Object.keys(streams))
+        if (newNode) {
+            this.debug('registered new node %s for streams %j', node, Object.keys(streams))
+        } else {
+            this.debug('setup existing node %s for streams %j', node, Object.keys(streams))
+        }
     }
 
     _formAndSendInstructions(node, streams) {
