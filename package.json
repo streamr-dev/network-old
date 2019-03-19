@@ -1,6 +1,6 @@
 {
   "name": "@streamr/streamr-p2p-network",
-  "version": "3.0.16",
+  "version": "3.0.17",
   "description": "Streamr P2P network",
   "repository": {
     "type": "git",
@@ -41,14 +41,14 @@
     "debug": "4.1.1",
     "events": "3.0.0",
     "uuid": "3.3.2",
-    "ws": "6.1.3"
+    "ws": "^6.2.0"
   },
   "devDependencies": {
-    "eslint": "5.12.1",
+    "eslint": "^5.15.3",
     "eslint-config-airbnb-base": "13.1.0",
     "eslint-plugin-import": "2.16.0",
     "eslint-plugin-import-order": "2.1.4",
-    "jest": "24.0.0",
-    "p-event": "2.2.0"
+    "jest": "^24.5.0",
+    "p-event": "^4.0.0"
   }
 }
