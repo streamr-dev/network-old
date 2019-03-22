@@ -192,6 +192,15 @@ class WsEndpoint extends EventEmitter {
         const parameters = url.parse(req.url, true)
         const { address } = parameters.query
 
+        // Handle scenario where two peers have opened a socket to each other at the same time.
+        // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
+        // thereby leaving no connection behind.
+        if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
+            debug('dropped new connection with %s because an existing connection already exists', address)
+            ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
+            return
+        }
+
         if (!address) {
             ws.terminate()
             debug('dropped incoming connection from %s because address parameter missing',
@@ -204,15 +213,6 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onNewConnection(ws, address, customHeaders) {
-        // Handle scenario where two peers have opened a socket to each other at the same time.
-        // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
-        // thereby leaving no connection behind.
-        if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
-            debug('dropped new connection with %s because an existing connection already exists', address)
-            ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
-            return
-        }
-
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
             this.onReceive(address, message)
