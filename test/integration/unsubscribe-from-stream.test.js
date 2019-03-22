@@ -18,10 +18,8 @@ describe('node unsubscribing from a stream', () => {
         nodeA = await startNetworkNode(LOCALHOST, 30451, 'a')
         nodeB = await startNetworkNode(LOCALHOST, 30452, 'b')
 
-        await Promise.all([
-            nodeA.addBootstrapTracker(tracker.getAddress()),
-            nodeB.addBootstrapTracker(tracker.getAddress())
-        ])
+        nodeA.addBootstrapTracker(tracker.getAddress())
+        nodeB.addBootstrapTracker(tracker.getAddress())
 
         nodeA.subscribeToStreamIfHaveNotYet(s1)
         nodeB.subscribeToStreamIfHaveNotYet(s1)
