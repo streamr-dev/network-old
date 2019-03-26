@@ -160,22 +160,22 @@ class WsEndpoint extends EventEmitter {
                         if (!customHeadersOfServer) {
                             const err = new Error('dropping outgoing connection because upgrade event never received')
                             ws.terminate()
-                            this.pendingConnections.get(peerAddress).forEach(({ reject }) => reject(err))
+                            this.pendingConnections.get(peerAddress).forEach(({ reject: r }) => r(err))
                         } else {
                             this._onNewConnection(ws, peerAddress, customHeadersOfServer)
-                            this.pendingConnections.get(peerAddress).forEach(({ resolve }) => resolve())
+                            this.pendingConnections.get(peerAddress).forEach(({ resolve: r }) => r())
                         }
                         this.pendingConnections.delete(peerAddress)
                     })
 
                     ws.on('error', (err) => {
                         debug('failed to connect to %s, error: %o', peerAddress, err)
-                        this.pendingConnections.get(peerAddress).forEach(({ reject }) => reject(new Error(err)))
+                        this.pendingConnections.get(peerAddress).forEach(({ reject: r }) => r(new Error(err)))
                         this.pendingConnections.delete(peerAddress)
                     })
                 } catch (err) {
                     debug('failed to connect to %s, error: %o', peerAddress, err)
-                    this.pendingConnections.get(peerAddress).forEach(({ reject }) => reject(new Error(err)))
+                    this.pendingConnections.get(peerAddress).forEach(({ reject: r }) => r(new Error(err)))
                     this.pendingConnections.delete(peerAddress)
                 }
             }
