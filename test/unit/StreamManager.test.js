@@ -123,7 +123,6 @@ describe('StreamManager', () => {
         expect(manager.isNodePresent('node-2')).toEqual(true)
         expect(manager.isNodePresent('node-3')).toEqual(true)
         expect(manager.isNodePresent('node-not-present')).toEqual(false)
-
     })
 
     test('removing node from stream removes it from both inbound and outbound nodes', () => {
