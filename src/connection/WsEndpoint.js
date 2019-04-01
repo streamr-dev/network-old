@@ -75,7 +75,7 @@ class WsEndpoint extends EventEmitter {
                 console.log('-------------> killing dublicate socket')
                 console.log('-------------> already connected to %s, readyState %d', address, this.connections.get(address).readyState)
 
-                this.connections.get(address).close()
+                this.connections.get(address).close(1000, disconnectionReasons.DUPLICATE_SOCKET)
             } else {
                 console.log('new income connection ok')
             }
@@ -93,9 +93,10 @@ class WsEndpoint extends EventEmitter {
     }
 
     _checkConnections() {
+        // eslint-disable-next-line no-restricted-syntax
         for (const [address, ws] of this.connections) {
             if (ws.readyState !== 1) {
-                console.log(address + "\t\t\t" + ws.readyState)
+                console.log(address + '\t\t\t' + ws.readyState)
             }
         }
     }
