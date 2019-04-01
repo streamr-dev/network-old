@@ -114,6 +114,7 @@ class Node extends EventEmitter {
         const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
 
         nodesToUnsubscribeFrom.forEach(async (node) => {
+            this.streams.removeNodeFromStream(streamId, node)
             await this.protocols.nodeToNode.sendUnsubscribe(node, streamId)
             this.debug('unsubscribed from node %s (tracker instruction)', node)
         })
