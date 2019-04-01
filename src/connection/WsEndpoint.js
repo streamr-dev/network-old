@@ -72,12 +72,9 @@ class WsEndpoint extends EventEmitter {
             const { address } = parameters.query
 
             if (this.isConnected(address)) {
-                console.log('-------------> killing dublicate socket')
-                console.log('-------------> already connected to %s, readyState %d', address, this.connections.get(address).readyState)
-
+                debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
+                debug('closing existing socket')
                 this.connections.get(address).close()
-            } else {
-                console.log('new income connection ok')
             }
 
             return true
@@ -209,6 +206,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     stop(callback = () => {}) {
+        clearInterval(this.checkConnections)
         this.connections.forEach((connection) => {
             connection.terminate()
         })
