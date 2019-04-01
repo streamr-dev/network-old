@@ -75,7 +75,7 @@ class WsEndpoint extends EventEmitter {
                 console.log('-------------> killing dublicate socket')
                 console.log('-------------> already connected to %s, readyState %d', address, this.connections.get(address).readyState)
 
-                this.connections.get(address).close(1000, disconnectionReasons.DUPLICATE_SOCKET)
+                this.connections.get(address).close()
             } else {
                 console.log('new income connection ok')
             }
