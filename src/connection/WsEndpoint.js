@@ -86,7 +86,7 @@ class WsEndpoint extends EventEmitter {
         })
 
         debug('listening on: %s', this.getAddress())
-        this.checkConnections = setInterval(this._checkConnections.bind(this), 2000)
+        this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 2000)
     }
 
     _checkConnections() {
@@ -206,7 +206,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     stop(callback = () => {}) {
-        clearInterval(this.checkConnections)
+        clearInterval(this.checkConnectionsInterval)
         this.connections.forEach((connection) => {
             connection.terminate()
         })
