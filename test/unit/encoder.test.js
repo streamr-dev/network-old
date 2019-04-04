@@ -5,26 +5,6 @@ const InstructionMessage = require('../../src/messages/InstructionMessage')
 const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
 
 describe('encoder', () => {
-    it('check all codes', (done) => {
-        expect(encoder.STATUS).toEqual(0)
-        expect(encoder.DATA).toEqual(2)
-        expect(encoder.SUBSCRIBE).toEqual(3)
-        expect(encoder.UNSUBSCRIBE).toEqual(4)
-        expect(encoder.PUBLISH).toEqual(5)
-        expect(encoder.INSTRUCTION).toEqual(6)
-
-        done()
-    })
-
-    it('check all code messages', (done) => {
-        expect(encoder.getMsgPrefix(encoder.STATUS)).toEqual('STATUS')
-        expect(encoder.getMsgPrefix(encoder.SUBSCRIBE)).toEqual('SUBSCRIBE')
-        expect(encoder.getMsgPrefix(encoder.PUBLISH)).toEqual('PUBLISH')
-        expect(encoder.getMsgPrefix(encoder.INSTRUCTION)).toEqual('INSTRUCTION')
-
-        done()
-    })
-
     it('check streamMessage encoding/decoding', () => {
         const json = encoder.instructionMessage(new StreamID('stream-id', 0), ['node-1', 'node-2'])
         expect(JSON.parse(json)).toEqual({

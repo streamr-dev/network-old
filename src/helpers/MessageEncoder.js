@@ -62,10 +62,7 @@ const decode = (source, message) => {
     }
 }
 
-const getMsgPrefix = (msgCode) => Object.keys(msgTypes).find((key) => msgTypes[key] === msgCode)
-
 module.exports = {
-    getMsgPrefix,
     decode,
     statusMessage: (status) => encode(msgTypes.STATUS, status),
     dataMessage: (messageId, previousMessageReference, data, signature, signatureType) => encode(msgTypes.DATA, {
