@@ -167,7 +167,7 @@ class Node extends EventEmitter {
                 this.debug('failed to propagate data %s to node %s (%s)', messageId, subscriber, e)
             }
         }))
-        if (successfulSends.length >= MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION) {
+        if (successfulSends.length >= Math.min(MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION, subscribers.length)) {
             this.debug('propagated data %s to %j', messageId, successfulSends)
             this.seenButNotPropagated.delete(messageId)
             this.emit(events.MESSAGE_PROPAGATED, dataMessage)
