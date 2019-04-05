@@ -10,24 +10,48 @@ module.exports = class Tracker extends EventEmitter {
     constructor(id, trackerServer) {
         super()
         this.overlayPerStream = {} // streamKey => overlayTopology
+        this.storages = new Map()
 
         this.id = id
         this.protocols = {
             trackerServer
         }
 
+        this.protocols.trackerServer.on(TrackerServer.events.STORAGE_DISCONNECTED, (node) => this._onStorageDisconnected(node))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
-        this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => this.processNodeStatus(statusMessage))
+        this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => this.processNodeStatus(message, nodeType))
 
         this.debug = createDebug(`streamr:logic:tracker:${this.id}`)
         this.debug('started %s', this.id)
     }
 
-    processNodeStatus(statusMessage) {
+    processNodeStatus(statusMessage, nodeType) {
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        this._updateNode(source, status.streams)
-        this._formAndSendInstructions(source, status.streams)
+
+        switch (nodeType) {
+            // TODO make node types ENUM
+            case 'node':
+                this._updateNode(source, status.streams)
+                this._formAndSendInstructions(source, status.streams)
+                break
+
+            case 'storage':
+                this._addStorageNode(source, status)
+                break
+
+            default:
+                console.error('Unknown type')
+                break
+        }
+    }
+
+    _addStorageNode(node, status) {
+        this.storages.set(node, status)
+    }
+
+    _onStorageDisconnected(node) {
+        this.storages.delete(node)
     }
 
     onNodeDisconnected(node) {

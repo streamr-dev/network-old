@@ -60,9 +60,9 @@ describe('Check tracker instructions to node', () => {
         })
 
         let receivedTotal = 0
-        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage) => {
+        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => {
             // eslint-disable-next-line no-underscore-dangle
-            const status = statusMessage.getStatus()
+            const status = message.getStatus()
 
             expect(status.streams).toEqual({
                 'stream-1::0': {

@@ -51,15 +51,11 @@ class PeerBook {
     }
 
     isNode(peerId) {
-        return this.getTypeById(peerId) === 'node' || this.getTypeById(peerId) === 'storage'
+        return this.getTypeById(peerId) === 'node'
     }
 
     isStorage(peerId) {
         return this.getTypeById(peerId) === 'storage'
-    }
-
-    isClient(peerId) {
-        return this.getTypeById(peerId) === 'client'
     }
 
     getTypeById(peerId) {
