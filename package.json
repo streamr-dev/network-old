@@ -43,14 +43,14 @@
     "debug": "4.1.1",
     "events": "3.0.0",
     "uuid": "3.3.2",
-    "ws": "^6.2.0"
+    "ws": "^6.2.1"
   },
   "devDependencies": {
-    "eslint": "^5.15.3",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "13.1.0",
     "eslint-plugin-import": "2.16.0",
     "eslint-plugin-import-order": "2.1.4",
-    "jest": "^24.5.0",
-    "p-event": "^4.0.0"
+    "jest": "^24.7.1",
+    "p-event": "^4.1.0"
   }
 }
