@@ -47,24 +47,27 @@ class PeerBook {
     }
 
     isTracker(peerId) {
-        if (!this.idToType[peerId]) {
-            throw new NotFoundInPeerBookError(`Id ${peerId} not found in peer book`)
-        }
-        return this.idToType[peerId] === 'tracker'
+        return this.getTypeById(peerId) === 'tracker'
     }
 
     isNode(peerId) {
-        if (!this.idToType[peerId]) {
-            throw new NotFoundInPeerBookError(`Id ${peerId} not found in peer book`)
-        }
-        return this.idToType[peerId] === 'node'
+        return this.getTypeById(peerId) === 'node' || this.getTypeById(peerId) === 'storage'
+    }
+
+    isStorage(peerId) {
+        return this.getTypeById(peerId) === 'storage'
     }
 
     isClient(peerId) {
+        return this.getTypeById(peerId) === 'client'
+    }
+
+    getTypeById(peerId) {
         if (!this.idToType[peerId]) {
             throw new NotFoundInPeerBookError(`Id ${peerId} not found in peer book`)
         }
-        return this.idToType[peerId] === 'client'
+
+        return this.idToType[peerId]
     }
 }
 
