@@ -44,10 +44,23 @@ async function startNetworkNode(host, port, id = uuidv4()) {
     })
 }
 
+async function startStorageNode(host, port, id = uuidv4()) {
+    const identity = {
+        'streamr-peer-id': id,
+        'streamr-peer-type': 'storage'
+    }
+    return startEndpoint(host, port, identity).then((endpoint) => {
+        return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint), ['storage1', 'storage2'])
+    }).catch((err) => {
+        throw err
+    })
+}
+
 module.exports = {
     startTracker,
     startNode,
     startNetworkNode,
+    startStorageNode,
     MessageID,
     MessageReference,
     StreamID

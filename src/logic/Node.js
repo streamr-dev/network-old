@@ -19,7 +19,7 @@ const events = Object.freeze({
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 class Node extends EventEmitter {
-    constructor(id, trackerNode, nodeToNode) {
+    constructor(id, trackerNode, nodeToNode, storages) {
         super()
 
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
