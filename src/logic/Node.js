@@ -34,6 +34,7 @@ class Node extends EventEmitter {
 
         this.id = id
         this.trackers = new Set()
+        this.storages = storages
 
         this.protocols = {
             trackerNode,

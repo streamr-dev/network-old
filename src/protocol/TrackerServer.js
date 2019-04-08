@@ -6,9 +6,7 @@ const { PeerBook } = require('./PeerBook')
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:tracker:send-peers',
     NODE_STATUS_RECEIVED: 'streamr:tracker:peer-status',
-    NODE_DISCONNECTED: 'streamr:tracker:node-disconnected',
-    STORAGE_CONNECTED: 'streamr:tracker:storage-connected',
-    STORAGE_DISCONNECTED: 'streamr:tracker:storage-disconnected',
+    NODE_DISCONNECTED: 'streamr:tracker:node-disconnected'
 })
 
 class TrackerServer extends EventEmitter {
@@ -37,18 +35,21 @@ class TrackerServer extends EventEmitter {
     }
 
     onPeerConnected(peerId) {
+        const nodeType = this.peerBook.getTypeById(peerId)
         if (this.peerBook.isNode(peerId)) {
-            this.emit(events.NODE_CONNECTED, peerId)
-        } else if (this.peerBook.isStorage(peerId)) {
-            this.emit(events.STORAGE_CONNECTED, peerId)
+            this.emit(events.NODE_CONNECTED, {
+                peerId, nodeType
+            })
         }
     }
 
     onPeerDisconnected(peerId, reason) {
+        const nodeType = this.peerBook.getTypeById(peerId)
+
         if (this.peerBook.isNode(peerId)) {
-            this.emit(events.NODE_DISCONNECTED, peerId)
-        } else if (this.peerBook.isStorage(peerId)) {
-            this.emit(events.STORAGE_DISCONNECTED, peerId)
+            this.emit(events.NODE_DISCONNECTED, {
+                peerId, nodeType
+            })
         }
     }
 
