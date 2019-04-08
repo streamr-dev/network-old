@@ -72,6 +72,10 @@ class NodeToNode extends EventEmitter {
         }
     }
 
+    isStorage() {
+        return this.endpoint.customHeaders.headers['streamr-peer-type'] === 'storage'
+    }
+
     onMessageReceived(message) {
         switch (message.getCode()) {
             case encoder.SUBSCRIBE:

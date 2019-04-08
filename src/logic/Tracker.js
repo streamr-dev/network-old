@@ -30,7 +30,6 @@ module.exports = class Tracker extends EventEmitter {
         const status = statusMessage.getStatus()
 
         switch (nodeType) {
-            // TODO make node types ENUM
             case 'node':
                 this._updateNode(source, status.streams)
                 this._formAndSendInstructions(source, status.streams)
@@ -69,10 +68,12 @@ module.exports = class Tracker extends EventEmitter {
 
     _updateNode(node, streams) {
         let newNode = true
+        const newStreams = new Map()
 
         // Add or update
         Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
             if (this.overlayPerStream[streamKey] == null) {
+                newStreams.set(streamKey, node)
                 this.overlayPerStream[streamKey] = new OverlayTopology(NEIGHBORS_PER_NODE)
             }
 
@@ -93,6 +94,12 @@ module.exports = class Tracker extends EventEmitter {
         } else {
             this.debug('setup existing node %s for streams %j', node, Object.keys(streams))
         }
+
+        newStreams.forEach((initialNode, streamKey) => {
+            this.storages.forEach(async (status, storageNode) => {
+                await this.protocols.trackerServer.sendInstruction(storageNode, StreamID.fromKey(streamKey), [initialNode])
+            })
+        }, this)
     }
 
     _formAndSendInstructions(node, streams) {
