@@ -3,6 +3,7 @@ const createDebug = require('debug')
 const TrackerServer = require('../protocol/TrackerServer')
 const OverlayTopology = require('../logic/OverlayTopology')
 const { StreamID } = require('../identifiers')
+const { nodeTypes } = require('../protocol/PeerBook')
 
 const NEIGHBORS_PER_NODE = 4
 
@@ -29,7 +30,7 @@ module.exports = class Tracker extends EventEmitter {
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
 
-        if (nodeType === 'storage') {
+        if (nodeType === nodeTypes.STORAGE) {
             this.storages.set(source, status)
         }
 
@@ -39,7 +40,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     onNodeDisconnected(node, nodeType) {
-        if (nodeType === 'storage') {
+        if (nodeType === nodeTypes.STORAGE) {
             this.storages.delete(node)
         }
 
