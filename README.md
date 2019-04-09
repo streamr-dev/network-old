@@ -21,9 +21,9 @@
 
 `nvm use default v10.15.3`
 
-#### install npm (v6.7.0)
+#### install npm (v6.9.0)
 
-`npm install -g npm@6.7.0`
+`npm install -g npm@6.9.0`
 
 
 #### install packages
