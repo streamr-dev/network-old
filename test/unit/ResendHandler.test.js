@@ -1,18 +1,10 @@
 const intoStream = require('into-stream')
 const ResendHandler = require('../../src/logic/ResendHandler')
-const { wait } = require('../util')
+const { eventsToArray, wait } = require('../util')
 const ResendLastRequest = require('../../src/messages/ResendLastRequest')
 const ResendFromRequest = require('../../src/messages/ResendFromRequest')
 const ResendRangeRequest = require('../../src/messages/ResendRangeRequest')
 const { MessageID, MessageReference, StreamID } = require('../../src/identifiers')
-
-function eventsToArray(emitter, events) {
-    const array = []
-    events.forEach((e) => {
-        emitter.on(e, (...args) => array.push([e, ...args]))
-    })
-    return array
-}
 
 describe('ResendHandler', () => {
     let storage
