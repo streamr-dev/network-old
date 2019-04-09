@@ -5,6 +5,7 @@ const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const StreamManager = require('./StreamManager')
+const ResendHandler = require('./ResendHandler')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
@@ -19,7 +20,7 @@ const events = Object.freeze({
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 class Node extends EventEmitter {
-    constructor(id, trackerNode, nodeToNode) {
+    constructor(id, trackerNode, nodeToNode, storage) {
         super()
 
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
@@ -31,6 +32,7 @@ class Node extends EventEmitter {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
+        this.resendHandler = new ResendHandler(storage)
 
         this.id = id
         this.trackers = new Set()
@@ -47,6 +49,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage) => this.onSubscribeRequest(subscribeMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage) => this.onUnsubscribeRequest(unsubscribeMessage))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
+        this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request) => this.requestResend(request))
         this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {
             this._handleBufferedMessages(streamId)
             this._sendStatusToAllTrackers()
@@ -84,6 +87,10 @@ class Node extends EventEmitter {
         const nodes = this.streams.removeStream(streamId)
         nodes.forEach((n) => this.protocols.nodeToNode.sendUnsubscribe(n, streamId))
         this._sendStatusToAllTrackers()
+    }
+
+    requestResend(request) {
+        this.resendHandler.handleRequest(request)
     }
 
     async onTrackerInstructionReceived(streamMessage) {
