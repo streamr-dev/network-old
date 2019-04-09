@@ -50,7 +50,7 @@ async function startStorageNode(host, port, id = uuidv4()) {
         'streamr-peer-type': 'storage'
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
-        return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint), ['storage1', 'storage2'])
+        return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint), ['interface1', 'interface2'])
     }).catch((err) => {
         throw err
     })
