@@ -92,7 +92,7 @@ class NodeToNode extends EventEmitter {
     disconnectFromNode(receiverNodeId, reason) {
         const receiverNodeAddress = this.peerBook.getAddress(receiverNodeId)
         return this.endpoint.close(receiverNodeAddress, reason).catch((err) => {
-            console.info(`Could not close connection ${receiverNodeAddress} because '${err}'`)
+            console.error(`Could not close connection ${receiverNodeAddress} because '${err}'`)
         })
     }
 

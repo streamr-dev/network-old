@@ -3,12 +3,7 @@ const TrackerNode = require('../../src/protocol/TrackerNode')
 const { wait } = require('../util')
 const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST, DEFAULT_TIMEOUT, waitForEvent } = require('../util')
-const TrackerServer = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
-const encoder = require('../../src/helpers/MessageEncoder')
 const { StreamID } = require('../../src/identifiers')
-const endpointEvents = require('../../src/connection/Endpoint').events
-const { disconnectionReasons } = require('../../src/messages/messageTypes')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 

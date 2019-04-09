@@ -1,5 +1,4 @@
 const { startStorageNode } = require('./src/composition')
-const { BOOTNODES } = require('./src/util')
 
 const port = process.argv[2] || 40300
 const ip = process.argv[3] || '127.0.0.1'
