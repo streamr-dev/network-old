@@ -22,7 +22,7 @@ class OverlayTopology {
     }
 
     getRandomNode() {
-        return this.shuffleArray(Object.keys(this.nodes)).slice(0, 1)[0]
+        return this.pickRandomElement(Object.keys(this.nodes))
     }
 
     update(nodeId, neighbors) {
