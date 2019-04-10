@@ -7,7 +7,7 @@ const { StreamID } = require('../../src/identifiers')
 
 jest.setTimeout(DEFAULT_TIMEOUT)
 
-describe('Check tracker will subscribe storage to all streams', () => {
+describe('Check tracker will subscribe storage node to all streams', () => {
     let tracker
     let subscriberOne
     let subscriberTwo
@@ -37,14 +37,14 @@ describe('Check tracker will subscribe storage to all streams', () => {
     it('tracker should register storage node and send subscribe all new streams', async (done) => {
         expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
-        await storageNode.addBootstrapTracker(tracker.getAddress())
-        await subscriberOne.addBootstrapTracker(tracker.getAddress())
+        storageNode.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.addBootstrapTracker(tracker.getAddress())
 
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         expect(tracker.storageNodes.has('storage-1')).toEqual(true)
         expect(storageNode.streams.getStreams()).toEqual([new StreamID('stream-1', 0)])
 
-        await subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        subscriberTwo.addBootstrapTracker(tracker.getAddress())
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         expect(storageNode.streams.getStreams()).toEqual([new StreamID('stream-1', 0), new StreamID('stream-2', 0)])
 
@@ -54,24 +54,16 @@ describe('Check tracker will subscribe storage to all streams', () => {
     it('tracker should register storage node and send subscribe all existing streams', async (done) => {
         expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
-        await subscriberOne.addBootstrapTracker(tracker.getAddress())
-        await subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.addBootstrapTracker(tracker.getAddress())
+        subscriberTwo.addBootstrapTracker(tracker.getAddress())
 
-        await storageNode.addBootstrapTracker(tracker.getAddress())
+        storageNode.addBootstrapTracker(tracker.getAddress())
 
-        let instuctionsReceived = 0
+        let instructionsReceived = 0
         storageNode.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, async (streamMessage) => {
-            instuctionsReceived += 1
-            const streamId = streamMessage.getStreamId()
-            const nodeAddresses = streamMessage.getNodeAddresses()
+            instructionsReceived += 1
 
-            if (streamId.key() === 'stream-1::0') {
-                expect(nodeAddresses).toEqual([subscriberOne.protocols.nodeToNode.getAddress()])
-            } else if (streamId.key() === 'stream-2::0') {
-                expect(nodeAddresses).toEqual([subscriberTwo.protocols.nodeToNode.getAddress()])
-            }
-
-            if (instuctionsReceived === 2) {
+            if (instructionsReceived === 2) {
                 await wait(500)
                 expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-1', 0))).toEqual(['subscriber-1'])
                 expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-2', 0))).toEqual(['subscriber-2'])
