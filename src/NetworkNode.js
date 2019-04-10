@@ -12,6 +12,7 @@ Convenience wrapper for building client-facing functionality. Used by broker.
 module.exports = class NetworkNode extends Node {
     constructor(id, trackerNode, nodeToNode, storage) {
         super(id, trackerNode, nodeToNode, new ResendHandler(storage))
+        this.addMessageListener(storage.store)
     }
 
     publish(streamId,
