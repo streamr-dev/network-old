@@ -73,7 +73,7 @@ describe('resend requests are fulfilled at L1', () => {
         contactNode.requestResendLast('streamId', 0, 'subId', 10)
 
         await waitForEvent(contactNode, Node.events.RESPONSE_RESENT)
-        expect(actualEvents.map(([e]) => e)).toEqual([
+        expect(actualEvents).toEqual([
             Node.events.RESPONSE_RESENDING,
             Node.events.UNICAST_RECEIVED,
             Node.events.UNICAST_RECEIVED,
@@ -87,7 +87,7 @@ describe('resend requests are fulfilled at L1', () => {
         contactNode.requestResendFrom('streamId', 0, 'subId', 666, 0, 'publisherId')
 
         await waitForEvent(contactNode, Node.events.RESPONSE_RESENT)
-        expect(actualEvents.map(([e]) => e)).toEqual([
+        expect(actualEvents).toEqual([
             Node.events.RESPONSE_RESENDING,
             Node.events.UNICAST_RECEIVED,
             Node.events.RESPONSE_RESENT,
@@ -99,7 +99,7 @@ describe('resend requests are fulfilled at L1', () => {
         contactNode.requestResendRange('streamId', 0, 'subId', 666, 0, 999, 0, 'publisherId')
 
         await waitForEvent(contactNode, Node.events.RESPONSE_NO_RESEND)
-        expect(actualEvents.map(([e]) => e)).toEqual([
+        expect(actualEvents).toEqual([
             Node.events.RESPONSE_NO_RESEND
         ])
     })
