@@ -2,7 +2,6 @@ const { startNetworkNode, startTracker, startStorageNode } = require('../../src/
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const Node = require('../../src/logic/Node')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { wait } = require('../util')
 const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST, DEFAULT_TIMEOUT, waitForEvent } = require('../util')
 const { StreamID } = require('../../src/identifiers')

@@ -204,7 +204,7 @@ describe('delivery of messages in protocol layer', () => {
             status: 'status'
         })
         const [message] = await waitForEvent(trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-        const msg = message.message
+        const msg = message.statusMessage
 
         expect(msg).toBeInstanceOf(StatusMessage)
         expect(msg.getSource()).toEqual('trackerNode')

@@ -24,7 +24,7 @@ module.exports = class Tracker extends EventEmitter {
         this.maxNeighborsPerNode = maxNeighborsPerNode
 
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, ({ peerId, nodeType }) => this.onNodeDisconnected(peerId, nodeType))
-        this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => this.processNodeStatus(message, nodeType))
+        this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => this.processNodeStatus(statusMessage, nodeType))
 
         this.debug = createDebug(`streamr:logic:tracker:${this.id}`)
         this.debug('started %s', this.id)

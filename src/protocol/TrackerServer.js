@@ -58,7 +58,7 @@ class TrackerServer extends EventEmitter {
         switch (message.getCode()) {
             case encoder.STATUS:
                 this.emit(events.NODE_STATUS_RECEIVED, {
-                    message, nodeType
+                    statusMessage: message, nodeType
                 })
                 break
             default:

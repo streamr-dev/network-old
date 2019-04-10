@@ -22,10 +22,10 @@ describe('check status message flow between tracker and two nodes', () => {
     })
 
     it('tracker should receive status message from node', async (done) => {
-        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => {
-            expect(message.getSource()).toEqual(nodeOne.id)
+        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => {
+            expect(statusMessage.getSource()).toEqual(nodeOne.id)
             // eslint-disable-next-line no-underscore-dangle
-            expect(message.getStatus()).toEqual(nodeOne._getStatus())
+            expect(statusMessage.getStatus()).toEqual(nodeOne._getStatus())
             done()
         })
 
@@ -33,10 +33,10 @@ describe('check status message flow between tracker and two nodes', () => {
     })
 
     it('tracker should receive status from second node', async (done) => {
-        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => {
-            expect(message.getSource()).toEqual(nodeTwo.id)
+        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => {
+            expect(statusMessage.getSource()).toEqual(nodeTwo.id)
             // eslint-disable-next-line no-underscore-dangle
-            expect(message.getStatus()).toEqual(nodeTwo._getStatus())
+            expect(statusMessage.getStatus()).toEqual(nodeTwo._getStatus())
             done()
         })
         await nodeTwo.addBootstrapTracker(tracker.getAddress())
@@ -55,15 +55,15 @@ describe('check status message flow between tracker and two nodes', () => {
             })
 
             let receivedTotal = 0
-            tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ message, nodeType }) => {
-                if (message.getSource() === nodeOne.id) {
+            tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => {
+                if (statusMessage.getSource() === nodeOne.id) {
                     // eslint-disable-next-line no-underscore-dangle
-                    expect(message.getStatus()).toEqual(nodeOne._getStatus())
+                    expect(statusMessage.getStatus()).toEqual(nodeOne._getStatus())
                 }
 
-                if (message.getSource() === nodeTwo.id) {
+                if (statusMessage.getSource() === nodeTwo.id) {
                     // eslint-disable-next-line no-underscore-dangle
-                    expect(message.getStatus()).toEqual(nodeTwo._getStatus())
+                    expect(statusMessage.getStatus()).toEqual(nodeTwo._getStatus())
                 }
 
                 receivedTotal += 1
