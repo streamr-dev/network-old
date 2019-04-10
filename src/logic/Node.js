@@ -93,10 +93,7 @@ class Node extends EventEmitter {
         const nodeIds = []
 
         this.debug('received instructions for %s', streamId)
-
-        if (this.protocols.nodeToNode.isStorage()) {
-            this.subscribeToStreamIfHaveNotYet(streamId)
-        }
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
         await Promise.all(nodeAddresses.map(async (nodeAddress) => {
             let node
