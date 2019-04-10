@@ -1,5 +1,7 @@
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
+const Node = require('../../src/logic/Node')
+const TrackerServer = require('../../src/protocol/TrackerServer')
 const { wait } = require('../util')
 const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST, DEFAULT_TIMEOUT, waitForEvent } = require('../util')
@@ -28,23 +30,27 @@ describe('Check tracker will subscribe storage node to all streams', () => {
 
     afterEach(async () => {
         await callbackToPromise(storageNode.stop.bind(storageNode))
-        await callbackToPromise(tracker.stop.bind(tracker))
         await callbackToPromise(subscriberOne.stop.bind(subscriberOne))
         await callbackToPromise(subscriberTwo.stop.bind(subscriberTwo))
-        await wait(1000)
+        await callbackToPromise(tracker.stop.bind(tracker))
     })
 
     it('tracker should register storage node and send subscribe all new streams', async (done) => {
         expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
         storageNode.addBootstrapTracker(tracker.getAddress())
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         subscriberOne.addBootstrapTracker(tracker.getAddress())
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         expect(tracker.storageNodes.has('storage-1')).toEqual(true)
         expect(storageNode.streams.getStreams()).toEqual([new StreamID('stream-1', 0)])
 
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+
+        await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         expect(storageNode.streams.getStreams()).toEqual([new StreamID('stream-1', 0), new StreamID('stream-2', 0)])
 
@@ -55,20 +61,20 @@ describe('Check tracker will subscribe storage node to all streams', () => {
         expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
         subscriberOne.addBootstrapTracker(tracker.getAddress())
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
         storageNode.addBootstrapTracker(tracker.getAddress())
 
-        let instructionsReceived = 0
-        storageNode.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, async (streamMessage) => {
-            instructionsReceived += 1
+        await Promise.all([
+            await waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED),
+            await waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED)
+        ])
 
-            if (instructionsReceived === 2) {
-                await wait(500)
-                expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-1', 0))).toEqual(['subscriber-1'])
-                expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-2', 0))).toEqual(['subscriber-2'])
-                done()
-            }
-        })
+        expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-1', 0))).toEqual(['subscriber-1'])
+        expect(storageNode.streams.getAllNodesForStream(new StreamID('stream-2', 0))).toEqual(['subscriber-2'])
+
+        done()
     })
 })

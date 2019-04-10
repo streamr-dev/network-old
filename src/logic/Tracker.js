@@ -112,19 +112,15 @@ module.exports = class Tracker extends EventEmitter {
 
                 if (streamsToSubscribe.length) {
                     streamsToSubscribe.forEach(async (streamKey) => {
-                        const randomNode = this.overlayPerStream[streamKey].getRandomNode()
-
-                        if (randomNode !== 'undefined') {
-                            try {
-                                await this.protocols.trackerServer.sendInstruction(storageNode, StreamID.fromKey(streamKey), [randomNode])
-                                this.debug('sent instruction %j for stream %s to storage node %s', [randomNode], streamKey, storageNode)
-                            } catch (e) {
-                                this.debug('failed to send instruction %j for stream %s to storage node %s because of %s', [randomNode], streamKey, storageNode, e)
-                            }
+                        try {
+                            await this.protocols.trackerServer.sendInstruction(storageNode, StreamID.fromKey(streamKey), [])
+                            this.debug('sent instruction %j for stream %s to storage node %s', [], streamKey, storageNode)
+                        } catch (e) {
+                            this.debug('failed to send instruction %j for stream %s to storage node %s because of %s', [], streamKey, storageNode, e)
                         }
                     })
                 }
-            }, this)
+            })
         }
     }
 
