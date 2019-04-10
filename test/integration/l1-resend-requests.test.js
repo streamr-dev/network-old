@@ -19,7 +19,8 @@ describe('resend requests are fulfilled at L1', () => {
 
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 28600, 'tracker')
-        contactNode = await startNetworkNode(LOCALHOST, 28601, 'contactNode', {
+        contactNode = await startNetworkNode(LOCALHOST, 28601, 'contactNode', [{
+            store: () => {},
             requestLast: () => intoStream.object([
                 {
                     timestamp: 666,
@@ -57,7 +58,7 @@ describe('resend requests are fulfilled at L1', () => {
                 },
             ]),
             requestRange: () => intoStream.object([]),
-        })
+        }])
         contactNode.addBootstrapTracker(tracker.getAddress())
         contactNode.subscribe('streamId', 0)
     })

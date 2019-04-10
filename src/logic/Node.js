@@ -25,7 +25,7 @@ const events = Object.freeze({
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 class Node extends EventEmitter {
-    constructor(id, trackerNode, nodeToNode, resendHandler) {
+    constructor(id, trackerNode, nodeToNode, resendStrategies) {
         super()
 
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
@@ -37,7 +37,7 @@ class Node extends EventEmitter {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
-        this.resendHandler = resendHandler
+        this.resendHandler = new ResendHandler(resendStrategies)
         this._bindResendHandlerEventsToNodeEvents()
 
         this.id = id
