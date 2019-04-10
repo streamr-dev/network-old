@@ -70,7 +70,7 @@ class PeerBook {
     }
 
     isNode(peerId) {
-        return this.getTypeById(peerId) === peerTypes.NODE
+        return this.getTypeById(peerId) === peerTypes.NODE || this.isStorage(peerId)
     }
 
     isStorage(peerId) {
