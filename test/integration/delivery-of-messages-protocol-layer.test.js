@@ -17,7 +17,7 @@ const StatusMessage = require('../../src/messages/StatusMessage')
 const SubscribeMessage = require('../../src/messages/SubscribeMessage')
 const UnicastMessage = require('../../src/messages/UnicastMessage')
 const UnsubscribeMessage = require('../../src/messages/UnsubscribeMessage')
-const { nodeTypes } = require('../../src/protocol/PeerBook')
+const { peerTypes } = require('../../src/protocol/PeerBook')
 
 jest.setTimeout(5000)
 
@@ -35,22 +35,22 @@ describe('delivery of messages in protocol layer', () => {
 
         nodeToNode1 = new NodeToNode(new WsEndpoint(wss1, {
             'streamr-peer-id': 'nodeToNode1',
-            'streamr-peer-type': nodeTypes.NODE
+            'streamr-peer-type': peerTypes.NODE
         }))
 
         nodeToNode2 = new NodeToNode(new WsEndpoint(wss2, {
             'streamr-peer-id': 'nodeToNode2',
-            'streamr-peer-type': nodeTypes.NODE
+            'streamr-peer-type': peerTypes.NODE
         }))
 
         trackerNode = new TrackerNode(new WsEndpoint(wss3, {
             'streamr-peer-id': 'trackerNode',
-            'streamr-peer-type': nodeTypes.NODE
+            'streamr-peer-type': peerTypes.NODE
         }))
 
         trackerServer = new TrackerServer(new WsEndpoint(wss4, {
             'streamr-peer-id': 'trackerServer',
-            'streamr-peer-type': nodeTypes.NODE
+            'streamr-peer-type': peerTypes.NODE
         }))
 
         // Connect nodeToNode1 <-> nodeToNode2

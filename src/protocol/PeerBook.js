@@ -11,7 +11,7 @@ class MetadataNotSetError extends Error {
     }
 }
 
-const nodeTypes = Object.freeze({
+const peerTypes = Object.freeze({
     TRACKER: 'tracker',
     NODE: 'node',
     STORAGE: 'storage'
@@ -66,15 +66,15 @@ class PeerBook {
     }
 
     isTracker(peerId) {
-        return this.getTypeById(peerId) === nodeTypes.TRACKER
+        return this.getTypeById(peerId) === peerTypes.TRACKER
     }
 
     isNode(peerId) {
-        return this.getTypeById(peerId) === nodeTypes.NODE
+        return this.getTypeById(peerId) === peerTypes.NODE
     }
 
     isStorage(peerId) {
-        return this.getTypeById(peerId) === nodeTypes.STORAGE
+        return this.getTypeById(peerId) === peerTypes.STORAGE
     }
 
     getTypeById(peerId) {
@@ -88,6 +88,6 @@ class PeerBook {
 
 module.exports = {
     PeerBook,
-    nodeTypes,
+    peerTypes,
     NotFoundInPeerBookError
 }
