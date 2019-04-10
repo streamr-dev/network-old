@@ -12,7 +12,7 @@ module.exports = class Tracker extends EventEmitter {
         super()
 
         this.overlayPerStream = {} // streamKey => overlayTopology
-        this.storages = new Map()
+        this.storageNodes = new Map()
 
         this.id = id
         this.protocols = {
@@ -31,7 +31,7 @@ module.exports = class Tracker extends EventEmitter {
         const status = statusMessage.getStatus()
 
         if (nodeType === nodeTypes.STORAGE) {
-            this.storages.set(source, status)
+            this.storageNodes.set(source, status)
         }
 
         this._updateNode(source, status.streams)
@@ -40,10 +40,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     onNodeDisconnected(node, nodeType) {
-        if (nodeType === nodeTypes.STORAGE) {
-            this.storages.delete(node)
-        }
-
+        this.storageNodes.delete(node)
         this._removeNode(node)
     }
 
@@ -104,7 +101,7 @@ module.exports = class Tracker extends EventEmitter {
         if (existingStreams.length) {
             let streamsToSubscribe
 
-            this.storages.forEach(async (status, storageNode) => {
+            this.storageNodes.forEach(async (status, storageNode) => {
                 const alreadyConnected = Object.keys(status.streams)
 
                 if (!alreadyConnected.length) {

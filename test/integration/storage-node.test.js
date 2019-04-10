@@ -35,13 +35,13 @@ describe('Check tracker will subscribe storage to all streams', () => {
     })
 
     it('tracker should register storage node and send subscribe all new streams', async (done) => {
-        expect(tracker.storages.has('storage-1')).toEqual(false)
+        expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
         await storageNode.addBootstrapTracker(tracker.getAddress())
         await subscriberOne.addBootstrapTracker(tracker.getAddress())
 
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
-        expect(tracker.storages.has('storage-1')).toEqual(true)
+        expect(tracker.storageNodes.has('storage-1')).toEqual(true)
         expect(storageNode.streams.getStreams()).toEqual([new StreamID('stream-1', 0)])
 
         await subscriberTwo.addBootstrapTracker(tracker.getAddress())
@@ -52,7 +52,7 @@ describe('Check tracker will subscribe storage to all streams', () => {
     })
 
     it('tracker should register storage node and send subscribe all existing streams', async (done) => {
-        expect(tracker.storages.has('storage-1')).toEqual(false)
+        expect(tracker.storageNodes.has('storage-1')).toEqual(false)
 
         await subscriberOne.addBootstrapTracker(tracker.getAddress())
         await subscriberTwo.addBootstrapTracker(tracker.getAddress())
