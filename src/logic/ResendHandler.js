@@ -23,6 +23,7 @@ class ResendHandler extends EventEmitter {
 
         for (let i = 0; i < this.resendStrategies.length && !isRequestFulfilled; ++i) {
             const responseStream = this.resendStrategies[i].getResendResponseStream(request)
+            // eslint-disable-next-line no-await-in-loop
             isRequestFulfilled = await this._readStreamUntilEndOrError(responseStream, request)
         }
 
