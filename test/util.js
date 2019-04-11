@@ -30,6 +30,7 @@ const eventsWithArgsToArray = (emitter, events) => {
 
 module.exports = {
     eventsToArray,
+    eventsWithArgsToArray,
     getPeers,
     wait,
     waitForEvent,

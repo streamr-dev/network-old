@@ -9,23 +9,14 @@ class ResendHandler {
         if (resendStrategies == null) {
             throw new Error('resendStrategies not given')
         }
-        if (!sendResponse) {
+        if (sendResponse == null) {
             throw new Error('sendResponse not given')
         }
-        if ({}.toString.call(sendResponse) !== '[object Function]') {
-            throw new Error('sendResponse not a function')
-        }
-        if (!sendUnicast) {
+        if (sendUnicast == null) {
             throw new Error('sendUnicast not given')
         }
-        if ({}.toString.call(sendUnicast) !== '[object Function]') {
-            throw new Error('sendUnicast not a function')
-        }
-        if (!notifyError) {
+        if (notifyError == null) {
             throw new Error('notifyError not given')
-        }
-        if ({}.toString.call(notifyError) !== '[object Function]') {
-            throw new Error('notifyError not a function')
         }
 
         this.resendStrategies = [...resendStrategies]
