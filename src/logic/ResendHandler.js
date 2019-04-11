@@ -1,21 +1,37 @@
-const { EventEmitter } = require('events')
 const { MessageID, MessageReference } = require('../identifiers')
+const ResendResponseNoResend = require('../../src/messages/ResendResponseNoResend')
+const ResendResponseResent = require('../../src/messages/ResendResponseResent')
+const ResendResponseResending = require('../../src/messages/ResendResponseResending')
+const UnicastMessage = require('../../src/messages/UnicastMessage')
 
-const events = Object.freeze({
-    NO_RESEND: 'streamr:resendHandler:no-resend',
-    RESENDING: 'streamr:resendHandler:resending',
-    RESENT: 'streamr:resendHandler:resent',
-    UNICAST: 'streamr:resendHandler:unicast',
-    ERROR: 'streamr:resendHandler:error'
-})
-
-class ResendHandler extends EventEmitter {
-    constructor(resendStrategies) {
-        super()
+class ResendHandler {
+    constructor(resendStrategies, sendResponse, sendUnicast, notifyError) {
         if (resendStrategies == null) {
             throw new Error('resendStrategies not given')
         }
+        if (!sendResponse) {
+            throw new Error('sendResponse not given')
+        }
+        if ({}.toString.call(sendResponse) !== '[object Function]') {
+            throw new Error('sendResponse not a function')
+        }
+        if (!sendUnicast) {
+            throw new Error('sendUnicast not given')
+        }
+        if ({}.toString.call(sendUnicast) !== '[object Function]') {
+            throw new Error('sendUnicast not a function')
+        }
+        if (!notifyError) {
+            throw new Error('notifyError not given')
+        }
+        if ({}.toString.call(notifyError) !== '[object Function]') {
+            throw new Error('notifyError not a function')
+        }
+
         this.resendStrategies = [...resendStrategies]
+        this.sendResponse = sendResponse
+        this.sendUnicast = sendUnicast
+        this.notifyError = notifyError
     }
 
     async handleRequest(request) {
@@ -61,11 +77,7 @@ class ResendHandler extends EventEmitter {
     }
 
     _emitResending(request) {
-        this.emit(events.RESENDING, {
-            streamId: request.getStreamId(),
-            subId: request.getSubId(),
-            source: request.getSource()
-        })
+        this.sendResponse(request.getSource(), new ResendResponseResending(request.getStreamId(), request.getSubId()))
     }
 
     _emitUnicast(request, {
@@ -79,43 +91,27 @@ class ResendHandler extends EventEmitter {
         signature,
         signatureType,
     }) {
-        this.emit(events.UNICAST, {
-            messageId: new MessageID(request.getStreamId(), timestamp, sequenceNo, publisherId, msgChainId),
-            previousMessageReference: previousTimestamp != null ? new MessageReference(previousTimestamp, previousSequenceNo) : null,
+        this.sendUnicast(request.getSource(), new UnicastMessage(
+            new MessageID(request.getStreamId(), timestamp, sequenceNo, publisherId, msgChainId),
+            previousTimestamp != null ? new MessageReference(previousTimestamp, previousSequenceNo) : null,
             data,
             signature,
             signatureType,
-            subId: request.getSubId(),
-            source: request.getSource()
-        })
+            request.getSubId()
+        ))
     }
 
     _emitResent(request) {
-        this.emit(events.RESENT, {
-            streamId: request.getStreamId(),
-            subId: request.getSubId(),
-            source: request.getSource()
-        })
+        this.sendResponse(request.getSource(), new ResendResponseResent(request.getStreamId(), request.getSubId()))
     }
 
     _emitNoResend(request) {
-        this.emit(events.NO_RESEND, {
-            streamId: request.getStreamId(),
-            subId: request.getSubId(),
-            source: request.getSource()
-        })
+        this.sendResponse(request.getSource(), new ResendResponseNoResend(request.getStreamId(), request.getSubId()))
     }
 
     _emitError(request, error) {
-        this.emit(events.ERROR, {
-            streamId: request.getStreamId(),
-            subId: request.getSubId(),
-            source: request.getSource(),
-            error
-        })
+        this.notifyError(request, error)
     }
 }
-
-ResendHandler.events = events
 
 module.exports = ResendHandler
