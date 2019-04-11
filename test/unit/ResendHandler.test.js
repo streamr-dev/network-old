@@ -2,8 +2,8 @@ const { Readable } = require('stream')
 const intoStream = require('into-stream')
 const ResendHandler = require('../../src/logic/ResendHandler')
 const ResendLastRequest = require('../../src/messages/ResendLastRequest')
-const { eventsToArray } = require('../util')
-const { StreamID } = require('../../src/identifiers')
+const { eventsToArray, waitForEvent } = require('../util')
+const { MessageID, MessageReference, StreamID } = require('../../src/identifiers')
 
 const collectResendHandlerEvents = (resendHandler) => eventsToArray(resendHandler, Object.values(ResendHandler.events))
 
@@ -12,7 +12,7 @@ describe('ResendHandler', () => {
     let request
 
     beforeEach(() => {
-        request = new ResendLastRequest(new StreamID('streamId', 0), 'subId', 10)
+        request = new ResendLastRequest(new StreamID('streamId', 0), 'subId', 10, 'source')
     })
 
     describe('initialized with no strategies', () => {
@@ -255,6 +255,100 @@ describe('ResendHandler', () => {
             const fulfilled = await resendHandler.handleRequest(new ResendLastRequest(new StreamID('streamId', 0), 'subId', 10))
             expect(fulfilled).toEqual(true)
             expect(neverShouldBeInvokedFn).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('emitted events and their arguments are formed correctly', () => {
+        test('NO_RESEND is formed correctly', async () => {
+            resendHandler = new ResendHandler([{
+                getResendResponseStream: () => intoStream.object([])
+            }])
+
+            resendHandler.handleRequest(request)
+
+            const args = await waitForEvent(resendHandler, ResendHandler.events.NO_RESEND)
+            expect(args).toEqual([{
+                streamId: new StreamID('streamId', 0),
+                subId: 'subId',
+                source: 'source'
+            }])
+        })
+
+        test('ERROR is formed correctly', async () => {
+            resendHandler = new ResendHandler([{
+                getResendResponseStream: () => intoStream.object(Promise.reject(new Error('yikes')))
+            }])
+
+            resendHandler.handleRequest(request)
+
+            const args = await waitForEvent(resendHandler, ResendHandler.events.ERROR)
+            expect(args).toEqual([{
+                streamId: new StreamID('streamId', 0),
+                subId: 'subId',
+                source: 'source',
+                error: new Error('yikes')
+            }])
+        })
+
+        describe('with data available', () => {
+            beforeEach(() => {
+                resendHandler = new ResendHandler([{
+                    getResendResponseStream: () => intoStream.object([
+                        {
+                            timestamp: 756,
+                            sequenceNo: 0,
+                            previousTimestamp: 666,
+                            previousSequenceNo: 50,
+                            publisherId: 'publisherId',
+                            msgChainId: 'msgChainId',
+                            data: {
+                                hello: 'world'
+                            },
+                            signature: 'signature',
+                            signatureType: 2
+                        }
+                    ])
+                }])
+            })
+
+            test('RESENDING is formed correctly', async () => {
+                resendHandler.handleRequest(request)
+
+                const args = await waitForEvent(resendHandler, ResendHandler.events.RESENDING)
+                expect(args).toEqual([{
+                    streamId: new StreamID('streamId', 0),
+                    subId: 'subId',
+                    source: 'source',
+                }])
+            })
+
+            test('RESENT is formed correctly', async () => {
+                resendHandler.handleRequest(request)
+
+                const args = await waitForEvent(resendHandler, ResendHandler.events.RESENT)
+                expect(args).toEqual([{
+                    streamId: new StreamID('streamId', 0),
+                    subId: 'subId',
+                    source: 'source',
+                }])
+            })
+
+            test('UNICAST is formed correctly', async () => {
+                resendHandler.handleRequest(request)
+
+                const args = await waitForEvent(resendHandler, ResendHandler.events.UNICAST)
+                expect(args).toEqual([{
+                    messageId: new MessageID(new StreamID('streamId', 0), 756, 0, 'publisherId', 'msgChainId'),
+                    previousMessageReference: new MessageReference(666, 50),
+                    data: {
+                        hello: 'world',
+                    },
+                    signature: 'signature',
+                    signatureType: 2,
+                    subId: 'subId',
+                    source: 'source',
+                }])
+            })
         })
     })
 })
