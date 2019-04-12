@@ -10,8 +10,8 @@ const waitForEvent = (emitter, event, timeout = 20 * 1000) => pEvent(emitter, ev
     multiArgs: true
 })
 
-const waitForCondition = (fn, timeout = 10 * 1000, retryInterval = 100) => {
-    if (fn()) {
+const waitForCondition = (conditionFn, timeout = 10 * 1000, retryInterval = 100) => {
+    if (conditionFn()) {
         return Promise.resolve()
     }
     return new Promise((resolve, reject) => {
@@ -23,7 +23,7 @@ const waitForCondition = (fn, timeout = 10 * 1000, retryInterval = 100) => {
         }, timeout)
 
         refs.interval = setInterval(() => {
-            if (fn()) {
+            if (conditionFn()) {
                 clearTimeout(refs.timeOut)
                 clearInterval(refs.interval)
                 resolve()
