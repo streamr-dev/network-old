@@ -1,8 +1,6 @@
-const { MessageID, MessageReference } = require('../identifiers')
 const ResendResponseNoResend = require('../../src/messages/ResendResponseNoResend')
 const ResendResponseResent = require('../../src/messages/ResendResponseResent')
 const ResendResponseResending = require('../../src/messages/ResendResponseResending')
-const UnicastMessage = require('../../src/messages/UnicastMessage')
 
 class ResendHandler {
     constructor(resendStrategies, sendResponse, sendUnicast, notifyError) {
@@ -71,25 +69,8 @@ class ResendHandler {
         this.sendResponse(request.getSource(), new ResendResponseResending(request.getStreamId(), request.getSubId()))
     }
 
-    _emitUnicast(request, {
-        timestamp,
-        sequenceNo,
-        publisherId,
-        msgChainId,
-        previousTimestamp,
-        previousSequenceNo,
-        data,
-        signature,
-        signatureType,
-    }) {
-        this.sendUnicast(request.getSource(), new UnicastMessage(
-            new MessageID(request.getStreamId(), timestamp, sequenceNo, publisherId, msgChainId),
-            previousTimestamp != null ? new MessageReference(previousTimestamp, previousSequenceNo) : null,
-            data,
-            signature,
-            signatureType,
-            request.getSubId()
-        ))
+    _emitUnicast(request, unicastMessage) {
+        this.sendUnicast(request.getSource(), unicastMessage)
     }
 
     _emitResent(request) {

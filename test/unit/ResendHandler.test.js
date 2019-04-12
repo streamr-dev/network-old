@@ -2,7 +2,6 @@ const { Readable } = require('stream')
 const intoStream = require('into-stream')
 const ResendHandler = require('../../src/logic/ResendHandler')
 const ResendLastRequest = require('../../src/messages/ResendLastRequest')
-const { waitForEvent } = require('../util')
 const { MessageID, MessageReference, StreamID } = require('../../src/identifiers')
 const ResendResponseNoResend = require('../../src/messages/ResendResponseNoResend')
 const ResendResponseResent = require('../../src/messages/ResendResponseResent')
@@ -88,20 +87,22 @@ describe('ResendHandler', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
                 getResendResponseStream: () => intoStream.object([
-                    {
-                        timestamp: 1000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },
-                    {
-                        timestamp: 2000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },
+                    new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 1000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    ),
+                    new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 2000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    )
                 ])
             }], sendResponse, sendUnicast, notifyError)
         })
@@ -131,20 +132,22 @@ describe('ResendHandler', () => {
                         read() {}
                     })
 
-                    setImmediate(() => stream.push({
-                        timestamp: 1000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },))
-                    setImmediate(() => stream.push({
-                        timestamp: 2000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },))
+                    setImmediate(() => stream.push(new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 1000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    )))
+                    setImmediate(() => stream.push(new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 2000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    )))
                     setImmediate(() => {
                         stream.emit('error', new Error('yikes'))
                     })
@@ -183,13 +186,14 @@ describe('ResendHandler', () => {
                         objectMode: true,
                         read() {}
                     })
-                    setImmediate(() => stream.push({
-                        timestamp: 2000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },))
+                    setImmediate(() => stream.push(new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 2000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    )))
                     setImmediate(() => {
                         stream.emit('error', new Error('yikes'))
                     })
@@ -199,20 +203,22 @@ describe('ResendHandler', () => {
 
             const thirdStrategy = {
                 getResendResponseStream: () => intoStream.object([
-                    {
-                        timestamp: 1000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    },
-                    {
-                        timestamp: 2000,
-                        sequenceNo: 0,
-                        publisherId: 'publisher',
-                        msgChainId: 'msgChain',
-                        data: {}
-                    }
+                    new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 1000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    ),
+                    new UnicastMessage(
+                        new MessageID(new StreamID('streamId', 0), 2000, 0, 'publisherId', 'msgChainId'),
+                        null,
+                        {},
+                        null,
+                        null,
+                        'subId'
+                    )
                 ])
             }
 
@@ -302,19 +308,16 @@ describe('ResendHandler', () => {
             beforeEach(() => {
                 resendHandler = new ResendHandler([{
                     getResendResponseStream: () => intoStream.object([
-                        {
-                            timestamp: 756,
-                            sequenceNo: 0,
-                            previousTimestamp: 666,
-                            previousSequenceNo: 50,
-                            publisherId: 'publisherId',
-                            msgChainId: 'msgChainId',
-                            data: {
+                        new UnicastMessage(
+                            new MessageID(new StreamID('streamId', 0), 756, 0, 'publisherId', 'msgChainId'),
+                            new MessageReference(666, 50),
+                            {
                                 hello: 'world'
                             },
-                            signature: 'signature',
-                            signatureType: 2
-                        }
+                            'signature',
+                            2,
+                            'subId'
+                        )
                     ])
                 }], sendResponse, sendUnicast, notifyError)
             })

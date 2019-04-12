@@ -1,3 +1,4 @@
+const intoStream = require('into-stream')
 const { StorageResendStrategy } = require('../../src/logic/resendStrategies')
 const ResendLastRequest = require('../../src/messages/ResendLastRequest')
 const ResendFromRequest = require('../../src/messages/ResendFromRequest')
@@ -14,7 +15,7 @@ describe('StorageResendStrategy', () => {
     })
 
     test('on receiving ResendLastRequest, storage#requestLast is invoked', async () => {
-        storage.requestLast = jest.fn()
+        storage.requestLast = jest.fn().mockReturnValueOnce(intoStream.object([]))
 
         resendStrategy.getResendResponseStream(new ResendLastRequest(new StreamID('streamId', 0), 'subId', 10))
 
@@ -24,7 +25,7 @@ describe('StorageResendStrategy', () => {
     })
 
     test('on receiving ResendFromRequest, storage#requestFrom is invoked', async () => {
-        storage.requestFrom = jest.fn()
+        storage.requestFrom = jest.fn().mockReturnValueOnce(intoStream.object([]))
 
         resendStrategy.getResendResponseStream(new ResendFromRequest(
             new StreamID('streamId', 0),
@@ -39,7 +40,7 @@ describe('StorageResendStrategy', () => {
     })
 
     test('on receiving ResendRangeRequest, storage#requestRange is invoked', async () => {
-        storage.requestRange = jest.fn()
+        storage.requestRange = jest.fn().mockReturnValueOnce(intoStream.object([]))
 
         resendStrategy.getResendResponseStream(new ResendRangeRequest(
             new StreamID('streamId', 0),
