@@ -4,9 +4,6 @@ const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
-const ResendResponseResent = require('../messages/ResendResponseResent')
-const ResendResponseResending = require('../messages/ResendResponseResending')
-const ResendResponseNoResend = require('../messages/ResendResponseNoResend')
 const StreamManager = require('./StreamManager')
 const ResendHandler = require('./ResendHandler')
 
@@ -109,14 +106,8 @@ class Node extends EventEmitter {
     async respondResend(destination, response) {
         if (destination === null) {
             this.emit(events.RESEND_RESPONSE_RECEIVED, response)
-        } else if (response instanceof ResendResponseNoResend) { // TODO: move this logic elsewhere
-            await this.protocols.nodeToNode.respondNoResend(destination, response.getStreamId(), response.getSubId())
-        } else if (response instanceof ResendResponseResending) {
-            await this.protocols.nodeToNode.respondResending(destination, response.getStreamId(), response.getSubId())
-        } else if (response instanceof ResendResponseResent) {
-            await this.protocols.nodeToNode.respondResent(destination, response.getStreamId(), response.getSubId())
         } else {
-            throw new Error(`unknown response ${response}`)
+            await this.protocols.nodeToNode.send(destination, response)
         }
 
         this.debug('responded %s with %s and subId %s',
@@ -129,15 +120,7 @@ class Node extends EventEmitter {
         if (destination === null) {
             this.emit(events.UNICAST_RECEIVED, unicastMessage)
         } else {
-            await this.protocols.nodeToNode.sendUnicast(
-                destination,
-                unicastMessage.getMessageId(),
-                unicastMessage.getPreviousMessageReference(),
-                unicastMessage.getData(),
-                unicastMessage.getSignature(),
-                unicastMessage.getSignatureType(),
-                unicastMessage.getSubId()
-            )
+            await this.protocols.nodeToNode.send(destination, unicastMessage)
         }
         this.debug('sent %s unicast %s for subId %s',
             destination === null ? 'locally' : `to ${destination}`,

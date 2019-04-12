@@ -183,7 +183,7 @@ class AskNeighborsResendStrategy {
 
         const neighborId = candidates[0]
 
-        this._forwardRequestToNeighbor(neighborId, request)
+        this.nodeToNode.send(neighborId, request)
             .catch(() => this._askNextNeighbor(subId))
             .then(() => {
                 neighborsAsked.add(neighborId)
@@ -202,37 +202,6 @@ class AskNeighborsResendStrategy {
     _reSetTimeout(subId) {
         clearTimeout(this.pending[subId].timeoutRef)
         this.pending[subId].timeoutRef = setTimeout(() => this._askNextNeighbor(subId), 10 * 1000)
-    }
-
-    _forwardRequestToNeighbor(neighborId, request) {
-        if (request instanceof ResendLastRequest) {
-            return this.nodeToNode.requestResendLast(
-                neighborId,
-                request.getStreamId(),
-                request.getSubId(),
-                request.getNumberLast()
-            )
-        }
-        if (request instanceof ResendFromRequest) {
-            return this.nodeToNode.requestResendFrom(
-                neighborId,
-                request.getStreamId(),
-                request.getSubId(),
-                request.getFromMsgRef(),
-                request.getPublisherId()
-            )
-        }
-        if (request instanceof ResendRangeRequest) {
-            return this.nodeToNode.requestResendRange(
-                neighborId,
-                request.getStreamId(),
-                request.getSubId(),
-                request.getFromMsgRef(),
-                request.getToMsgRef(),
-                request.getPublisherId()
-            )
-        }
-        throw new Error(`unknown resend request ${request}`)
     }
 }
 
