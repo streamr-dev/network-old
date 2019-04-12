@@ -91,10 +91,11 @@ class StorageResendStrategy {
  * Often used at L2.
  */
 class AskNeighborsResendStrategy {
-    constructor(nodeToNode, getNeighbors, maxTries = 3) {
+    constructor(nodeToNode, getNeighbors, maxTries = 3, timeout = 20 * 1000) {
         this.nodeToNode = nodeToNode
         this.getNeighbors = getNeighbors
         this.maxTries = maxTries
+        this.timeout = timeout
         this.pending = {}
 
         this.nodeToNode.on(NodeToNode.events.UNICAST_RECEIVED, (unicastMessage) => {
@@ -165,6 +166,10 @@ class AskNeighborsResendStrategy {
         return responseStream
     }
 
+    stop() {
+        Object.keys(this.pending).forEach(this._endStream.bind(this))
+    }
+
     _askNextNeighbor(subId) {
         const { request, neighborsAsked, timeoutRef } = this.pending[subId]
 
@@ -182,14 +187,14 @@ class AskNeighborsResendStrategy {
         }
 
         const neighborId = candidates[0]
+        neighborsAsked.add(neighborId)
 
-        this.nodeToNode.send(neighborId, request)
-            .catch(() => this._askNextNeighbor(subId))
-            .then(() => {
-                neighborsAsked.add(neighborId)
-                this.pending[subId].currentNeighbor = neighborId
-                this._reSetTimeout(subId)
-            })
+        this.nodeToNode.send(neighborId, request).then(() => {
+            this.pending[subId].currentNeighbor = neighborId
+            this._reSetTimeout(subId)
+        }, () => {
+            this._askNextNeighbor(subId)
+        })
     }
 
     _endStream(subId) {
@@ -201,7 +206,7 @@ class AskNeighborsResendStrategy {
 
     _reSetTimeout(subId) {
         clearTimeout(this.pending[subId].timeoutRef)
-        this.pending[subId].timeoutRef = setTimeout(() => this._askNextNeighbor(subId), 10 * 1000)
+        this.pending[subId].timeoutRef = setTimeout(() => this._askNextNeighbor(subId), this.timeout)
     }
 }
 
