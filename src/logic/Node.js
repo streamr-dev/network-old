@@ -38,29 +38,10 @@ class Node extends EventEmitter {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
-        this.resendHandler = new ResendHandler(resendStrategies, this.respondResend.bind(this),
-            async (destination, unicastMessage) => {
-                if (destination === null) {
-                    this.emit(events.UNICAST_RECEIVED, unicastMessage)
-                } else {
-                    await this.protocols.nodeToNode.sendUnicast(
-                        destination,
-                        unicastMessage.getMessageId(),
-                        unicastMessage.getPreviousMessageReference(),
-                        unicastMessage.getData(),
-                        unicastMessage.getSignature(),
-                        unicastMessage.getSignatureType(),
-                        unicastMessage.getSubId()
-                    )
-                }
-                this.debug('sent %s unicast %s for subId %s',
-                    destination === null ? 'locally' : `to ${destination}`,
-                    unicastMessage.getMessageId(),
-                    unicastMessage.getSubId())
-            },
-            (error) => {
-                console.error(error)
-            })
+        this.resendHandler = new ResendHandler(resendStrategies,
+            this.respondResend.bind(this),
+            this._unicast.bind(this),
+            console.error.bind(console))
 
         this.id = id
         this.trackers = new Set()
@@ -142,6 +123,26 @@ class Node extends EventEmitter {
             destination === null ? 'locally' : `to ${destination}`,
             response.constructor.name,
             response.getSubId())
+    }
+
+    async _unicast(destination, unicastMessage) {
+        if (destination === null) {
+            this.emit(events.UNICAST_RECEIVED, unicastMessage)
+        } else {
+            await this.protocols.nodeToNode.sendUnicast(
+                destination,
+                unicastMessage.getMessageId(),
+                unicastMessage.getPreviousMessageReference(),
+                unicastMessage.getData(),
+                unicastMessage.getSignature(),
+                unicastMessage.getSignatureType(),
+                unicastMessage.getSubId()
+            )
+        }
+        this.debug('sent %s unicast %s for subId %s',
+            destination === null ? 'locally' : `to ${destination}`,
+            unicastMessage.getMessageId(),
+            unicastMessage.getSubId())
     }
 
     async onTrackerInstructionReceived(streamMessage) {
