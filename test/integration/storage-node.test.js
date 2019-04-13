@@ -89,14 +89,11 @@ describe('Check tracker will subscribe storage node to all streams', () => {
         storageNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
-            await waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED),
-            await waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED)
+            await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED),
+            await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
         ])
 
-        // TODO with delays this test works
-        // await wait(500)
         subscriberOne.unsubscribeFromStream(streamOne)
-        // await wait(500)
 
         await Promise.all([
             await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
@@ -105,5 +102,6 @@ describe('Check tracker will subscribe storage node to all streams', () => {
 
         expect(subscriberOne.streams.isSetUp(streamOne)).toBeFalsy()
         expect(storageNode.streams.getAllNodesForStream(streamOne)).toEqual([])
+        expect(storageNode.streams.getAllNodesForStream(streamTwo)).toEqual([subscriberTwoId])
     })
 })
