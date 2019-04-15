@@ -13,10 +13,10 @@ jobs:
   - stage: tests
     name: lint
     script: npm run eslint
-  - name: unit tests
-    script: npm run test-unit
-  - name: integration tests
-    script: npm run test-integration
+  - script: npm run test-unit
+    name: unit tests
+  - script: npm run test-integration
+    name: integration tests
   - stage: publish
     if: tag IS present
     deploy:
