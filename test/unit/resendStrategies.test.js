@@ -12,6 +12,21 @@ const { wait } = require('../util')
 const { MessageID, MessageReference, StreamID } = require('../../src/identifiers')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 
+/**
+ * Collect data of a stream into an array. The array is wrapped in a Promise
+ * that resolves when the stream has ended, i.e., event `end` is emitted by
+ * stream.
+ */
+function streamToArray(stream) {
+    const arr = []
+    return new Promise((resolve, reject) => {
+        stream
+            .on('data', arr.push.bind(arr))
+            .on('error', reject)
+            .on('end', () => resolve(arr))
+    })
+}
+
 describe('StorageResendStrategy#getResendResponseStream', () => {
     let storage
     let resendStrategy
@@ -61,17 +76,59 @@ describe('StorageResendStrategy#getResendResponseStream', () => {
             ['streamId', 0, 1555555555555, 0, 1555555555555, 1000, 'publisherId']
         ])
     })
-})
 
-async function streamToArray(stream) {
-    const arr = []
-    return new Promise((resolve, reject) => {
-        stream
-            .on('data', arr.push.bind(arr))
-            .on('error', reject)
-            .on('end', () => resolve(arr))
+    test('data of storage stream are transformed into UnicastMessages for response stream', async () => {
+        storage.requestLast = jest.fn().mockReturnValueOnce(intoStream.object([
+            {
+                timestamp: 0,
+                sequenceNo: 0,
+                publisherId: 'publisherId',
+                msgChainId: 'msgChainId',
+                data: {
+                    hello: 'world'
+                },
+                signature: 'signature',
+                signatureType: 2,
+            },
+            {
+                timestamp: 10,
+                sequenceNo: 10,
+                publisherId: 'publisherId',
+                msgChainId: 'msgChainId',
+                previousTimestamp: 0,
+                previousSequenceNo: 0,
+                data: {},
+                signature: 'signature',
+                signatureType: 2,
+            }
+        ]))
+
+        const responseStream = resendStrategy.getResendResponseStream(
+            new ResendLastRequest(new StreamID('streamId', 0), 'subId', 10)
+        )
+        const streamAsArray = await streamToArray(responseStream)
+        expect(streamAsArray).toEqual([
+            new UnicastMessage(
+                new MessageID(new StreamID('streamId', 0), 0, 0, 'publisherId', 'msgChainId'),
+                null,
+                {
+                    hello: 'world'
+                },
+                'signature',
+                2,
+                'subId'
+            ),
+            new UnicastMessage(
+                new MessageID(new StreamID('streamId', 0), 10, 10, 'publisherId', 'msgChainId'),
+                new MessageReference(0, 0),
+                {},
+                'signature',
+                2,
+                'subId'
+            )
+        ])
     })
-}
+})
 
 describe('AskNeighborsResendStrategy#getResendResponseStream', () => {
     const TIMEOUT = 50
