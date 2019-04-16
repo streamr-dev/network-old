@@ -12,8 +12,7 @@ class MetadataNotSetError extends Error {
 }
 
 const peerTypes = Object.freeze({
-    TRACKER: 'tracker',
-    NODE: 'node',
+    TRACKER: 'tracker', NODE: 'node',
     STORAGE: 'storage'
 })
 
