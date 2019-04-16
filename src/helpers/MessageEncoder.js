@@ -10,12 +10,13 @@ const ResendRangeRequest = require('../messages/ResendRangeRequest')
 const ResendResponseResent = require('../messages/ResendResponseResent')
 const ResendResponseResending = require('../messages/ResendResponseResending')
 const ResendResponseNoResend = require('../messages/ResendResponseNoResend')
+const StorageNodesMessage = require('../messages/StorageNodesMessage')
 const UnicastMessage = require('../messages/UnicastMessage')
 const { StreamID, MessageID, MessageReference } = require('../identifiers')
 const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
-    if (type < 0 || type > 13) {
+    if (type < 0 || type > 14) {
         throw new Error(`Unknown message type: ${type}`)
     }
 
@@ -132,6 +133,13 @@ const decode = (source, message) => {
                 source
             )
 
+        case msgTypes.STORAGE_NODES:
+            return new StorageNodesMessage(
+                new StreamID(payload.streamId, payload.streamPartition),
+                payload.nodeAddresses,
+                source
+            )
+
         default:
             throw new Error(`Unknown message type: ${code}`)
     }
@@ -208,6 +216,11 @@ module.exports = {
     findStorageNodesMessage: (streamId) => encode(msgTypes.FIND_STORAGE_NODES, {
         streamId: streamId.id,
         streamPartition: streamId.partition
+    }),
+    storageNodesMessage: (streamId, nodeAddresses) => encode(msgTypes.STORAGE_NODES, {
+        streamId: streamId.id,
+        streamPartition: streamId.partition,
+        nodeAddresses
     }),
     ...msgTypes,
     CURRENT_VERSION
