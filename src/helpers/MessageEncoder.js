@@ -1,6 +1,7 @@
-const StatusMessage = require('../messages/StatusMessage')
-const InstructionMessage = require('../messages/InstructionMessage')
 const DataMessage = require('../messages/DataMessage')
+const FindStorageNodesMessage = require('../messages/FindStorageNodesMessage')
+const InstructionMessage = require('../messages/InstructionMessage')
+const StatusMessage = require('../messages/StatusMessage')
 const SubscribeMessage = require('../messages/SubscribeMessage')
 const UnsubscribeMessage = require('../messages/UnsubscribeMessage')
 const ResendLastRequest = require('../messages/ResendLastRequest')
@@ -14,7 +15,7 @@ const { StreamID, MessageID, MessageReference } = require('../identifiers')
 const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
-    if (type < 0 || type > 12) {
+    if (type < 0 || type > 13) {
         throw new Error(`Unknown message type: ${type}`)
     }
 
@@ -125,6 +126,12 @@ const decode = (source, message) => {
                 source
             )
 
+        case msgTypes.FIND_STORAGE_NODES:
+            return new FindStorageNodesMessage(
+                new StreamID(payload.streamId, payload.streamPartition),
+                source
+            )
+
         default:
             throw new Error(`Unknown message type: ${code}`)
     }
@@ -197,6 +204,10 @@ module.exports = {
         streamId: streamId.id,
         streamPartition: streamId.partition,
         subId,
+    }),
+    findStorageNodesMessage: (streamId) => encode(msgTypes.FIND_STORAGE_NODES, {
+        streamId: streamId.id,
+        streamPartition: streamId.partition
     }),
     ...msgTypes,
     CURRENT_VERSION

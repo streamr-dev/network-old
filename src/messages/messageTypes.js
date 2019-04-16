@@ -14,6 +14,7 @@ const msgTypes = {
     RESEND_RESPONSE_RESENT: 10,
     RESEND_RESPONSE_NO_RESEND: 11,
     UNICAST: 12,
+    FIND_STORAGE_NODES: 13
 }
 
 const disconnectionReasons = Object.freeze({
