@@ -13,9 +13,9 @@ jobs:
   - stage: tests
     name: lint
     script:
-      TRAVIS_JOB_NAME=lint npm run eslint
-      TRAVIS_JOB_NAME=unit npm run test-unit
-      TRAVIS_JOB_NAME=integration npm run test-integration
+      - TRAVIS_JOB_NAME=lint npm run eslint
+      - TRAVIS_JOB_NAME=unit npm run test-unit
+      - TRAVIS_JOB_NAME=integration npm run test-integration
   - stage: publish
     if: tag IS present
     deploy:
