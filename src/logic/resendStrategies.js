@@ -107,10 +107,10 @@ class AskNeighborsResendStrategy {
                     this.pending[subId].responseStream.push(unicastMessage)
                     this._reSetTimeout(subId)
                 } else {
-                    throw new Error(`received unicast from non-current neighbor ${source}`)
+                    console.error(`received unicast from non-current neighbor ${source}`)
                 }
             } else {
-                throw new Error(`received unicast for unknown subId ${subId}`)
+                console.error(`received unicast for unknown subId ${subId}`)
             }
         })
         this.nodeToNode.on(NodeToNode.events.RESEND_RESPONSE, (response) => {
@@ -128,10 +128,10 @@ class AskNeighborsResendStrategy {
                         throw new Error(`unexpected response type ${response}`)
                     }
                 } else {
-                    throw new Error(`received resend response from non-current neighbor ${source}`)
+                    console.error(`received resend response from non-current neighbor ${source}`)
                 }
             } else {
-                throw new Error(`received resend response for unknown subId ${subId}`)
+                console.error(`received resend response for unknown subId ${subId}`)
             }
         })
         this.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (nodeId) => {
