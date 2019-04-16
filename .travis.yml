@@ -12,11 +12,10 @@ jobs:
   include:
   - stage: tests
     name: lint
-    script: npm run eslint
-  - script: npm run test-unit
-    name: unit tests
-  - script: npm run test-integration
-    name: integration tests
+    script:
+      TRAVIS_JOB_NAME=lint npm run eslint
+      TRAVIS_JOB_NAME=unit npm run test-unit
+      TRAVIS_JOB_NAME=integration npm run test-integration
   - stage: publish
     if: tag IS present
     deploy:
