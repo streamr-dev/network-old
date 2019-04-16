@@ -9,6 +9,7 @@ const ResendRangeRequest = require('../../src/messages/ResendRangeRequest')
 const ResendResponseResent = require('../../src/messages/ResendResponseResent')
 const ResendResponseResending = require('../../src/messages/ResendResponseResending')
 const ResendResponseNoResend = require('../../src/messages/ResendResponseNoResend')
+const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
 const UnicastMessage = require('../../src/messages/UnicastMessage')
 const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
 
@@ -551,6 +552,45 @@ describe('encoder', () => {
         expect(unicastMessage.getSource()).toEqual('source')
 
         expect(unicastMessage.getStreamId()).toEqual(new StreamID('stream-id', 0))
+    })
+
+    it('check encoding STORAGE_NODES', () => {
+        const actual = encoder.storageNodesMessage(new StreamID('stream-id', 0), ['ws://node-1', 'ws://node-2'])
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.STORAGE_NODES,
+            version,
+            payload: {
+                streamId: 'stream-id',
+                streamPartition: 0,
+                nodeAddresses: [
+                    'ws://node-1',
+                    'ws://node-2'
+                ]
+            }
+        })
+    })
+
+    it('check decoding STORAGE_NODES', () => {
+        const unicastMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.STORAGE_NODES,
+            version,
+            payload: {
+                streamId: 'stream-id',
+                streamPartition: 0,
+                nodeAddresses: [
+                    'ws://node-1',
+                    'ws://node-2'
+                ]
+            }
+        }))
+
+        expect(unicastMessage).toBeInstanceOf(StorageNodesMessage)
+        expect(unicastMessage.getVersion()).toEqual(version)
+        expect(unicastMessage.getCode()).toEqual(encoder.STORAGE_NODES)
+        expect(unicastMessage.getSource()).toEqual('source')
+
+        expect(unicastMessage.getStreamId()).toEqual(new StreamID('stream-id', 0))
+        expect(unicastMessage.getNodeAddresses()).toEqual(['ws://node-1', 'ws://node-2'])
     })
 })
 
