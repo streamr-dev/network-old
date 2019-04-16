@@ -1,6 +1,7 @@
 const encoder = require('../../src/helpers/MessageEncoder')
 const { version } = require('../../package.json')
 const DataMessage = require('../../src/messages/DataMessage')
+const FindStorageNodesMessage = require('../../src/messages/FindStorageNodesMessage')
 const InstructionMessage = require('../../src/messages/InstructionMessage')
 const ResendLastRequest = require('../../src/messages/ResendLastRequest')
 const ResendFromRequest = require('../../src/messages/ResendFromRequest')
@@ -520,6 +521,36 @@ describe('encoder', () => {
         expect(unicastMessage.getSignature()).toEqual('signature')
         expect(unicastMessage.getSignatureType()).toEqual(1)
         expect(unicastMessage.getSubId()).toEqual('subId')
+    })
+
+    it('check encoding FIND_STORAGE_NODES', () => {
+        const actual = encoder.findStorageNodesMessage(new StreamID('stream-id', 0))
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.FIND_STORAGE_NODES,
+            version,
+            payload: {
+                streamId: 'stream-id',
+                streamPartition: 0
+            }
+        })
+    })
+
+    it('check decoding FIND_STORAGE_NODES', () => {
+        const unicastMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.FIND_STORAGE_NODES,
+            version,
+            payload: {
+                streamId: 'stream-id',
+                streamPartition: 0
+            }
+        }))
+
+        expect(unicastMessage).toBeInstanceOf(FindStorageNodesMessage)
+        expect(unicastMessage.getVersion()).toEqual(version)
+        expect(unicastMessage.getCode()).toEqual(encoder.FIND_STORAGE_NODES)
+        expect(unicastMessage.getSource()).toEqual('source')
+
+        expect(unicastMessage.getStreamId()).toEqual(new StreamID('stream-id', 0))
     })
 })
 
