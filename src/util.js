@@ -6,9 +6,6 @@ const callbackToPromise = (method, ...args) => {
     })
 }
 
-const BOOTNODES = require('../bootstrapNodes.json').map((node) => node.path)
-
 module.exports = {
     callbackToPromise,
-    BOOTNODES
 }
