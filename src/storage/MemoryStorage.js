@@ -84,7 +84,7 @@ module.exports = class MemoryStorage {
         return this._createStream(filterFunc, index, streamId, streamPartition, subId)
     }
 
-    requestResendRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
+    range(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }

@@ -122,7 +122,7 @@ describe('test mem storage', () => {
     test('test requestRange', (done) => {
         const FROM_TIME = 1000
         const TO_TIME = 9000
-        const fromStream = memoryStorage.requestResendRange(id, partition, subId, FROM_TIME, TO_TIME)
+        const fromStream = memoryStorage.range(id, partition, subId, FROM_TIME, TO_TIME)
 
         const arr = []
 
