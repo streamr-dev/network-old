@@ -50,9 +50,9 @@ describe('test mem storage', () => {
         expect(memoryStorage.hasStreamId(streamObj2.id, streamObj2.partition, subId)).toBeFalsy()
     })
 
-    test('requestLast(10) should return 10 records', (done) => {
+    test('last(10) should return 10 records', (done) => {
         const RECORDS_NEEDED = 10
-        const last10Stream = memoryStorage.requestLast(id, partition, subId, RECORDS_NEEDED)
+        const last10Stream = memoryStorage.last(id, partition, subId, RECORDS_NEEDED)
 
         let arr = []
 
@@ -78,15 +78,15 @@ describe('test mem storage', () => {
         })
     })
 
-    test('test requestLast 0 and -1', () => {
+    test('test last 0 and -1', () => {
         try {
-            memoryStorage.requestLast(id, partition, subId, 0)
+            memoryStorage.last(id, partition, subId, 0)
         } catch (error) {
             expect(error).toEqual(new TypeError('number is not an positive integer'))
         }
 
         try {
-            memoryStorage.requestLast(id, partition, subId, -1)
+            memoryStorage.last(id, partition, subId, -1)
         } catch (error) {
             expect(error).toEqual(new TypeError('number is not an positive integer'))
         }
@@ -94,7 +94,7 @@ describe('test mem storage', () => {
 
     test('test requestFrom', (done) => {
         const FROM_TIME = 5
-        const fromStream = memoryStorage.requestResendFrom(id, partition, subId, FROM_TIME)
+        const fromStream = memoryStorage.from(id, partition, subId, FROM_TIME)
 
         let arr = []
 

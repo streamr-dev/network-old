@@ -41,7 +41,7 @@ module.exports = class MemoryStorage {
         return this.hasStreamId(streamId, streamPartition, subId) ? Object.keys(this.storage.get(index)).length : 0
     }
 
-    requestLast(streamId, streamPartition, subId, number) {
+    last(streamId, streamPartition, subId, number) {
         if (!Number.isInteger(number) || number <= 0) {
             throw new TypeError('number is not an positive integer')
         }
@@ -68,7 +68,7 @@ module.exports = class MemoryStorage {
         return stream
     }
 
-    requestResendFrom(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
+    from(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }
