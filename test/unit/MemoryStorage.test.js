@@ -54,7 +54,7 @@ describe('test mem storage', () => {
         const RECORDS_NEEDED = 10
         const last10Stream = memoryStorage.last(id, partition, subId, RECORDS_NEEDED)
 
-        let arr = []
+        const arr = []
 
         last10Stream.on('readable', () => {
             while (true) {
@@ -96,7 +96,7 @@ describe('test mem storage', () => {
         const FROM_TIME = 5
         const fromStream = memoryStorage.from(id, partition, subId, FROM_TIME)
 
-        let arr = []
+        const arr = []
 
         fromStream.on('readable', () => {
             while (true) {
@@ -120,11 +120,11 @@ describe('test mem storage', () => {
     })
 
     test('test requestRange', (done) => {
-        const FROM_TIME = 5
-        const TO_TIME = 10
+        const FROM_TIME = 1000
+        const TO_TIME = 9000
         const fromStream = memoryStorage.requestResendRange(id, partition, subId, FROM_TIME, TO_TIME)
 
-        let arr = []
+        const arr = []
 
         fromStream.on('readable', () => {
             while (true) {
