@@ -1,6 +1,5 @@
 const { startNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
-const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST } = require('../util')
 
 const DataMessage = require('../../src/messages/DataMessage')
@@ -28,9 +27,9 @@ describe('message buffering of Node', () => {
     })
 
     afterAll(async () => {
-        await callbackToPromise(sourceNode.stop.bind(sourceNode))
-        await callbackToPromise(destinationNode.stop.bind(destinationNode))
-        await callbackToPromise(tracker.stop.bind(tracker))
+        await sourceNode.stop()
+        await destinationNode.stop()
+        await tracker.stop()
     })
 
     test('first message to unknown stream eventually gets delivered', (done) => {

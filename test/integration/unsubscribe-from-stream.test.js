@@ -1,5 +1,4 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { callbackToPromise } = require('../../src/util')
 const Node = require('../../src/logic/Node')
 const { wait, waitForEvent, LOCALHOST } = require('../util')
 const { StreamID } = require('../../src/identifiers')
@@ -29,9 +28,9 @@ describe('node unsubscribing from a stream', () => {
     })
 
     afterEach(async () => {
-        await callbackToPromise(nodeA.stop.bind(nodeA))
-        await callbackToPromise(nodeB.stop.bind(nodeB))
-        await callbackToPromise(tracker.stop.bind(tracker))
+        await nodeA.stop()
+        await nodeB.stop()
+        await tracker.stop()
     })
 
     test('node still receives data for subscribed streams thru existing connections', async () => {

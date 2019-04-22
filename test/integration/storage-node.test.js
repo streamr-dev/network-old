@@ -2,7 +2,6 @@ const { startNetworkNode, startTracker, startStorageNode } = require('../../src/
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const Node = require('../../src/logic/Node')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { callbackToPromise } = require('../../src/util')
 const { LOCALHOST, waitForEvent } = require('../util')
 const { StreamID } = require('../../src/identifiers')
 
@@ -34,10 +33,10 @@ describe('Check tracker will subscribe storage node to all streams', () => {
     })
 
     afterEach(async () => {
-        await callbackToPromise(storageNode.stop.bind(storageNode))
-        await callbackToPromise(subscriberOne.stop.bind(subscriberOne))
-        await callbackToPromise(subscriberTwo.stop.bind(subscriberTwo))
-        await callbackToPromise(tracker.stop.bind(tracker))
+        await storageNode.stop()
+        await subscriberOne.stop()
+        await subscriberTwo.stop()
+        await tracker.stop()
     })
 
     it('tracker should register storage node and send subscribe all new streams', async () => {
