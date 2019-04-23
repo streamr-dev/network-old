@@ -7,7 +7,7 @@ module.exports = class MemoryStorage {
     }
 
     store({
-        streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
+        streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousTimestamp, previousSequenceNo, data, signature, signatureType
     }) {
         const streamKey = this._getStreamKey(streamId, streamPartition)
 
@@ -16,7 +16,7 @@ module.exports = class MemoryStorage {
         }
 
         this.storage.get(streamKey).push({
-            streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
+            streamId, streamPartition, timestamp, sequenceNo, publisherId, previousTimestamp, msgChainId, previousSequenceNo, data, signature, signatureType
         })
 
         if (this.storage.get(streamKey).length > this.maxNumberOfMessages) {
