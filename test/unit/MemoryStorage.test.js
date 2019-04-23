@@ -68,7 +68,6 @@ describe('test mem storage', () => {
         const lastRecords = memoryStorage.requestLast(id, partition, 2)
 
         const arr = []
-
         lastRecords.on('data', (object) => arr.push(object))
 
         lastRecords.on('end', () => {
@@ -106,47 +105,64 @@ describe('test mem storage', () => {
             done()
         })
     })
-    //
-    // test('test last 0 and -1', () => {
-    //     try {
-    //         memoryStorage.requestLast(id, partition, 0)
-    //     } catch (error) {
-    //         expect(error).toEqual(new TypeError('number is not an positive integer'))
-    //     }
-    //
-    //     try {
-    //         memoryStorage.requestLast(id, partition, -1)
-    //     } catch (error) {
-    //         expect(error).toEqual(new TypeError('number is not an positive integer'))
-    //     }
-    // })
-    //
-    // test('test requestFrom', (done) => {
-    //     const FROM_TIME = 5
-    //     const fromStream = memoryStorage.requestFrom(id, partition, FROM_TIME)
-    //
-    //     const arr = []
-    //
-    //     fromStream.on('readable', () => {
-    //         while (true) {
-    //             const data = fromStream.read()
-    //             if (data !== null) {
-    //                 arr.push(data)
-    //             } else {
-    //                 break
-    //             }
-    //         }
-    //     })
-    //
-    //     fromStream.on('end', () => {
-    //         const dataMessagesNeeded = dataMessages.filter((dataMessage) => dataMessage.getMessageId().timestamp >= FROM_TIME)
-    //         expect(arr.length).toEqual(dataMessagesNeeded.length)
-    //
-    //         const data = dataMessagesNeeded.map((dataMessage) => dataMessage.getData())
-    //         expect(arr).toEqual(data)
-    //         done()
-    //     })
-    // })
+
+    test('test last 0 and -1', () => {
+        try {
+            memoryStorage.requestLast(id, partition, 0)
+        } catch (error) {
+            expect(error).toEqual(new TypeError('number is not an positive integer'))
+        }
+
+        try {
+            memoryStorage.requestLast(id, partition, -1)
+        } catch (error) {
+            expect(error).toEqual(new TypeError('number is not an positive integer'))
+        }
+    })
+
+    test('test requestFrom', (done) => {
+        const FROM_TIME = 8
+        const fromStream = memoryStorage.requestFrom(id, partition, FROM_TIME, 0, 'publisher-id')
+
+        const arr = []
+        fromStream.on('data', (object) => arr.push(object))
+
+        fromStream.on('end', () => {
+            expect(arr.length).toEqual(2)
+
+            expect(arr).toEqual([
+                {
+                    data: {
+                        messageNo: 8
+                    },
+                    msgChainId: 'sessionId',
+                    previousSequenceNo: 0,
+                    publisherId: 'publisher-id',
+                    sequenceNo: 0,
+                    signature: undefined,
+                    signatureType: undefined,
+                    streamId: 'stream-1',
+                    streamPartition: 0,
+                    timestamp: 8
+                },
+                {
+                    data: {
+                        messageNo: 9
+                    },
+                    msgChainId: 'sessionId',
+                    previousSequenceNo: 0,
+                    publisherId: 'publisher-id',
+                    sequenceNo: 0,
+                    signature: undefined,
+                    signatureType: undefined,
+                    streamId: 'stream-1',
+                    streamPartition: 0,
+                    timestamp: 9
+                }
+            ])
+            done()
+        })
+    })
     //
     // test('test requestRange', (done) => {
     //     const FROM_TIME = 1000

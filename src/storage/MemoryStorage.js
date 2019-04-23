@@ -76,16 +76,37 @@ module.exports = class MemoryStorage {
         return this._createStream(filterFunc, streamKey, streamId, streamPartition)
     }
 
-    // requestFrom(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
-    //     if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
-    //         throw new TypeError('fromTimestamp is not an positive integer')
-    //     }
-    //
-    //     const index = this._key(streamId, streamPartition, subId)
-    //     const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp)
-    //
-    //     return this._createStream(filterFunc, index, streamId, streamPartition, subId)
-    // }
+    requestFrom(streamId, streamPartition, fromTimestamp, fromSequenceNo = 0, publisherId = '') {
+        if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
+            throw new TypeError('fromTimestamp is not an positive integer')
+        }
+
+        if (!Number.isInteger(fromSequenceNo) || fromSequenceNo < 0) {
+            throw new TypeError('fromSequenceNo should be equal or greater than zero')
+        }
+
+        const streamKey = this._getStreamKey(streamId, streamPartition)
+
+        const stream = new Readable({
+            objectMode: true,
+            read() {}
+        })
+
+        setImmediate(() => {
+            if (this.hasStreamKey(streamId, streamPartition)) {
+                const records = Object.values(this.storage.get(streamKey)).filter((record) => {
+                    return record.timestamp >= fromTimestamp && record.sequenceNo === fromSequenceNo
+                        && record.publisherId === publisherId
+                })
+
+                records.forEach((record) => stream.push(record))
+            }
+
+            stream.push(null)
+        })
+
+        return stream
+    }
     //
     // requestRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
     //     if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
