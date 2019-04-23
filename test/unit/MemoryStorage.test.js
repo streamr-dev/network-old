@@ -3,7 +3,6 @@ const DataMessage = require('../../src/messages/DataMessage')
 const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
 
 const dataMessages = []
-const dataMessages2 = []
 const MAX = 10
 const streamIdInit = 'stream-1'
 const streamIdInit2 = 'stream-2'
@@ -20,15 +19,6 @@ for (let i = 0; i < MAX; i++) {
         }
     )
     dataMessages.push(dataMessage)
-}
-
-for (let i = 0; i < MAX / 2; i++) {
-    const dataMessage = new DataMessage(
-        new MessageID(streamObj2, i, 0, 'publisher-id', 'sessionId'), i === 0 ? null : new MessageReference(i - 1, 0), {
-            messageNo: i
-        }
-    )
-    dataMessages2.push(dataMessage)
 }
 
 describe('test mem storage', () => {
