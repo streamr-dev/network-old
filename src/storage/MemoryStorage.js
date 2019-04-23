@@ -4,7 +4,6 @@ const uuidv4 = require('uuid/v4')
 module.exports = class MemoryStorage {
     constructor() {
         this.storage = new Map()
-        this.index = new Map()
     }
 
     store({
@@ -17,15 +16,9 @@ module.exports = class MemoryStorage {
             this.storage.set(streamKey, {})
         }
 
-        if (!this.index.has(streamKey)) {
-            this.index.set(streamKey, [])
-        }
-
         this.storage.get(streamKey)[recordId] = {
             streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
         }
-
-        this.index.get(streamKey)[timestamp] = recordId
     }
 
     _getStreamKey(streamId, streamPartition) {
@@ -35,7 +28,7 @@ module.exports = class MemoryStorage {
     hasStreamKey(streamId, streamPartition) {
         const streamKey = this._getStreamKey(streamId, streamPartition)
 
-        return this.storage.has(streamKey) && this.index.has(streamKey)
+        return this.storage.has(streamKey)
     }
 
     size(streamId, streamPartition) {
@@ -44,7 +37,7 @@ module.exports = class MemoryStorage {
         return this.hasStreamKey(streamId, streamPartition) ? Object.keys(this.storage.get(streamKey)).length : 0
     }
 
-    _createStream(fetchFunc, index, streamId, streamPartition) {
+    _createStream(fetchFunc, streamId, streamPartition) {
         const stream = new Readable({
             objectMode: true,
             read() {}
@@ -52,11 +45,8 @@ module.exports = class MemoryStorage {
 
         setImmediate(() => {
             if (this.hasStreamKey(streamId, streamPartition)) {
-                const indexes = fetchFunc()
-
-                indexes.forEach((recordId, timestamp) => {
-                    stream.push(this.storage.get(index)[recordId])
-                })
+                const records = fetchFunc()
+                records.forEach((record) => stream.push(record))
             }
 
             stream.push(null)
@@ -71,9 +61,9 @@ module.exports = class MemoryStorage {
         }
 
         const streamKey = this._getStreamKey(streamId, streamPartition)
-        const filterFunc = () => this.index.get(streamKey).slice(-number)
+        const filterFunc = () => Object.values(this.storage.get(streamKey)).slice(-number)
 
-        return this._createStream(filterFunc, streamKey, streamId, streamPartition)
+        return this._createStream(filterFunc, streamId, streamPartition)
     }
 
     requestFrom(streamId, streamPartition, fromTimestamp, fromSequenceNo = 0, publisherId = '') {
@@ -86,26 +76,12 @@ module.exports = class MemoryStorage {
         }
 
         const streamKey = this._getStreamKey(streamId, streamPartition)
-
-        const stream = new Readable({
-            objectMode: true,
-            read() {}
+        const filterFunc = () => Object.values(this.storage.get(streamKey)).filter((record) => {
+            return record.timestamp >= fromTimestamp && record.sequenceNo === fromSequenceNo
+                && record.publisherId === publisherId
         })
 
-        setImmediate(() => {
-            if (this.hasStreamKey(streamId, streamPartition)) {
-                const records = Object.values(this.storage.get(streamKey)).filter((record) => {
-                    return record.timestamp >= fromTimestamp && record.sequenceNo === fromSequenceNo
-                        && record.publisherId === publisherId
-                })
-
-                records.forEach((record) => stream.push(record))
-            }
-
-            stream.push(null)
-        })
-
-        return stream
+        return this._createStream(filterFunc, streamId, streamPartition)
     }
 
     requestRange(streamId, streamPartition, fromTimestamp, toTimestamp, fromSequenceNo, toSequenceNo, publisherId = '') {
@@ -134,26 +110,12 @@ module.exports = class MemoryStorage {
         }
 
         const streamKey = this._getStreamKey(streamId, streamPartition)
-
-        const stream = new Readable({
-            objectMode: true,
-            read() {}
+        const filterFunc = () => Object.values(this.storage.get(streamKey)).filter((record) => {
+            return record.timestamp >= fromTimestamp && record.timestamp <= toTimestamp
+                && record.sequenceNo >= fromSequenceNo && record.sequenceNo <= toSequenceNo
+                && record.publisherId === publisherId
         })
 
-        setImmediate(() => {
-            if (this.hasStreamKey(streamId, streamPartition)) {
-                const records = Object.values(this.storage.get(streamKey)).filter((record) => {
-                    return record.timestamp >= fromTimestamp && record.timestamp <= toTimestamp
-                        && record.sequenceNo >= fromSequenceNo && record.sequenceNo <= toSequenceNo
-                        && record.publisherId === publisherId
-                })
-
-                records.forEach((record) => stream.push(record))
-            }
-
-            stream.push(null)
-        })
-
-        return stream
+        return this._createStream(filterFunc, streamId, streamPartition)
     }
 }
