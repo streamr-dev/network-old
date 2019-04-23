@@ -2,22 +2,26 @@ const { Readable } = require('stream')
 const uuidv4 = require('uuid/v4')
 
 module.exports = class MemoryStorage {
-    constructor() {
+    constructor(maxNumberOfMessages = 10000) {
+        this.maxNumberOfMessages = maxNumberOfMessages
         this.storage = new Map()
     }
 
     store({
         streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
     }) {
-        const recordId = uuidv4()
         const streamKey = this._getStreamKey(streamId, streamPartition)
 
         if (!this.storage.has(streamKey)) {
-            this.storage.set(streamKey, {})
+            this.storage.set(streamKey, [])
         }
 
-        this.storage.get(streamKey)[recordId] = {
+        this.storage.get(streamKey).push({
             streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
+        })
+
+        if (this.storage.get(streamKey).length > this.maxNumberOfMessages) {
+            this.storage.get(streamKey).shift()
         }
     }
 
@@ -34,7 +38,7 @@ module.exports = class MemoryStorage {
     size(streamId, streamPartition) {
         const streamKey = this._getStreamKey(streamId, streamPartition)
 
-        return this.hasStreamKey(streamId, streamPartition) ? Object.keys(this.storage.get(streamKey)).length : 0
+        return this.hasStreamKey(streamId, streamPartition) ? this.storage.get(streamKey).length : 0
     }
 
     _createStream(fetchFunc, streamId, streamPartition) {
