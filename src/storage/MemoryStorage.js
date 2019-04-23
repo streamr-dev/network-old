@@ -107,23 +107,53 @@ module.exports = class MemoryStorage {
 
         return stream
     }
-    //
-    // requestRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
-    //     if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
-    //         throw new TypeError('fromTimestamp is not an positive integer')
-    //     }
-    //
-    //     if (!Number.isInteger(toTimestamp) || toTimestamp <= 0) {
-    //         throw new TypeError('toTimestamp is not an positive integer')
-    //     }
-    //
-    //     if (fromTimestamp > toTimestamp) {
-    //         throw new TypeError('fromTimestamp must be less or equal than toTimestamp')
-    //     }
-    //
-    //     const index = this._key(streamId, streamPartition, subId)
-    //     const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp && timestamp <= toTimestamp)
-    //
-    //     return this._createStream(filterFunc, index, streamId, streamPartition, subId)
-    // }
+
+    requestRange(streamId, streamPartition, fromTimestamp, toTimestamp, fromSequenceNo, toSequenceNo, publisherId = '') {
+        if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
+            throw new TypeError('fromTimestamp is not an positive integer')
+        }
+
+        if (!Number.isInteger(toTimestamp) || toTimestamp <= 0) {
+            throw new TypeError('toTimestamp is not an positive integer')
+        }
+
+        if (fromTimestamp > toTimestamp) {
+            throw new TypeError('fromTimestamp must be less or equal than toTimestamp')
+        }
+
+        if (!Number.isInteger(fromSequenceNo) || fromSequenceNo < 0) {
+            throw new TypeError('fromSequenceNo should be equal or greater than zero')
+        }
+
+        if (!Number.isInteger(toSequenceNo) || toSequenceNo < 0) {
+            throw new TypeError('toSequenceNo should be equal or greater than zero')
+        }
+
+        if (fromSequenceNo > toSequenceNo) {
+            throw new TypeError('fromSequenceNo must be less or equal than toSequenceNo')
+        }
+
+        const streamKey = this._getStreamKey(streamId, streamPartition)
+
+        const stream = new Readable({
+            objectMode: true,
+            read() {}
+        })
+
+        setImmediate(() => {
+            if (this.hasStreamKey(streamId, streamPartition)) {
+                const records = Object.values(this.storage.get(streamKey)).filter((record) => {
+                    return record.timestamp >= fromTimestamp && record.timestamp <= toTimestamp
+                        && record.sequenceNo >= fromSequenceNo && record.sequenceNo <= toSequenceNo
+                        && record.publisherId === publisherId
+                })
+
+                records.forEach((record) => stream.push(record))
+            }
+
+            stream.push(null)
+        })
+
+        return stream
+    }
 }

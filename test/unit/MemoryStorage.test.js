@@ -163,32 +163,62 @@ describe('test mem storage', () => {
             done()
         })
     })
-    //
-    // test('test requestRange', (done) => {
-    //     const FROM_TIME = 1000
-    //     const TO_TIME = 9000
-    //     const fromStream = memoryStorage.requestRange(id, partition, FROM_TIME, TO_TIME)
-    //
-    //     const arr = []
-    //
-    //     fromStream.on('readable', () => {
-    //         while (true) {
-    //             const data = fromStream.read()
-    //             if (data !== null) {
-    //                 arr.push(data)
-    //             } else {
-    //                 break
-    //             }
-    //         }
-    //     })
-    //
-    //     fromStream.on('end', () => {
-    //         const dataMessagesNeeded = dataMessages.filter((dataMessage) => dataMessage.getMessageId().timestamp >= FROM_TIME && dataMessage.getMessageId().timestamp <= TO_TIME)
-    //         expect(arr.length).toEqual(dataMessagesNeeded.length)
-    //
-    //         const data = dataMessagesNeeded.map((dataMessage) => dataMessage.getData())
-    //         expect(arr).toEqual(data)
-    //         done()
-    //     })
-    // })
+
+    test('test requestRange', (done) => {
+        const FROM_TIME = 3
+        const TO_TIME = 5
+        const rangeStream = memoryStorage.requestRange(id, partition, FROM_TIME, TO_TIME, 0, 0, 'publisher-id')
+
+        const arr = []
+        rangeStream.on('data', (object) => arr.push(object))
+
+        rangeStream.on('end', () => {
+            expect(arr.length).toEqual(3)
+            expect(arr).toEqual([
+                {
+                    data: {
+                        messageNo: 3
+                    },
+                    msgChainId: 'sessionId',
+                    previousSequenceNo: 0,
+                    publisherId: 'publisher-id',
+                    sequenceNo: 0,
+                    signature: undefined,
+                    signatureType: undefined,
+                    streamId: 'stream-1',
+                    streamPartition: 0,
+                    timestamp: 3
+                },
+                {
+                    data: {
+                        messageNo: 4
+                    },
+                    msgChainId: 'sessionId',
+                    previousSequenceNo: 0,
+                    publisherId: 'publisher-id',
+                    sequenceNo: 0,
+                    signature: undefined,
+                    signatureType: undefined,
+                    streamId: 'stream-1',
+                    streamPartition: 0,
+                    timestamp: 4
+                },
+                {
+                    data: {
+                        messageNo: 5
+                    },
+                    msgChainId: 'sessionId',
+                    previousSequenceNo: 0,
+                    publisherId: 'publisher-id',
+                    sequenceNo: 0,
+                    signature: undefined,
+                    signatureType: undefined,
+                    streamId: 'stream-1',
+                    streamPartition: 0,
+                    timestamp: 5
+                },
+            ])
+            done()
+        })
+    })
 })
