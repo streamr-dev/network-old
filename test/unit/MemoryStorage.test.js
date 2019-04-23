@@ -52,7 +52,7 @@ describe('test mem storage', () => {
 
     test('last(10) should return 10 records', (done) => {
         const RECORDS_NEEDED = 10
-        const last10Stream = memoryStorage.last(id, partition, subId, RECORDS_NEEDED)
+        const last10Stream = memoryStorage.requestLast(id, partition, subId, RECORDS_NEEDED)
 
         const arr = []
 
@@ -80,13 +80,13 @@ describe('test mem storage', () => {
 
     test('test last 0 and -1', () => {
         try {
-            memoryStorage.last(id, partition, subId, 0)
+            memoryStorage.requestLast(id, partition, subId, 0)
         } catch (error) {
             expect(error).toEqual(new TypeError('number is not an positive integer'))
         }
 
         try {
-            memoryStorage.last(id, partition, subId, -1)
+            memoryStorage.requestLast(id, partition, subId, -1)
         } catch (error) {
             expect(error).toEqual(new TypeError('number is not an positive integer'))
         }
@@ -94,7 +94,7 @@ describe('test mem storage', () => {
 
     test('test requestFrom', (done) => {
         const FROM_TIME = 5
-        const fromStream = memoryStorage.from(id, partition, subId, FROM_TIME)
+        const fromStream = memoryStorage.requestFrom(id, partition, subId, FROM_TIME)
 
         const arr = []
 
@@ -122,7 +122,7 @@ describe('test mem storage', () => {
     test('test requestRange', (done) => {
         const FROM_TIME = 1000
         const TO_TIME = 9000
-        const fromStream = memoryStorage.range(id, partition, subId, FROM_TIME, TO_TIME)
+        const fromStream = memoryStorage.requestRange(id, partition, subId, FROM_TIME, TO_TIME)
 
         const arr = []
 

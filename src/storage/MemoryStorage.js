@@ -62,7 +62,7 @@ module.exports = class MemoryStorage {
         return stream
     }
 
-    last(streamId, streamPartition, subId, number) {
+    requestLast(streamId, streamPartition, subId, number) {
         if (!Number.isInteger(number) || number <= 0) {
             throw new TypeError('number is not an positive integer')
         }
@@ -73,7 +73,7 @@ module.exports = class MemoryStorage {
         return this._createStream(filterFunc, index, streamId, streamPartition, subId)
     }
 
-    from(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
+    requestFrom(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }
@@ -84,7 +84,7 @@ module.exports = class MemoryStorage {
         return this._createStream(filterFunc, index, streamId, streamPartition, subId)
     }
 
-    range(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
+    requestRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }
