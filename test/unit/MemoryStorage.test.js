@@ -2,7 +2,7 @@ const MemoryStorage = require('../../src/storage/MemoryStorage')
 const DataMessage = require('../../src/messages/DataMessage')
 const { StreamID, MessageID, MessageReference } = require('../../src/identifiers')
 
-const dataMessages = []
+let dataMessages = []
 const MAX = 10
 const streamIdInit = 'stream-1'
 const streamIdInit2 = 'stream-2'
@@ -21,9 +21,16 @@ for (let i = 0; i < MAX; i++) {
     dataMessages.push(dataMessage)
 }
 
+const shuffleArray = (arr) => arr
+    .map((a) => [Math.random(), a])
+    .sort((a, b) => a[0] - b[0])
+    .map((a) => a[1])
+
 describe('test mem storage', () => {
     beforeEach(() => {
         memoryStorage = new MemoryStorage()
+
+        dataMessages = shuffleArray(dataMessages)
 
         for (let i = 0; i < MAX; i++) {
             const dataMessage = dataMessages[i]

@@ -22,6 +22,10 @@ module.exports = class MemoryStorage {
         if (this.storage.get(streamKey).length > this.maxNumberOfMessages) {
             this.storage.get(streamKey).shift()
         }
+
+        const arr = this.storage.get(streamKey)
+        arr.sort((a, b) => a.timestamp - b.timestamp)
+        this.storage.set(streamKey, arr)
     }
 
     _getStreamKey(streamId, streamPartition) {
