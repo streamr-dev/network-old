@@ -1,4 +1,5 @@
 const { Readable } = require('stream')
+const uuidv4 = require('uuid/v4')
 
 module.exports = class MemoryStorage {
     constructor() {
@@ -6,100 +7,102 @@ module.exports = class MemoryStorage {
         this.index = new Map()
     }
 
-    store(streamId, streamPartition, subId, timestamp, sequenceNo, publisherId, msgChainId, data) {
-        const id = `${timestamp}, ${sequenceNo}, ${publisherId}, ${msgChainId}`
-        const index = this._index(streamId, streamPartition, subId)
+    store({
+        streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
+    }) {
+        const recordId = uuidv4()
+        const streamKey = this._getStreamKey(streamId, streamPartition)
 
-        if (!this.storage.has(index)) {
-            this.storage.set(index, {})
+        if (!this.storage.has(streamKey)) {
+            this.storage.set(streamKey, {})
         }
 
-        if (!this.index.has(index)) {
-            this.index.set(index, [])
+        if (!this.index.has(streamKey)) {
+            this.index.set(streamKey, [])
         }
 
-        this.storage.get(index)[id] = {
-            id, data
+        this.storage.get(streamKey)[recordId] = {
+            streamId, streamPartition, timestamp, sequenceNo, publisherId, msgChainId, previousSequenceNo, data, signature, signatureType
         }
 
-        this.index.get(index)[timestamp] = id
+        this.index.get(streamKey)[timestamp] = recordId
     }
 
-    _index(streamId, streamPartition, subId) {
-        return `${streamId}-${streamPartition}-${subId}`
+    _getStreamKey(streamId, streamPartition) {
+        return `${streamId}-${streamPartition}`
     }
 
-    hasStreamId(streamId, streamPartition, subId) {
-        const index = this._index(streamId, streamPartition, subId)
+    hasStreamKey(streamId, streamPartition) {
+        const streamKey = this._getStreamKey(streamId, streamPartition)
 
-        return this.storage.has(index) && this.index.has(index)
+        return this.storage.has(streamKey) && this.index.has(streamKey)
     }
 
-    size(streamId, streamPartition, subId) {
-        const index = this._index(streamId, streamPartition, subId)
+    size(streamId, streamPartition) {
+        const streamKey = this._getStreamKey(streamId, streamPartition)
 
-        return this.hasStreamId(streamId, streamPartition, subId) ? Object.keys(this.storage.get(index)).length : 0
+        return this.hasStreamKey(streamId, streamPartition) ? Object.keys(this.storage.get(streamKey)).length : 0
     }
 
-    _createStream(fetchFunc, index, streamId, streamPartition, subId) {
+    _createStream(fetchFunc, index, streamId, streamPartition) {
         const stream = new Readable({
-            objectMode: true
+            objectMode: true,
+            read() {}
         })
 
-        // eslint-disable-next-line no-underscore-dangle
-        stream._read = () => {
-            if (this.hasStreamId(streamId, streamPartition, subId)) {
+        setImmediate(() => {
+            if (this.hasStreamKey(streamId, streamPartition)) {
                 const indexes = fetchFunc()
 
-                indexes.forEach((id, timestamp) => {
-                    stream.push(this.storage.get(index)[id].data)
+                indexes.forEach((recordId, timestamp) => {
+                    stream.push(this.storage.get(index)[recordId])
                 })
             }
 
             stream.push(null)
-        }
+        })
 
         return stream
     }
 
-    requestLast(streamId, streamPartition, subId, number) {
+    requestLast(streamId, streamPartition, number) {
         if (!Number.isInteger(number) || number <= 0) {
             throw new TypeError('number is not an positive integer')
         }
 
-        const index = this._index(streamId, streamPartition, subId)
-        const filterFunc = () => this.index.get(index).slice(-number)
+        const streamKey = this._getStreamKey(streamId, streamPartition)
+        const filterFunc = () => this.index.get(streamKey).slice(-number)
 
-        return this._createStream(filterFunc, index, streamId, streamPartition, subId)
+        return this._createStream(filterFunc, streamKey, streamId, streamPartition)
     }
 
-    requestFrom(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
-        if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
-            throw new TypeError('fromTimestamp is not an positive integer')
-        }
-
-        const index = this._index(streamId, streamPartition, subId)
-        const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp)
-
-        return this._createStream(filterFunc, index, streamId, streamPartition, subId)
-    }
-
-    requestRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
-        if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
-            throw new TypeError('fromTimestamp is not an positive integer')
-        }
-
-        if (!Number.isInteger(toTimestamp) || toTimestamp <= 0) {
-            throw new TypeError('toTimestamp is not an positive integer')
-        }
-
-        if (fromTimestamp > toTimestamp) {
-            throw new TypeError('fromTimestamp must be less or equal than toTimestamp')
-        }
-
-        const index = this._index(streamId, streamPartition, subId)
-        const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp && timestamp <= toTimestamp)
-
-        return this._createStream(filterFunc, index, streamId, streamPartition, subId)
-    }
+    // requestFrom(streamId, streamPartition, subId, fromTimestamp, fromSequenceNo = '', publisherId = '') {
+    //     if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
+    //         throw new TypeError('fromTimestamp is not an positive integer')
+    //     }
+    //
+    //     const index = this._key(streamId, streamPartition, subId)
+    //     const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp)
+    //
+    //     return this._createStream(filterFunc, index, streamId, streamPartition, subId)
+    // }
+    //
+    // requestRange(streamId, streamPartition, subId, fromTimestamp, toTimestamp, fromSequenceNo = 0, toSequenceNo = 0, publisherId = '') {
+    //     if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
+    //         throw new TypeError('fromTimestamp is not an positive integer')
+    //     }
+    //
+    //     if (!Number.isInteger(toTimestamp) || toTimestamp <= 0) {
+    //         throw new TypeError('toTimestamp is not an positive integer')
+    //     }
+    //
+    //     if (fromTimestamp > toTimestamp) {
+    //         throw new TypeError('fromTimestamp must be less or equal than toTimestamp')
+    //     }
+    //
+    //     const index = this._key(streamId, streamPartition, subId)
+    //     const filterFunc = () => this.index.get(index).filter((id, timestamp) => timestamp >= fromTimestamp && timestamp <= toTimestamp)
+    //
+    //     return this._createStream(filterFunc, index, streamId, streamPartition, subId)
+    // }
 }
