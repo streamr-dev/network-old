@@ -69,7 +69,7 @@ module.exports = class MemoryStorage {
         return this._createStream(filterFunc, streamId, streamPartition)
     }
 
-    requestFrom(streamId, streamPartition, fromTimestamp, fromSequenceNo = 0, publisherId = '') {
+    requestFrom(streamId, streamPartition, fromTimestamp, fromSequenceNo = 0, publisherId = null) {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }
@@ -80,14 +80,14 @@ module.exports = class MemoryStorage {
 
         const streamKey = this._getStreamKey(streamId, streamPartition)
         const filterFunc = () => Object.values(this.storage.get(streamKey)).filter((record) => {
-            return record.timestamp >= fromTimestamp && record.sequenceNo === fromSequenceNo
-                && record.publisherId === publisherId
+            return (record.timestamp > fromTimestamp || (record.timestamp === fromTimestamp && record.sequenceNo >= fromSequenceNo))
+                && (record.publisherId === publisherId || publisherId === null)
         })
 
         return this._createStream(filterFunc, streamId, streamPartition)
     }
 
-    requestRange(streamId, streamPartition, fromTimestamp, toTimestamp, fromSequenceNo, toSequenceNo, publisherId = '') {
+    requestRange(streamId, streamPartition, fromTimestamp, toTimestamp, fromSequenceNo, toSequenceNo, publisherId = null) {
         if (!Number.isInteger(fromTimestamp) || fromTimestamp <= 0) {
             throw new TypeError('fromTimestamp is not an positive integer')
         }
@@ -108,15 +108,11 @@ module.exports = class MemoryStorage {
             throw new TypeError('toSequenceNo should be equal or greater than zero')
         }
 
-        if (fromSequenceNo > toSequenceNo) {
-            throw new TypeError('fromSequenceNo must be less or equal than toSequenceNo')
-        }
-
         const streamKey = this._getStreamKey(streamId, streamPartition)
         const filterFunc = () => Object.values(this.storage.get(streamKey)).filter((record) => {
-            return record.timestamp >= fromTimestamp && record.timestamp <= toTimestamp
-                && record.sequenceNo >= fromSequenceNo && record.sequenceNo <= toSequenceNo
-                && record.publisherId === publisherId
+            return ((record.timestamp > fromTimestamp || (record.timestamp === fromTimestamp && record.sequenceNo >= fromSequenceNo))
+                && (record.timestamp < toTimestamp || (record.timestamp === toTimestamp && record.sequenceNo <= toSequenceNo))
+                && (record.publisherId === publisherId || publisherId === null))
         })
 
         return this._createStream(filterFunc, streamId, streamPartition)
