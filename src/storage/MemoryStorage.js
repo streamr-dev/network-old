@@ -1,5 +1,4 @@
 const { Readable } = require('stream')
-const uuidv4 = require('uuid/v4')
 
 module.exports = class MemoryStorage {
     constructor(maxNumberOfMessages = 10000) {
