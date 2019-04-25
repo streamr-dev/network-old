@@ -35,6 +35,7 @@
     "storage": "node $NODE_DEBUG_OPTION bin/storage.js",
     "test": "jest --detectOpenHandles",
     "test-unit": "jest test/unit --detectOpenHandles",
+    "coverage": "jest --coverage",
     "test-integration": "jest test/integration --detectOpenHandles",
     "eslint": "eslint .",
     "network": "node $NODE_DEBUG_OPTION bin/run.js"

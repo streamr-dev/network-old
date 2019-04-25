@@ -3,7 +3,7 @@
 const { spawn } = require('child_process')
 const path = require('path')
 
-const numberOfNodes = process.argv[2] || 0
+const numberOfNodes = process.argv[2] || 10
 const startingPort = 30400
 const startingDebugPort = 9200
 let debug = false
