@@ -42,7 +42,7 @@ It is also possible to install Streamr Network globally (using `npm install @str
 
 ## Integration
 
-Integration into existing project could be found in [Examples](/examples)
+Integration into existing project could be found in [Examples](./examples)
 
 ## Getting started
 
