@@ -1,5 +1,5 @@
 {
-  "name": "mqqt",
+  "name": "pubsub",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
