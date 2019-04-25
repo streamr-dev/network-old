@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { spawn } = require('child_process')
 const path = require('path')
 
@@ -11,7 +13,7 @@ productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
 productionEnv.checkUncaughtException = true
 
 // create tracker
-const tracker = path.resolve('./tracker.js')
+const tracker = path.resolve('./bin/tracker.js')
 let args = [tracker]
 
 if (process.env.NODE_DEBUG_OPTION !== undefined) {
@@ -25,7 +27,7 @@ spawn('node', args, {
 })
 
 for (let i = 0; i < numberOfNodes; i++) {
-    const node = path.resolve('./subscriber.js')
+    const node = path.resolve('./bin/subscriber.js')
     args = [node, startingPort + i]
 
     if (debug) {
