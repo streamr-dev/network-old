@@ -121,7 +121,8 @@ class NodeToNode extends EventEmitter {
                 message.getStreamId(),
                 message.getSubId(),
                 message.getFromMsgRef(),
-                message.getPublisherId()
+                message.getPublisherId(),
+                message.getMsgChainId()
             )
         }
         if (message instanceof ResendRangeRequest) {
@@ -131,7 +132,8 @@ class NodeToNode extends EventEmitter {
                 message.getSubId(),
                 message.getFromMsgRef(),
                 message.getToMsgRef(),
-                message.getPublisherId()
+                message.getPublisherId(),
+                message.getMsgChainId()
             )
         }
         if (message instanceof ResendResponseNoResend) {
