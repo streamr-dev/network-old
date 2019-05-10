@@ -68,16 +68,19 @@ class NodeToNode extends EventEmitter {
         return this.endpoint.send(receiverNodeAddress, encoder.resendLastRequest(streamId, subId, numberLast))
     }
 
-    requestResendFrom(receiverNodeId, streamId, subId, fromMsgRef, publisherId) {
-        const receiverNodeAddress = this.peerBook.getAddress(receiverNodeId)
-        return this.endpoint.send(receiverNodeAddress, encoder.resendFromRequest(streamId, subId, fromMsgRef, publisherId))
-    }
-
-    requestResendRange(receiverNodeId, streamId, subId, fromMsgRef, toMsgRef, publisherId) {
+    requestResendFrom(receiverNodeId, streamId, subId, fromMsgRef, publisherId, msgChainId) {
         const receiverNodeAddress = this.peerBook.getAddress(receiverNodeId)
         return this.endpoint.send(
             receiverNodeAddress,
-            encoder.resendRangeRequest(streamId, subId, fromMsgRef, toMsgRef, publisherId)
+            encoder.resendFromRequest(streamId, subId, fromMsgRef, publisherId, msgChainId)
+        )
+    }
+
+    requestResendRange(receiverNodeId, streamId, subId, fromMsgRef, toMsgRef, publisherId, msgChainId) {
+        const receiverNodeAddress = this.peerBook.getAddress(receiverNodeId)
+        return this.endpoint.send(
+            receiverNodeAddress,
+            encoder.resendRangeRequest(streamId, subId, fromMsgRef, toMsgRef, publisherId, msgChainId)
         )
     }
 
