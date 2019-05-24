@@ -5,7 +5,7 @@ const events = Object.freeze({
 })
 
 class Endpoint {
-    implement(implementor) {
+    static implement(implementor) {
         if (typeof implementor.send !== 'function') {
             throw new Error('send() method not found in class implementing Endpoint')
         }

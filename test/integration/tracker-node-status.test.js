@@ -19,7 +19,7 @@ describe('check status message flow between tracker and two nodes', () => {
     })
 
     it('tracker should receive status message from node', async (done) => {
-        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => {
+        tracker.protocols.trackerServer.once(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage }) => {
             expect(statusMessage.getSource()).toEqual(nodeOne.id)
             // eslint-disable-next-line no-underscore-dangle
             expect(statusMessage.getStatus()).toEqual(nodeOne._getStatus())
