@@ -60,7 +60,7 @@ class WsEndpoint extends EventEmitter {
         this.customHeaders = new CustomHeaders(customHeaders)
 
         this.endpoint = new Endpoint()
-        Endpoint.implement(this)
+        this.endpoint.implement(this)
 
         this.connections = new Map()
         this.pendingConnections = new Map()
