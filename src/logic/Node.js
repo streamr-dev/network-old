@@ -23,15 +23,24 @@ const events = Object.freeze({
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 class Node extends EventEmitter {
-    constructor(id, trackerNode, nodeToNode, resendStrategies) {
+    constructor(trackerNode, nodeToNode, resendStrategies, opts) {
         super()
 
-        this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), 5000)
+        // set default options
+        const defaultOptions = {
+            id: 'node',
+            connectToBootstrapTrackersInterval: 5000,
+            sendStatusToAllTrackersInterval: 1000,
+            messageBufferSize: 60 * 1000
+        }
+
+        this.opts = Object.assign({}, defaultOptions, opts)
+        this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), this.opts.connectToBootstrapTrackersInterval)
         this.sendStatusTimeout = null
         this.bootstrapTrackerAddresses = []
 
         this.streams = new StreamManager()
-        this.messageBuffer = new MessageBuffer(60 * 1000, (streamId) => {
+        this.messageBuffer = new MessageBuffer(this.opts.messageBufferSize, (streamId) => {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
@@ -40,7 +49,6 @@ class Node extends EventEmitter {
             this._unicast.bind(this),
             console.error.bind(console))
 
-        this.id = id
         this.trackers = new Set()
 
         this.protocols = {
@@ -61,8 +69,8 @@ class Node extends EventEmitter {
             this._sendStatusToAllTrackers()
         })
 
-        this.debug = createDebug(`streamr:logic:node:${this.id}`)
-        this.debug('started %s', this.id)
+        this.debug = createDebug(`streamr:logic:node:${this.opts.id}`)
+        this.debug('started %s', this.opts.id)
 
         this.started = new Date().toLocaleString()
         this.metrics = {
@@ -295,7 +303,7 @@ class Node extends EventEmitter {
         clearTimeout(this.sendStatusTimeout)
         this.sendStatusTimeout = setTimeout(() => {
             this.trackers.forEach((tracker) => this._sendStatus(tracker))
-        }, 1000)
+        }, this.opts.sendStatusToAllTrackersInterval)
     }
 
     async _sendStatus(tracker) {

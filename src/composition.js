@@ -25,7 +25,10 @@ function startNode(host, port, id = uuidv4(), resendStrategies = []) {
         'streamr-peer-type': peerTypes.NODE
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
-        return new Node(id, new TrackerNode(endpoint), new NodeToNode(endpoint), resendStrategies)
+        const opts = {
+            id
+        }
+        return new Node(new TrackerNode(endpoint), new NodeToNode(endpoint), resendStrategies, opts)
     })
 }
 

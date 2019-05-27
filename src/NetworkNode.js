@@ -54,7 +54,10 @@ Convenience wrapper for building client-facing functionality. Used by broker.
  */
 class NetworkNode extends Node {
     constructor(id, trackerNode, nodeToNode, storages) {
-        super(id, trackerNode, nodeToNode, [
+        const opts = {
+            id
+        }
+        super(trackerNode, nodeToNode, [
             ...storages.map((storage) => new StorageResendStrategy(storage)),
             new AskNeighborsResendStrategy(nodeToNode, (streamId) => {
                 return this.streams.getOutboundNodesForStream(streamId)
@@ -62,7 +65,7 @@ class NetworkNode extends Node {
             new StorageNodeResendStrategy(trackerNode, nodeToNode,
                 () => [...this.trackers][0],
                 (node) => this.streams.isNodePresent(node))
-        ])
+        ], opts)
         storages.forEach((storage) => this.on(events.MESSAGE, storage.store.bind(storage)))
 
         this.on(Node.events.MESSAGE_PROPAGATED, this._emitMessage.bind(this))
