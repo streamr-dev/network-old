@@ -26,9 +26,14 @@ function startNode(host, port, id = uuidv4(), resendStrategies = []) {
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
         const opts = {
-            id
+            id,
+            protocols: {
+                trackerNode: new TrackerNode(endpoint),
+                nodeToNode: new NodeToNode(endpoint)
+            },
+            resendStrategies
         }
-        return new Node(new TrackerNode(endpoint), new NodeToNode(endpoint), resendStrategies, opts)
+        return new Node(opts)
     })
 }
 
@@ -38,7 +43,15 @@ function startNetworkNode(host, port, id = uuidv4(), storages = []) {
         'streamr-peer-type': peerTypes.NODE
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
-        return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint), storages)
+        const opts = {
+            id,
+            protocols: {
+                trackerNode: new TrackerNode(endpoint),
+                nodeToNode: new NodeToNode(endpoint)
+            },
+            storages
+        }
+        return new NetworkNode(opts)
     })
 }
 
@@ -48,7 +61,15 @@ function startStorageNode(host, port, id = uuidv4(), storages = []) {
         'streamr-peer-type': peerTypes.STORAGE
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
-        return new NetworkNode(id, new TrackerNode(endpoint), new NodeToNode(endpoint), storages)
+        const opts = {
+            id,
+            protocols: {
+                trackerNode: new TrackerNode(endpoint),
+                nodeToNode: new NodeToNode(endpoint)
+            },
+            storages
+        }
+        return new NetworkNode(opts)
     })
 }
 

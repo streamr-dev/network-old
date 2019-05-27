@@ -23,7 +23,7 @@ const events = Object.freeze({
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 class Node extends EventEmitter {
-    constructor(trackerNode, nodeToNode, resendStrategies, opts) {
+    constructor(opts) {
         super()
 
         // set default options
@@ -31,7 +31,9 @@ class Node extends EventEmitter {
             id: 'node',
             connectToBootstrapTrackersInterval: 5000,
             sendStatusToAllTrackersInterval: 1000,
-            messageBufferSize: 60 * 1000
+            messageBufferSize: 60 * 1000,
+            protocols: [],
+            resendStrategies: []
         }
 
         this.opts = Object.assign({}, defaultOptions, opts)
@@ -44,17 +46,14 @@ class Node extends EventEmitter {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
-        this.resendHandler = new ResendHandler(resendStrategies,
+        this.resendHandler = new ResendHandler(this.opts.resendStrategies,
             this.respondResend.bind(this),
             this._unicast.bind(this),
             console.error.bind(console))
 
         this.trackers = new Set()
 
-        this.protocols = {
-            trackerNode,
-            nodeToNode
-        }
+        this.protocols = this.opts.protocols
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
