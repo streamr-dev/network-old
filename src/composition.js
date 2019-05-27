@@ -15,7 +15,14 @@ function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4) {
         'streamr-peer-type': peerTypes.TRACKER
     }
     return startEndpoint(host, port, identity).then((endpoint) => {
-        return new Tracker(id, new TrackerServer(endpoint), maxNeighborsPerNode)
+        const opts = {
+            id,
+            protocols: {
+                trackerServer: new TrackerServer(endpoint)
+            },
+            maxNeighborsPerNode
+        }
+        return new Tracker(opts)
     })
 }
 
