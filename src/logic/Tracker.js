@@ -21,6 +21,10 @@ module.exports = class Tracker extends EventEmitter {
 
         this.opts = Object.assign({}, defaultOptions, opts)
 
+        if (!(this.opts.protocols.trackerServer instanceof TrackerServer)) {
+            throw new Error('Provided protocols are not correct')
+        }
+
         this.overlayPerStream = {} // streamKey => overlayTopology
         this.storageNodes = new Map()
 

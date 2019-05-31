@@ -37,6 +37,11 @@ class Node extends EventEmitter {
         }
 
         this.opts = Object.assign({}, defaultOptions, opts)
+
+        if (!(this.opts.protocols.trackerNode instanceof TrackerNode) || !(this.opts.protocols.nodeToNode instanceof NodeToNode)) {
+            throw new Error('Provided protocols are not correct')
+        }
+
         this.connectToBoostrapTrackersInterval = setInterval(this._connectToBootstrapTrackers.bind(this), this.opts.connectToBootstrapTrackersInterval)
         this.sendStatusTimeout = null
         this.bootstrapTrackerAddresses = []
