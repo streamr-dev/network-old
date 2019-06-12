@@ -5,6 +5,10 @@ module.exports = class Metrics {
         this._metrics = new Map()
     }
 
+    set(name, value) {
+        this._metrics.set(name, value)
+    }
+
     inc(name, step = 1) {
         this._put(name, Math.abs(step) || 0)
     }
@@ -20,10 +24,6 @@ module.exports = class Metrics {
 
         if (!Number.isInteger(step)) {
             throw new Error('step is not an integer')
-        }
-
-        if (!this._metrics.has(name)) {
-            this._metrics.set(name, 0)
         }
 
         this._metrics.set(name, this.get(name) + step)

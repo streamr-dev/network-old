@@ -54,7 +54,11 @@ describe('metrics', () => {
         )
         // eslint-disable-next-line no-underscore-dangle
         expect(appMetrics._metrics).toEqual(new Map())
-
         expect(appMetrics.timestamp).toBeGreaterThan(timestamp)
+
+        appMetrics.set('metric-a', 'test-me')
+        appMetrics.set('metric-b', 5)
+        expect(appMetrics.get('metric-a')).toEqual('test-me')
+        expect(appMetrics.get('metric-b')).toEqual(5)
     })
 })

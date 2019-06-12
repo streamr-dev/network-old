@@ -282,6 +282,7 @@ class WsEndpoint extends EventEmitter {
         })
 
         this.connections.set(address, ws)
+        this.metrics.set('connections', this.connections.size)
         debug('added %s to connection list (headers %o)', address, customHeaders)
         this.emit(Endpoint.events.PEER_CONNECTED, address, customHeaders)
     }
