@@ -78,7 +78,7 @@ class Node extends EventEmitter {
         this.debug('started %s', this.opts.id)
 
         this.started = new Date().toLocaleString()
-        this.metrics = new Metrics('node')
+        this.metrics = new Metrics(this.opts.id)
 
         this.seenButNotPropagated = new Set()
     }
