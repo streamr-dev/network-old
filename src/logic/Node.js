@@ -105,6 +105,7 @@ class Node extends EventEmitter {
     }
 
     requestResend(request) {
+        this.metrics.inc('resend')
         this.debug('received %s resend request %s with subId %s',
             request.getSource() === null ? 'local' : `from ${request.getSource()}`,
             request.constructor.name,
@@ -138,6 +139,7 @@ class Node extends EventEmitter {
     }
 
     async onTrackerInstructionReceived(streamMessage) {
+        this.metrics.inc('tracker:instructions')
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
         const nodeIds = []
@@ -171,6 +173,7 @@ class Node extends EventEmitter {
     }
 
     onDataReceived(dataMessage) {
+        this.metrics.inc('data:received')
         const messageId = dataMessage.getMessageId()
         const previousMessageReference = dataMessage.getPreviousMessageReference()
         const { streamId } = messageId
@@ -199,6 +202,7 @@ class Node extends EventEmitter {
     }
 
     async _propagateMessage(dataMessage) {
+        this.metrics.inc('propagate:message')
         const source = dataMessage.getSource()
         const messageId = dataMessage.getMessageId()
         const previousMessageReference = dataMessage.getPreviousMessageReference()
@@ -232,6 +236,7 @@ class Node extends EventEmitter {
     }
 
     onSubscribeRequest(subscribeMessage) {
+        this.metrics.inc('subscribe')
         const streamId = subscribeMessage.getStreamId()
         const source = subscribeMessage.getSource()
         const leechOnly = subscribeMessage.getLeechOnly()
@@ -261,6 +266,7 @@ class Node extends EventEmitter {
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
+        this.metrics.inc('unsubscribe')
         const streamId = unsubscribeMessage.getStreamId()
         const source = unsubscribeMessage.getSource()
         this.streams.removeNodeFromStream(streamId, source)
@@ -339,6 +345,7 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
+        this.metrics.inc('node:disconnected')
         this.streams.removeNodeFromAllStreams(node)
         this.debug('removed all subscriptions of node %s', node)
         this._sendStatusToAllTrackers()
