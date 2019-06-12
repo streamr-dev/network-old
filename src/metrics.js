@@ -54,4 +54,15 @@ module.exports = class Metrics {
 
         return res
     }
+
+    mergeAndReport(report, reset = false) {
+        const res = [this.report()]
+        res.push(report)
+
+        if (reset) {
+            this._reset()
+        }
+
+        return res
+    }
 }
