@@ -28,15 +28,14 @@ module.exports = class Tracker extends EventEmitter {
         this.overlayPerStream = {} // streamKey => overlayTopology
         this.storageNodes = new Map()
 
-        // this.id = id
         this.protocols = opts.protocols
 
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, ({ peerId, nodeType }) => this.onNodeDisconnected(peerId, nodeType))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => this.processNodeStatus(statusMessage, nodeType))
         this.protocols.trackerServer.on(TrackerServer.events.FIND_STORAGE_NODES_REQUEST, this.findStorageNodes.bind(this))
 
-        this.debug = createDebug(`streamr:logic:tracker:${this.id}`)
-        this.debug('started %s', this.id)
+        this.debug = createDebug(`streamr:logic:tracker:${this.opts.id}`)
+        this.debug('started %s', this.opts.id)
     }
 
     processNodeStatus(statusMessage, nodeType) {

@@ -1,0 +1,57 @@
+module.exports = class Metrics {
+    constructor(name = '') {
+        this.name = name || ''
+        this.timestamp = Date.now()
+        this._metrics = new Map()
+    }
+
+    inc(name, step = 1) {
+        this._put(name, Math.abs(step) || 0)
+    }
+
+    decr(name, step = 1) {
+        this._put(name, -Math.abs(step) || 0)
+    }
+
+    _put(name, step) {
+        if (typeof name !== 'string') {
+            throw new Error('name is not a string')
+        }
+
+        if (!Number.isInteger(step)) {
+            throw new Error('step is not an integer')
+        }
+
+        if (!this._metrics.has(name)) {
+            this._metrics.set(name, 0)
+        }
+
+        this._metrics.set(name, this.get(name) + step)
+    }
+
+    get(name) {
+        return this._metrics.get(name) || 0
+    }
+
+    report() {
+        const res = {
+            name: this.name,
+            timestamp: this.timestamp,
+            metrics: Array.from(this._metrics)
+        }
+
+        return res
+    }
+
+    _reset() {
+        this.timestamp = Date.now()
+        this._metrics.clear()
+    }
+
+    reportAndReset() {
+        const res = this.report()
+        this._reset()
+
+        return res
+    }
+}

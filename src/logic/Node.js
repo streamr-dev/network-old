@@ -4,6 +4,7 @@ const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
+const Metrics = require('../metrics')
 const StreamManager = require('./StreamManager')
 const ResendHandler = require('./ResendHandler')
 
@@ -77,11 +78,7 @@ class Node extends EventEmitter {
         this.debug('started %s', this.opts.id)
 
         this.started = new Date().toLocaleString()
-        this.metrics = {
-            received: {
-                duplicates: 0
-            }
-        }
+        this.metrics = new Metrics('node')
 
         this.seenButNotPropagated = new Set()
     }
@@ -189,7 +186,7 @@ class Node extends EventEmitter {
                 this._propagateMessage(dataMessage)
             } else {
                 this.debug('ignoring duplicate data %s (from %s)', messageId, dataMessage.getSource())
-                this.metrics.received.duplicates += 1
+                this.metrics.inc('received.duplicates')
             }
         } else {
             this.debug('Not outbound nodes to propagate')
