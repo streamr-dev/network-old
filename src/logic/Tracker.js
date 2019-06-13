@@ -165,4 +165,8 @@ module.exports = class Tracker extends EventEmitter {
         Object.values(this.overlayPerStream).forEach((overlay) => overlay.leave(node))
         this.debug('unregistered node %s from tracker', node)
     }
+
+    getMetrics() {
+        return this.metrics.report()
+    }
 }

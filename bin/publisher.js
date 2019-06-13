@@ -21,7 +21,7 @@ startNetworkNode(host, port, id)
             const timestamp = Date.now()
             const msg = 'Hello world, ' + new Date().toLocaleString()
 
-            publisher.publish(streamId, 0, timestamp, 0, publisher.id, messageChainId, lastTimestamp, 0, {
+            publisher.publish(streamId, 0, timestamp, 0, publisher.opts.id, messageChainId, lastTimestamp, 0, {
                 msg
             })
             lastTimestamp = timestamp
