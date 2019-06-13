@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events')
 const createDebug = require('debug')
+const pretty = require('prettysize')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const MessageBuffer = require('../helpers/MessageBuffer')
@@ -383,6 +384,16 @@ class Node extends EventEmitter {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
         }
+    }
+
+    getMetrics() {
+        const metrics = this.protocols.nodeToNode.endpoint.getMetrics()
+
+        metrics.msg += ' messages/second'
+        metrics.inSpeed = pretty(metrics.inSpeed)
+        metrics.outSpeed = pretty(metrics.outSpeed)
+
+        return metrics
     }
 }
 

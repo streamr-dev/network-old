@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events')
 const url = require('url')
+const speedometer = require('speedometer')
 const debug = require('debug')('streamr:connection:ws-endpoint')
 const WebSocket = require('ws')
 const { disconnectionReasons } = require('../messages/messageTypes')
@@ -63,6 +64,10 @@ class WsEndpoint extends EventEmitter {
         this.endpoint = new Endpoint()
         this.endpoint.implement(this)
 
+        this._inSpeed = speedometer()
+        this._outSpeed = speedometer()
+        this._msgSpeed = speedometer()
+
         this.connections = new Map()
         this.pendingConnections = new Map()
 
@@ -112,6 +117,8 @@ class WsEndpoint extends EventEmitter {
                 try {
                     const ws = this.connections.get(recipientAddress)
                     if (ws.readyState === ws.OPEN) {
+                        this._outSpeed(message.length)
+                        this._msgSpeed(1)
                         ws.send(message, (err) => {
                             if (err) {
                                 reject(err)
@@ -262,6 +269,8 @@ class WsEndpoint extends EventEmitter {
 
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
+            this._inSpeed(message.length)
+            this._msgSpeed(1)
             this.onReceive(address, message)
         })
 
@@ -285,6 +294,14 @@ class WsEndpoint extends EventEmitter {
         this.metrics.set('connections', this.connections.size)
         debug('added %s to connection list (headers %o)', address, customHeaders)
         this.emit(Endpoint.events.PEER_CONNECTED, address, customHeaders)
+    }
+
+    getMetrics() {
+        return {
+            msg: this._msgSpeed(),
+            inSpeed: this._inSpeed(),
+            outSpeed: this._outSpeed()
+        }
     }
 }
 

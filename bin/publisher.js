@@ -26,6 +26,10 @@ startNetworkNode(host, port, id)
             })
             lastTimestamp = timestamp
         }, intervalInMs)
+
+        setInterval(() => {
+            console.log(publisher.getMetrics())
+        }, 5000)
     })
     .catch((err) => {
         console.error(err)
