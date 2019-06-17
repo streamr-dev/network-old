@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const util = require('util')
 const { startNetworkNode } = require('../src/composition')
 
 const port = process.argv[2] || 30302
@@ -28,7 +29,10 @@ startNetworkNode(host, port, id)
         }, intervalInMs)
 
         setInterval(() => {
-            console.log(publisher.getMetrics())
+            // console.log('Metrics: %j', publisher.getMetrics())
+            console.log(util.inspect(publisher.getMetrics(), false, null))
+
+            // console.log(JSON.stringify(publisher.getMetrics(), null, 2))
         }, 5000)
     })
     .catch((err) => {

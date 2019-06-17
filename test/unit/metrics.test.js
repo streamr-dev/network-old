@@ -39,8 +39,6 @@ describe('metrics', () => {
                 ]
             }
         )
-        // eslint-disable-next-line no-underscore-dangle
-        expect(appMetrics._metrics).toEqual(new Map().set('metric-a', 0).set('metric-b', -1))
 
         expect(appMetrics.reportAndReset()).toEqual(
             {

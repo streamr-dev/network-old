@@ -106,7 +106,7 @@ class Node extends EventEmitter {
     }
 
     requestResend(request) {
-        this.metrics.inc('resend')
+        this.metrics.inc('requestResend')
         this.debug('received %s resend request %s with subId %s',
             request.getSource() === null ? 'local' : `from ${request.getSource()}`,
             request.constructor.name,
@@ -140,7 +140,7 @@ class Node extends EventEmitter {
     }
 
     async onTrackerInstructionReceived(streamMessage) {
-        this.metrics.inc('tracker:instructions')
+        this.metrics.inc('onTrackerInstructionReceived')
         const streamId = streamMessage.getStreamId()
         const nodeAddresses = streamMessage.getNodeAddresses()
         const nodeIds = []
@@ -174,7 +174,7 @@ class Node extends EventEmitter {
     }
 
     onDataReceived(dataMessage) {
-        this.metrics.inc('data:received')
+        this.metrics.inc('onDataReceived')
         const messageId = dataMessage.getMessageId()
         const previousMessageReference = dataMessage.getPreviousMessageReference()
         const { streamId } = messageId
@@ -190,7 +190,7 @@ class Node extends EventEmitter {
                 this._propagateMessage(dataMessage)
             } else {
                 this.debug('ignoring duplicate data %s (from %s)', messageId, dataMessage.getSource())
-                this.metrics.inc('received.duplicates')
+                this.metrics.inc('onDataReceived:ignoring:duplicate')
             }
         } else {
             this.debug('Not outbound nodes to propagate')
@@ -203,7 +203,7 @@ class Node extends EventEmitter {
     }
 
     async _propagateMessage(dataMessage) {
-        this.metrics.inc('propagate:message')
+        this.metrics.inc('_propagateMessage')
         const source = dataMessage.getSource()
         const messageId = dataMessage.getMessageId()
         const previousMessageReference = dataMessage.getPreviousMessageReference()
@@ -237,7 +237,7 @@ class Node extends EventEmitter {
     }
 
     onSubscribeRequest(subscribeMessage) {
-        this.metrics.inc('subscribe')
+        this.metrics.inc('onSubscribeRequest')
         const streamId = subscribeMessage.getStreamId()
         const source = subscribeMessage.getSource()
         const leechOnly = subscribeMessage.getLeechOnly()
@@ -267,7 +267,7 @@ class Node extends EventEmitter {
     }
 
     onUnsubscribeRequest(unsubscribeMessage) {
-        this.metrics.inc('unsubscribe')
+        this.metrics.inc('onUnsubscribeRequest')
         const streamId = unsubscribeMessage.getStreamId()
         const source = unsubscribeMessage.getSource()
         this.streams.removeNodeFromStream(streamId, source)
@@ -346,7 +346,7 @@ class Node extends EventEmitter {
     }
 
     onNodeDisconnected(node) {
-        this.metrics.inc('node:disconnected')
+        this.metrics.inc('onNodeDisconnected')
         this.streams.removeNodeFromAllStreams(node)
         this.debug('removed all subscriptions of node %s', node)
         this._sendStatusToAllTrackers()

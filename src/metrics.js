@@ -1,8 +1,18 @@
+const speedometer = require('speedometer')
+
 module.exports = class Metrics {
     constructor(name = '') {
         this.name = name || ''
         this.timestamp = Date.now()
         this._metrics = new Map()
+    }
+
+    createSpeedometer(name) {
+        this._metrics.set(name, speedometer())
+    }
+
+    speed(name) {
+        return this._metrics.get(name)
     }
 
     set(name, value) {

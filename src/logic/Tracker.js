@@ -42,7 +42,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     processNodeStatus(statusMessage, nodeType) {
-        this.metrics.inc('node:status:received')
+        this.metrics.inc('processNodeStatus')
 
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
@@ -57,13 +57,13 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     onNodeDisconnected(node, nodeType) {
-        this.metrics.inc('node:disconnected')
+        this.metrics.inc('onNodeDisconnected')
         this.storageNodes.delete(node)
         this._removeNode(node)
     }
 
     findStorageNodes(findStorageNodesMessage) {
-        this.metrics.inc('node:disconnected')
+        this.metrics.inc('findStorageNodes')
         const streamId = findStorageNodesMessage.getStreamId()
         const source = findStorageNodesMessage.getSource()
 
@@ -116,7 +116,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _formAndSendInstructions(node, streams) {
-        this.metrics.inc('node:form:and:send:instructions')
+        this.metrics.inc('_formAndSendInstructions')
         Object.keys(streams).forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node)
             Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
@@ -131,7 +131,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _formAndSendInstructionsToStorages() {
-        this.metrics.inc('storage:form:and:send:instructions')
+        this.metrics.inc('_formAndSendInstructionsToStorages')
         const existingStreams = Object.keys(this.overlayPerStream)
 
         if (existingStreams.length) {
@@ -161,7 +161,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _removeNode(node) {
-        this.metrics.inc('node:remove')
+        this.metrics.inc('_removeNode')
         Object.values(this.overlayPerStream).forEach((overlay) => overlay.leave(node))
         this.debug('unregistered node %s from tracker', node)
     }
