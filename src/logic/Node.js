@@ -377,9 +377,10 @@ class Node extends EventEmitter {
         }
     }
 
-    getMetrics() {
+    async getMetrics() {
         const metrics = this.protocols.nodeToNode.endpoint.getMetrics()
 
+        metrics.pidMetrics = await this.metrics.getPidusage()
         metrics.msg += ' messages/second'
         metrics.inSpeed = pretty(metrics.inSpeed)
         metrics.outSpeed = pretty(metrics.outSpeed)

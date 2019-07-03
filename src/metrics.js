@@ -1,14 +1,21 @@
 const speedometer = require('speedometer')
+const pidusage = require('pidusage')
 
 module.exports = class Metrics {
     constructor(name = '') {
         this.name = name || ''
         this.timestamp = Date.now()
         this._metrics = new Map()
+        this.pidusage = pidusage
     }
 
     createSpeedometer(name) {
         this._metrics.set(name, speedometer())
+    }
+
+    async getPidusage(pid = process.pid) {
+        const stats = await this.pidusage(pid)
+        return stats
     }
 
     speed(name) {
