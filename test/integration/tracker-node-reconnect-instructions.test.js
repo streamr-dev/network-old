@@ -57,7 +57,7 @@ describe('Check tracker instructions to node', () => {
         })
 
         let receivedTotal = 0
-        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => {
+        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, _ }) => {
             // eslint-disable-next-line no-underscore-dangle
             const status = statusMessage.getStatus()
 

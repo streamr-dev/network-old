@@ -58,8 +58,8 @@ class OverlayTopology {
 
         if (this._numOfMissingNeighbors(nodeId) > 0) {
             const candidates = Object.entries(this.nodes)
-                .filter(([n, neighbors]) => neighbors.size < this.maxNeighborsPerNode) // nodes with open slots
-                .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
+                .filter(([_, neighbors]) => neighbors.size < this.maxNeighborsPerNode) // nodes with open slots
+                .filter(([_, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
                 .filter(([n, _]) => n !== nodeId) // remove self
                 .map(([n, _]) => n)
 
@@ -76,8 +76,8 @@ class OverlayTopology {
         // leave one slot free which could lead to a never-ending chain of disconnects and connects, one node at a time.
         if (this._numOfMissingNeighbors(nodeId) > 1) {
             const candidates = Object.entries(this.nodes)
-                .filter(([n, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // full nodes
-                .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
+                .filter(([_, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // full nodes
+                .filter(([_, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
                 .filter(([n, _]) => n !== nodeId) // remove self
                 .map(([n, _]) => n)
 
