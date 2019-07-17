@@ -75,7 +75,7 @@ Install dependencies:
 
     npm ci
     
-Run the tests:
+Run the tests: 
 
     npm run test
 
