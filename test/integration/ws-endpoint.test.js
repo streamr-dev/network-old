@@ -1,6 +1,5 @@
 const { LOCALHOST, waitForEvent } = require('../util')
-const endpointEvents = require('../../src/connection/Endpoint').events
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
+const { startEndpoint, events } = require('../../src/connection/WsEndpoint')
 
 describe('create five endpoints and init connection between them', () => {
     const MAX = 5
@@ -20,7 +19,7 @@ describe('create five endpoints and init connection between them', () => {
         const promises = []
 
         for (let i = 0; i < MAX; i++) {
-            promises.push(waitForEvent(endpoints[i], endpointEvents.PEER_CONNECTED))
+            promises.push(waitForEvent(endpoints[i], events.PEER_CONNECTED))
 
             const nextEndpoint = i + 1 === MAX ? endpoints[0] : endpoints[i + 1]
 
@@ -48,8 +47,8 @@ describe('create five endpoints and init connection between them', () => {
             'my-identity': 'endpoint-2'
         })
 
-        const e1 = waitForEvent(endpointOne, endpointEvents.PEER_CONNECTED)
-        const e2 = waitForEvent(endpointTwo, endpointEvents.PEER_CONNECTED)
+        const e1 = waitForEvent(endpointOne, events.PEER_CONNECTED)
+        const e2 = waitForEvent(endpointTwo, events.PEER_CONNECTED)
 
         endpointOne.connect(endpointTwo.getAddress())
 

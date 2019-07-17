@@ -4,7 +4,7 @@ const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const encoder = require('../../src/helpers/MessageEncoder')
 const { StreamIdAndPartition } = require('../../src/identifiers')
-const endpointEvents = require('../../src/connection/Endpoint').events
+const { events } = require('../../src/connection/WsEndpoint')
 const { disconnectionReasons } = require('../../src/messages/messageTypes')
 
 /**
@@ -48,7 +48,7 @@ describe('Check tracker instructions to node', () => {
         let firstCheck = false
         let secondCheck = false
 
-        otherNodes[1].protocols.nodeToNode.endpoint.once(endpointEvents.PEER_DISCONNECTED, ({ _, reason }) => {
+        otherNodes[1].protocols.nodeToNode.endpoint.once(events.PEER_DISCONNECTED, ({ _, reason }) => {
             expect(reason).toBe(disconnectionReasons.NO_SHARED_STREAMS)
             firstCheck = true
             if (firstCheck && secondCheck) {

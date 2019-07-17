@@ -1,3 +1,9 @@
+const events = Object.freeze({
+    PEER_CONNECTED: 'streamr:peer:connect',
+    PEER_DISCONNECTED: 'streamr:peer:disconnect',
+    MESSAGE_RECEIVED: 'streamr:message-received'
+})
+
 const { EventEmitter } = require('events')
 const url = require('url')
 
@@ -6,8 +12,6 @@ const WebSocket = require('ws')
 
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
-
-const Endpoint = require('./Endpoint')
 
 class ReadyStateError extends Error {
     constructor(readyState) {
@@ -62,9 +66,6 @@ class WsEndpoint extends EventEmitter {
 
         this.wss = wss
         this.customHeaders = new CustomHeaders(customHeaders)
-
-        this.endpoint = new Endpoint()
-        this.endpoint.implement(this)
 
         this.metrics = new Metrics('WsEndpoint')
 
@@ -148,7 +149,7 @@ class WsEndpoint extends EventEmitter {
     onReceive(sender, message) {
         this.metrics.inc('onReceive')
         debug('received from %s message "%s"', sender, message)
-        this.emit(Endpoint.events.MESSAGE_RECEIVED, {
+        this.emit(events.MESSAGE_RECEIVED, {
             sender,
             message
         })
@@ -296,7 +297,7 @@ class WsEndpoint extends EventEmitter {
             debug('socket to %s closed (code %d, reason %s)', address, code, reason)
             this.connections.delete(address)
             debug('removed %s from connection list', address)
-            this.emit(Endpoint.events.PEER_DISCONNECTED, {
+            this.emit(events.PEER_DISCONNECTED, {
                 address, reason
             })
         })
@@ -304,7 +305,7 @@ class WsEndpoint extends EventEmitter {
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
         debug('added %s to connection list (headers %o)', address, customHeaders)
-        this.emit(Endpoint.events.PEER_CONNECTED, address, customHeaders)
+        this.emit(events.PEER_CONNECTED, address, customHeaders)
     }
 
     getMetrics() {
@@ -341,9 +342,12 @@ async function startEndpoint(host, port, customHeaders) {
     return startWebSocketServer(host, port).then((wss) => new WsEndpoint(wss, customHeaders))
 }
 
+WsEndpoint.events = events
+
 module.exports = {
     CustomHeaders,
     WsEndpoint,
+    events,
     startWebSocketServer,
     startEndpoint
 }
