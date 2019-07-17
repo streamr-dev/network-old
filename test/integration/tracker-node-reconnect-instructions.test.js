@@ -48,7 +48,7 @@ describe('Check tracker instructions to node', () => {
         let firstCheck = false
         let secondCheck = false
 
-        otherNodes[1].protocols.nodeToNode.endpoint.once(events.PEER_DISCONNECTED, ({ _, reason }) => {
+        otherNodes[1].protocols.nodeToNode.endpoint.once(events.PEER_DISCONNECTED, ({ reason }) => {
             expect(reason).toBe(disconnectionReasons.NO_SHARED_STREAMS)
             firstCheck = true
             if (firstCheck && secondCheck) {
@@ -57,7 +57,7 @@ describe('Check tracker instructions to node', () => {
         })
 
         let receivedTotal = 0
-        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, _ }) => {
+        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage }) => {
             // eslint-disable-next-line no-underscore-dangle
             const status = statusMessage.getStatus()
 
