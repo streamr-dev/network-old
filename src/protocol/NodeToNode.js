@@ -4,8 +4,8 @@ const { ControlLayer } = require('streamr-client-protocol')
 
 const encoder = require('../helpers/MessageEncoder')
 const { msgTypes } = require('../messages/messageTypes')
+const endpointEvents = require('../connection/WsEndpoint').events
 
-const EndpointListener = require('./EndpointListener')
 const { PeerBook, peerTypes } = require('./PeerBook')
 
 const events = Object.freeze({
@@ -37,8 +37,20 @@ class NodeToNode extends EventEmitter {
         this.endpoint = endpoint
         this.peerBook = new PeerBook()
 
-        this._endpointListener = new EndpointListener()
-        this._endpointListener.implement(this, endpoint)
+        this.endpoint.on(endpointEvents.PEER_CONNECTED, (address, metadata) => {
+            this.peerBook.add(address, metadata)
+            this.onPeerConnected(this.peerBook.getPeerId(address))
+        })
+
+        this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, ({ sender, message }) => {
+            const senderId = this.peerBook.getPeerId(sender)
+            this.onMessageReceived(encoder.decode(senderId, message), senderId)
+        })
+
+        this.endpoint.on(endpointEvents.PEER_DISCONNECTED, ({ address, reason }) => {
+            this.onPeerDisconnected(this.peerBook.getPeerId(address), reason)
+            this.peerBook.remove(address)
+        })
     }
 
     connectToNode(address) {
