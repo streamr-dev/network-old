@@ -1,12 +1,10 @@
-const { EventEmitter } = require('events')
-
 const { ControlLayer } = require('streamr-client-protocol')
 
 const encoder = require('../helpers/MessageEncoder')
 const { msgTypes } = require('../messages/messageTypes')
-const endpointEvents = require('../connection/WsEndpoint').events
 
-const { PeerBook, peerTypes } = require('./PeerBook')
+const { peerTypes } = require('./PeerBook')
+const BasicProtocol = require('./BasicProtocol')
 
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:node-node:node-connected',
@@ -30,29 +28,7 @@ eventPerType[ControlLayer.ResendResponseResending.TYPE] = events.RESEND_RESPONSE
 eventPerType[ControlLayer.ResendResponseResent.TYPE] = events.RESEND_RESPONSE
 eventPerType[ControlLayer.ResendResponseNoResend.TYPE] = events.RESEND_RESPONSE
 
-class NodeToNode extends EventEmitter {
-    constructor(endpoint) {
-        super()
-
-        this.endpoint = endpoint
-        this.peerBook = new PeerBook()
-
-        this.endpoint.on(endpointEvents.PEER_CONNECTED, (address, metadata) => {
-            this.peerBook.add(address, metadata)
-            this.onPeerConnected(this.peerBook.getPeerId(address))
-        })
-
-        this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, ({ sender, message }) => {
-            const senderId = this.peerBook.getPeerId(sender)
-            this.onMessageReceived(encoder.decode(senderId, message), senderId)
-        })
-
-        this.endpoint.on(endpointEvents.PEER_DISCONNECTED, ({ address, reason }) => {
-            this.onPeerDisconnected(this.peerBook.getPeerId(address), reason)
-            this.peerBook.remove(address)
-        })
-    }
-
+class NodeToNode extends BasicProtocol {
     connectToNode(address) {
         return this.endpoint.connect(address).then(() => this.peerBook.getPeerId(address))
     }

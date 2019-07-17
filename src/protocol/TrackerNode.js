@@ -1,9 +1,6 @@
-const { EventEmitter } = require('events')
-
-const endpointEvents = require('../connection/WsEndpoint').events
 const encoder = require('../helpers/MessageEncoder')
 
-const { PeerBook } = require('./PeerBook')
+const BasicProtocol = require('./BasicProtocol')
 
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
@@ -12,29 +9,7 @@ const events = Object.freeze({
     STORAGE_NODES_RECEIVED: 'streamr:tracker-node:storage-nodes-received'
 })
 
-class TrackerNode extends EventEmitter {
-    constructor(endpoint) {
-        super()
-
-        this.endpoint = endpoint
-        this.peerBook = new PeerBook()
-
-        this.endpoint.on(endpointEvents.PEER_CONNECTED, (address, metadata) => {
-            this.peerBook.add(address, metadata)
-            this.onPeerConnected(this.peerBook.getPeerId(address))
-        })
-
-        this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, ({ sender, message }) => {
-            const senderId = this.peerBook.getPeerId(sender)
-            this.onMessageReceived(encoder.decode(senderId, message), senderId)
-        })
-
-        this.endpoint.on(endpointEvents.PEER_DISCONNECTED, ({ address, reason }) => {
-            this.onPeerDisconnected(this.peerBook.getPeerId(address), reason)
-            this.peerBook.remove(address)
-        })
-    }
-
+class TrackerNode extends BasicProtocol {
     sendStatus(trackerId, status) {
         const trackerAddress = this.peerBook.getAddress(trackerId)
         return this.endpoint.send(trackerAddress, encoder.statusMessage(status))
