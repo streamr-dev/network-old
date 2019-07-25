@@ -50,20 +50,20 @@ class Node extends EventEmitter {
         )
         this.sendStatusTimeout = null
         this.bootstrapTrackerAddresses = []
+        this.protocols = this.opts.protocols
 
         this.streams = new StreamManager()
         this.messageBuffer = new MessageBuffer(this.opts.messageBufferSize, (streamId) => {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
-        this.resendHandler = new ResendHandler(this.opts.resendStrategies,
-            (...args) => this.protocols.nodeToNode.send(...args),
-            (...args) => this.protocols.nodeToNode.send(...args),
-            console.error.bind(console))
+        this.resendHandler = new ResendHandler(
+            this.opts.resendStrategies,
+            this.protocols.nodeToNode.send.bind(this.protocols.nodeToNode),
+            console.error.bind(console)
+        )
 
         this.trackers = new Set()
-
-        this.protocols = this.opts.protocols
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))

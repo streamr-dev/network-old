@@ -18,15 +18,12 @@ class RequestStream extends Readable {
 }
 
 class ResendHandler {
-    constructor(resendStrategies, sendResponse, sendUnicast, notifyError) {
+    constructor(resendStrategies, sendResponse, notifyError) {
         if (resendStrategies == null) {
             throw new Error('resendStrategies not given')
         }
         if (sendResponse == null) {
             throw new Error('sendResponse not given')
-        }
-        if (sendUnicast == null) {
-            throw new Error('sendUnicast not given')
         }
         if (notifyError == null) {
             throw new Error('notifyError not given')
@@ -34,7 +31,6 @@ class ResendHandler {
 
         this.resendStrategies = [...resendStrategies]
         this.sendResponse = sendResponse
-        this.sendUnicast = sendUnicast
         this.notifyError = notifyError
     }
 
@@ -109,7 +105,7 @@ class ResendHandler {
 
     _sendUnicast(unicastMessage, source) {
         if (source != null) {
-            this.sendUnicast(source, unicastMessage)
+            this.sendResponse(source, unicastMessage)
         }
     }
 
