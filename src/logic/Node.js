@@ -20,9 +20,6 @@ const events = Object.freeze({
     NODE_DISCONNECTED: 'streamr:node:node-disconnected',
     SUBSCRIPTION_REQUEST: 'streamr:node:subscription-received',
     MESSAGE_DELIVERY_FAILED: 'streamr:node:message-delivery-failed',
-    UNICAST_RECEIVED: 'streamr:node:unicast-received',
-    RESEND_RESPONSE_RECEIVED: 'streamr:node:resend-response-received',
-
 })
 
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
@@ -60,8 +57,8 @@ class Node extends EventEmitter {
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
         this.resendHandler = new ResendHandler(this.opts.resendStrategies,
-            this.respondResend.bind(this),
-            this._unicast.bind(this),
+            (...args) => this.protocols.nodeToNode.send(...args),
+            (...args) => this.protocols.nodeToNode.send(...args),
             console.error.bind(console))
 
         this.trackers = new Set()
@@ -124,31 +121,6 @@ class Node extends EventEmitter {
             request.constructor.name,
             request.subId)
         return this.resendHandler.handleRequest(request, source)
-    }
-
-    async respondResend(destination, response) {
-        if (destination === null) {
-            this.emit(events.RESEND_RESPONSE_RECEIVED, response)
-        } else {
-            await this.protocols.nodeToNode.send(destination, response)
-        }
-
-        this.debug('responded %s with %s and subId %s',
-            destination === null ? 'locally' : `to ${destination}`,
-            response.constructor.name,
-            response.subId)
-    }
-
-    async _unicast(destination, unicastMessage, source) {
-        if (destination === null) {
-            this.emit(events.UNICAST_RECEIVED, unicastMessage, source)
-        } else {
-            await this.protocols.nodeToNode.send(destination, unicastMessage)
-        }
-        this.debug('sent %s unicast %j for subId %s',
-            destination === null ? 'locally' : `to ${destination}`,
-            unicastMessage.streamMessage.messageId,
-            unicastMessage.subId)
     }
 
     async onTrackerInstructionReceived(streamMessage) {
