@@ -7,7 +7,7 @@ const events = Object.freeze({
 const { EventEmitter } = require('events')
 const url = require('url')
 
-const debug = require('debug')('streamr:connection:ws-endpoint')
+const createDebug = require('debug')
 const WebSocket = require('ws')
 
 const { disconnectionReasons } = require('../messages/messageTypes')
@@ -63,9 +63,14 @@ class WsEndpoint extends EventEmitter {
         if (!customHeaders) {
             throw new Error('customHeaders not given')
         }
+        if (customHeaders['streamr-peer-id'] === undefined) {
+            throw new Error('customHeaders["streamr-peer-id"] not given')
+        }
         if (advertisedWsUrl === undefined) {
             throw new Error('advertisedWsUrl not given')
         }
+
+        this.debug = createDebug(`streamr:logic:node:${customHeaders['streamr-peer-id']}:ws-endpoint`)
 
         this.wss = wss
         this.customHeaders = new CustomHeaders(customHeaders)
@@ -89,8 +94,8 @@ class WsEndpoint extends EventEmitter {
             const { address } = parameters.query
 
             if (this.isConnected(address)) {
-                debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
-                debug('closing existing socket')
+                this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
+                this.debug('closing existing socket')
                 this.connections.get(address).close()
             }
 
@@ -102,7 +107,7 @@ class WsEndpoint extends EventEmitter {
             headers.push(...this.customHeaders.asArray())
         })
 
-        debug('listening on: %s', this.getAddress())
+        this.debug('listening on: %s', this.getAddress())
         this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 2000)
     }
 
@@ -120,7 +125,7 @@ class WsEndpoint extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (!this.isConnected(recipientAddress)) {
                 this.metrics.inc('send:failed:not-connected')
-                debug('cannot send to %s because not connected', recipientAddress)
+                this.debug('cannot send to %s because not connected', recipientAddress)
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
                 try {
@@ -135,13 +140,13 @@ class WsEndpoint extends EventEmitter {
                                 reject(err)
                             } else {
                                 this.metrics.inc('send:success')
-                                debug('sent to %s message "%s"', recipientAddress, message)
+                                this.debug('sent to %s message "%s"', recipientAddress, message)
                                 resolve()
                             }
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        debug('sent failed because readyState of socket is %d', ws.readyState)
+                        this.debug('sent failed because readyState of socket is %d', ws.readyState)
                         reject(new ReadyStateError(ws.readyState))
                     }
                 } catch (e) {
@@ -155,7 +160,7 @@ class WsEndpoint extends EventEmitter {
 
     onReceive(sender, message) {
         this.metrics.inc('onReceive')
-        debug('received from %s message "%s"', sender, message)
+        this.debug('received from %s message "%s"', sender, message)
         this.emit(events.MESSAGE_RECEIVED, {
             sender,
             message
@@ -167,11 +172,11 @@ class WsEndpoint extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (!this.isConnected(recipientAddress)) {
                 this.metrics.inc('close:error:not-connected')
-                debug('cannot close connection to %s because not connected', recipientAddress)
+                this.debug('cannot close connection to %s because not connected', recipientAddress)
                 reject(new Error(`cannot close connection to ${recipientAddress} because not connected`))
             } else {
                 try {
-                    debug('closing connection to %s, reason %s', recipientAddress, reason)
+                    this.debug('closing connection to %s, reason %s', recipientAddress, reason)
                     const ws = this.connections.get(recipientAddress)
                     ws.close(1000, reason)
                 } catch (e) {
@@ -187,12 +192,12 @@ class WsEndpoint extends EventEmitter {
         this.metrics.inc('connect')
         if (this.isConnected(peerAddress)) {
             this.metrics.inc('connect:already-connected')
-            debug('already connected to %s', peerAddress)
+            this.debug('already connected to %s', peerAddress)
             return Promise.resolve()
         }
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
-            debug('pending connection to %s', peerAddress)
+            this.debug('pending connection to %s', peerAddress)
             return this.pendingConnections.get(peerAddress)
         }
 
@@ -220,12 +225,12 @@ class WsEndpoint extends EventEmitter {
 
                 ws.on('error', (err) => {
                     this.metrics.inc('connect:failed-to-connect')
-                    debug('failed to connect to %s, error: %o', peerAddress, err)
+                    this.debug('failed to connect to %s, error: %o', peerAddress, err)
                     reject(new Error(err))
                 })
             } catch (err) {
                 this.metrics.inc('connect:failed-to-connect')
-                debug('failed to connect to %s, error: %o', peerAddress, err)
+                this.debug('failed to connect to %s, error: %o', peerAddress, err)
                 reject(new Error(err))
             }
         }).finally(() => {
@@ -268,10 +273,10 @@ class WsEndpoint extends EventEmitter {
         if (!address) {
             this.metrics.inc('_onIncomingConnection:closed:no-address')
             ws.terminate()
-            debug('dropped incoming connection from %s because address parameter missing',
+            this.debug('dropped incoming connection from %s because address parameter missing',
                 req.connection.remoteAddress)
         } else {
-            debug('%s connected to me', address)
+            this.debug('%s connected to me', address)
             const customHeadersOfClient = this.customHeaders.pluckCustomHeadersFromObject(req.headers)
             this._onNewConnection(ws, address, customHeadersOfClient)
         }
@@ -283,7 +288,7 @@ class WsEndpoint extends EventEmitter {
         // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             this.metrics.inc('_onNewConnection:closed:dublicate')
-            debug('dropped new connection with %s because an existing connection already exists', address)
+            this.debug('dropped new connection with %s because an existing connection already exists', address)
             ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
             return
         }
@@ -300,14 +305,14 @@ class WsEndpoint extends EventEmitter {
         ws.on('close', (code, reason) => {
             if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
                 this.metrics.inc('_onNewConnection:closed:dublicate')
-                debug('socket %s dropped from other side because existing connection already exists')
+                this.debug('socket %s dropped from other side because existing connection already exists')
                 return
             }
 
             this.metrics.inc(`_onNewConnection:closed:code=${code}`)
-            debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+            this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
             this.connections.delete(address)
-            debug('removed %s from connection list', address)
+            this.debug('removed %s from connection list', address)
             this.emit(events.PEER_DISCONNECTED, {
                 address, reason
             })
@@ -315,7 +320,7 @@ class WsEndpoint extends EventEmitter {
 
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
-        debug('added %s to connection list (headers %o)', address, customHeaders)
+        this.debug('added %s to connection list (headers %o)', address, customHeaders)
         this.emit(events.PEER_CONNECTED, address, customHeaders)
     }
 
