@@ -63,14 +63,13 @@ class WsEndpoint extends EventEmitter {
         if (!customHeaders) {
             throw new Error('customHeaders not given')
         }
-        if (customHeaders['streamr-peer-id'] === undefined) {
-            throw new Error('customHeaders["streamr-peer-id"] not given')
-        }
         if (advertisedWsUrl === undefined) {
             throw new Error('advertisedWsUrl not given')
         }
 
-        this.debug = createDebug(`streamr:logic:node:${customHeaders['streamr-peer-id']}:ws-endpoint`)
+        const id = customHeaders['streamr-peer-id'] || 'id-not-set'
+
+        this.debug = createDebug(`streamr:logic:node:${id}:ws-endpoint`)
 
         this.wss = wss
         this.customHeaders = new CustomHeaders(customHeaders)
