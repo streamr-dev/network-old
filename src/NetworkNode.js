@@ -128,6 +128,10 @@ class NetworkNode extends Node {
 
         this.emit(eventType, resendResponse)
     }
+
+    getStreams() {
+        return this.streams.getStreamsAsKeys()
+    }
 }
 
 NetworkNode.events = events
