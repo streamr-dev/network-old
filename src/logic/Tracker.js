@@ -92,6 +92,11 @@ module.exports = class Tracker extends EventEmitter {
     _updateNode(node, streams) {
         let newNode = true
 
+        if (streams === {}) {
+            this._removeNode(node)
+            return
+        }
+
         // Add or update
         Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
             if (this.overlayPerStream[streamKey] == null) {
@@ -101,6 +106,7 @@ module.exports = class Tracker extends EventEmitter {
             newNode = this.overlayPerStream[streamKey].hasNode(node)
 
             const neighbors = new Set([...inboundNodes, ...outboundNodes])
+
             this.overlayPerStream[streamKey].update(node, neighbors)
         })
 
@@ -110,7 +116,7 @@ module.exports = class Tracker extends EventEmitter {
             .filter(([streamKey, _]) => !currentStreamKeys.has(streamKey))
             .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
 
-        if (newNode) {
+        if (!newNode) {
             this.debug('registered new node %s for streams %j', node, Object.keys(streams))
         } else {
             this.debug('setup existing node %s for streams %j', node, Object.keys(streams))

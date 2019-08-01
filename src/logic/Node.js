@@ -238,12 +238,15 @@ class Node extends EventEmitter {
     }
 
     onUnsubscribeRequest(unsubscribeMessage, source) {
-        this.metrics.inc('onUnsubscribeRequest')
         const streamIdAndPartition = new StreamIdAndPartition(unsubscribeMessage.streamId, unsubscribeMessage.streamPartition)
-        this.streams.removeNodeFromStream(streamIdAndPartition, source)
-        this.debug('node %s unsubscribed from stream %s', source, streamIdAndPartition)
-        this.emit(events.NODE_UNSUBSCRIBED, source, streamIdAndPartition)
-        this._sendStatusToAllTrackers()
+
+        if (this.streams.isSetUp(streamIdAndPartition)) {
+            this.metrics.inc('onUnsubscribeRequest')
+            this.streams.removeNodeFromStream(streamIdAndPartition, source)
+            this.debug('node %s unsubscribed from stream %s', source, streamIdAndPartition)
+            this.emit(events.NODE_UNSUBSCRIBED, source, streamIdAndPartition)
+            this._sendStatusToAllTrackers()
+        }
         if (!this.streams.isNodePresent(source)) {
             this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.NO_SHARED_STREAMS)
         }
@@ -287,6 +290,7 @@ class Node extends EventEmitter {
 
     async _sendStatus(tracker) {
         const status = this._getStatus()
+
         try {
             await this.protocols.trackerNode.sendStatus(tracker, status)
             this.debug('sent status %j to tracker %s', status.streams, tracker)
