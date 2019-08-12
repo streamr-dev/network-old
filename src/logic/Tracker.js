@@ -181,8 +181,6 @@ module.exports = class Tracker extends EventEmitter {
         if (overlayTopology.isEmpty()) {
             delete this.overlayPerStream[streamKey]
         }
-
-        return overlayTopology
     }
 
     async getMetrics() {
