@@ -36,7 +36,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         expect(tracker.protocols.trackerServer.endpoint.connections.size).toBe(0)
         expect(tracker.overlayPerStream).toEqual({})
 
-        await subscriberOne.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.addBootstrapTracker(tracker.getAddress())
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         expect(tracker.protocols.trackerServer.endpoint.connections.size).toBe(1)
 
@@ -48,7 +48,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
             subscriberOne: []
         })
 
-        await subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        subscriberTwo.addBootstrapTracker(tracker.getAddress())
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         expect(tracker.protocols.trackerServer.endpoint.connections.size).toBe(2)
 
@@ -64,8 +64,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
     })
 
     it('tracker should update correctly overlayPerStream on subscribe/unsubscribe', async () => {
-        await subscriberOne.addBootstrapTracker(tracker.getAddress())
-        await subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.addBootstrapTracker(tracker.getAddress())
+        subscriberTwo.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             await waitForEvent(subscriberTwo, Node.events.NODE_SUBSCRIBED),
@@ -88,13 +88,13 @@ describe('check tracker, nodes and statuses from nodes', () => {
             subscriberTwo: []
         })
 
-        // console.log('subscriberOne.unsubscribeFromStream(s1)')
         subscriberOne.unsubscribeFromStream(s1)
 
         const res = {
             subscriberTwo: []
         }
-        await waitForCondition(() => JSON.stringify(tracker.overlayPerStream['stream-1::0'].state()) === JSON.stringify(res))
+
+        await waitForCondition(() => Object.keys(tracker.overlayPerStream['stream-1::0'].state()).length === 1)
 
         expect(Object.keys(tracker.overlayPerStream)).toEqual(['stream-1::0', 'stream-2::2'])
         expect(tracker.overlayPerStream['stream-1::0'].state()).toEqual(res)

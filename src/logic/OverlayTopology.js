@@ -34,8 +34,8 @@ class OverlayTopology {
     leave(nodeId) {
         if (this.nodes[nodeId] != null) {
             this.nodes[nodeId].forEach((neighbor) => this.nodes[neighbor].delete(nodeId))
+            delete this.nodes[nodeId]
         }
-        delete this.nodes[nodeId]
     }
 
     isEmpty() {

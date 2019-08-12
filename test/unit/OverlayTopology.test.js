@@ -2,7 +2,7 @@ const OverlayTopology = require('../../src/logic/OverlayTopology')
 
 const maxNeighborsPerNodeArray = [4, 8, 12, 16]
 
-describe('tracker creation', () => {
+describe('overlay creation', () => {
     test('forming overlay topology', () => {
         const topology = new OverlayTopology(3, (arr) => arr, (arr) => arr[0])
 
