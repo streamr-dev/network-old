@@ -342,7 +342,6 @@ class WsEndpoint extends EventEmitter {
     }
 
     getMetrics() {
-        // eslint-disable-next-line no-underscore-dangle, max-len
         const totalBufferSize = Object.values(this.connections).reduce((totalBufferSizeSum, ws) => totalBufferSizeSum + ws.bufferedAmount, 0)
 
         return {
