@@ -1,5 +1,5 @@
 module.exports = class MessageBuffer {
-    constructor(timeoutInMs, maxSize = 1000, onTimeout = () => {}) {
+    constructor(timeoutInMs, maxSize = 10000, onTimeout = () => {}) {
         this.buffer = {}
         this.timeoutRefs = {}
         this.timeoutInMs = timeoutInMs
