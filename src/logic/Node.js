@@ -39,7 +39,8 @@ class Node extends EventEmitter {
             id: 'node',
             connectToBootstrapTrackersInterval: 5000,
             sendStatusToAllTrackersInterval: 1000,
-            messageBufferSize: 60 * 1000,
+            bufferTimeoutInMs: 60 * 1000,
+            bufferMaxSize: 10000,
             protocols: [],
             resendStrategies: []
         }
@@ -61,7 +62,7 @@ class Node extends EventEmitter {
         this.protocols = this.opts.protocols
 
         this.streams = new StreamManager()
-        this.messageBuffer = new MessageBuffer(this.opts.messageBufferSize, (streamId) => {
+        this.messageBuffer = new MessageBuffer(this.opts.bufferTimeoutInMs, this.opts.bufferMaxSize, (streamId) => {
             this.debug('failed to deliver buffered messages of stream %s', streamId)
             this.emit(events.MESSAGE_DELIVERY_FAILED, streamId)
         })
