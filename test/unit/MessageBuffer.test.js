@@ -232,7 +232,7 @@ describe('fullt test of MessageBuffer', () => {
         expect(buffer.pop('stream-1')).toEqual({})
     })
 
-    test('text max limit', () => {
+    test('test maxLimit', () => {
         const buffer = new MessageBuffer(1000, 3)
 
         buffer.put('stream-1', {})
