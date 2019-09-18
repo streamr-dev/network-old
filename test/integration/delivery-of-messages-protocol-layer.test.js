@@ -76,11 +76,11 @@ describe('delivery of messages in protocol layer', () => {
             StreamMessage.SIGNATURE_TYPES.ETH,
             'signature'
         )
-        nodeToNode2.sendData('nodeToNode1', streamMessage)
+        nodeToNode2.sendData(nodeToNode1.getAddress(), streamMessage)
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.DATA_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.BroadcastMessage)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual('ws://127.0.0.1:28512')
         expect(msg.streamMessage.messageId).toEqual(new MessageLayer.MessageID('stream', 10, 666, 0, 'publisherId', 'msgChainId'))
         expect(msg.streamMessage.prevMsgRef).toEqual(new MessageLayer.MessageRef(665, 0))
         expect(msg.streamMessage.getParsedContent()).toEqual({
@@ -88,7 +88,7 @@ describe('delivery of messages in protocol layer', () => {
         })
         expect(msg.streamMessage.signatureType).toEqual(MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH)
         expect(msg.streamMessage.signature).toEqual('signature')
-    })
+    }, 20000)
 
     test('sendUnicast is delivered', async () => {
         const streamMessage = MessageLayer.StreamMessage.create(
@@ -103,11 +103,11 @@ describe('delivery of messages in protocol layer', () => {
             'signature'
         )
         const unicastMessage = ControlLayer.UnicastMessage.create('subId', streamMessage)
-        nodeToNode2.send('nodeToNode1', unicastMessage)
+        nodeToNode2.send(nodeToNode1.getAddress(), unicastMessage)
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.UNICAST_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.UnicastMessage)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamMessage.messageId).toEqual(new MessageLayer.MessageID('stream', 10, 666, 0, 'publisherId', 'msgChainId'))
         expect(msg.streamMessage.prevMsgRef).toEqual(new MessageLayer.MessageRef(665, 0))
         expect(msg.streamMessage.getParsedContent()).toEqual({
@@ -119,21 +119,21 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendInstruction is delivered', async () => {
-        trackerServer.sendInstruction('trackerNode', new StreamIdAndPartition('stream', 10), ['trackerNode'])
+        trackerServer.sendInstruction(trackerNode.getAddress(), new StreamIdAndPartition('stream', 10), [trackerNode.getAddress()])
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
 
         expect(msg).toBeInstanceOf(InstructionMessage)
-        expect(msg.getSource()).toEqual('trackerServer')
+        expect(msg.getSource()).toEqual(trackerServer.getAddress())
         expect(msg.getStreamId()).toEqual(new StreamIdAndPartition('stream', 10))
         expect(msg.getNodeAddresses()).toEqual(['ws://127.0.0.1:28513'])
     })
 
     test('resendLastRequest is delivered', async () => {
-        nodeToNode2.send('nodeToNode1', ControlLayer.ResendLastRequest.create('stream', 10, 'subId', 100))
+        nodeToNode2.send(nodeToNode1.getAddress(), ControlLayer.ResendLastRequest.create('stream', 10, 'subId', 100))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendLastRequest)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
@@ -141,12 +141,12 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('requestResendFrom is delivered', async () => {
-        nodeToNode2.send('nodeToNode1',
+        nodeToNode2.send(nodeToNode1.getAddress(),
             ControlLayer.ResendFromRequest.create('stream', 10, 'subId', [1, 1], 'publisherId', 'msgChainId'))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendFromRequest)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
@@ -156,12 +156,12 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('requestResendRange is delivered', async () => {
-        nodeToNode2.send('nodeToNode1',
+        nodeToNode2.send(nodeToNode1.getAddress(),
             ControlLayer.ResendRangeRequest.create('stream', 10, 'subId', [1, 1], [2, 2], 'publisherId', 'msgChainId'))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendRangeRequest)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
@@ -172,87 +172,87 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('respondResending is delivered', async () => {
-        nodeToNode2.send('nodeToNode1', ControlLayer.ResendResponseResending.create('stream', 10, 'subId'))
+        nodeToNode2.send(nodeToNode1.getAddress(), ControlLayer.ResendResponseResending.create('stream', 10, 'subId'))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResending)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
     })
 
     test('respondResent is delivered', async () => {
-        nodeToNode2.send('nodeToNode1', ControlLayer.ResendResponseResent.create('stream', 10, 'subId'))
+        nodeToNode2.send(nodeToNode1.getAddress(), ControlLayer.ResendResponseResent.create('stream', 10, 'subId'))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResent)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
     })
 
     test('respondNoResend is delivered', async () => {
-        nodeToNode2.send('nodeToNode1', ControlLayer.ResendResponseNoResend.create('stream', 10, 'subId'))
+        nodeToNode2.send(nodeToNode1.getAddress(), ControlLayer.ResendResponseNoResend.create('stream', 10, 'subId'))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseNoResend)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
         expect(msg.subId).toEqual('subId')
     })
 
     test('sendStatus is delivered', async () => {
-        trackerNode.sendStatus('trackerServer', {
+        trackerNode.sendStatus(trackerServer.getAddress(), {
             status: 'status'
         })
         const [message] = await waitForEvent(trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         const msg = message.statusMessage
 
         expect(msg).toBeInstanceOf(StatusMessage)
-        expect(msg.getSource()).toEqual('trackerNode')
+        expect(msg.getSource()).toEqual(trackerNode.getAddress())
         expect(msg.getStatus()).toEqual({
             status: 'status'
         })
     })
 
     test('sendSubscribe is delivered', async () => {
-        nodeToNode2.sendSubscribe('nodeToNode1', new StreamIdAndPartition('stream', 10))
+        nodeToNode2.sendSubscribe(nodeToNode1.getAddress(), new StreamIdAndPartition('stream', 10))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.SUBSCRIBE_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.SubscribeRequest)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
     })
 
     test('sendUnsubscribe is delivered', async () => {
-        nodeToNode2.sendUnsubscribe('nodeToNode1', new StreamIdAndPartition('stream', 10))
+        nodeToNode2.sendUnsubscribe(nodeToNode1.getAddress(), new StreamIdAndPartition('stream', 10))
         const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.UNSUBSCRIBE_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.UnsubscribeRequest)
-        expect(source).toEqual('nodeToNode2')
+        expect(source).toEqual(nodeToNode2.getAddress())
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
     })
 
     test('findStorageNodes is delivered', async () => {
-        trackerNode.findStorageNodes('trackerServer', new StreamIdAndPartition('stream', 10))
+        trackerNode.findStorageNodes(trackerServer.getAddress(), new StreamIdAndPartition('stream', 10))
         const [msg] = await waitForEvent(trackerServer, TrackerServer.events.FIND_STORAGE_NODES_REQUEST)
 
         expect(msg).toBeInstanceOf(FindStorageNodesMessage)
-        expect(msg.getSource()).toEqual('trackerNode')
+        expect(msg.getSource()).toEqual(trackerNode.getAddress())
         expect(msg.getStreamId()).toEqual(new StreamIdAndPartition('stream', 10))
     })
 
     test('sendStorageNodes is delivered', async () => {
-        trackerServer.sendStorageNodes('trackerNode', new StreamIdAndPartition('stream', 10), ['trackerNode'])
+        trackerServer.sendStorageNodes(trackerNode.getAddress(), new StreamIdAndPartition('stream', 10), [trackerNode.getAddress()])
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.STORAGE_NODES_RECEIVED)
 
         expect(msg).toBeInstanceOf(StorageNodesMessage)
-        expect(msg.getSource()).toEqual('trackerServer')
+        expect(msg.getSource()).toEqual(trackerServer.getAddress())
         expect(msg.getStreamId()).toEqual(new StreamIdAndPartition('stream', 10))
         expect(msg.getNodeAddresses()).toEqual(['ws://127.0.0.1:28513'])
     })

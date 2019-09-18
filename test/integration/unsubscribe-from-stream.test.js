@@ -1,5 +1,5 @@
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
-const { wait, waitForEvent } = require('streamr-test-utils')
+const { wait, waitForEvent, waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
@@ -67,10 +67,10 @@ describe('node unsubscribing from a stream', () => {
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE
         }))
 
-        await wait(150)
+        await waitForCondition(() => actual.length === 1)
 
-        expect(actual).toEqual(['s::1'])
-    })
+        expect(actual).toStrictEqual(['s::1'])
+    }, 20000)
 
     test('connection between nodes is not kept if no shared streams', async () => {
         nodeB.unsubscribe('s', 2)
@@ -84,7 +84,7 @@ describe('node unsubscribing from a stream', () => {
             waitForEvent(nodeB, Node.events.NODE_DISCONNECTED)
         ])
 
-        expect(aEventArgs).toEqual(['b'])
-        expect(bEventArgs).toEqual(['a'])
-    })
+        expect(aEventArgs).toStrictEqual([nodeB.getAddress()])
+        expect(bEventArgs).toStrictEqual([nodeA.getAddress()])
+    }, 20000)
 })

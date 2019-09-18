@@ -32,7 +32,7 @@ eventPerType[ControlLayer.ResendResponseNoResend.TYPE] = events.RESEND_RESPONSE
 
 class NodeToNode extends BasicProtocol {
     connectToNode(address) {
-        return this.endpoint.connect(address).then(() => this.peerBook.getPeerId(address))
+        return this.endpoint.connect(address + `?streamr-peer-type=node&streamr-peer-id=${address}`).then(() => this.peerBook.getPeerId(address))
     }
 
     sendData(receiverNodeId, streamMessage) {

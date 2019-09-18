@@ -38,7 +38,7 @@ class TrackerNode extends BasicProtocol {
     }
 
     connectToTracker(trackerAddress) {
-        return this.endpoint.connect(trackerAddress)
+        return this.endpoint.connect(trackerAddress + `?streamr-peer-type=node&streamr-peer-id=${trackerAddress}`)
     }
 
     onPeerConnected(peerId) {
@@ -51,6 +51,10 @@ class TrackerNode extends BasicProtocol {
         if (this.peerBook.isTracker(peerId)) {
             this.emit(events.TRACKER_DISCONNECTED, peerId)
         }
+    }
+
+    getAddress() {
+        return this.endpoint.getAddress()
     }
 }
 

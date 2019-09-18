@@ -42,10 +42,10 @@ describe('check tracker, nodes and statuses from nodes', () => {
 
         expect(Object.keys(tracker.overlayPerStream)).toEqual(['stream-1::0', 'stream-2::2'])
         expect(tracker.overlayPerStream['stream-1::0'].state()).toEqual({
-            subscriberOne: []
+            'ws://127.0.0.1:33371': []
         })
         expect(tracker.overlayPerStream['stream-2::2'].state()).toEqual({
-            subscriberOne: []
+            'ws://127.0.0.1:33371': []
         })
 
         subscriberTwo.addBootstrapTracker(tracker.getAddress())

@@ -8,7 +8,7 @@ const { EventEmitter } = require('events')
 const url = require('url')
 
 const createDebug = require('debug')
-const WebSocket = require('ws')
+const WebSocket = require('sc-uws')
 
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
@@ -88,23 +88,24 @@ class WsEndpoint extends EventEmitter {
 
         this.wss.on('connection', this._onIncomingConnection.bind(this))
 
-        this.wss.options.verifyClient = (info) => {
-            const parameters = url.parse(info.req.url, true)
-            const { address } = parameters.query
+        // this.wss.verifyClient = (info, socket, head, emitConnection) => {
+        //     const parameters = url.parse(info.req.url, true)
+        //     const { address } = parameters.query
+        //
+        //     if (this.isConnected(address)) {
+        //         this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
+        //         this.debug('closing existing socket')
+        //         this.connections.get(address).close()
+        //     }
+        //
+        //     return true
+        // }
 
-            if (this.isConnected(address)) {
-                this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
-                this.debug('closing existing socket')
-                this.connections.get(address).close()
-            }
-
-            return true
-        }
-
-        // Attach custom headers to headers before they are sent to client
-        this.wss.on('headers', (headers) => {
-            headers.push(...this.customHeaders.asArray())
-        })
+        // this.wss.httpServer.on('upgrade', (request, socket, head) => {
+        //     request.headers = {
+        //         ...request.headers, ...this.customHeaders.headers
+        //     }
+        // })
 
         this.debug('listening on: %s', this.getAddress())
         this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 2000)
@@ -229,55 +230,50 @@ class WsEndpoint extends EventEmitter {
     }
 
     connect(peerAddress) {
+        const address = this._extractAddress(peerAddress)
+
         this.metrics.inc('connect')
-        if (this.isConnected(peerAddress)) {
+        if (this.isConnected(address)) {
             this.metrics.inc('connect:already-connected')
-            this.debug('already connected to %s', peerAddress)
+            this.debug('already connected to %s', address)
             return Promise.resolve()
         }
-        if (this.pendingConnections.has(peerAddress)) {
+        if (this.pendingConnections.has(address)) {
             this.metrics.inc('connect:pending-connection')
-            this.debug('pending connection to %s', peerAddress)
-            return this.pendingConnections.get(peerAddress)
+            this.debug('pending connection to %s', address)
+            return this.pendingConnections.get(address)
         }
 
         const p = new Promise((resolve, reject) => {
             try {
-                let customHeadersOfServer
-                const ws = new WebSocket(`${peerAddress}?address=${this.getAddress()}`, {
-                    headers: this.customHeaders.asObject()
-                })
-
-                ws.on('upgrade', (response) => {
-                    customHeadersOfServer = this.customHeaders.pluckCustomHeadersFromObject(response.headers)
-                })
-
+                const ws = new WebSocket(`${address}/?address=${this.getAddress()}&${this.getHeaders()}`)
                 ws.on('open', () => {
-                    if (!customHeadersOfServer) {
-                        ws.terminate()
-                        this.metrics.inc('connect:dropping-upgrade-never-received')
-                        reject(new Error('dropping outgoing connection because upgrade event never received'))
-                    } else {
-                        this._onNewConnection(ws, peerAddress, customHeadersOfServer)
-                        resolve()
-                    }
+                    const parameters = url.parse(peerAddress, true)
+                    // if (!customHeadersOfServer) {
+                    //     ws.terminate()
+                    //     this.metrics.inc('connect:dropping-upgrade-never-received')
+                    //     reject(new Error('dropping outgoing connection because upgrade event never received'))
+                    // } else {
+                    this._onNewConnection(ws, address, parameters.query)
+                    this.pendingConnections.delete(address)
+                    resolve()
                 })
 
                 ws.on('error', (err) => {
                     this.metrics.inc('connect:failed-to-connect')
-                    this.debug('failed to connect to %s, error: %o', peerAddress, err)
+                    this.debug('failed to connect to %s, error: %o', address, err)
+                    this.pendingConnections.delete(address)
                     reject(new Error(err))
                 })
             } catch (err) {
                 this.metrics.inc('connect:failed-to-connect')
-                this.debug('failed to connect to %s, error: %o', peerAddress, err)
+                this.debug('failed to connect to %s, error: %o', address, err)
+                this.pendingConnections.delete(address)
                 reject(new Error(err))
             }
-        }).finally(() => {
-            this.pendingConnections.delete(peerAddress)
         })
 
-        this.pendingConnections.set(peerAddress, p)
+        this.pendingConnections.set(address, p)
         return p
     }
 
@@ -288,26 +284,31 @@ class WsEndpoint extends EventEmitter {
         })
 
         return new Promise((resolve, reject) => {
-            this.wss.close((err) => {
-                if (err) {
-                    reject(err)
-                } else {
-                    resolve()
-                }
-            })
+            this.wss.close()
+            resolve()
         })
+    }
+
+    _extractAddress(address) {
+        const parameters = url.parse(address, true)
+        return `${parameters.protocol}//${parameters.host}`
     }
 
     isConnected(address) {
         return this.connections.has(address)
     }
 
-    getAddress() {
+    getAddress(ipOnly = false) {
         if (this.advertisedWsUrl) {
             return this.advertisedWsUrl
         }
-        const socketAddress = this.wss.address()
-        return `ws://${socketAddress.address}:${socketAddress.port}`
+        // eslint-disable-next-line no-underscore-dangle
+        const socketAddress = this.wss.httpServer._connectionKey.split(':')
+        return ipOnly ? `${socketAddress[1]}:${socketAddress[2]}` : `ws://${socketAddress[1]}:${socketAddress[2]}`
+    }
+
+    getHeaders() {
+        return 'streamr-peer-id=' + this.getAddress() + '&streamr-peer-type=' + this.customHeaders.headers['streamr-peer-type']
     }
 
     getPeers() {
@@ -315,7 +316,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onIncomingConnection(ws, req) {
-        const parameters = url.parse(req.url, true)
+        const parameters = url.parse(ws.upgradeReq.url, true)
         const { address } = parameters.query
 
         if (!address) {
@@ -325,7 +326,7 @@ class WsEndpoint extends EventEmitter {
                 req.connection.remoteAddress)
         } else {
             this.debug('%s connected to me', address)
-            const customHeadersOfClient = this.customHeaders.pluckCustomHeadersFromObject(req.headers)
+            const customHeadersOfClient = this.customHeaders.pluckCustomHeadersFromObject(parameters.query)
             this._onNewConnection(ws, address, customHeadersOfClient)
         }
     }
@@ -393,7 +394,14 @@ async function startWebSocketServer(host, port) {
             {
                 host,
                 port,
-                clientTracking: true
+                clientTracking: true,
+                verifyClient: (info, cb) => {
+                    if (info.req.headers['sec-websocket-key']) {
+                        cb(true)
+                    } else {
+                        cb(false, 400, 'Invalid headers on websocket request. Please upgrade your browser or websocket library!')
+                    }
+                }
             }
         )
 

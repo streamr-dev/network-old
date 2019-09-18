@@ -361,9 +361,10 @@ class Node extends EventEmitter {
 
     _connectToBootstrapTrackers() {
         this.bootstrapTrackerAddresses.forEach((address) => {
-            this.protocols.trackerNode.connectToTracker(address)
+            this.protocols.trackerNode.connectToTracker(address + `?streamr-peer-type=tracker&streamr-peer-id=${address}`)
                 .catch((err) => {
                     console.error(`Could not connect to tracker ${address} because '${err}'`)
+                    console.error(err)
                 })
         })
     }
@@ -389,6 +390,10 @@ class Node extends EventEmitter {
             messageBufferSize: this.messageBuffer.size(),
             seenButNotPropagated: this.seenButNotPropagated.length
         }
+    }
+
+    getAddress() {
+        return this.protocols.trackerNode.getAddress()
     }
 }
 
