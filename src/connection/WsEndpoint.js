@@ -8,7 +8,7 @@ const { EventEmitter } = require('events')
 const url = require('url')
 
 const createDebug = require('debug')
-const WebSocket = require('@kapouer/uws')
+const WebSocket = require('@streamr/sc-uws')
 
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
