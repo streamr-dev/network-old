@@ -13,7 +13,7 @@ const port = process.argv[2] || 30302
 const host = process.argv[3] || '127.0.0.1'
 const trackers = process.argv[4] ? process.argv[4].split(',') : ['ws://127.0.0.1:30300']
 const streamId = process.argv[5] || 'default-stream-id'
-const intervalInMs = process.argv[6] || 1
+const intervalInMs = process.argv[6] || 200
 
 const publisherId = `publisher-${port}`
 const messageChainId = `message-chain-id-${port}`
@@ -49,7 +49,7 @@ startNetworkNode(host, port, publisherId)
         }, intervalInMs)
 
         setInterval(async () => {
-            // console.log(util.inspect(await publisher.getMetrics(), false, null))
+            console.log(util.inspect(await publisher.getMetrics(), false, null))
         }, 5000)
     })
     .catch((err) => {

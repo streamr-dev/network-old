@@ -18,11 +18,11 @@ startNetworkNode(host, port, id).then((subscriber) => {
 
     subscriber.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (brodcastMessage) => {
         const { streamMessage } = brodcastMessage
-        // console.log('received %s, data %j', streamMessage.messageId, streamMessage.getParsedContent())
+        console.log('received %s, data %j', streamMessage.messageId, streamMessage.getParsedContent())
     })
 
     setInterval(async () => {
-        // console.log(util.inspect(await subscriber.getMetrics(), false, null))
+        console.log(util.inspect(await subscriber.getMetrics(), false, null))
     }, 5000)
 }).catch((err) => {
     throw err
