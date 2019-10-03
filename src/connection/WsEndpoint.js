@@ -135,28 +135,12 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('send:failed:not-connected')
             this.debug('cannot send to %s because not connected', recipientAddress)
         } else {
+            const { ws, duplex } = this.connections.get(recipientAddress)
             try {
-                const { ws } = this.connections.get(recipientAddress)
-                if (ws.readyState === ws.OPEN) {
-                    this.metrics.speed('_outSpeed')(message.length)
-                    this.metrics.speed('_msgSpeed')(1)
-                    this.metrics.speed('_msgOutSpeed')(1)
-
-                    ws.send(message, (err) => {
-                        if (!err) {
-                            this.metrics.inc('send:failed')
-                        } else {
-                            this.metrics.inc('send:success')
-                            this.debug('sent to %s message "%s"', recipientAddress, message)
-                        }
-                    })
-                } else {
-                    this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                    this.debug('sent failed because readyState of socket is %d', ws.readyState)
-                }
+                duplex.write(message)
             } catch (e) {
                 this.metrics.inc('send:failed')
-                console.error('sending to %s failed because of %s', recipientAddress, e)
+                console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
             }
         }
     }
@@ -168,30 +152,13 @@ class WsEndpoint extends EventEmitter {
                 this.debug('cannot send to %s because not connected', recipientAddress)
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
+                const { ws, duplex } = this.connections.get(recipientAddress)
                 try {
-                    const { ws } = this.connections.get(recipientAddress)
-                    if (ws.readyState === ws.OPEN) {
-                        this.metrics.speed('_outSpeed')(message.length)
-                        this.metrics.speed('_msgSpeed')(1)
-                        this.metrics.speed('_msgOutSpeed')(1)
-
-                        ws.send(message, (err) => {
-                            if (err) {
-                                reject(err)
-                            } else {
-                                this.metrics.inc('send:success')
-                                this.debug('sent to %s message "%s"', recipientAddress, message)
-                                resolve()
-                            }
-                        })
-                    } else {
-                        this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug('sent failed because readyState of socket is %d', ws.readyState)
-                        reject(new ReadyStateError(ws.readyState))
-                    }
+                    duplex.write(message)
+                    resolve()
                 } catch (e) {
                     this.metrics.inc('send:failed')
-                    console.error('sending to %s failed because of %s', recipientAddress, e)
+                    console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
                     reject(e)
                 }
             }
@@ -346,7 +313,7 @@ class WsEndpoint extends EventEmitter {
             encoding: 'utf8'
         })
 
-        ws.on('message', (message) => {
+        duplex.on('data', (message) => {
             // TODO check message.type [utf8|binary]
             this.metrics.speed('_inSpeed')(message.length)
             this.metrics.speed('_msgSpeed')(1)
