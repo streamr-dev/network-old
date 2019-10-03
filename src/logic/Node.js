@@ -116,7 +116,7 @@ class Node extends EventEmitter {
         const nodes = this.streams.removeStream(streamId)
         nodes.forEach(async (n) => {
             try {
-                this.protocols.nodeToNode.sendUnsubscribe(n, streamId)
+                await this.protocols.nodeToNode.sendUnsubscribe(n, streamId)
             } catch (e) {
                 this.debug('failed to send unsubscribe request because of %s', e)
             }

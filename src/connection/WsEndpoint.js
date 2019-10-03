@@ -131,6 +131,10 @@ class WsEndpoint extends EventEmitter {
             const { ws, duplex } = this.connections.get(recipientAddress)
             try {
                 duplex.write(message)
+                this.metrics.speed('_outSpeed')(message.length)
+                this.metrics.speed('_msgSpeed')(1)
+                this.metrics.speed('_msgOutSpeed')(1)
+                this.metrics.inc('send:success')
             } catch (e) {
                 this.metrics.inc('send:failed')
                 console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
@@ -148,6 +152,10 @@ class WsEndpoint extends EventEmitter {
                 const { ws, duplex } = this.connections.get(recipientAddress)
                 try {
                     duplex.write(message)
+                    this.metrics.speed('_outSpeed')(message.length)
+                    this.metrics.speed('_msgSpeed')(1)
+                    this.metrics.speed('_msgOutSpeed')(1)
+                    this.metrics.inc('send:success')
                     resolve()
                 } catch (e) {
                     this.metrics.inc('send:failed')
@@ -315,7 +323,7 @@ class WsEndpoint extends EventEmitter {
             this.onReceive(address, message)
         })
 
-        // TODO possilbe solution remove reasons?
+        // TODO possible solution remove reasons?
         // duplex.on('close', () => {
         //     this.connections.delete(address)
         //     this.emit(events.PEER_DISCONNECTED, {
