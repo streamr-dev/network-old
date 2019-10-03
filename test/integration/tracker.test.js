@@ -1,4 +1,4 @@
-const { waitForEvent, wait, waitForCondition } = require('streamr-test-utils')
+const { waitForEvent, waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')

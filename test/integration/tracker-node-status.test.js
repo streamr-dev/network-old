@@ -1,7 +1,6 @@
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
 
 /**
  * This test verifies that tracker receives status messages from nodes with list of inBound and outBound connections
