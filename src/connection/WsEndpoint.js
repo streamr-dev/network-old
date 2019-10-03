@@ -93,9 +93,9 @@ class WsEndpoint extends EventEmitter {
             const { address } = parameters.query
 
             if (this.isConnected(address)) {
-                this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
+                this.debug('already connected to %s, readyState %d', address, this.connections.get(address).ws.readyState)
                 this.debug('closing existing socket')
-                this.connections.get(address).close()
+                this.connections.get(address).ws.close()
             }
 
             return true
@@ -112,7 +112,7 @@ class WsEndpoint extends EventEmitter {
 
     _checkConnections() {
         Object.keys(this.connections).forEach((address) => {
-            const ws = this.connections.get(address)
+            const { ws } = this.connections.get(address)
 
             if (ws.readyState !== 1) {
                 this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
@@ -136,7 +136,7 @@ class WsEndpoint extends EventEmitter {
             this.debug('cannot send to %s because not connected', recipientAddress)
         } else {
             try {
-                const ws = this.connections.get(recipientAddress)
+                const { ws } = this.connections.get(recipientAddress)
                 if (ws.readyState === ws.OPEN) {
                     this.metrics.speed('_outSpeed')(message.length)
                     this.metrics.speed('_msgSpeed')(1)
@@ -169,7 +169,7 @@ class WsEndpoint extends EventEmitter {
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
                 try {
-                    const ws = this.connections.get(recipientAddress)
+                    const { ws } = this.connections.get(recipientAddress)
                     if (ws.readyState === ws.OPEN) {
                         this.metrics.speed('_outSpeed')(message.length)
                         this.metrics.speed('_msgSpeed')(1)
@@ -217,7 +217,7 @@ class WsEndpoint extends EventEmitter {
             } else {
                 try {
                     this.debug('closing connection to %s, reason %s', recipientAddress, reason)
-                    const ws = this.connections.get(recipientAddress)
+                    const { ws } = this.connections.get(recipientAddress)
                     ws.close(1000, reason)
                 } catch (e) {
                     this.metrics.inc('close:error:failed')
@@ -285,7 +285,7 @@ class WsEndpoint extends EventEmitter {
     stop() {
         clearInterval(this.checkConnectionsInterval)
         this.connections.forEach((connection) => {
-            connection.terminate()
+            connection.ws.terminate()
         })
 
         return new Promise((resolve, reject) => {
@@ -342,6 +342,10 @@ class WsEndpoint extends EventEmitter {
             return
         }
 
+        const duplex = WebSocket.createWebSocketStream(ws, {
+            encoding: 'utf8'
+        })
+
         ws.on('message', (message) => {
             // TODO check message.type [utf8|binary]
             this.metrics.speed('_inSpeed')(message.length)
@@ -367,7 +371,10 @@ class WsEndpoint extends EventEmitter {
             })
         })
 
-        this.connections.set(address, ws)
+        this.connections.set(address, {
+            ws,
+            duplex
+        })
         this.metrics.set('connections', this.connections.size)
         this.debug('added %s to connection list (headers %o)', address, customHeaders)
         this.emit(events.PEER_CONNECTED, address, customHeaders)
