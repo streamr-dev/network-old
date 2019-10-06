@@ -19,13 +19,8 @@ decisions made during development. It also provides explanations of some the mor
 glossary for often used terms. We aim to keep the wiki updated regularly so it is an accurate reflection of the code
 base.
 
-Flexible architecture allows you to integrate any external data sources.
-Check [Examples](#examples) for more information.
-
-
 ## Table of Contents
 - [Installation](#installation)
-- [Integration](#integration)
 - [Architectural decisions](https://github.com/streamr-dev/network/wiki)
 - [Examples](#examples)
 - [Development](#development)
@@ -43,13 +38,10 @@ $ npm install @streamr/streamr-p2p-network --save
 
 It is also possible to install Streamr Network globally (using `npm install @streamr/streamr-p2p-network --global`)
 
-## Integration
-
-Integration into existing project could be found in [Examples](./examples)
-
 ## Examples
 
-Check our [examples folder](./examples)
+Check the [examples folder](./examples) for examples of using the network node in different settings. Examples include:
+typical pub/sub setting, and publishing and subscribing using MQTT.
 
 ## Development
 
