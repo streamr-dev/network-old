@@ -24,18 +24,12 @@ Check [Examples](#examples) for more information.
 
 
 ## Table of Contents
-- [Demo](#demo)
 - [Installation](#installation)
 - [Integration](#integration)
 - [Architectural decisions](https://github.com/streamr-dev/network/wiki)
 - [Examples](#examples)
 - [Development](#development)
 - [Releasing](#releasing)
-
-## Demo
-
-Follow installation instructions in [Network runner](https://github.com/streamr-dev/network-runner).
-![Screenshot of the demo running](https://raw.githubusercontent.com/streamr-dev/network-runner/master/streamr-network.png?token=ABWG2RMLCBIRYNCUUTOF2Z24ZLWT6)
 
 ## Installation
 
