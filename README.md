@@ -3,7 +3,7 @@
  
 > Peer-to-peer publish-subscribe network for real-time data with support for long-term data persistence
 
-This repository/package contains an extendable server-side implementation of the 
+This repository/package contains an extendable implementation of the
 [Streamr protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) written in Node.js.
 The code contains a tracker implementation and a minimal network node implementation.
 This package acts as a library for other Node.js packages, but also provides a few of its own executables as well.
