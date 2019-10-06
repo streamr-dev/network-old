@@ -10,10 +10,11 @@ const ip = process.argv[3] || '127.0.0.1'
 const maxNeighborsPerNode = parseInt(process.argv[4], 10) || 4
 const apiKey = process.argv[5] || 'EmqyPJBAR-26T60BbxLazQhN8GKqhOQQe2rbEqRwECCQ'
 const streamId = process.argv[6] || 'cueeTiqTQUmHjZJhv4rOhA'
+const sentryDsn = process.argv[7] || null
 const id = `tracker-${port}`
 
 Sentry.init({
-    dsn: 'https://0fcf3b8f6b254caa9a7fadd77bcc37a4@sentry.io/1510389',
+    dsn: sentryDsn,
     integrations: [
         new Sentry.Integrations.Console({
             levels: ['error']
