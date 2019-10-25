@@ -27,7 +27,8 @@ describe('Check tracker instructions to node', () => {
         await Promise.all(otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress())))
         await Promise.all(otherNodes.map((node) => node.subscribe(streamId, 0)))
 
-        await Promise.all(otherNodes.map((node) => waitForEvent(node, Node.events.NODE_SUBSCRIBED)))
+        otherNodes.map((node) => node.addBootstrapTracker(tracker.getAddress()))
+        await wait(1000)
     })
 
     afterAll(async () => {
