@@ -1,6 +1,6 @@
 {
   "name": "streamr-network",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "Streamr P2P network",
   "repository": {
     "type": "git",
@@ -48,6 +48,7 @@
   "dependencies": {
     "@sentry/node": "^5.7.1",
     "commander": "^3.0.2",
+    "@streamr/sc-uws": "^10.12.0",
     "debug": "4.1.1",
     "events": "3.0.0",
     "lru-cache": "^5.1.1",
@@ -55,8 +56,7 @@
     "speedometer": "^1.1.0",
     "streamr-client": "^2.2.5",
     "streamr-client-protocol": "^2.2.14",
-    "uuid": "^3.3.3",
-    "ws": "^7.1.2"
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "eslint": "^6.6.0",
