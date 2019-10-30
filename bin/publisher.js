@@ -19,7 +19,7 @@ program
     .option('--streamId <streamId>', 'streamId to publish', 'default-stream-id')
     .option('--metrics <metrics>', 'log metrics', false)
     .option('--intervalInMs <intervalInMs>', 'interval to publish in ms', 200)
-    .description('Run subscriber')
+    .description('Run publisher')
     .parse(process.argv)
 
 const publisherId = `publisher-${program.port}`

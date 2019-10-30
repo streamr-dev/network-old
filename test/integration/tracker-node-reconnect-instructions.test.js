@@ -1,9 +1,8 @@
-const { waitForEvent, wait } = require('streamr-test-utils')
+const { wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
 const encoder = require('../../src/helpers/MessageEncoder')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const endpointEvents = require('../../src/connection/WsEndpoint').events
