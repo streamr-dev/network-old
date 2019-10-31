@@ -7,10 +7,8 @@ const host = process.argv[3] || null
 const maxNeighborsPerNode = parseInt(process.argv[4], 10) || 4
 const id = `tracker-${port}`
 
-startTracker(ip, port, id, maxNeighborsPerNode)
-    .then(() => {
-        console.info('Tracker %s listening on %s:%d', id, ip, port)
-    })
+startTracker(host, port, id, maxNeighborsPerNode)
+    .then(() => {})
     .catch((err) => {
         console.error(err)
         process.exit(1)
