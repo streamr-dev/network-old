@@ -24,10 +24,6 @@ module.exports = class BasicProtocol extends EventEmitter {
         })
 
         this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, (address, message) => {
-            if (!this.peerBook.hasAddress(address)) {
-                console.log(this.endpoint.isConnected(address))
-                console.error(message)
-            }
             const peerId = this.peerBook.getPeerId(address)
             const decodedMessage = encoder.decode(peerId, message)
 
