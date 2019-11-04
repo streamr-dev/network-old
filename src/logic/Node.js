@@ -147,7 +147,7 @@ class Node extends EventEmitter {
             try {
                 node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             } catch (e) {
-                this.debug('failed to connect to node at %s (%s)', nodeAddress, e)
+                this.debug('failed to connect to node at %s (%j)', nodeAddress, e)
                 return
             }
             try {
@@ -159,7 +159,7 @@ class Node extends EventEmitter {
             nodeIds.push(node)
         }))
 
-        const currentNodes = this.streams.getAllNodesForStream(streamId)
+        const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
         const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
 
         nodesToUnsubscribeFrom.forEach((node) => {
@@ -363,7 +363,7 @@ class Node extends EventEmitter {
         this.bootstrapTrackerAddresses.forEach((address) => {
             this.protocols.trackerNode.connectToTracker(address)
                 .catch((err) => {
-                    console.error(`Could not connect to tracker ${address} because '${err}'`)
+                    console.error('Could not connect to tracker %s because %j', address, err)
                 })
         })
     }
@@ -376,7 +376,7 @@ class Node extends EventEmitter {
     }
 
     async getMetrics() {
-        const endpointMetrics = this.protocols.nodeToNode.endpoint.getMetrics()
+        const endpointMetrics = this.protocols.nodeToNode.basicProtocol.endpoint.getMetrics()
         const processMetrics = await this.metrics.getPidusage()
         const nodeMetrics = this.metrics.report()
         const mainMetrics = this.metrics.prettify(endpointMetrics)

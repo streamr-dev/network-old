@@ -38,6 +38,8 @@ class PeerBook {
         this.idToAddress[peerId] = peerAddress
         this.idToType[peerId] = peerType
         this.addressToId[peerAddress] = peerId
+
+        return peerId
     }
 
     remove(peerAddress) {
@@ -45,6 +47,7 @@ class PeerBook {
         delete this.idToAddress[peerId]
         delete this.idToType[peerId]
         delete this.addressToId[peerAddress]
+        return peerId
     }
 
     getAddress(peerId) {
@@ -55,14 +58,18 @@ class PeerBook {
     }
 
     getPeerId(address) {
-        if (!this.addressToId[address]) {
+        if (!this.hasAddress(address)) {
             throw new NotFoundInPeerBookError(`Address ${address} not found in peer book`)
         }
         return this.addressToId[address]
     }
 
-    hasPeerId(address) {
-        return this.idToAddress[address] != null
+    hasAddress(address) {
+        return this.addressToId[address] != null
+    }
+
+    hasPeerId(peerId) {
+        return this.idToAddress[peerId] != null
     }
 
     isTracker(peerId) {
