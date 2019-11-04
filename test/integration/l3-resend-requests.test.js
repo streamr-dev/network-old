@@ -111,7 +111,7 @@ describe('resend requests are fulfilled at L3', () => {
         await storageNode.stop()
     })
 
-    beforeEach(async () => {
+    beforeEach(() => {
         // Prevent storageNode from being a neighbor of contactNode. Otherwise
         // L2 will be used to fulfill resend request, which will mean that L3
         // is skipped and we are just testing L2 again. TODO: find a better way

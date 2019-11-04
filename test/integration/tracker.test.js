@@ -50,8 +50,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
 
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
         await Promise.all([
-            await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            await waitForEvent(subscriberOne, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(subscriberOne, Node.events.NODE_SUBSCRIBED)
         ])
 
         expect(tracker.protocols.trackerServer.basicProtocol.endpoint.connections.size).toBe(2)
@@ -72,14 +72,14 @@ describe('check tracker, nodes and statuses from nodes', () => {
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
-            await waitForEvent(subscriberOne, Node.events.NODE_SUBSCRIBED),
-            await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(subscriberOne, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
 
         subscriberOne.unsubscribeFromStream(s2)
         await Promise.all([
-            await waitForEvent(subscriberTwo, Node.events.NODE_UNSUBSCRIBED),
-            await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(subscriberTwo, Node.events.NODE_UNSUBSCRIBED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
 
         expect(Object.keys(tracker.overlayPerStream)).toEqual(['stream-1::0', 'stream-2::2'])

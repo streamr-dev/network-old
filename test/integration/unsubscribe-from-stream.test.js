@@ -24,8 +24,12 @@ describe('node unsubscribing from a stream', () => {
         nodeA.subscribe('s', 2)
         nodeB.subscribe('s', 2)
 
-        await waitForEvent(nodeB, Node.events.NODE_SUBSCRIBED)
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await Promise.all([
+            waitForEvent(nodeA, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(nodeB, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        ])
     })
 
     afterEach(async () => {
