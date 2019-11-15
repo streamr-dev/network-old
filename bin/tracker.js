@@ -5,6 +5,9 @@ const util = require('util')
 const program = require('commander')
 const StreamrClient = require('streamr-client')
 const Sentry = require('@sentry/node')
+const fastify = require('fastify')({
+    ignoreTrailingSlash: true
+})
 
 const CURRENT_VERSION = require('../package.json').version
 const { startTracker } = require('../src/composition')
@@ -44,6 +47,7 @@ if (program.sentryDns) {
 }
 
 let client
+
 if (program.apiKey && program.streamId) {
     const { apiKey } = program
     client = new StreamrClient({
@@ -51,6 +55,40 @@ if (program.apiKey && program.streamId) {
             apiKey
         },
         autoConnect: false
+    })
+}
+
+function startServer(tracker) {
+    // Declare a route
+    fastify.get('/topology/', async (request, reply) => {
+        reply.send(tracker.getTopology())
+    })
+
+    fastify.get('/topology/:streamId/', async (request, reply) => {
+        if (request.params.streamId === '') {
+            throw Error('streamId must be a not empty string')
+        }
+        reply.send(tracker.getTopology(request.params.streamId, null))
+    })
+
+    fastify.get('/topology/:streamId/:partition/', async (request, reply) => {
+        if (request.params.streamId === '') {
+            throw Error('streamId must be a not empty string')
+        }
+
+        const askedPartition = parseInt(request.params.partition, 10)
+        if (Number.isNaN(askedPartition) || askedPartition < 0) {
+            throw Error('partition must be a positive integer')
+        }
+        reply.send(tracker.getTopology(request.params.streamId, request.params.partition))
+    })
+
+    // Run the server!
+    fastify.listen(3000, (err, address) => {
+        if (err) {
+            throw err
+        }
+        fastify.log.info(`server listening on ${address}`)
     })
 }
 
@@ -76,6 +114,8 @@ startTracker(program.ip, program.port, id, program.maxNeighborsPerNode)
                 }
             }, program.metricsInterval)
         }
+
+        startServer(tracker)
     })
     .catch((err) => {
         console.error(err)
