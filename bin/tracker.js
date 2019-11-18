@@ -11,6 +11,7 @@ const fastify = require('fastify')({
 
 const CURRENT_VERSION = require('../package.json').version
 const { startTracker } = require('../src/composition')
+const Tracker = require('../src/logic/Tracker')
 
 program
     .version(CURRENT_VERSION)
@@ -22,6 +23,7 @@ program
     .option('--sentryDns <sentryDns>', 'sentryDns', undefined)
     .option('--metrics <metrics>', 'output metrics to console', false)
     .option('--metricsInterval <metricsInterval>', 'metrics output interval (ms)', 5000)
+    .option('--endpointServerPort <endpointServerPort>', 'port for endpoint server', undefined)
     .description('Run tracker with reporting')
     .parse(process.argv)
 
@@ -58,7 +60,15 @@ if (program.apiKey && program.streamId) {
     })
 }
 
-function startServer(tracker) {
+function startServer(tracker, endpointServerPort) {
+    if (!(tracker instanceof Tracker)) {
+        throw new Error('tracker not instance of Tracker')
+    }
+
+    if (Number.isNaN(endpointServerPort) || endpointServerPort < 0) {
+        throw Error('endpointServerPort must be a positive integer')
+    }
+
     // Declare a route
     fastify.get('/topology/', async (request, reply) => {
         reply.send(tracker.getTopology())
@@ -83,12 +93,11 @@ function startServer(tracker) {
         reply.send(tracker.getTopology(request.params.streamId, request.params.partition))
     })
 
-    // Run the server!
-    fastify.listen(3000, (err, address) => {
+    fastify.listen(endpointServerPort, (err, address) => {
         if (err) {
             throw err
         }
-        fastify.log.info(`server listening on ${address}`)
+        console.info(`tracker is listening on ${address}`)
     })
 }
 
@@ -115,7 +124,9 @@ startTracker(program.ip, program.port, id, program.maxNeighborsPerNode)
             }, program.metricsInterval)
         }
 
-        startServer(tracker)
+        if (program.endpointServerPort) {
+            startServer(tracker, program.endpointServerPort)
+        }
     })
     .catch((err) => {
         console.error(err)
