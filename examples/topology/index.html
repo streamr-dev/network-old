@@ -80,7 +80,8 @@
 
         var streamList = $('menu');
 
-        Object.keys(topology).forEach((stream) => {
+        Object.keys(topology).sort().forEach((stream) => {
+            console.log(stream)
             var newLI = document.createElement('li');
             newLI.appendChild(document.createTextNode(stream));
             newLI.addEventListener('click', (e) => {
