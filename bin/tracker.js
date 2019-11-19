@@ -8,6 +8,7 @@ const Sentry = require('@sentry/node')
 const fastify = require('fastify')({
     ignoreTrailingSlash: true
 })
+const cors = require('fastify-cors')
 
 const CURRENT_VERSION = require('../package.json').version
 const { startTracker } = require('../src/composition')
@@ -69,6 +70,8 @@ function startServer(tracker, endpointServerPort) {
         throw Error('endpointServerPort must be a positive integer')
     }
 
+    fastify.register(cors)
+
     // Declare a route
     fastify.get('/topology/', async (request, reply) => {
         reply.send(tracker.getTopology())
@@ -101,9 +104,9 @@ function startServer(tracker, endpointServerPort) {
     })
 }
 
-startTracker(program.ip, program.port, id, program.maxNeighborsPerNode)
+startTracker(program.ip, program.port, id, parseInt(program.maxNeighborsPerNode, 10))
     .then((tracker) => {
-        console.log('started tracker id: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
+        console.info('started tracker id: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
             + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s',
         id, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
         program.metricsInterval, program.apiKey, program.streamId, program.sentryDns)
