@@ -7,7 +7,7 @@ const numberOfNodes = process.argv[2] || 10
 const startingPort = 30400
 const trackerPort = 27777
 const startingDebugPort = 9200
-const streams = ['stream1', 'stream2', 'stream3']
+const streams = ['stream1', 'stream2', 'stream3', 'stream4', 'stream5']
 let debug = false
 
 const productionEnv = Object.create(process.env)

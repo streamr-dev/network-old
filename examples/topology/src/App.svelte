@@ -1,7 +1,7 @@
 <script>
-    import Fetch from './Fetch.svelte'
-            import vis from '../node_modules/vis-network';
+	import vis from '../node_modules/vis-network';
 
+	import Fetch from './Fetch.svelte'
 	import Network from './Network.svelte'
 	import StreamList from './StreamList.svelte';
 
@@ -43,7 +43,9 @@
 	function handleFetch() {
 		fetch(trackerEndpoint).then(function(response) {
 			if (response.status !== 200) {
-				console.error("Error. Got status %d for %s", response.status, tracker)
+				let msg = `Error. Got status ${response.status} for ${trackerEndpoint}`
+				console.error(msg)
+				alert(msg)
 			} else {
 				return response.json()
 			}
