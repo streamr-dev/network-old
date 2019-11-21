@@ -12,8 +12,13 @@ class ResendBookkeeper {
         this.resends[node].add(ctx)
     }
 
-    getContexts(node) {
-        return this.resends[node] == null ? [] : this.resends[node]
+    popContexts(node) {
+        if (this.resends[node] == null) {
+            return []
+        }
+        const contexts = this.resends[node]
+        delete this.resends[node]
+        return contexts
     }
 
     delete(node, ctx) {
@@ -50,7 +55,7 @@ class ResendHandler {
     }
 
     cancelResendsOfNode(node) {
-        this.ongoingResends.getContexts(node).forEach((ctx) => ctx.cancel())
+        this.ongoingResends.popContexts(node).forEach((ctx) => ctx.cancel())
     }
 
     stop() {
