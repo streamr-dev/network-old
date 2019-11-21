@@ -1,13 +1,14 @@
 <script>
-	import vis from '../node_modules/vis-network';
+    import Fetch from './Fetch.svelte'
+            import vis from '../node_modules/vis-network';
 
 	import Network from './Network.svelte'
 	import StreamList from './StreamList.svelte';
 
 	let topology
 	let network
-	let trackerEndpoint = "http://localhost:11111/topology/"
 	let streamList = []
+    let trackerEndpoint = "http://localhost:11111/topology/"
 
 	let nodes = new vis.DataSet();
 	let edges = new vis.DataSet();
@@ -58,21 +59,7 @@
 
 <main>
     <h1 class="title">Streamr Network Topology</h1>
-	<div class="field is-horizontal">
-		<div class="field-body">
-			<div class="field">
-				<p class="control has-icons-left">
-					<input class="input is-primary" type="url" bind:value={trackerEndpoint}>
-					<span class="icon is-small is-left"><i class="fa fa-search"></i></span>
-				</p>
-			</div>
-			<div class="field">
-				<div class="control">
-					<button class="button is-success" on:click={handleFetch}>Fetch</button>
-				</div>
-			</div>
-		</div>
-	</div>
+    <Fetch trackerEndpoint={trackerEndpoint} handleFetch={handleFetch} />
     <div class="columns full">
         <div class="column is-one-fifth">
 			<StreamList streamList={streamList} buildNetwork={(stream) => buildNetwork(stream)} />

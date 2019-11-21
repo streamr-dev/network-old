@@ -1,6 +1,6 @@
 <script>
     export let streamList = []
-    export let buildNetwork
+    export let buildNetwork = () => {}
 </script>
 <nav class="panel">
     <p class="panel-heading">
