@@ -1,18 +1,18 @@
 <script>
 	import vis from '../node_modules/vis-network';
 
+	import Network from './Network.svelte'
+	import StreamList from './StreamList.svelte';
+
 	let topology
 	let network
 	let trackerEndpoint = "http://localhost:11111/topology/"
 	let streamList = []
 
+	let nodes = new vis.DataSet();
+	let edges = new vis.DataSet();
+
 	function buildNetwork(stream) {
-		// create an array with nodes
-		var nodes = new vis.DataSet();
-
-		// create an array with edges
-		var edges = new vis.DataSet();
-
 		let streamTopology = topology[stream]
 
 		nodes.clear()
@@ -21,7 +21,7 @@
 		Object.entries(streamTopology).map(([nodeId, neighbors]) => {
 			nodes.add({
 				id: nodeId,
-				label: nodeId + "\nLeft-Aligned box"
+				label: nodeId
 			})
 
 			neighbors.forEach((neighborId) => {
@@ -37,59 +37,6 @@
 				}
 			})
 		})
-
-		// create a network
-		let container = document.getElementById('network');
-		let data = {
-			nodes: nodes,
-			edges: edges
-		};
-		let options = {
-			nodes: {
-				shape: 'dot',
-				size: 16
-			},
-			layout:{
-				randomSeed: 34
-			},
-			physics: {
-				forceAtlas2Based: {
-					gravitationalConstant: -26,
-					centralGravity: 0.005,
-					springLength: 230,
-					springConstant: 0.18
-				},
-				maxVelocity: 146,
-				solver: 'forceAtlas2Based',
-				timestep: 0.35,
-				stabilization: {
-					enabled:true,
-					iterations:2000,
-					updateInterval:25
-				}
-			}
-		};
-		let network = new vis.Network(container, data, options);
-		// alert(stream)
-		//
-		// // create an array with nodes
-		// var nodes = new vis.DataSet();
-		//
-		// // create an array with edges
-		// var edges = new vis.DataSet();
-		//
-		// // create a network
-		// var container = document.getElementById('network');
-		// console.log(container)
-		// // container.css('border', '1px solidd red')
-		// var data = {
-		// 	nodes: nodes,
-		// 	edges: edges
-		// };
-		//
-		// var network = new vis.Network(container, data, options);
-
-		return true
 	}
 
 	function handleFetch() {
@@ -128,30 +75,10 @@
 	</div>
     <div class="columns full">
         <div class="column is-one-fifth">
-            <nav class="panel">
-                <p class="panel-heading">
-					List of streams:
-                </p>
-                <div class="panel-block">
-                    <p class="control has-icons-left">
-                        <input class="input" type="text" placeholder="Search">
-                        <span class="icon is-left">
-							<i class="fas fa-search" aria-hidden="true"></i>
-						</span>
-                    </p>
-                </div>
-				{#each streamList as stream}
-					<a class="panel-block is-active"  on:click|preventDefault={() => buildNetwork(stream)}>
-					<span class="panel-icon">
-						<i class="fas fa-book" aria-hidden="true"></i>
-					</span>
-						{stream}
-					</a>
-				{/each}
-            </nav>
+			<StreamList streamList={streamList} buildNetwork={(stream) => buildNetwork(stream)} />
         </div>
-        <div id="network" class="column">
-            Topology
+        <div class="column is-fullheight">
+			<Network nodes={nodes} edges={edges} />
         </div>
     </div>
 </main>
