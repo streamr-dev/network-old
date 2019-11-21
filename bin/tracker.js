@@ -104,7 +104,7 @@ function startServer(tracker, endpointServerPort) {
     })
 }
 
-startTracker(program.ip, program.port, id, parseInt(program.maxNeighborsPerNode, 10))
+startTracker(program.ip, parseInt(program.port, 10), id, parseInt(program.maxNeighborsPerNode, 10))
     .then((tracker) => {
         console.info('started tracker id: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
             + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s',

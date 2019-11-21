@@ -5,6 +5,7 @@ const path = require('path')
 
 const numberOfNodes = process.argv[2] || 10
 const startingPort = 30400
+const trackerPort = 27777
 const startingDebugPort = 9200
 const streams = ['stream1', 'stream2', 'stream3']
 let debug = false
@@ -15,7 +16,7 @@ productionEnv.checkUncaughtException = true
 
 // create tracker
 const tracker = path.resolve('./bin/tracker.js')
-let args = [tracker, '--endpointServerPort=11111']
+let args = [tracker, '--port=' + trackerPort, '--endpointServerPort=11111']
 
 if (process.env.NODE_DEBUG_OPTION !== undefined) {
     debug = true
@@ -31,7 +32,8 @@ for (let i = 0; i < numberOfNodes; i++) {
     args = [
         path.resolve('./bin/subscriber.js'),
         '--streamId=' + streams[Math.floor(Math.random() * streams.length)],
-        '--port=' + (startingPort + i)
+        '--port=' + (startingPort + i),
+        `--trackers=ws://127.0.0.1:${trackerPort}`
     ]
 
     if (debug) {
