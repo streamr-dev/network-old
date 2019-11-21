@@ -349,6 +349,7 @@ class Node extends EventEmitter {
 
     onNodeDisconnected(node) {
         this.metrics.inc('onNodeDisconnected')
+        this.resendHandler.cancelResendsOfNode(node)
         this.streams.removeNodeFromAllStreams(node)
         this.debug('removed all subscriptions of node %s', node)
         this._sendStatusToAllTrackers()
