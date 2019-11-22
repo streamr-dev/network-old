@@ -134,7 +134,7 @@ class Node extends EventEmitter {
             proxyRequestStream(
                 async (data) => {
                     try {
-                        this.protocols.nodeToNode.send(source, data)
+                        await this.protocols.nodeToNode.send(source, data)
                     } catch (e) {
                         // TODO: catch specific error
                         const requests = this.resendHandler.cancelResendsOfNode(source)
