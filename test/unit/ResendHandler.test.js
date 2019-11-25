@@ -327,17 +327,20 @@ describe('ResendHandler', () => {
         }], notifyError)
 
         expect(resendHandler.metrics()).toEqual({
+            meanAge: 0,
             numOfOngoingResends: 0
         })
 
         const p1 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
         const p2 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
-        expect(resendHandler.metrics()).toEqual({
+        expect(resendHandler.metrics()).toMatchObject({
+            meanAge: expect.any(Number),
             numOfOngoingResends: 2
         })
 
         await Promise.all([p1, p2])
         expect(resendHandler.metrics()).toEqual({
+            meanAge: 0,
             numOfOngoingResends: 0
         })
     })
