@@ -29,6 +29,10 @@ class ResendBookkeeper {
             }
         }
     }
+
+    size() {
+        return Object.values(this.resends).reduce((acc, ctxs) => acc + ctxs.size, 0)
+    }
 }
 
 class ResendHandler {
@@ -69,6 +73,12 @@ class ResendHandler {
                 resendStrategy.stop()
             }
         })
+    }
+
+    metrics() {
+        return {
+            numOfOngoingResends: this.ongoingResends.size()
+        }
     }
 
     async _loopThruResendStrategies(request, source, requestStream) {
