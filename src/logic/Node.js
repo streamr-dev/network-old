@@ -123,10 +123,10 @@ class Node extends EventEmitter {
 
     requestResend(request, source) {
         this.metrics.inc('requestResend')
-        this.debug('received %s resend request %s with subId %s',
+        this.debug('received %s resend request %s with requestId %s',
             source === null ? 'local' : `from ${source}`,
             request.constructor.name,
-            request.subId)
+            request.requestId)
         this.emit(events.RESEND_REQUEST_RECEIVED, request, source)
 
         const requestStream = this.resendHandler.handleRequest(request, source)
