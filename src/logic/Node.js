@@ -115,7 +115,7 @@ class Node extends EventEmitter {
             try {
                 await this.protocols.nodeToNode.sendUnsubscribe(n, streamId)
             } catch (e) {
-                this.debug('failed to send unsubscribe request because of %s', e)
+                this.debug('unsubscribed, but failed to send unsubscribe request for the stream %s because of %j', streamId, e)
             }
         })
         this._sendStatusToAllTrackers()
@@ -163,13 +163,13 @@ class Node extends EventEmitter {
             try {
                 node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             } catch (e) {
-                this.debug('failed to connect to node at %s (%j)', nodeAddress, e)
+                this.debug('failed to connect to node at %s (%j), to subscribe streamId %s', nodeAddress, e, streamId)
                 return
             }
             try {
                 await this._subscribeToStreamOnNode(node, streamId)
             } catch (e) {
-                this.debug('failed to subscribe to node %s (%s)', node, e)
+                this.debug('failed to subscribe to node %s (%s), streamId %s', node, e, streamId)
                 return
             }
             nodeIds.push(node)
