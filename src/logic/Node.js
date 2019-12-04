@@ -351,7 +351,7 @@ class Node extends EventEmitter {
     async _unsubscribeFromStreamOnNode(node, streamId) {
         this.streams.removeNodeFromStream(streamId, node)
         await this.protocols.nodeToNode.sendUnsubscribe(node, streamId).catch((err) => {
-            console.error(`Failed to unsubscribed from ${node} because '${err}'`)
+            console.error(`Failed to send unsubscribed from ${node} because '${err}'`)
         })
         this.debug('unsubscribed from node %s (tracker instruction)', node)
     }
