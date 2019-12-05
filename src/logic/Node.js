@@ -169,7 +169,7 @@ class Node extends EventEmitter {
             try {
                 await this._subscribeToStreamOnNode(node, streamId)
             } catch (e) {
-                this.debug('failed to subscribe to node %s (%s), streamId %s', node, e, streamId)
+                this.debug('failed to subscribe to node %s (%j), streamId %s', node, e, streamId)
                 return
             }
             nodeIds.push(node)
