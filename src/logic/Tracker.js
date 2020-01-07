@@ -73,7 +73,8 @@ module.exports = class Tracker extends EventEmitter {
 
         // create new topology with storage
         if (this.storageNodes.size && this.overlayPerStream[streamId] == null) {
-            this.overlayPerStream[streamId] = this._createNewOverlayTopology(true)
+            this.overlayPerStream[streamId] = this._createNewOverlayTopology()
+            this._formAndSendInstructionsToStorages()
         }
 
         const foundStorageNodes = []
@@ -109,7 +110,7 @@ module.exports = class Tracker extends EventEmitter {
         return listOfStorages[Math.floor(Math.random() * listOfStorages.length)]
     }
 
-    _createNewOverlayTopology(sendInstructionsToStorages = false) {
+    _createNewOverlayTopology() {
         const overlayTopology = new OverlayTopology(this.opts.maxNeighborsPerNode)
 
         // add to the new OverlayTopology random storage
@@ -118,10 +119,6 @@ module.exports = class Tracker extends EventEmitter {
 
             if (randomStorage) {
                 overlayTopology.update(this._getRandomStorage(), new Set())
-            }
-
-            if (sendInstructionsToStorages) {
-                this._formAndSendInstructionsToStorages()
             }
         }
 

@@ -1,15 +1,10 @@
 const intoStream = require('into-stream')
 const { UnicastMessage } = require('streamr-client-protocol').ControlLayer
-const { waitForEvent, waitForStreamToEnd } = require('streamr-test-utils')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startStorageNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
+const { LOCALHOST, typesOfStreamItems } = require('../util')
 const Node = require('../../src/logic/Node')
-
-const typesOfStreamItems = async (stream) => {
-    const arr = await waitForStreamToEnd(stream)
-    return arr.map((msg) => msg.type)
-}
 
 /**
  * This test verifies that a node can fulfill resend requests at L3. A resend
