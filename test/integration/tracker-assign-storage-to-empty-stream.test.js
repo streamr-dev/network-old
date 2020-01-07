@@ -1,4 +1,5 @@
 const intoStream = require('into-stream')
+const portfinder = require('portfinder')
 const { waitForEvent, waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
@@ -8,14 +9,17 @@ const { LOCALHOST, typesOfStreamItems } = require('../util')
 
 describe('tracker assigns storage node to streams on any resend', () => {
     let tracker
+    let trackerPort
     let subscriberOne
     let subscriberTwo
     let storageNode
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 21950, 'tracker')
-        subscriberOne = await startNetworkNode(LOCALHOST, 21952, 'subscriberOne')
-        subscriberTwo = await startNetworkNode(LOCALHOST, 21953, 'subscriberTwo')
+        trackerPort = await portfinder.getPortPromise()
+
+        tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
+        subscriberOne = await startNetworkNode(LOCALHOST, await portfinder.getPortPromise(), 'subscriberOne')
+        subscriberTwo = await startNetworkNode(LOCALHOST, await portfinder.getPortPromise(), 'subscriberTwo')
 
         storageNode = await startStorageNode(LOCALHOST, 18634, 'storageNode', [{
             store: () => {},
@@ -108,7 +112,7 @@ describe('tracker assigns storage node to streams on any resend', () => {
         })
 
         await tracker.stop()
-        tracker = await startTracker(LOCALHOST, 21950, 'tracker')
+        tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
