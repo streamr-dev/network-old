@@ -71,6 +71,11 @@ module.exports = class Tracker extends EventEmitter {
         const streamId = findStorageNodesMessage.getStreamId()
         const source = findStorageNodesMessage.getSource()
 
+        // create new topology with storage
+        if (this.storageNodes.size && this.overlayPerStream[streamId] == null) {
+            this.overlayPerStream[streamId] = this._createNewOverlayTopology(true)
+        }
+
         const foundStorageNodes = []
         this.storageNodes.forEach((status, node) => {
             const streams = Object.keys(status.streams)
@@ -78,6 +83,14 @@ module.exports = class Tracker extends EventEmitter {
                 foundStorageNodes.push(node)
             }
         })
+
+        if (!foundStorageNodes.length) {
+            const randomStorage = this._getRandomStorage()
+
+            if (randomStorage) {
+                foundStorageNodes.push(randomStorage)
+            }
+        }
 
         this.protocols.trackerServer.sendStorageNodes(source, streamId, foundStorageNodes)
     }
@@ -91,6 +104,30 @@ module.exports = class Tracker extends EventEmitter {
         return this.protocols.trackerServer.getAddress()
     }
 
+    _getRandomStorage() {
+        const listOfStorages = [...this.storageNodes.keys()]
+        return listOfStorages[Math.floor(Math.random() * listOfStorages.length)]
+    }
+
+    _createNewOverlayTopology(sendInstructionsToStorages = false) {
+        const overlayTopology = new OverlayTopology(this.opts.maxNeighborsPerNode)
+
+        // add to the new OverlayTopology random storage
+        if (this.storageNodes.size) {
+            const randomStorage = this._getRandomStorage()
+
+            if (randomStorage) {
+                overlayTopology.update(this._getRandomStorage(), new Set())
+            }
+
+            if (sendInstructionsToStorages) {
+                this._formAndSendInstructionsToStorages()
+            }
+        }
+
+        return overlayTopology
+    }
+
     _updateNode(node, streams) {
         let newNode = true
 
@@ -102,7 +139,7 @@ module.exports = class Tracker extends EventEmitter {
         // Add or update
         Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
             if (this.overlayPerStream[streamKey] == null) {
-                this.overlayPerStream[streamKey] = new OverlayTopology(this.opts.maxNeighborsPerNode)
+                this.overlayPerStream[streamKey] = this._createNewOverlayTopology()
             }
 
             newNode = this.overlayPerStream[streamKey].hasNode(node) ? false : newNode
