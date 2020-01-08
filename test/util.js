@@ -1,13 +1,10 @@
-const { waitForStreamToEnd } = require('streamr-test-utils')
+const portfinder = require('portfinder')
 
 const LOCALHOST = '127.0.0.1'
 
-const typesOfStreamItems = async (stream) => {
-    const arr = await waitForStreamToEnd(stream)
-    return arr.map((msg) => msg.type)
-}
+const getPort = async () => portfinder.getPortPromise()
 
 module.exports = {
-    typesOfStreamItems,
+    getPort,
     LOCALHOST,
 }

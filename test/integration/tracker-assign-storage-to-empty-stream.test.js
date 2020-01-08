@@ -1,11 +1,10 @@
 const intoStream = require('into-stream')
-const portfinder = require('portfinder')
-const { waitForEvent, waitForCondition } = require('streamr-test-utils')
+const { waitForEvent, waitForCondition, waitForStreamToEnd } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const { LOCALHOST, typesOfStreamItems } = require('../util')
+const { LOCALHOST, getPort } = require('../util')
 
 describe('tracker assigns storage node to streams on any resend', () => {
     let tracker
@@ -15,11 +14,11 @@ describe('tracker assigns storage node to streams on any resend', () => {
     let storageNode
 
     beforeAll(async () => {
-        trackerPort = await portfinder.getPortPromise()
+        trackerPort = await getPort()
 
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
-        subscriberOne = await startNetworkNode(LOCALHOST, await portfinder.getPortPromise(), 'subscriberOne')
-        subscriberTwo = await startNetworkNode(LOCALHOST, await portfinder.getPortPromise(), 'subscriberTwo')
+        subscriberOne = await startNetworkNode(LOCALHOST, await getPort(), 'subscriberOne')
+        subscriberTwo = await startNetworkNode(LOCALHOST, await getPort(), 'subscriberTwo')
 
         storageNode = await startStorageNode(LOCALHOST, 18634, 'storageNode', [{
             store: () => {},
@@ -91,7 +90,7 @@ describe('tracker assigns storage node to streams on any resend', () => {
 
         const stream = subscriberOne.requestResendLast('streamId', 0, 'requestId', 10)
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
-        await typesOfStreamItems(stream)
+        await waitForStreamToEnd(stream)
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
                 storageNode: []
@@ -100,7 +99,7 @@ describe('tracker assigns storage node to streams on any resend', () => {
 
         const stream2 = subscriberTwo.requestResendLast('streamId2', 1, 'requestId2', 10)
         await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
-        await typesOfStreamItems(stream2)
+        await waitForStreamToEnd(stream2)
 
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
