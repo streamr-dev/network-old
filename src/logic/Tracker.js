@@ -71,7 +71,10 @@ module.exports = class Tracker extends EventEmitter {
         const streamId = findStorageNodesMessage.getStreamId()
         const source = findStorageNodesMessage.getSource()
 
-        // create new topology with storage
+        // Storage node may have restarted which means it will be no longer assigned to its previous streams,
+        // especially those that aren't actively being subscribed or produced to. Thus on encountering a
+        // unknown streamId, we need to create a new topology and assign storage node(s) to it to ensure
+        // that resend requests for inactive streams get properly handled.
         if (this.storageNodes.size && this.overlayPerStream[streamId] == null) {
             this.overlayPerStream[streamId] = this._createNewOverlayTopology()
             this._formAndSendInstructionsToStorages()
@@ -85,6 +88,7 @@ module.exports = class Tracker extends EventEmitter {
             }
         })
 
+        // TODO: this works for single storage node scenario. How to deal with multiple?
         if (!foundStorageNodes.length) {
             const randomStorage = this._getRandomStorage()
 
