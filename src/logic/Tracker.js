@@ -6,7 +6,7 @@ const TrackerServer = require('../protocol/TrackerServer')
 const OverlayTopology = require('../logic/OverlayTopology')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
-const { peerTypes } = require('../protocol/PeerBook')
+const { peerTypes, NotFoundInPeerBookError } = require('../protocol/PeerBook')
 
 module.exports = class Tracker extends EventEmitter {
     constructor(opts) {
@@ -38,6 +38,52 @@ module.exports = class Tracker extends EventEmitter {
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, ({ peerId, nodeType }) => this.onNodeDisconnected(peerId, nodeType))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage, nodeType }) => this.processNodeStatus(statusMessage, nodeType))
         this.protocols.trackerServer.on(TrackerServer.events.FIND_STORAGE_NODES_REQUEST, this.findStorageNodes.bind(this))
+
+        this.protocols.trackerServer.on(TrackerServer.events.RTC_OFFER_RECEIVED, (rtcOfferMessage) => {
+            try {
+                this.protocols.trackerServer.sendRtcOffer(
+                    rtcOfferMessage.getTargetNode(),
+                    rtcOfferMessage.getOriginatorNode(),
+                    rtcOfferMessage.getData()
+                )
+            } catch (err) {
+                if (err instanceof NotFoundInPeerBookError) {
+                    this.protocols.trackerServer.sendUnknownPeerRtcError(rtcOfferMessage.getOriginatorNode())
+                } else {
+                    throw err
+                }
+            }
+        })
+        this.protocols.trackerServer.on(TrackerServer.events.RTC_ANSWER_RECEIVED, (rtcAnswerMessage) => {
+            try {
+                this.protocols.trackerServer.sendRtcAnswer(
+                    rtcAnswerMessage.getTargetNode(),
+                    rtcAnswerMessage.getOriginatorNode(),
+                    rtcAnswerMessage.getData()
+                )
+            } catch (err) {
+                if (err instanceof NotFoundInPeerBookError) {
+                    this.protocols.trackerServer.sendUnknownPeerRtcError(rtcAnswerMessage.getOriginatorNode())
+                } else {
+                    throw err
+                }
+            }
+        })
+        this.protocols.trackerServer.on(TrackerServer.events.ICE_CANDIDATE_RECEIVED, (iceCandidateMessage) => {
+            try {
+                this.protocols.trackerServer.sendIceCandidate(
+                    iceCandidateMessage.getTargetNode(),
+                    iceCandidateMessage.getOriginatorNode(),
+                    iceCandidateMessage.getData()
+                )
+            } catch (err) {
+                if (err instanceof NotFoundInPeerBookError) {
+                    this.protocols.trackerServer.sendUnknownPeerRtcError(iceCandidateMessage.getOriginatorNode())
+                } else {
+                    throw err
+                }
+            }
+        })
 
         this.metrics = new Metrics(this.opts.id)
 
