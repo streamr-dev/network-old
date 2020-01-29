@@ -7,7 +7,11 @@ const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
     TRACKER_INSTRUCTION_RECEIVED: 'streamr:tracker-node:tracker-instruction-received',
     TRACKER_DISCONNECTED: 'streamr:tracker-node:tracker-disconnected',
-    STORAGE_NODES_RECEIVED: 'streamr:tracker-node:storage-nodes-received'
+    STORAGE_NODES_RECEIVED: 'streamr:tracker-node:storage-nodes-received',
+    RTC_OFFER_RECEIVED: 'streamr:tracker-node:rtc-offer-received',
+    RTC_ANSWER_RECEIVED: 'streamr:tracker-node:rtc-answer-received',
+    RTC_ERROR_RECEIVED: 'streamr:tracker-node:rtc-error-received',
+    ICE_CANDIDATE_RECEIVED: 'streamr:tracker-node:ice-candidate-received'
 })
 
 class TrackerNode extends EventEmitter {
@@ -30,6 +34,21 @@ class TrackerNode extends EventEmitter {
         return this.basicProtocol.endpoint.send(trackerAddress, encoder.findStorageNodesMessage(streamId))
     }
 
+    sendRtcOffer(trackerId, targetNode, originatorNode, data) {
+        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
+        return this.basicProtocol.endpoint.send(trackerAddress, encoder.rtcOfferMessage(originatorNode, targetNode, data))
+    }
+
+    sendRtcAnswer(trackerId, targetNode, originatorNode, data) {
+        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
+        return this.basicProtocol.endpoint.send(trackerAddress, encoder.rtcAnswerMessage(originatorNode, targetNode, data))
+    }
+
+    sendIceCandidate(trackerId, targetNode, originatorNode, data) {
+        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
+        return this.basicProtocol.endpoint.send(trackerAddress, encoder.iceCandidateMessage(originatorNode, targetNode, data))
+    }
+
     stop() {
         this.basicProtocol.endpoint.stop()
     }
@@ -41,6 +60,18 @@ class TrackerNode extends EventEmitter {
                 break
             case encoder.STORAGE_NODES:
                 this.emit(events.STORAGE_NODES_RECEIVED, message)
+                break
+            case encoder.RTC_OFFER:
+                this.emit(events.RTC_OFFER_RECEIVED, message)
+                break
+            case encoder.RTC_ANSWER:
+                this.emit(events.RTC_ANSWER_RECEIVED, message)
+                break
+            case encoder.RTC_ERROR:
+                this.emit(events.RTC_ERROR_RECEIVED, message)
+                break
+            case encoder.ICE_CANDIDATE:
+                this.emit(events.ICE_CANDIDATE_RECEIVED, message)
                 break
             default:
                 break

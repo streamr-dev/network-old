@@ -3,11 +3,16 @@ const { EventEmitter } = require('events')
 const encoder = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
+const RtcErrorMessage = require('../messages/RtcErrorMessage')
+
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:tracker:send-peers',
     NODE_STATUS_RECEIVED: 'streamr:tracker:peer-status',
     NODE_DISCONNECTED: 'streamr:tracker:node-disconnected',
-    FIND_STORAGE_NODES_REQUEST: 'streamr:tracker:find-storage-nodes-request'
+    FIND_STORAGE_NODES_REQUEST: 'streamr:tracker:find-storage-nodes-request',
+    RTC_OFFER_RECEIVED: 'streamr:tracker:rtc-offer-received',
+    RTC_ANSWER_RECEIVED: 'streamr:tracker:rtc-answer-received',
+    ICE_CANDIDATE_RECEIVED: 'streamr:tracker:ice-candidate-received'
 })
 
 class TrackerServer extends EventEmitter {
@@ -30,6 +35,26 @@ class TrackerServer extends EventEmitter {
         const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
         const listOfNodeAddresses = listOfNodeIds.map((nodeId) => this.basicProtocol.peerBook.getAddress(nodeId))
         return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.storageNodesMessage(streamId, listOfNodeAddresses))
+    }
+
+    sendRtcOffer(receiverNodeId, originatorNode, data) {
+        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
+        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcOfferMessage(originatorNode, receiverNodeId, data))
+    }
+
+    sendRtcAnswer(receiverNodeId, originatorNode, data) {
+        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
+        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcAnswerMessage(originatorNode, receiverNodeId, data))
+    }
+
+    sendUnknownPeerRtcError(receiverNodeId) {
+        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
+        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER))
+    }
+
+    sendIceCandidate(receiverNodeId, originatorNode, data) {
+        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
+        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.iceCandidateMessage(originatorNode, receiverNodeId, data))
     }
 
     getAddress() {
@@ -69,6 +94,15 @@ class TrackerServer extends EventEmitter {
                 break
             case encoder.FIND_STORAGE_NODES:
                 this.emit(events.FIND_STORAGE_NODES_REQUEST, message)
+                break
+            case encoder.RTC_OFFER:
+                this.emit(events.RTC_OFFER_RECEIVED, message)
+                break
+            case encoder.RTC_ANSWER:
+                this.emit(events.RTC_ANSWER_RECEIVED, message)
+                break
+            case encoder.ICE_CANDIDATE:
+                this.emit(events.ICE_CANDIDATE_RECEIVED, message)
                 break
             default:
                 break
