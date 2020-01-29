@@ -6,6 +6,10 @@ const FindStorageNodesMessage = require('../../src/messages/FindStorageNodesMess
 const InstructionMessage = require('../../src/messages/InstructionMessage')
 const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
 const WrapperMessage = require('../../src/messages/WrapperMessage')
+const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
+const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
+const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
+const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
 describe('encoder', () => {
@@ -130,6 +134,136 @@ describe('encoder', () => {
 
         expect(unicastMessage.getStreamId()).toEqual(new StreamIdAndPartition('stream-id', 0))
         expect(unicastMessage.getNodeAddresses()).toEqual(['ws://node-1', 'ws://node-2'])
+    })
+
+    it('check encoding RTC_OFFER', () => {
+        const actual = encoder.rtcOfferMessage('originatorNode', 'targetNode', 'some data here')
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.RTC_OFFER,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        })
+    })
+
+    it('check decoding RTC_OFFER', () => {
+        const rtcOfferMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.RTC_OFFER,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        }))
+
+        expect(rtcOfferMessage).toBeInstanceOf(RtcOfferMessage)
+        expect(rtcOfferMessage.getVersion()).toEqual(version)
+        expect(rtcOfferMessage.getCode()).toEqual(encoder.RTC_OFFER)
+        expect(rtcOfferMessage.getSource()).toEqual('source')
+
+        expect(rtcOfferMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(rtcOfferMessage.getTargetNode()).toEqual('targetNode')
+        expect(rtcOfferMessage.getData()).toEqual('some data here')
+    })
+
+    it('check encoding RTC_ANSWER', () => {
+        const actual = encoder.rtcAnswerMessage('originatorNode', 'targetNode', 'some data here')
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.RTC_ANSWER,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        })
+    })
+
+    it('check decoding RTC_ANSWER', () => {
+        const rtcAnswerMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.RTC_ANSWER,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        }))
+
+        expect(rtcAnswerMessage).toBeInstanceOf(RtcAnswerMessage)
+        expect(rtcAnswerMessage.getVersion()).toEqual(version)
+        expect(rtcAnswerMessage.getCode()).toEqual(encoder.RTC_ANSWER)
+        expect(rtcAnswerMessage.getSource()).toEqual('source')
+
+        expect(rtcAnswerMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(rtcAnswerMessage.getTargetNode()).toEqual('targetNode')
+        expect(rtcAnswerMessage.getData()).toEqual('some data here')
+    })
+
+    it('check encoding RTC_ERROR', () => {
+        const actual = encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.RTC_ERROR,
+            version,
+            payload: {
+                errorCode: 'UNKNOWN_PEER'
+            }
+        })
+    })
+
+    it('check decoding RTC_ERROR', () => {
+        const rtcErrorMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.RTC_ERROR,
+            version,
+            payload: {
+                errorCode: 'UNKNOWN_PEER'
+            }
+        }))
+
+        expect(rtcErrorMessage).toBeInstanceOf(RtcErrorMessage)
+        expect(rtcErrorMessage.getVersion()).toEqual(version)
+        expect(rtcErrorMessage.getCode()).toEqual(encoder.RTC_ERROR)
+        expect(rtcErrorMessage.getSource()).toEqual('source')
+
+        expect(rtcErrorMessage.getErrorCode()).toEqual(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
+    })
+
+    it('check encoding ICE_CANDIDATE', () => {
+        const actual = encoder.iceCandidateMessage('originatorNode', 'targetNode', 'some data here')
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.ICE_CANDIDATE,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        })
+    })
+
+    it('check decoding ICE_CANDIDATE', () => {
+        const iceCandidateMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.ICE_CANDIDATE,
+            version,
+            payload: {
+                originatorNode: 'originatorNode',
+                targetNode: 'targetNode',
+                data: 'some data here'
+            }
+        }))
+
+        expect(iceCandidateMessage).toBeInstanceOf(IceCandidateMessage)
+        expect(iceCandidateMessage.getVersion()).toEqual(version)
+        expect(iceCandidateMessage.getCode()).toEqual(encoder.ICE_CANDIDATE)
+        expect(iceCandidateMessage.getSource()).toEqual('source')
+
+        expect(iceCandidateMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(iceCandidateMessage.getTargetNode()).toEqual('targetNode')
+        expect(iceCandidateMessage.getData()).toEqual('some data here')
     })
 })
 

@@ -1,5 +1,9 @@
 const { ControlLayer } = require('streamr-client-protocol')
 
+const RtcOfferMessage = require('../messages/RtcOfferMessage')
+const RtcAnswerMessage = require('../messages/RtcAnswerMessage')
+const RtcErrorMessage = require('../messages/RtcErrorMessage')
+const IceCandidateMessage = require('../messages/IceCandidateMessage')
 const FindStorageNodesMessage = require('../messages/FindStorageNodesMessage')
 const InstructionMessage = require('../messages/InstructionMessage')
 const StatusMessage = require('../messages/StatusMessage')
@@ -9,7 +13,7 @@ const { StreamIdAndPartition } = require('../identifiers')
 const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
-    if (type < 0 || type > 4) {
+    if (type < 0 || type > 8) {
         throw new Error(`Unknown message type: ${type}`)
     }
 
@@ -50,6 +54,18 @@ const decode = (source, message) => {
         case msgTypes.WRAPPER:
             return new WrapperMessage(ControlLayer.ControlMessage.deserialize(payload.serializedControlLayerPayload, false), source)
 
+        case msgTypes.RTC_OFFER:
+            return new RtcOfferMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+
+        case msgTypes.RTC_ANSWER:
+            return new RtcAnswerMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+
+        case msgTypes.RTC_ERROR:
+            return new RtcErrorMessage(payload.errorCode, source)
+
+        case msgTypes.ICE_CANDIDATE:
+            return new IceCandidateMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+
         default:
             throw new Error(`Unknown message type: ${code}`)
     }
@@ -74,6 +90,24 @@ module.exports = {
     }),
     wrapperMessage: (controlLayerPayload) => encode(msgTypes.WRAPPER, {
         serializedControlLayerPayload: controlLayerPayload.serialize()
+    }),
+    rtcOfferMessage: (originatorNode, targetNode, data) => encode(msgTypes.RTC_OFFER, {
+        originatorNode,
+        targetNode,
+        data
+    }),
+    rtcAnswerMessage: (originatorNode, targetNode, data) => encode(msgTypes.RTC_ANSWER, {
+        originatorNode,
+        targetNode,
+        data
+    }),
+    rtcErrorMessage: (errorCode) => encode(msgTypes.RTC_ERROR, {
+        errorCode
+    }),
+    iceCandidateMessage: (originatorNode, targetNode, data) => encode(msgTypes.ICE_CANDIDATE, {
+        originatorNode,
+        targetNode,
+        data
     }),
     ...msgTypes,
     CURRENT_VERSION
