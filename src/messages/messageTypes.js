@@ -6,6 +6,10 @@ const msgTypes = {
     FIND_STORAGE_NODES: 2,
     STORAGE_NODES: 3,
     WRAPPER: 4,
+    RTC_OFFER: 5,
+    RTC_ANSWER: 6,
+    RTC_ERROR: 7,
+    ICE_CANDIDATE: 8,
 }
 
 const disconnectionReasons = Object.freeze({
