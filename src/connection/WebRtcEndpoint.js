@@ -51,7 +51,13 @@ class WebRtcEndpoint extends EventEmitter {
             }))
         }
         const connection = new RTCPeerConnection(configuration)
+        const dataChannel = connection.createDataChannel('streamrDataChannel', {
+            id: 0,
+            negotiated: true
+        })
+
         this.connections[targetPeerId] = connection
+        this.dataChannels[targetPeerId] = dataChannel
 
         connection.onicecandidate = (event) => {
             if (event.candidate != null) {
@@ -73,26 +79,6 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onnegotiationneeded = (event) => {
             console.log('onnegotiationneeded', this.id, event)
         }
-
-        const isOffering = this.id < targetPeerId
-        if (isOffering) {
-            this._initDataChannel(targetPeerId, connection.createDataChannel())
-            const offer = await connection.createOffer()
-            await connection.setLocalDescription(offer)
-            this.rtcSignaller.offer(routerId, targetPeerId, offer)
-        } else {
-            connection.ondatachannel = (event) => {
-                this._initDataChannel(targetPeerId, event.channel)
-            }
-        }
-    }
-
-    send(targetPeerId, message) {
-        this.dataChannels[targetPeerId].send(message)
-    }
-
-    _initDataChannel(targetPeerId, dataChannel) {
-        this.dataChannels[targetPeerId] = dataChannel
         dataChannel.onopen = (event) => {
             this.emit(events.PEER_CONNECTED, targetPeerId)
         }
@@ -105,6 +91,17 @@ class WebRtcEndpoint extends EventEmitter {
         dataChannel.onmessage = (event) => {
             this.emit(events.MESSAGE_RECEIVED, targetPeerId, event.data)
         }
+
+        const isOffering = this.id < targetPeerId
+        if (isOffering) {
+            const offer = await connection.createOffer()
+            await connection.setLocalDescription(offer)
+            this.rtcSignaller.offer(routerId, targetPeerId, offer)
+        }
+    }
+
+    send(targetPeerId, message) {
+        this.dataChannels[targetPeerId].send(message)
     }
 }
 
