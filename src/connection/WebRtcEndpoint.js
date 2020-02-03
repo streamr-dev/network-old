@@ -59,6 +59,14 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections[targetPeerId] = connection
         this.dataChannels[targetPeerId] = dataChannel
 
+        const isOffering = this.id < targetPeerId
+        if (isOffering) {
+            connection.onnegotiationneeded = async () => {
+                const offer = await connection.createOffer()
+                await connection.setLocalDescription(offer)
+                this.rtcSignaller.offer(routerId, targetPeerId, offer)
+            }
+        }
         connection.onicecandidate = (event) => {
             if (event.candidate != null) {
                 this.rtcSignaller.onNewIceCandidate(routerId, targetPeerId, event.candidate)
@@ -76,9 +84,6 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onicegatheringstatechange = (event) => {
             console.log('onicegatheringstatechange', this.id, event)
         }
-        connection.onnegotiationneeded = (event) => {
-            console.log('onnegotiationneeded', this.id, event)
-        }
         dataChannel.onopen = (event) => {
             this.emit(events.PEER_CONNECTED, targetPeerId)
         }
@@ -90,13 +95,6 @@ class WebRtcEndpoint extends EventEmitter {
         }
         dataChannel.onmessage = (event) => {
             this.emit(events.MESSAGE_RECEIVED, targetPeerId, event.data)
-        }
-
-        const isOffering = this.id < targetPeerId
-        if (isOffering) {
-            const offer = await connection.createOffer()
-            await connection.setLocalDescription(offer)
-            this.rtcSignaller.offer(routerId, targetPeerId, offer)
         }
     }
 
