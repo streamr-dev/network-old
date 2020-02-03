@@ -17,22 +17,23 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.dataChannels = {}
 
+        rtcSignaller.setOfferListener(async ({ routerId, originatorId, offer }) => {
+            this._createConnectionAndDataChannelIfNeeded(originatorId, routerId)
+            const connection = this.connections[originatorId]
+            const description = new RTCSessionDescription(offer)
+            await connection.setRemoteDescription(description)
+            const answer = await connection.createAnswer()
+            await connection.setLocalDescription(answer)
+            this.rtcSignaller.answer(routerId, originatorId, answer)
+        })
+
         rtcSignaller.setAnswerListener(async ({ originatorId, answer }) => {
             const connection = this.connections[originatorId]
             if (connection) {
                 const description = new RTCSessionDescription(answer)
                 await connection.setRemoteDescription(description)
-            }
-        })
-
-        rtcSignaller.setOfferListener(async ({ routerId, originatorId, offer }) => {
-            const connection = this.connections[originatorId]
-            if (connection) {
-                const description = new RTCSessionDescription(offer)
-                await connection.setRemoteDescription(description)
-                const answer = await connection.createAnswer()
-                await connection.setLocalDescription(answer)
-                this.rtcSignaller.answer(routerId, originatorId, answer)
+            } else {
+                console.warn(`Unexpected RTC_ANSWER from ${originatorId} with contents: ${answer}`)
             }
         })
 
@@ -40,11 +41,36 @@ class WebRtcEndpoint extends EventEmitter {
             const connection = this.connections[originatorId]
             if (connection) {
                 await connection.addIceCandidate(candidate)
+            } else {
+                console.warn(`Unexpected ICE_CANDIDATE from ${originatorId} with contents: ${candidate}`)
             }
         })
     }
 
-    async connect(targetPeerId, routerId) {
+    connect(targetPeerId, routerId) {
+        this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId)
+    }
+
+    send(targetPeerId, message) {
+        this.dataChannels[targetPeerId].send(message)
+    }
+
+    stop() {
+        Object.values(this.dataChannels).forEach((dataChannel) => {
+            dataChannel.close()
+        })
+        Object.values(this.connections).forEach((connection) => {
+            connection.close()
+        })
+        this.connections = {}
+        this.dataChannels = {}
+    }
+
+    _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId) {
+        if (this.connections[targetPeerId] != null) {
+            return
+        }
+
         const configuration = {
             iceServers: this.stunUrls.map((url) => ({
                 urls: url
@@ -96,10 +122,6 @@ class WebRtcEndpoint extends EventEmitter {
         dataChannel.onmessage = (event) => {
             this.emit(events.MESSAGE_RECEIVED, targetPeerId, event.data)
         }
-    }
-
-    send(targetPeerId, message) {
-        this.dataChannels[targetPeerId].send(message)
     }
 }
 
