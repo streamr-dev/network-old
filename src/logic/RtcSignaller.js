@@ -9,26 +9,40 @@ module.exports = class RtcSignaller {
         this.iceCandidateListener = null
 
         trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message) => {
-            this.offerListener(message.getOriginatorNode(), message.getData())
+            this.offerListener({
+                routerId: message.getSource(),
+                originatorId: message.getOriginatorNode(),
+                offer: message.getData()
+
+            })
         })
         trackerNode.on(TrackerNode.events.RTC_ANSWER_RECEIVED, (message) => {
-            this.answerListener(message.getOriginatorNode(), message.getData())
+            this.answerListener({
+                routerId: message.getSource(),
+                originatorId: message.getOriginatorNode(),
+                answer: message.getData()
+
+            })
         })
         trackerNode.on(TrackerNode.events.ICE_CANDIDATE_RECEIVED, (message) => {
-            this.iceCandidateListener(message.getOriginatorNode(), message.getData())
+            this.iceCandidateListener({
+                routerId: message.getSource(),
+                originatorId: message.getOriginatorNode(),
+                candidate: message.getData()
+            })
         })
     }
 
-    offer(targetPeerId, offer) {
-        this.trackerNode.sendRtcOffer('tracker', targetPeerId, this.id, offer)
+    offer(routerId, targetPeerId, offer) {
+        this.trackerNode.sendRtcOffer(routerId, targetPeerId, this.id, offer)
     }
 
-    answer(targetPeerId, answer) {
-        this.trackerNode.sendRtcAnswer('tracker', targetPeerId, this.id, answer)
+    answer(routerId, targetPeerId, answer) {
+        this.trackerNode.sendRtcAnswer(routerId, targetPeerId, this.id, answer)
     }
 
-    onNewIceCandidate(targetPeerId, candidate) {
-        this.trackerNode.sendIceCandidate('tracker', targetPeerId, this.id, candidate)
+    onNewIceCandidate(routerId, targetPeerId, candidate) {
+        this.trackerNode.sendIceCandidate(routerId, targetPeerId, this.id, candidate)
     }
 
     setOfferListener(fn) {

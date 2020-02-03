@@ -1,4 +1,5 @@
 const { EventEmitter } = require('events')
+
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
 const events = Object.freeze({
@@ -16,7 +17,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.dataChannels = {}
 
-        rtcSignaller.setAnswerListener(async (originatorId, answer) => {
+        rtcSignaller.setAnswerListener(async ({ originatorId, answer }) => {
             const connection = this.connections[originatorId]
             if (connection) {
                 const description = new RTCSessionDescription(answer)
@@ -24,18 +25,18 @@ class WebRtcEndpoint extends EventEmitter {
             }
         })
 
-        rtcSignaller.setOfferListener(async (originatorId, offer) => {
+        rtcSignaller.setOfferListener(async ({ routerId, originatorId, offer }) => {
             const connection = this.connections[originatorId]
             if (connection) {
                 const description = new RTCSessionDescription(offer)
                 await connection.setRemoteDescription(description)
                 const answer = await connection.createAnswer()
                 await connection.setLocalDescription(answer)
-                this.rtcSignaller.answer(originatorId, answer)
+                this.rtcSignaller.answer(routerId, originatorId, answer)
             }
         })
 
-        rtcSignaller.setIceCandidateListener(async (originatorId, candidate) => {
+        rtcSignaller.setIceCandidateListener(async ({ originatorId, candidate }) => {
             const connection = this.connections[originatorId]
             if (connection) {
                 await connection.addIceCandidate(candidate)
@@ -43,7 +44,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
     }
 
-    async connect(targetPeerId) {
+    async connect(targetPeerId, routerId) {
         const configuration = {
             iceServers: this.stunUrls.map((url) => ({
                 urls: url
@@ -54,7 +55,7 @@ class WebRtcEndpoint extends EventEmitter {
 
         connection.onicecandidate = (event) => {
             if (event.candidate != null) {
-                this.rtcSignaller.onNewIceCandidate(targetPeerId, event.candidate)
+                this.rtcSignaller.onNewIceCandidate(routerId, targetPeerId, event.candidate)
             }
         }
         connection.onconnectionstatechange = (event) => {
@@ -78,7 +79,7 @@ class WebRtcEndpoint extends EventEmitter {
             this._initDataChannel(targetPeerId, connection.createDataChannel())
             const offer = await connection.createOffer()
             await connection.setLocalDescription(offer)
-            this.rtcSignaller.offer(targetPeerId, offer)
+            this.rtcSignaller.offer(routerId, targetPeerId, offer)
         } else {
             connection.ondatachannel = (event) => {
                 this._initDataChannel(targetPeerId, event.channel)

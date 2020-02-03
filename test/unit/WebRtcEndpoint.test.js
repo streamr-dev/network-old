@@ -32,8 +32,8 @@ describe('WebRtcEndpoint', () => {
 
         const ep1 = new WebRtcEndpoint('node-1', ['stun:stun.l.google.com:19302'], new RtcSignaller('node-1', trackerNode1))
         const ep2 = new WebRtcEndpoint('node-2', ['stun:stun.l.google.com:19302'], new RtcSignaller('node-2', trackerNode2))
-        ep1.connect('node-2')
-        ep2.connect('node-1')
+        ep1.connect('node-2', 'tracker')
+        ep2.connect('node-1', 'tracker')
 
         await Promise.all([
             waitForEvent(ep1, events.PEER_CONNECTED),
