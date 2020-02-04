@@ -13,6 +13,9 @@ const WebSocket = require('@streamr/sc-uws')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
 
+const { PeerBook } = require('./PeerBook')
+const { PeerInfo } = require('./PeerInfo')
+
 function transformToObjectWithLowerCaseKeys(o) {
     const transformedO = {}
     Object.entries(o).forEach(([k, v]) => {
@@ -21,58 +24,43 @@ function transformToObjectWithLowerCaseKeys(o) {
     return transformedO
 }
 
+// asObject
+function toHeaders(peerInfo) {
+    return {
+        'streamr-peer-id': peerInfo.peerId,
+        'streamr-peer-type': peerInfo.peerType
+    }
+}
+
+function fromHeaders(headers) {
+    const objectWithLowerCaseKeys = transformToObjectWithLowerCaseKeys(headers)
+    return new PeerInfo(objectWithLowerCaseKeys['streamr-peer-id'], objectWithLowerCaseKeys['streamr-peer-type'])
+}
+
 class ReadyStateError extends Error {
     constructor(readyState) {
         super(`cannot send because socket.readyState=${readyState}`)
     }
 }
 
-class CustomHeaders {
-    constructor(headers) {
-        this.headers = transformToObjectWithLowerCaseKeys(headers)
-    }
-
-    pluckCustomHeadersFromObject(object) {
-        const headerNames = Object.keys(this.headers)
-        const objectWithLowerCaseKeys = transformToObjectWithLowerCaseKeys(object)
-        return headerNames.reduce((acc, headerName) => {
-            return {
-                ...acc,
-                [headerName]: objectWithLowerCaseKeys[headerName]
-            }
-        }, {})
-    }
-
-    asObject() {
-        return this.headers
-    }
-
-    asArray() {
-        return Object.entries(this.headers)
-            .map(([name, value]) => `${name}: ${value}`)
-    }
-}
-
 class WsEndpoint extends EventEmitter {
-    constructor(wss, customHeaders, advertisedWsUrl) {
+    constructor(wss, peerInfo, advertisedWsUrl) {
         super()
 
         if (!wss) {
             throw new Error('wss not given')
         }
-        if (!customHeaders) {
-            throw new Error('customHeaders not given')
+        if (!peerInfo) {
+            throw new Error('peerInfo not given')
         }
         if (advertisedWsUrl === undefined) {
             throw new Error('advertisedWsUrl not given')
         }
 
-        const id = customHeaders['streamr-peer-id'] || 'id-not-set'
-
-        this.debug = createDebug(`streamr:connection:ws-endpoint:${id}`)
+        this.debug = createDebug(`streamr:connection:ws-endpoint:${peerInfo.peerId}`)
 
         this.wss = wss
-        this.customHeaders = new CustomHeaders(customHeaders)
+        this.peerInfo = peerInfo
         this.advertisedWsUrl = advertisedWsUrl
 
         this.metrics = new Metrics('WsEndpoint')
@@ -86,6 +74,7 @@ class WsEndpoint extends EventEmitter {
         this.connections = new Map()
         this.lastCheckedReadyState = new Map()
         this.pendingConnections = new Map()
+        this.peerBook = new PeerBook()
 
         this.wss.on('connection', this._onIncomingConnection.bind(this))
 
@@ -104,7 +93,7 @@ class WsEndpoint extends EventEmitter {
 
         // Attach custom headers to headers before they are sent to client
         this.wss.httpServer.on('upgrade', (request, socket, head) => {
-            request.headers.extraHeaders = this.customHeaders.asObject()
+            request.headers.extraHeaders = toHeaders(this.peerInfo)
         })
 
         this.debug('listening on: %s', this.getAddress())
@@ -213,10 +202,10 @@ class WsEndpoint extends EventEmitter {
         })
     }
 
-    onReceive(address, message) {
+    onReceive(peerInfo, address, message) {
         this.metrics.inc('onReceive')
-        this.debug('received from %s message "%s"', address, message)
-        this.emit(events.MESSAGE_RECEIVED, address, message)
+        this.debug('received from %s / %s message "%s"', peerInfo, address, message)
+        this.emit(events.MESSAGE_RECEIVED, peerInfo, message)
     }
 
     close(recipientAddress, reason = '') {
@@ -241,7 +230,7 @@ class WsEndpoint extends EventEmitter {
         if (this.isConnected(peerAddress)) {
             this.metrics.inc('connect:already-connected')
             this.debug('already connected to %s', peerAddress)
-            return Promise.resolve()
+            return Promise.resolve(this.peerBook.getPeerId(peerAddress))
         }
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
@@ -251,24 +240,21 @@ class WsEndpoint extends EventEmitter {
 
         const p = new Promise((resolve, reject) => {
             try {
-                let customHeadersOfServer
-                const ws = new WebSocket(`${peerAddress}/?address=${this.getAddress()}`, this.customHeaders.asObject())
+                let serverPeerInfo
+                const ws = new WebSocket(`${peerAddress}/?address=${this.getAddress()}`, toHeaders(this.peerInfo))
 
                 ws.on('upgrade', (peerId, peerType) => {
-                    customHeadersOfServer = this.customHeaders.pluckCustomHeadersFromObject({
-                        'streamr-peer-id': peerId,
-                        'streamr-peer-type': peerType
-                    })
+                    serverPeerInfo = new PeerInfo(peerId, peerType)
                 })
 
                 ws.once('open', () => {
-                    if (!customHeadersOfServer) {
+                    if (!serverPeerInfo) {
                         ws.terminate()
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
-                        this._onNewConnection(ws, peerAddress, customHeadersOfServer)
-                        resolve()
+                        this._onNewConnection(ws, peerAddress, serverPeerInfo)
+                        resolve(this.peerBook.getPeerId(peerAddress))
                     }
                 })
 
@@ -321,6 +307,10 @@ class WsEndpoint extends EventEmitter {
         return this.connections
     }
 
+    resolveAddress(peerId) {
+        return this.peerBook.getAddress(peerId)
+    }
+
     _onIncomingConnection(ws, req) {
         const parameters = url.parse(req.url, true)
         const { address } = parameters.query
@@ -332,12 +322,12 @@ class WsEndpoint extends EventEmitter {
                 req.connection.remoteAddress)
         } else {
             this.debug('%s connected to me', address)
-            const customHeadersOfClient = this.customHeaders.pluckCustomHeadersFromObject(req.headers)
-            this._onNewConnection(ws, address, customHeadersOfClient)
+            const clientPeerInfo = fromHeaders(req.headers)
+            this._onNewConnection(ws, address, clientPeerInfo)
         }
     }
 
-    _onNewConnection(ws, address, customHeaders) {
+    _onNewConnection(ws, address, peerInfo) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
         // thereby leaving no connection behind.
@@ -354,7 +344,7 @@ class WsEndpoint extends EventEmitter {
             this.metrics.speed('_msgSpeed')(1)
             this.metrics.speed('_msgInSpeed')(1)
 
-            setImmediate(() => this.onReceive(address, message), 0)
+            setImmediate(() => this.onReceive(peerInfo, address, message), 0)
         })
 
         ws.once('close', (code, reason) => {
@@ -368,14 +358,16 @@ class WsEndpoint extends EventEmitter {
             this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
             this.connections.delete(address)
             this.lastCheckedReadyState.delete(address)
-            this.debug('removed %s from connection list', address)
-            this.emit(events.PEER_DISCONNECTED, address, reason)
+            this.peerBook.getPeerId(address)
+            this.debug('removed %s / %s from connection list', peerInfo, address)
+            this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
         })
 
+        this.peerBook.add(address, peerInfo)
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
-        this.debug('added %s to connection list (headers %o)', address, customHeaders)
-        this.emit(events.PEER_CONNECTED, address, customHeaders)
+        this.debug('added %s / %s to connection list', peerInfo, address)
+        this.emit(events.PEER_CONNECTED, peerInfo)
     }
 
     getMetrics() {
@@ -416,12 +408,11 @@ async function startWebSocketServer(host, port) {
     })
 }
 
-async function startEndpoint(host, port, customHeaders, advertisedWsUrl) {
-    return startWebSocketServer(host, port).then((wss) => new WsEndpoint(wss, customHeaders, advertisedWsUrl))
+async function startEndpoint(host, port, peerInfo, advertisedWsUrl) {
+    return startWebSocketServer(host, port).then((wss) => new WsEndpoint(wss, peerInfo, advertisedWsUrl))
 }
 
 module.exports = {
-    CustomHeaders,
     WsEndpoint,
     events,
     startWebSocketServer,
