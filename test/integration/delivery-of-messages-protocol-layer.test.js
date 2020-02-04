@@ -130,7 +130,7 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg).toBeInstanceOf(InstructionMessage)
         expect(msg.getSource()).toEqual('trackerServer')
         expect(msg.getStreamId()).toEqual(new StreamIdAndPartition('stream', 10))
-        expect(msg.getNodeAddresses()).toEqual(['ws://127.0.0.1:28513'])
+        expect(msg.getNodeIds()).toEqual(['trackerNode'])
     })
 
     test('resendLastRequest is delivered', async () => {

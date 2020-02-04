@@ -21,7 +21,7 @@ describe('encoder', () => {
             payload: {
                 streamId: 'stream-id',
                 streamPartition: 0,
-                nodeAddresses: [
+                nodeIds: [
                     'node-1',
                     'node-2'
                 ]
@@ -34,7 +34,7 @@ describe('encoder', () => {
         expect(streamMessage).toBeInstanceOf(InstructionMessage)
         expect(streamMessage.getSource()).toEqual('127.0.0.1')
         expect(streamMessage.getStreamId()).toEqual(new StreamIdAndPartition('stream-id', 0))
-        expect(streamMessage.getNodeAddresses()).toEqual(['node-1', 'node-2'])
+        expect(streamMessage.getNodeIds()).toEqual(['node-1', 'node-2'])
     })
 
     it('check encoding WRAPPER', () => {

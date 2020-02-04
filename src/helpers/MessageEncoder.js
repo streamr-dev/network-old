@@ -34,7 +34,7 @@ const decode = (source, message) => {
         case msgTypes.INSTRUCTION:
             return new InstructionMessage(
                 new StreamIdAndPartition(payload.streamId, payload.streamPartition),
-                payload.nodeAddresses,
+                payload.nodeIds,
                 source
             )
 
@@ -74,10 +74,10 @@ const decode = (source, message) => {
 module.exports = {
     decode,
     statusMessage: (status) => encode(msgTypes.STATUS, status),
-    instructionMessage: (streamId, nodeAddresses) => encode(msgTypes.INSTRUCTION, {
+    instructionMessage: (streamId, nodeIds) => encode(msgTypes.INSTRUCTION, {
         streamId: streamId.id,
         streamPartition: streamId.partition,
-        nodeAddresses
+        nodeIds
     }),
     findStorageNodesMessage: (streamId) => encode(msgTypes.FIND_STORAGE_NODES, {
         streamId: streamId.id,

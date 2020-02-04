@@ -25,10 +25,9 @@ class TrackerServer extends EventEmitter {
         this.basicProtocol.on(endpointEvents.MESSAGE_RECEIVED, (message) => this.onMessageReceived(message))
     }
 
-    sendInstruction(receiverNodeId, streamId, listOfNodeIds) {
+    sendInstruction(receiverNodeId, streamId, nodeIds) {
         const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        const listOfNodeAddresses = listOfNodeIds.map((nodeId) => this.basicProtocol.peerBook.getAddress(nodeId))
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.instructionMessage(streamId, listOfNodeAddresses))
+        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.instructionMessage(streamId, nodeIds))
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {
