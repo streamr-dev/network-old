@@ -50,6 +50,5 @@ class PeerInfo {
 }
 
 module.exports = {
-    peerTypes,
     PeerInfo
 }
