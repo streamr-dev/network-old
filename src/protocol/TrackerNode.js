@@ -20,13 +20,11 @@ class TrackerNode extends EventEmitter {
     }
 
     sendStatus(trackerId, status) {
-        const trackerAddress = this.endpoint.resolveAddress(trackerId)
-        return this.endpoint.send(trackerAddress, encoder.statusMessage(status))
+        return this.endpoint.send(trackerId, encoder.statusMessage(status))
     }
 
     findStorageNodes(trackerId, streamId) {
-        const trackerAddress = this.endpoint.resolveAddress(trackerId)
-        return this.endpoint.send(trackerAddress, encoder.findStorageNodesMessage(streamId))
+        return this.endpoint.send(trackerId, encoder.findStorageNodesMessage(streamId))
     }
 
     stop() {

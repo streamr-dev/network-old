@@ -20,15 +20,13 @@ class TrackerServer extends EventEmitter {
     }
 
     sendInstruction(receiverNodeId, streamId, listOfNodeIds) {
-        const receiverNodeAddress = this.endpoint.resolveAddress(receiverNodeId)
         const listOfNodeAddresses = listOfNodeIds.map((nodeId) => this.endpoint.resolveAddress(nodeId))
-        return this.endpoint.send(receiverNodeAddress, encoder.instructionMessage(streamId, listOfNodeAddresses))
+        return this.endpoint.send(receiverNodeId, encoder.instructionMessage(streamId, listOfNodeAddresses))
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {
-        const receiverNodeAddress = this.endpoint.resolveAddress(receiverNodeId)
         const listOfNodeAddresses = listOfNodeIds.map((nodeId) => this.endpoint.resolveAddress(nodeId))
-        return this.endpoint.send(receiverNodeAddress, encoder.storageNodesMessage(streamId, listOfNodeAddresses))
+        return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeAddresses))
     }
 
     getAddress() {

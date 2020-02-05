@@ -126,7 +126,8 @@ class WsEndpoint extends EventEmitter {
         })
     }
 
-    sendSync(recipientAddress, message) {
+    sendSync(recipientId, message) {
+        const recipientAddress = this.resolveAddress(recipientId)
         if (!this.isConnected(recipientAddress)) {
             this.metrics.inc('send:failed:not-connected')
             this.debug('cannot send to %s because not connected', recipientAddress)
@@ -162,7 +163,8 @@ class WsEndpoint extends EventEmitter {
         }
     }
 
-    send(recipientAddress, message) {
+    send(recipientId, message) {
+        const recipientAddress = this.resolveAddress(recipientId)
         return new Promise((resolve, reject) => {
             if (!this.isConnected(recipientAddress)) {
                 this.metrics.inc('send:failed:not-connected')
@@ -208,7 +210,8 @@ class WsEndpoint extends EventEmitter {
         this.emit(events.MESSAGE_RECEIVED, peerInfo, message)
     }
 
-    close(recipientAddress, reason = '') {
+    close(recipientId, reason = '') {
+        const recipientAddress = this.resolveAddress(recipientId)
         this.metrics.inc('close')
         if (!this.isConnected(recipientAddress)) {
             this.metrics.inc('close:error:not-connected')

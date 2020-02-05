@@ -81,7 +81,7 @@ describe('Check tracker instructions to node', () => {
 
         // send empty list
         await tracker.protocols.trackerServer.endpoint.send(
-            otherNodes[0].protocols.nodeToNode.getAddress(),
+            'node-1',
             encoder.instructionMessage(new StreamIdAndPartition(streamId, 0), [])
         )
     })

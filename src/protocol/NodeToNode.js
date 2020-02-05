@@ -43,8 +43,7 @@ class NodeToNode extends EventEmitter {
     }
 
     sendData(receiverNodeId, streamMessage) {
-        const receiverNodeAddress = this.endpoint.resolveAddress(receiverNodeId)
-        this.endpoint.sendSync(receiverNodeAddress, encoder.wrapperMessage(ControlLayer.BroadcastMessage.create(streamMessage)))
+        this.endpoint.sendSync(receiverNodeId, encoder.wrapperMessage(ControlLayer.BroadcastMessage.create(streamMessage)))
     }
 
     sendSubscribe(receiverNodeId, streamIdAndPartition) {
@@ -56,13 +55,11 @@ class NodeToNode extends EventEmitter {
     }
 
     disconnectFromNode(receiverNodeId, reason) {
-        const receiverNodeAddress = this.endpoint.resolveAddress(receiverNodeId)
-        this.endpoint.close(receiverNodeAddress, reason)
+        this.endpoint.close(receiverNodeId, reason)
     }
 
     send(receiverNodeId, message) {
-        const receiverNodeAddress = this.endpoint.resolveAddress(receiverNodeId)
-        return this.endpoint.send(receiverNodeAddress, encoder.wrapperMessage(message))
+        return this.endpoint.send(receiverNodeId, encoder.wrapperMessage(message))
     }
 
     getAddress() {
