@@ -50,8 +50,8 @@ class WsEndpoint extends EventEmitter {
         if (!wss) {
             throw new Error('wss not given')
         }
-        if (!peerInfo) {
-            throw new Error('peerInfo not given')
+        if (!(peerInfo instanceof PeerInfo)) {
+            throw new Error('peerInfo not instance of PeerInfo')
         }
         if (advertisedWsUrl === undefined) {
             throw new Error('advertisedWsUrl not given')
@@ -206,7 +206,7 @@ class WsEndpoint extends EventEmitter {
 
     onReceive(peerInfo, address, message) {
         this.metrics.inc('onReceive')
-        this.debug('received from %s / %s message "%s"', peerInfo, address, message)
+        this.debug('received from %s [%s] message "%s"', peerInfo, address, message)
         this.emit(events.MESSAGE_RECEIVED, peerInfo, message)
     }
 
@@ -362,14 +362,14 @@ class WsEndpoint extends EventEmitter {
             this.connections.delete(address)
             this.lastCheckedReadyState.delete(address)
             this.peerBook.getPeerId(address)
-            this.debug('removed %s / %s from connection list', peerInfo, address)
+            this.debug('removed %s [%s] from connection list', peerInfo, address)
             this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
         })
 
         this.peerBook.add(address, peerInfo)
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
-        this.debug('added %s / %s to connection list', peerInfo, address)
+        this.debug('added %s [%s] to connection list', peerInfo, address)
         this.emit(events.PEER_CONNECTED, peerInfo)
     }
 

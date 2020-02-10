@@ -15,13 +15,9 @@ module.exports = class Tracker extends EventEmitter {
             throw new Error('maxNeighborsPerNode is not an integer')
         }
 
-        // set default options
-        const defaultOptions = {
-            protocols: []
-        }
-
         this.opts = {
-            ...defaultOptions, ...opts
+            protocols: [],
+            ...opts
         }
 
         if (!(this.opts.protocols.trackerServer instanceof TrackerServer)) {
