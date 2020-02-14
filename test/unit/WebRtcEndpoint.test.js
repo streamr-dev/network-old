@@ -121,7 +121,7 @@ describe('WebRtcEndpoint', () => {
             setTimeout(sendFrom2To1, 10 * i + 5)
         }
 
-        await waitForCondition(() => ep1NumOfReceivedMessages > 9)
-        await waitForCondition(() => ep2NumOfReceivedMessages > 9)
+        await waitForCondition(() => ep1NumOfReceivedMessages === 10)
+        await waitForCondition(() => ep2NumOfReceivedMessages === 10)
     })
 })
