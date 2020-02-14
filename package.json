@@ -67,7 +67,8 @@
     "into-stream": "^5.1.1",
     "jest": "^24.9.0",
     "portfinder": "^1.0.25",
-    "streamr-test-utils": "^1.0.4"
+    "streamr-test-utils": "^1.0.4",
+    "ws": "^7.2.1"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.1",
