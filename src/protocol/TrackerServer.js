@@ -2,7 +2,6 @@ const { EventEmitter } = require('events')
 
 const encoder = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
-
 const RtcErrorMessage = require('../messages/RtcErrorMessage')
 
 const events = Object.freeze({
@@ -25,8 +24,7 @@ class TrackerServer extends EventEmitter {
     }
 
     sendInstruction(receiverNodeId, streamId, nodeIds) {
-        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.instructionMessage(streamId, nodeIds))
+        return this.endpoint.send(receiverNodeId, encoder.instructionMessage(streamId, nodeIds))
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {
@@ -35,23 +33,19 @@ class TrackerServer extends EventEmitter {
     }
 
     sendRtcOffer(receiverNodeId, originatorNode, data) {
-        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcOfferMessage(originatorNode, receiverNodeId, data))
+        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorNode, receiverNodeId, data))
     }
 
     sendRtcAnswer(receiverNodeId, originatorNode, data) {
-        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcAnswerMessage(originatorNode, receiverNodeId, data))
+        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorNode, receiverNodeId, data))
     }
 
     sendUnknownPeerRtcError(receiverNodeId) {
-        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER))
+        return this.endpoint.send(receiverNodeId, encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER))
     }
 
     sendIceCandidate(receiverNodeId, originatorNode, data) {
-        const receiverNodeAddress = this.basicProtocol.peerBook.getAddress(receiverNodeId)
-        return this.basicProtocol.endpoint.send(receiverNodeAddress, encoder.iceCandidateMessage(originatorNode, receiverNodeId, data))
+        return this.endpoint.send(receiverNodeId, encoder.iceCandidateMessage(originatorNode, receiverNodeId, data))
     }
 
     getAddress() {

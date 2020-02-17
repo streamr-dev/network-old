@@ -1,5 +1,5 @@
 const TrackerServer = require('../protocol/TrackerServer')
-const { NotFoundInPeerBookError } = require('../protocol/PeerBook')
+const { NotFoundInPeerBookError } = require('../connection/PeerBook')
 
 function attachRtcSignalling(trackerServer) {
     if (!(trackerServer instanceof TrackerServer)) {

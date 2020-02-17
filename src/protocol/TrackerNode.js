@@ -32,18 +32,15 @@ class TrackerNode extends EventEmitter {
     }
 
     sendRtcOffer(trackerId, targetNode, originatorNode, data) {
-        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
-        return this.basicProtocol.endpoint.send(trackerAddress, encoder.rtcOfferMessage(originatorNode, targetNode, data))
+        return this.endpoint.send(trackerId, encoder.rtcOfferMessage(originatorNode, targetNode, data))
     }
 
     sendRtcAnswer(trackerId, targetNode, originatorNode, data) {
-        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
-        return this.basicProtocol.endpoint.send(trackerAddress, encoder.rtcAnswerMessage(originatorNode, targetNode, data))
+        return this.endpoint.send(trackerId, encoder.rtcAnswerMessage(originatorNode, targetNode, data))
     }
 
     sendIceCandidate(trackerId, targetNode, originatorNode, data) {
-        const trackerAddress = this.basicProtocol.peerBook.getAddress(trackerId)
-        return this.basicProtocol.endpoint.send(trackerAddress, encoder.iceCandidateMessage(originatorNode, targetNode, data))
+        return this.endpoint.send(trackerId, encoder.iceCandidateMessage(originatorNode, targetNode, data))
     }
 
     stop() {
