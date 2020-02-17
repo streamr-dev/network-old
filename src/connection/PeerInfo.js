@@ -17,6 +17,10 @@ class PeerInfo {
         return new PeerInfo(peerId, peerTypes.STORAGE)
     }
 
+    static fromObject({ peerId, peerType }) {
+        return new PeerInfo(peerId, peerType)
+    }
+
     constructor(peerId, peerType) {
         if (!peerId) {
             throw new Error('peerId not given')

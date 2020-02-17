@@ -247,23 +247,23 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendRtcOffer is delivered (trackerServer->trackerNode)', async () => {
-        trackerServer.sendRtcOffer('trackerNode', 'originatorNode', 'some data')
+        trackerServer.sendRtcOffer('trackerNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_OFFER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcOfferMessage)
         expect(msg.getSource()).toEqual('trackerServer')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('trackerNode')
         expect(msg.getData()).toEqual('some data')
     })
 
     test('sendRtcAnswer is delivered (trackerServer->trackerNode)', async () => {
-        trackerServer.sendRtcAnswer('trackerNode', 'originatorNode', 'some data')
+        trackerServer.sendRtcAnswer('trackerNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_ANSWER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcAnswerMessage)
         expect(msg.getSource()).toEqual('trackerServer')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('trackerNode')
         expect(msg.getData()).toEqual('some data')
     })
@@ -278,45 +278,45 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendIceCandidate is delivered (trackerServer->trackerNode)', async () => {
-        trackerServer.sendIceCandidate('trackerNode', 'originatorNode', 'some data')
+        trackerServer.sendIceCandidate('trackerNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.ICE_CANDIDATE_RECEIVED)
 
         expect(msg).toBeInstanceOf(IceCandidateMessage)
         expect(msg.getSource()).toEqual('trackerServer')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('trackerNode')
         expect(msg.getData()).toEqual('some data')
     })
 
     test('sendRtcOffer is delivered (trackerNode->trackerServer)', async () => {
-        trackerNode.sendRtcOffer('trackerServer', 'targetNode', 'originatorNode', 'some data')
+        trackerNode.sendRtcOffer('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerServer, TrackerServer.events.RTC_OFFER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcOfferMessage)
         expect(msg.getSource()).toEqual('trackerNode')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('targetNode')
         expect(msg.getData()).toEqual('some data')
     })
 
     test('sendRtcAnswer is delivered (trackerNode->trackerServer)', async () => {
-        trackerNode.sendRtcAnswer('trackerServer', 'targetNode', 'originatorNode', 'some data')
+        trackerNode.sendRtcAnswer('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerServer, TrackerServer.events.RTC_ANSWER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcAnswerMessage)
         expect(msg.getSource()).toEqual('trackerNode')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('targetNode')
         expect(msg.getData()).toEqual('some data')
     })
 
     test('sendIceCandidate is delivered (trackerNode->trackerServer)', async () => {
-        trackerNode.sendIceCandidate('trackerServer', 'targetNode', 'originatorNode', 'some data')
+        trackerNode.sendIceCandidate('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'some data')
         const [msg] = await waitForEvent(trackerServer, TrackerServer.events.ICE_CANDIDATE_RECEIVED)
 
         expect(msg).toBeInstanceOf(IceCandidateMessage)
         expect(msg.getSource()).toEqual('trackerNode')
-        expect(msg.getOriginatorNode()).toEqual('originatorNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(msg.getTargetNode()).toEqual('targetNode')
         expect(msg.getData()).toEqual('some data')
     })

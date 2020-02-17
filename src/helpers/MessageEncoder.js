@@ -1,5 +1,6 @@
 const { ControlLayer } = require('streamr-client-protocol')
 
+const { PeerInfo } = require('../connection/PeerInfo')
 const RtcOfferMessage = require('../messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../messages/RtcAnswerMessage')
 const RtcErrorMessage = require('../messages/RtcErrorMessage')
@@ -55,16 +56,31 @@ const decode = (source, message) => {
             return new WrapperMessage(ControlLayer.ControlMessage.deserialize(payload.serializedControlLayerPayload, false), source)
 
         case msgTypes.RTC_OFFER:
-            return new RtcOfferMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+            return new RtcOfferMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
+                payload.data,
+                source
+            )
 
         case msgTypes.RTC_ANSWER:
-            return new RtcAnswerMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+            return new RtcAnswerMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
+                payload.data,
+                source
+            )
 
         case msgTypes.RTC_ERROR:
             return new RtcErrorMessage(payload.errorCode, source)
 
         case msgTypes.ICE_CANDIDATE:
-            return new IceCandidateMessage(payload.originatorNode, payload.targetNode, payload.data, source)
+            return new IceCandidateMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
+                payload.data,
+                source
+            )
 
         default:
             throw new Error(`Unknown message type: ${code}`)
@@ -91,21 +107,21 @@ module.exports = {
     wrapperMessage: (controlLayerPayload) => encode(msgTypes.WRAPPER, {
         serializedControlLayerPayload: controlLayerPayload.serialize()
     }),
-    rtcOfferMessage: (originatorNode, targetNode, data) => encode(msgTypes.RTC_OFFER, {
-        originatorNode,
+    rtcOfferMessage: (originatorInfo, targetNode, data) => encode(msgTypes.RTC_OFFER, {
+        originatorInfo,
         targetNode,
         data
     }),
-    rtcAnswerMessage: (originatorNode, targetNode, data) => encode(msgTypes.RTC_ANSWER, {
-        originatorNode,
+    rtcAnswerMessage: (originatorInfo, targetNode, data) => encode(msgTypes.RTC_ANSWER, {
+        originatorInfo,
         targetNode,
         data
     }),
     rtcErrorMessage: (errorCode) => encode(msgTypes.RTC_ERROR, {
         errorCode
     }),
-    iceCandidateMessage: (originatorNode, targetNode, data) => encode(msgTypes.ICE_CANDIDATE, {
-        originatorNode,
+    iceCandidateMessage: (originatorInfo, targetNode, data) => encode(msgTypes.ICE_CANDIDATE, {
+        originatorInfo,
         targetNode,
         data
     }),

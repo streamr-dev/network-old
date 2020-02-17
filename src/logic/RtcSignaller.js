@@ -1,8 +1,8 @@
 const TrackerNode = require('../../src/protocol/TrackerNode')
 
 module.exports = class RtcSignaller {
-    constructor(id, trackerNode) {
-        this.id = id
+    constructor(peerInfo, trackerNode) {
+        this.peerInfo = peerInfo
         this.trackerNode = trackerNode
         this.offerListener = null
         this.answerListener = null
@@ -11,7 +11,7 @@ module.exports = class RtcSignaller {
         trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message) => {
             this.offerListener({
                 routerId: message.getSource(),
-                originatorId: message.getOriginatorNode(),
+                originatorInfo: message.getOriginatorInfo(),
                 offer: message.getData()
 
             })
@@ -19,7 +19,7 @@ module.exports = class RtcSignaller {
         trackerNode.on(TrackerNode.events.RTC_ANSWER_RECEIVED, (message) => {
             this.answerListener({
                 routerId: message.getSource(),
-                originatorId: message.getOriginatorNode(),
+                originatorInfo: message.getOriginatorInfo(),
                 answer: message.getData()
 
             })
@@ -27,22 +27,22 @@ module.exports = class RtcSignaller {
         trackerNode.on(TrackerNode.events.ICE_CANDIDATE_RECEIVED, (message) => {
             this.iceCandidateListener({
                 routerId: message.getSource(),
-                originatorId: message.getOriginatorNode(),
+                originatorInfo: message.getOriginatorInfo(),
                 candidate: message.getData()
             })
         })
     }
 
     offer(routerId, targetPeerId, offer) {
-        this.trackerNode.sendRtcOffer(routerId, targetPeerId, this.id, offer)
+        this.trackerNode.sendRtcOffer(routerId, targetPeerId, this.peerInfo, offer)
     }
 
     answer(routerId, targetPeerId, answer) {
-        this.trackerNode.sendRtcAnswer(routerId, targetPeerId, this.id, answer)
+        this.trackerNode.sendRtcAnswer(routerId, targetPeerId, this.peerInfo, answer)
     }
 
     onNewIceCandidate(routerId, targetPeerId, candidate) {
-        this.trackerNode.sendIceCandidate(routerId, targetPeerId, this.id, candidate)
+        this.trackerNode.sendIceCandidate(routerId, targetPeerId, this.peerInfo, candidate)
     }
 
     setOfferListener(fn) {

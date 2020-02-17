@@ -32,20 +32,20 @@ class TrackerServer extends EventEmitter {
         return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeAddresses))
     }
 
-    sendRtcOffer(receiverNodeId, originatorNode, data) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorNode, receiverNodeId, data))
+    sendRtcOffer(receiverNodeId, originatorInfo, data) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorInfo, receiverNodeId, data))
     }
 
-    sendRtcAnswer(receiverNodeId, originatorNode, data) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorNode, receiverNodeId, data))
+    sendRtcAnswer(receiverNodeId, originatorInfo, data) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, data))
     }
 
     sendUnknownPeerRtcError(receiverNodeId) {
         return this.endpoint.send(receiverNodeId, encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER))
     }
 
-    sendIceCandidate(receiverNodeId, originatorNode, data) {
-        return this.endpoint.send(receiverNodeId, encoder.iceCandidateMessage(originatorNode, receiverNodeId, data))
+    sendIceCandidate(receiverNodeId, originatorInfo, data) {
+        return this.endpoint.send(receiverNodeId, encoder.iceCandidateMessage(originatorInfo, receiverNodeId, data))
     }
 
     getAddress() {

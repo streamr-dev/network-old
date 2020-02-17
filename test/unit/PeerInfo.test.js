@@ -38,4 +38,13 @@ describe('PeerInfo', () => {
     it('PeerInfo constructor throws if unknown peerType', () => {
         expect(() => new PeerInfo('peerId', 'unknownPeerType')).toThrow()
     })
+
+    it('fromObject', () => {
+        const peerInfo = PeerInfo.fromObject({
+            peerId: 'peerId',
+            peerType: 'tracker'
+        })
+        expect(peerInfo.peerId).toEqual('peerId')
+        expect(peerInfo.isTracker()).toEqual(true)
+    })
 })

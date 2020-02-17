@@ -1,6 +1,7 @@
 const { ControlLayer } = require('streamr-client-protocol')
 
 const encoder = require('../../src/helpers/MessageEncoder')
+const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { version } = require('../../package.json')
 const FindStorageNodesMessage = require('../../src/messages/FindStorageNodesMessage')
 const InstructionMessage = require('../../src/messages/InstructionMessage')
@@ -137,12 +138,15 @@ describe('encoder', () => {
     })
 
     it('check encoding RTC_OFFER', () => {
-        const actual = encoder.rtcOfferMessage('originatorNode', 'targetNode', 'some data here')
+        const actual = encoder.rtcOfferMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.RTC_OFFER,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -154,7 +158,10 @@ describe('encoder', () => {
             code: encoder.RTC_OFFER,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -165,18 +172,21 @@ describe('encoder', () => {
         expect(rtcOfferMessage.getCode()).toEqual(encoder.RTC_OFFER)
         expect(rtcOfferMessage.getSource()).toEqual('source')
 
-        expect(rtcOfferMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(rtcOfferMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(rtcOfferMessage.getTargetNode()).toEqual('targetNode')
         expect(rtcOfferMessage.getData()).toEqual('some data here')
     })
 
     it('check encoding RTC_ANSWER', () => {
-        const actual = encoder.rtcAnswerMessage('originatorNode', 'targetNode', 'some data here')
+        const actual = encoder.rtcAnswerMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.RTC_ANSWER,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -188,7 +198,10 @@ describe('encoder', () => {
             code: encoder.RTC_ANSWER,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -199,7 +212,7 @@ describe('encoder', () => {
         expect(rtcAnswerMessage.getCode()).toEqual(encoder.RTC_ANSWER)
         expect(rtcAnswerMessage.getSource()).toEqual('source')
 
-        expect(rtcAnswerMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(rtcAnswerMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(rtcAnswerMessage.getTargetNode()).toEqual('targetNode')
         expect(rtcAnswerMessage.getData()).toEqual('some data here')
     })
@@ -233,12 +246,15 @@ describe('encoder', () => {
     })
 
     it('check encoding ICE_CANDIDATE', () => {
-        const actual = encoder.iceCandidateMessage('originatorNode', 'targetNode', 'some data here')
+        const actual = encoder.iceCandidateMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.ICE_CANDIDATE,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -250,7 +266,10 @@ describe('encoder', () => {
             code: encoder.ICE_CANDIDATE,
             version,
             payload: {
-                originatorNode: 'originatorNode',
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerType: 'node'
+                },
                 targetNode: 'targetNode',
                 data: 'some data here'
             }
@@ -261,7 +280,7 @@ describe('encoder', () => {
         expect(iceCandidateMessage.getCode()).toEqual(encoder.ICE_CANDIDATE)
         expect(iceCandidateMessage.getSource()).toEqual('source')
 
-        expect(iceCandidateMessage.getOriginatorNode()).toEqual('originatorNode')
+        expect(iceCandidateMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(iceCandidateMessage.getTargetNode()).toEqual('targetNode')
         expect(iceCandidateMessage.getData()).toEqual('some data here')
     })
