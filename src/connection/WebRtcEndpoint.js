@@ -16,43 +16,88 @@ class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller = rtcSignaller
         this.connections = {}
         this.dataChannels = {}
+        this.peerInfos = {}
 
-        rtcSignaller.setOfferListener(async ({ routerId, originatorId, offer }) => {
-            this._createConnectionAndDataChannelIfNeeded(originatorId, routerId)
-            const connection = this.connections[originatorId]
+        rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
+            const { peerId } = originatorInfo
+            this._createConnectionAndDataChannelIfNeeded(peerId, routerId)
+            this.peerInfos[peerId] = originatorInfo
+            const connection = this.connections[peerId]
             const description = new RTCSessionDescription(offer)
             await connection.setRemoteDescription(description)
             const answer = await connection.createAnswer()
             await connection.setLocalDescription(answer)
-            this.rtcSignaller.answer(routerId, originatorId, answer)
+            this.rtcSignaller.answer(routerId, peerId, answer)
         })
 
-        rtcSignaller.setAnswerListener(async ({ originatorId, answer }) => {
-            const connection = this.connections[originatorId]
+        rtcSignaller.setAnswerListener(async ({ originatorInfo, answer }) => {
+            const { peerId } = originatorInfo
+            const connection = this.connections[peerId]
             if (connection) {
+                this.peerInfos[peerId] = originatorInfo
                 const description = new RTCSessionDescription(answer)
                 await connection.setRemoteDescription(description)
             } else {
-                console.warn(`Unexpected RTC_ANSWER from ${originatorId} with contents: ${answer}`)
+                console.warn(`Unexpected RTC_ANSWER from ${originatorInfo} with contents: ${answer}`)
             }
         })
 
-        rtcSignaller.setIceCandidateListener(async ({ originatorId, candidate }) => {
-            const connection = this.connections[originatorId]
+        rtcSignaller.setIceCandidateListener(async ({ originatorInfo, candidate }) => {
+            const { peerId } = originatorInfo
+            const connection = this.connections[peerId]
             if (connection) {
                 await connection.addIceCandidate(candidate)
             } else {
-                console.warn(`Unexpected ICE_CANDIDATE from ${originatorId} with contents: ${candidate}`)
+                console.warn(`Unexpected ICE_CANDIDATE from ${originatorInfo} with contents: ${candidate}`)
             }
         })
     }
 
+    // TODO: get rid of promise
     connect(targetPeerId, routerId) {
         this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId)
+        return Promise.resolve(targetPeerId) // compatibility
     }
 
+    // TODO: get rid of promises and just queue messages until connection comes available
     send(targetPeerId, message) {
-        this.dataChannels[targetPeerId].send(message)
+        const sendFn = (resolve, reject) => {
+            try {
+                this.dataChannels[targetPeerId].send(message)
+                resolve()
+            } catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            const connection = this.connections[targetPeerId]
+            if (connection && connection.connectionState === 'connected') {
+                sendFn(resolve, reject)
+            } else {
+                const fn = (peerInfo) => {
+                    if (peerInfo.peerId === targetPeerId) {
+                        this.removeListener(events.PEER_CONNECTED, fn)
+                        sendFn(resolve, reject)
+                    }
+                }
+                this.on(events.PEER_CONNECTED, fn)
+            }
+        })
+    }
+
+    close(targetPeerId) {
+        const connection = this.connections[targetPeerId]
+        if (connection) {
+            connection.close()
+            delete this.connections[targetPeerId]
+            delete this.dataChannels[targetPeerId]
+        }
+    }
+
+    getAddress() {
+        return this.id
     }
 
     stop() {
@@ -111,16 +156,16 @@ class WebRtcEndpoint extends EventEmitter {
             console.log('onicegatheringstatechange', this.id, event)
         }
         dataChannel.onopen = (event) => {
-            this.emit(events.PEER_CONNECTED, targetPeerId)
+            this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
         }
         dataChannel.onclose = (event) => {
-            this.emit(events.PEER_DISCONNECTED, targetPeerId)
+            this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
         }
         dataChannel.onerror = (event) => {
             console.error(event)
         }
         dataChannel.onmessage = (event) => {
-            this.emit(events.MESSAGE_RECEIVED, targetPeerId, event.data)
+            this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
         }
     }
 }

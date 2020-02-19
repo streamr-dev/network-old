@@ -38,12 +38,12 @@ class NodeToNode extends EventEmitter {
         this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
     }
 
-    connectToNode(address) {
-        return this.endpoint.connect(address)
+    connectToNode(receiverNodeId, trackerAddress) {
+        return this.endpoint.connect(receiverNodeId, trackerAddress)
     }
 
     sendData(receiverNodeId, streamMessage) {
-        this.endpoint.sendSync(receiverNodeId, encoder.wrapperMessage(ControlLayer.BroadcastMessage.create(streamMessage)))
+        this.send(receiverNodeId, ControlLayer.BroadcastMessage.create(streamMessage))
     }
 
     sendSubscribe(receiverNodeId, streamIdAndPartition) {

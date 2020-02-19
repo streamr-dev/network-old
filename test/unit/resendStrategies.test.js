@@ -393,19 +393,19 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RECEIVED,
                 new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [
-                    'ws://storageNode-1',
-                    'ws://storageNode-2',
-                    'ws://storageNode-3',
-                    'ws://storageNode-4'
-                ])
+                    'storageNode-1',
+                    'storageNode-2',
+                    'storageNode-3',
+                    'storageNode-4'
+                ], 'tracker')
             )
 
             setImmediate(() => {
                 jest.runAllTimers()
                 expect(nodeToNode.connectToNode).toBeCalledTimes(3)
-                expect(nodeToNode.connectToNode).toBeCalledWith('ws://storageNode-1')
-                expect(nodeToNode.connectToNode).toBeCalledWith('ws://storageNode-2')
-                expect(nodeToNode.connectToNode).toBeCalledWith('ws://storageNode-3')
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-1', 'tracker')
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-2', 'tracker')
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-3', 'tracker')
                 done()
             })
         })

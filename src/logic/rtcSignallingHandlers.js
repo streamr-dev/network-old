@@ -10,12 +10,12 @@ function attachRtcSignalling(trackerServer) {
         try {
             trackerServer.sendRtcOffer(
                 rtcOfferMessage.getTargetNode(),
-                rtcOfferMessage.getOriginatorNode(),
+                rtcOfferMessage.getOriginatorInfo(),
                 rtcOfferMessage.getData()
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(rtcOfferMessage.getOriginatorNode())
+                trackerServer.sendUnknownPeerRtcError(rtcOfferMessage.getOriginatorInfo().peerId)
             } else {
                 throw err
             }
@@ -25,12 +25,12 @@ function attachRtcSignalling(trackerServer) {
         try {
             trackerServer.sendRtcAnswer(
                 rtcAnswerMessage.getTargetNode(),
-                rtcAnswerMessage.getOriginatorNode(),
+                rtcAnswerMessage.getOriginatorInfo(),
                 rtcAnswerMessage.getData()
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(rtcAnswerMessage.getOriginatorNode())
+                trackerServer.sendUnknownPeerRtcError(rtcAnswerMessage.getOriginatorInfo().peerId)
             } else {
                 throw err
             }
@@ -40,12 +40,12 @@ function attachRtcSignalling(trackerServer) {
         try {
             trackerServer.sendIceCandidate(
                 iceCandidateMessage.getTargetNode(),
-                iceCandidateMessage.getOriginatorNode(),
+                iceCandidateMessage.getOriginatorInfo(),
                 iceCandidateMessage.getData()
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(iceCandidateMessage.getOriginatorNode())
+                trackerServer.sendUnknownPeerRtcError(iceCandidateMessage.getOriginatorInfo().peerId)
             } else {
                 throw err
             }

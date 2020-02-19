@@ -1,12 +1,12 @@
 const { waitForCondition, waitForEvent } = require('streamr-test-utils')
 
+const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
 const { startWebSocketServer, WsEndpoint } = require('../../src/connection/WsEndpoint')
 const { WebRtcEndpoint, events } = require('../../src/connection/WebRtcEndpoint')
 const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { LOCALHOST } = require('../util')
 
 describe('WebRtcEndpoint', () => {
@@ -29,8 +29,10 @@ describe('WebRtcEndpoint', () => {
         trackerNode2.connectToTracker(tracker.getAddress())
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED)
 
-        endpoint1 = new WebRtcEndpoint('node-1', ['stun:stun.l.google.com:19302'], new RtcSignaller('node-1', trackerNode1))
-        endpoint2 = new WebRtcEndpoint('node-2', ['stun:stun.l.google.com:19302'], new RtcSignaller('node-2', trackerNode2))
+        const peerInfo1 = PeerInfo.newNode('node-1')
+        const peerInfo2 = PeerInfo.newNode('node-2')
+        endpoint1 = new WebRtcEndpoint('node-1', ['stun:stun.l.google.com:19302'], new RtcSignaller(peerInfo1, trackerNode1))
+        endpoint2 = new WebRtcEndpoint('node-2', ['stun:stun.l.google.com:19302'], new RtcSignaller(peerInfo2, trackerNode2))
     })
 
     afterEach(async () => {

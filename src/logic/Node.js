@@ -152,31 +152,26 @@ class Node extends EventEmitter {
     async onTrackerInstructionReceived(instructionMessage) {
         this.metrics.inc('onTrackerInstructionReceived')
         const streamId = instructionMessage.getStreamId()
-        const nodeAddresses = instructionMessage.getNodeAddresses()
-        const nodeIds = []
+        const assignedNodeIds = instructionMessage.getNodeIds()
+        const tracker = instructionMessage.getSource()
+        const successfulNodeIds = []
 
         this.debug('received instructions for %s', streamId)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        await Promise.all(nodeAddresses.map(async (nodeAddress) => {
-            let node
+        await Promise.all(assignedNodeIds.map(async (nodeId) => {
+            await this.protocols.nodeToNode.connectToNode(nodeId, tracker)
             try {
-                node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
+                await this._subscribeToStreamOnNode(nodeId, streamId)
             } catch (e) {
-                this.debug('failed to connect to node at %s (%j), to subscribe streamId %s', nodeAddress, e, streamId)
+                this.debug('failed to subscribe to node %s (%j), streamId %s', nodeId, e, streamId)
                 return
             }
-            try {
-                await this._subscribeToStreamOnNode(node, streamId)
-            } catch (e) {
-                this.debug('failed to subscribe to node %s (%j), streamId %s', node, e, streamId)
-                return
-            }
-            nodeIds.push(node)
+            successfulNodeIds.push(nodeId)
         }))
 
         const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
-        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
+        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !successfulNodeIds.includes(node))
 
         nodesToUnsubscribeFrom.forEach((node) => {
             this._unsubscribeFromStreamOnNode(node, streamId)
@@ -399,7 +394,7 @@ class Node extends EventEmitter {
     }
 
     async getMetrics() {
-        const endpointMetrics = this.protocols.nodeToNode.basicProtocol.endpoint.getMetrics()
+        const endpointMetrics = this.protocols.nodeToNode.endpoint.getMetrics()
         const processMetrics = await this.metrics.getPidusage()
         const nodeMetrics = this.metrics.report()
         const mainMetrics = this.metrics.prettify(endpointMetrics)
