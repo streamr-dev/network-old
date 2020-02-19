@@ -46,17 +46,19 @@
   "engineStrict": true,
   "dependencies": {
     "@sentry/node": "^5.12.3",
-    "@streamr/sc-uws": "^10.12.0",
     "commander": "^4.1.1",
     "debug": "4.1.1",
     "fastify": "^2.12.0",
     "fastify-cors": "^3.0.1",
     "lru-cache": "^5.1.1",
     "pidusage": "^2.0.17",
+    "qs": "^6.9.1",
     "speedometer": "^1.1.0",
     "streamr-client": "^3.1.2",
     "streamr-client-protocol": "^4.1.0",
-    "uuid": "^3.4.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v17.1.0",
+    "uuid": "^3.4.0",
+    "ws": "^7.2.1"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
@@ -67,8 +69,7 @@
     "into-stream": "^5.1.1",
     "jest": "^25.1.0",
     "portfinder": "^1.0.25",
-    "streamr-test-utils": "^1.0.4",
-    "ws": "^7.2.1"
+    "streamr-test-utils": "^1.0.4"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.1",

@@ -5,10 +5,11 @@ const events = Object.freeze({
 })
 
 const { EventEmitter } = require('events')
-const url = require('url')
 
+const qs = require('qs')
 const createDebug = require('debug')
-const WebSocket = require('@streamr/sc-uws')
+const WebSocket = require('ws')
+const uWS = require('uWebSockets.js')
 
 const { disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
@@ -16,12 +17,26 @@ const Metrics = require('../metrics')
 const { PeerBook } = require('./PeerBook')
 const { PeerInfo } = require('./PeerInfo')
 
-function transformToObjectWithLowerCaseKeys(o) {
-    const transformedO = {}
-    Object.entries(o).forEach(([k, v]) => {
-        transformedO[k.toLowerCase()] = v
-    })
-    return transformedO
+const ab2str = (buf) => Buffer.from(buf).toString('utf8')
+
+const closeWs = (ws, code, reason) => {
+    if (ws.terminate !== undefined) {
+        /* ws socket */
+        ws.close(code, reason)
+    } else {
+        /* uWS socket */
+        ws.end(code, reason)
+    }
+}
+
+const terminateWs = (ws) => {
+    if (ws.terminate !== undefined) {
+        /* ws socket */
+        ws.terminate()
+    } else {
+        /* uWS socket */
+        ws.close()
+    }
 }
 
 // asObject
@@ -32,11 +47,6 @@ function toHeaders(peerInfo) {
     }
 }
 
-function fromHeaders(headers) {
-    const objectWithLowerCaseKeys = transformToObjectWithLowerCaseKeys(headers)
-    return new PeerInfo(objectWithLowerCaseKeys['streamr-peer-id'], objectWithLowerCaseKeys['streamr-peer-type'])
-}
-
 class ReadyStateError extends Error {
     constructor(readyState) {
         super(`cannot send because socket.readyState=${readyState}`)
@@ -44,7 +54,7 @@ class ReadyStateError extends Error {
 }
 
 class WsEndpoint extends EventEmitter {
-    constructor(wss, peerInfo, advertisedWsUrl) {
+    constructor(host, port, wss, listenSocket, peerInfo, advertisedWsUrl) {
         super()
 
         if (!wss) {
@@ -56,6 +66,10 @@ class WsEndpoint extends EventEmitter {
         if (advertisedWsUrl === undefined) {
             throw new Error('advertisedWsUrl not given')
         }
+
+        this._serverHost = host
+        this._serverPort = port
+        this._listenSocket = listenSocket
 
         this.debug = createDebug(`streamr:connection:ws-endpoint:${peerInfo.peerId}`)
 
@@ -72,60 +86,125 @@ class WsEndpoint extends EventEmitter {
         this.metrics.createSpeedometer('_msgOutSpeed')
 
         this.connections = new Map()
-        this.lastCheckedReadyState = new Map()
+
+        this.wss.get('/', (res, req) => {
+            // write into headers need information and redirect to ws
+            res.writeStatus('302')
+
+            res.writeHeader('streamr-peer-id', this.peerInfo.peerId)
+            res.writeHeader('streamr-peer-type', this.peerInfo.peerType)
+
+            res.writeHeader('location', `/ws/?${req.getQuery()}`)
+            res.end()
+        }).ws('/ws', {
+            compression: 0,
+            maxPayloadLength: 1024 * 1024,
+            open: (ws, req) => {
+                const { address } = qs.parse(req.getQuery())
+
+                const peerId = req.getHeader('streamr-peer-id') // case insensitive
+                const peerType = req.getHeader('streamr-peer-type')
+
+                try {
+                    if (!address) {
+                        throw new Error('address not given')
+                    }
+                    if (!peerId) {
+                        throw new Error('peerId not given')
+                    }
+                    if (!peerType) {
+                        throw new Error('peerType not given')
+                    }
+
+                    const clientPeerInfo = new PeerInfo(peerId, peerType)
+
+                    // Allowed by library
+                    // eslint-disable-next-line no-param-reassign
+                    ws.peerInfo = clientPeerInfo
+                    // eslint-disable-next-line no-param-reassign
+                    ws.address = address
+
+                    this.debug('<=== %s connected to me', address)
+                    setImmediate(() => this._onNewConnection(ws, address, clientPeerInfo))
+                } catch (e) {
+                    this.debug('dropped incoming connection because of %s', e)
+                    this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
+                    closeWs(ws, 1002, e.toString())
+                }
+            },
+            message: (ws, message, isBinary) => {
+                const connection = this.connections.get(ws.address)
+
+                if (connection) {
+                    this.onReceive(ws.peerInfo, ws.address, ab2str(message))
+                }
+            },
+            drain: (ws) => {
+                this.debug(`WebSocket backpressure: ${ws.getBufferedAmount()}`)
+            },
+            close: (ws, code, message) => {
+                const reason = ab2str(message)
+
+                const connection = this.connections.get(ws.address)
+
+                if (connection) {
+                    this._onClose(ws.address, code, reason, ws.peerInfo)
+                }
+            }
+        })
+        // this.lastCheckedReadyState = new Map()
         this.pendingConnections = new Map()
         this.peerBook = new PeerBook()
 
-        this.wss.on('connection', this._onIncomingConnection.bind(this))
-
-        this.wss.verifyClient = (info) => {
-            const parameters = url.parse(info.req.url, true)
-            const { address } = parameters.query
-
-            if (this.isConnected(address)) {
-                this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
-                this.debug('closing existing socket')
-                this.connections.get(address).close()
-            }
-
-            return true
-        }
-
-        // Attach custom headers to headers before they are sent to client
-        this.wss.httpServer.on('upgrade', (request, socket, head) => {
-            request.headers.extraHeaders = toHeaders(this.peerInfo)
-        })
-
+        //
+        // this.wss.verifyClient = (info) => {
+        //     const parameters = url.parse(info.req.url, true)
+        //     const { address } = parameters.query
+        //
+        //     if (this.isConnected(address)) {
+        //         this.debug('already connected to %s, readyState %d', address, this.connections.get(address).readyState)
+        //         this.debug('closing existing socket')
+        //         this.connections.get(address).closeWs()
+        //     }
+        //
+        //     return true
+        // }
+        //
+        // // Attach custom headers to headers before they are sent to client
+        // this.wss.httpServer.on('upgrade', (request, socket, head) => {
+        //     request.headers.extraHeaders = toHeaders(this.peerInfo)
+        // })
+        //
         this.debug('listening on: %s', this.getAddress())
-        this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 10 * 1000)
+        // this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 10 * 1000)
     }
 
-    _checkConnections() {
-        Object.keys(this.connections).forEach((address) => {
-            const ws = this.connections.get(address)
-
-            if (ws.readyState !== 1) {
-                const lastReadyState = this.lastCheckedReadyState.get(address)
-                this.lastCheckedReadyState.set(address, ws.readyState)
-
-                this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
-                console.error(address + '\t\t\t' + ws.readyState)
-
-                if (lastReadyState != null && lastReadyState === ws.readyState) {
-                    try {
-                        ws.terminate()
-                    } catch (e) {
-                        console.error('failed to close closed socket because of %s', e)
-                    } finally {
-                        this.lastCheckedReadyState.delete(address)
-                    }
-                }
-            } else {
-                this.lastCheckedReadyState.delete(address)
-            }
-        })
-    }
-
+    // _checkConnections() {
+    //     Object.keys(this.connections).forEach((address) => {
+    //         const ws = this.connections.get(address)
+    //
+    //         if (ws.readyState !== 1) {
+    //             const lastReadyState = this.lastCheckedReadyState.get(address)
+    //             this.lastCheckedReadyState.set(address, ws.readyState)
+    //
+    //             this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
+    //             console.error(address + '\t\t\t' + ws.readyState)
+    //
+    //             if (lastReadyState != null && lastReadyState === ws.readyState) {
+    //                 try {
+    //                     ws.terminate()
+    //                 } catch (e) {
+    //                     console.error('failed to closeWs closed socket because of %s', e)
+    //                 } finally {
+    //                     this.lastCheckedReadyState.delete(address)
+    //                 }
+    //             }
+    //         } else {
+    //             this.lastCheckedReadyState.delete(address)
+    //         }
+    //     })
+    // }
+    //
     sendSync(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
         if (!this.isConnected(recipientAddress)) {
@@ -157,7 +236,7 @@ class WsEndpoint extends EventEmitter {
                 this.metrics.inc('send:failed')
                 console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
                 if (ws.readyState === 2 || ws.readyState === 3) {
-                    ws.terminate()
+                    terminateWs(ws)
                 }
             }
         }
@@ -196,7 +275,7 @@ class WsEndpoint extends EventEmitter {
                     this.metrics.inc('send:failed')
                     console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
                     if (ws.readyState === 2 || ws.readyState === 3) {
-                        ws.terminate()
+                        terminateWs(ws)
                     }
                     reject(e)
                 }
@@ -206,23 +285,23 @@ class WsEndpoint extends EventEmitter {
 
     onReceive(peerInfo, address, message) {
         this.metrics.inc('onReceive')
-        this.debug('received from %s [%s] message "%s"', peerInfo, address, message)
-        this.emit(events.MESSAGE_RECEIVED, peerInfo, message)
+        this.debug('<=== received from %s [%s] message "%s"', peerInfo, address, message)
+        setImmediate(() => this.emit(events.MESSAGE_RECEIVED, peerInfo, message), 0)
     }
 
-    close(recipientId, reason = '') {
+    close(recipientId, reason) {
         const recipientAddress = this.resolveAddress(recipientId)
-        this.metrics.inc('close')
+        this.metrics.inc('closeWs')
         if (!this.isConnected(recipientAddress)) {
-            this.metrics.inc('close:error:not-connected')
-            this.debug('cannot close connection to %s because not connected', recipientAddress)
+            this.metrics.inc('closeWs:error:not-connected')
+            this.debug('cannot closeWs connection to %s because not connected', recipientAddress)
         } else {
             const ws = this.connections.get(recipientAddress)
             try {
                 this.debug('closing connection to %s, reason %s', recipientAddress, reason)
-                ws.close(1000, reason)
+                closeWs(ws, 1000, reason)
             } catch (e) {
-                this.metrics.inc('close:error:failed')
+                this.metrics.inc('closeWs:error:failed')
                 console.error('closing connection to %s failed because of %s', recipientAddress, e)
             }
         }
@@ -244,15 +323,29 @@ class WsEndpoint extends EventEmitter {
         const p = new Promise((resolve, reject) => {
             try {
                 let serverPeerInfo
-                const ws = new WebSocket(`${peerAddress}/?address=${this.getAddress()}`, toHeaders(this.peerInfo))
+                const ws = new WebSocket(
+                    `${peerAddress}/?address=${this.getAddress()}`,
+                    undefined,
+                    {
+                        followRedirects: true,
+                        headers: toHeaders(this.peerInfo)
+                    }
+                )
 
-                ws.on('upgrade', (peerId, peerType) => {
-                    serverPeerInfo = new PeerInfo(peerId, peerType)
+                // catching headers
+                // eslint-disable-next-line no-underscore-dangle
+                ws._req.on('response', (res) => {
+                    const peerId = res.headers['streamr-peer-id']
+                    const peerType = res.headers['streamr-peer-type']
+
+                    if (peerId && peerType) {
+                        serverPeerInfo = new PeerInfo(peerId, peerType)
+                    }
                 })
 
                 ws.once('open', () => {
                     if (!serverPeerInfo) {
-                        ws.terminate()
+                        terminateWs(ws)
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
@@ -261,11 +354,30 @@ class WsEndpoint extends EventEmitter {
                     }
                 })
 
+                ws.on('message', (message) => {
+                    // TODO check message.type [utf8|binary]
+                    this.metrics.speed('_inSpeed')(message.length)
+                    this.metrics.speed('_msgSpeed')(1)
+                    this.metrics.speed('_msgInSpeed')(1)
+
+                    setImmediate(() => this.onReceive(serverPeerInfo, peerAddress, message), 0)
+                })
+
+                ws.once('closeWs', (code, reason) => {
+                    if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
+                        this.metrics.inc('_onNewConnection:closed:dublicate')
+                        this.debug('socket %s dropped from other side because existing connection already exists')
+                        return
+                    }
+
+                    this._onClose(peerAddress, code, reason, serverPeerInfo)
+                })
+
                 ws.on('error', (err) => {
                     this.metrics.inc('connect:failed-to-connect')
                     this.debug('failed to connect to %s, error: %o', peerAddress, err)
-                    ws.terminate()
-                    reject(new Error(err))
+                    terminateWs(ws)
+                    reject(err)
                 })
             } catch (err) {
                 this.metrics.inc('connect:failed-to-connect')
@@ -281,15 +393,28 @@ class WsEndpoint extends EventEmitter {
     }
 
     stop() {
-        clearInterval(this.checkConnectionsInterval)
+        // clearInterval(this.checkConnectionsInterval)
         this.connections.forEach((connection) => {
-            connection.terminate()
+            try {
+                closeWs(connection, 1000, disconnectionReasons.GRACEFUL_SHUTDOWN)
+            } catch (e) {
+                console.warn(`Failed to close websocket on shutdown, reason ${e}`)
+            }
         })
 
         return new Promise((resolve, reject) => {
-            // uws has setTimeout(cb, 20000); in close event
-            this.wss.close()
-            resolve()
+            try {
+                if (this._listenSocket) {
+                    this.debug('shutting down uWS server')
+                    uWS.us_listen_socket_close(this._listenSocket)
+                    this._listenSocket = null
+                }
+
+                resolve()
+            } catch (e) {
+                console.error(e)
+                reject(new Error(`Failed to stop websocket server, because of ${e}`))
+            }
         })
     }
 
@@ -301,9 +426,8 @@ class WsEndpoint extends EventEmitter {
         if (this.advertisedWsUrl) {
             return this.advertisedWsUrl
         }
-        // eslint-disable-next-line no-underscore-dangle
-        const socketAddress = this.wss.httpServer._connectionKey.split(':')
-        return `ws://${socketAddress[1]}:${socketAddress[2]}`
+
+        return `ws://${this._serverHost}:${this._serverPort}`
     }
 
     getPeers() {
@@ -314,25 +438,6 @@ class WsEndpoint extends EventEmitter {
         return this.peerBook.getAddress(peerId)
     }
 
-    _onIncomingConnection(ws, req) {
-        const parameters = url.parse(req.url, true)
-        const { address } = parameters.query
-
-        try {
-            if (!address) {
-                throw new Error('address not given')
-            }
-            const clientPeerInfo = fromHeaders(req.headers)
-
-            this.debug('%s connected to me', address)
-            this._onNewConnection(ws, address, clientPeerInfo)
-        } catch (e) {
-            this.debug('dropped incoming connection from %s because of %s', req.connection.remoteAddress, e)
-            this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
-            ws.close(1002, `${e}`)
-        }
-    }
-
     _onNewConnection(ws, address, peerInfo) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
@@ -340,44 +445,33 @@ class WsEndpoint extends EventEmitter {
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             this.metrics.inc('_onNewConnection:closed:dublicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
-            ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
+
+            this.debug(1)
+            closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
             return
         }
-
-        ws.on('message', (message) => {
-            // TODO check message.type [utf8|binary]
-            this.metrics.speed('_inSpeed')(message.length)
-            this.metrics.speed('_msgSpeed')(1)
-            this.metrics.speed('_msgInSpeed')(1)
-
-            setImmediate(() => this.onReceive(peerInfo, address, message), 0)
-        })
-
-        ws.once('close', (code, reason) => {
-            if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
-                this.metrics.inc('_onNewConnection:closed:dublicate')
-                this.debug('socket %s dropped from other side because existing connection already exists')
-                return
-            }
-
-            this.metrics.inc(`_onNewConnection:closed:code=${code}`)
-            this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
-            this.connections.delete(address)
-            this.lastCheckedReadyState.delete(address)
-            this.peerBook.getPeerId(address)
-            this.debug('removed %s [%s] from connection list', peerInfo, address)
-            this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
-        })
-
+        this.debug(2)
         this.peerBook.add(address, peerInfo)
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
         this.debug('added %s [%s] to connection list', peerInfo, address)
+        this.debug(3)
         this.emit(events.PEER_CONNECTED, peerInfo)
     }
 
+    _onClose(address, code, reason, peerInfo) {
+        this.metrics.inc(`_onClose:code=${code}`)
+        this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+        this.connections.delete(address)
+        // this.lastCheckedReadyState.delete(address)
+        this.debug('removed %s [%s] from connection list', peerInfo, address)
+
+        this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+    }
+
     getMetrics() {
-        const totalBufferSize = Object.values(this.connections).reduce((totalBufferSizeSum, ws) => totalBufferSizeSum + ws.bufferedAmount, 0)
+        const totalBufferSize = 0
+        // const totalBufferSize = Object.values(this.connections).reduce((totalBufferSizeSum, ws) => totalBufferSizeSum + ws.bufferedAmount, 0)
 
         return {
             msgSpeed: this.metrics.speed('_msgSpeed')(),
@@ -393,29 +487,22 @@ class WsEndpoint extends EventEmitter {
 
 async function startWebSocketServer(host, port) {
     return new Promise((resolve, reject) => {
-        const conf = {
-            port,
-            clientTracking: true,
-            perMessageDeflate: false
-        }
-        if (host) {
-            conf.host = host
-        }
+        const server = uWS.App()
 
-        const wss = new WebSocket.Server(conf)
-
-        wss.on('error', (err) => {
-            reject(err)
-        })
-
-        wss.on('listening', () => {
-            resolve(wss)
+        server.listen(host, port, (token) => {
+            if (token) {
+                resolve([server, token])
+            } else {
+                reject(new Error(`Failed to start websocket server, host ${host}, port ${port}`))
+            }
         })
     })
 }
 
 async function startEndpoint(host, port, peerInfo, advertisedWsUrl) {
-    return startWebSocketServer(host, port).then((wss) => new WsEndpoint(wss, peerInfo, advertisedWsUrl))
+    return startWebSocketServer(host, port).then(([wss, listenSocket]) => {
+        return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl)
+    })
 }
 
 module.exports = {
