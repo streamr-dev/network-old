@@ -19,6 +19,7 @@ const { PeerInfo } = require('./PeerInfo')
 
 const ab2str = (buf) => Buffer.from(buf).toString('utf8')
 
+// TODO uWS will soon rename end -> close and end -> terminate
 const closeWs = (ws, code, reason) => {
     if (ws.terminate !== undefined) {
         /* ws socket */
@@ -124,8 +125,8 @@ class WsEndpoint extends EventEmitter {
                     // eslint-disable-next-line no-param-reassign
                     ws.address = address
 
-                    this.debug('<=== %s connected to me', address)
-                    setImmediate(() => this._onNewConnection(ws, address, clientPeerInfo))
+                    this.debug('<=== %s connecting to me', address)
+                    this._onNewConnection(ws, address, clientPeerInfo, false)
                 } catch (e) {
                     this.debug('dropped incoming connection because of %s', e)
                     this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
@@ -309,16 +310,20 @@ class WsEndpoint extends EventEmitter {
 
     connect(peerAddress) {
         this.metrics.inc('connect')
+
         if (this.isConnected(peerAddress)) {
             this.metrics.inc('connect:already-connected')
             this.debug('already connected to %s', peerAddress)
             return Promise.resolve(this.peerBook.getPeerId(peerAddress))
         }
+
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
             this.debug('pending connection to %s', peerAddress)
             return this.pendingConnections.get(peerAddress)
         }
+
+        this.debug('===> connecting to %s', peerAddress)
 
         const p = new Promise((resolve, reject) => {
             try {
@@ -349,7 +354,7 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
-                        this._onNewConnection(ws, peerAddress, serverPeerInfo)
+                        this._onNewConnection(ws, peerAddress, serverPeerInfo, true)
                         resolve(this.peerBook.getPeerId(peerAddress))
                     }
                 })
@@ -394,16 +399,17 @@ class WsEndpoint extends EventEmitter {
 
     stop() {
         // clearInterval(this.checkConnectionsInterval)
-        this.connections.forEach((connection) => {
-            try {
-                closeWs(connection, 1000, disconnectionReasons.GRACEFUL_SHUTDOWN)
-            } catch (e) {
-                console.warn(`Failed to close websocket on shutdown, reason ${e}`)
-            }
-        })
 
         return new Promise((resolve, reject) => {
             try {
+                this.connections.forEach((connection) => {
+                    try {
+                        terminateWs(connection)
+                    } catch (e) {
+                        console.warn(`Failed to close websocket on shutdown, reason ${e}`)
+                    }
+                })
+
                 if (this._listenSocket) {
                     this.debug('shutting down uWS server')
                     uWS.us_listen_socket_close(this._listenSocket)
@@ -438,25 +444,27 @@ class WsEndpoint extends EventEmitter {
         return this.peerBook.getAddress(peerId)
     }
 
-    _onNewConnection(ws, address, peerInfo) {
+    _onNewConnection(ws, address, peerInfo, out = true) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
         // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
-            this.metrics.inc('_onNewConnection:closed:dublicate')
+            this.metrics.inc('_onNewConnection:closed:dupicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
-
-            this.debug(1)
             closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
-            return
+        } else {
+            this.debug(address)
+            this.debug(this.connections.get(address))
+
+            this.peerBook.add(address, peerInfo)
+            this.connections.set(address, ws)
+            this.metrics.set('connections', this.connections.size)
+            this.debug('added %s [%s] to connection list', peerInfo, address)
+
+            this.debug('%s connected to %s', out ? '===>' : '<===', address)
+            this.emit(events.PEER_CONNECTED, peerInfo)
+            this.debug('new CONNECTION')
         }
-        this.debug(2)
-        this.peerBook.add(address, peerInfo)
-        this.connections.set(address, ws)
-        this.metrics.set('connections', this.connections.size)
-        this.debug('added %s [%s] to connection list', peerInfo, address)
-        this.debug(3)
-        this.emit(events.PEER_CONNECTED, peerInfo)
     }
 
     _onClose(address, code, reason, peerInfo) {
