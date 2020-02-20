@@ -11,7 +11,7 @@ const createDebug = require('debug')
 const WebSocket = require('ws')
 const uWS = require('uWebSockets.js')
 
-const { disconnectionReasons } = require('../messages/messageTypes')
+const { disconnectionCodes, disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
 
 const { PeerBook } = require('./PeerBook')
@@ -368,9 +368,9 @@ class WsEndpoint extends EventEmitter {
                     setImmediate(() => this.onReceive(serverPeerInfo, peerAddress, message), 0)
                 })
 
-                ws.once('closeWs', (code, reason) => {
+                ws.once('close', (code, reason) => {
                     if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
-                        this.metrics.inc('_onNewConnection:closed:dublicate')
+                        this.metrics.inc('_onNewConnection:closed:duplicate')
                         this.debug('socket %s dropped from other side because existing connection already exists')
                         return
                     }
@@ -402,9 +402,9 @@ class WsEndpoint extends EventEmitter {
 
         return new Promise((resolve, reject) => {
             try {
-                this.connections.forEach((connection) => {
+                this.connections.forEach((ws) => {
                     try {
-                        terminateWs(connection)
+                        closeWs(ws, disconnectionCodes.GRACEFUL_SHUTDOWN, disconnectionReasons.GRACEFUL_SHUTDOWN)
                     } catch (e) {
                         console.warn(`Failed to close websocket on shutdown, reason ${e}`)
                     }
@@ -416,7 +416,7 @@ class WsEndpoint extends EventEmitter {
                     this._listenSocket = null
                 }
 
-                resolve()
+                setTimeout(() => resolve(), 100)
             } catch (e) {
                 console.error(e)
                 reject(new Error(`Failed to stop websocket server, because of ${e}`))

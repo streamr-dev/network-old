@@ -8,6 +8,12 @@ const msgTypes = {
     WRAPPER: 4,
 }
 
+const disconnectionCodes = Object.freeze({
+    GRACEFUL_SHUTDOWN: 1000,
+    DUPLICATE_SOCKET: 1002,
+    NO_SHARED_STREAMS: 1000
+})
+
 const disconnectionReasons = Object.freeze({
     GRACEFUL_SHUTDOWN: 'streamr:node:graceful-shutdown',
     DUPLICATE_SOCKET: 'streamr:endpoint:duplicate-connection',
@@ -17,5 +23,6 @@ const disconnectionReasons = Object.freeze({
 module.exports = {
     msgTypes,
     CURRENT_VERSION,
+    disconnectionCodes,
     disconnectionReasons
 }
