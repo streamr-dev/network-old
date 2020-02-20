@@ -21,24 +21,26 @@ describe('tracker assigns storage node to streams', () => {
         subscriberOne.subscribe('stream-1', 0)
         subscriberTwo.subscribe('stream-2', 0)
 
+        storageNode.addBootstrapTracker(tracker.getAddress())
         subscriberOne.addBootstrapTracker(tracker.getAddress())
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
-
-        storageNode.addBootstrapTracker(tracker.getAddress())
 
         await wait(1000)
     })
 
     afterAll(async () => {
-        await storageNode.stop()
-        await subscriberOne.stop()
-        await subscriberTwo.stop()
-        await tracker.stop()
+        await Promise.all([
+            storageNode.stop(),
+            subscriberOne.stop(),
+            subscriberTwo.stop(),
+            tracker.stop()
+        ])
     })
 
     it('existing streams are assigned to storage node', async () => {

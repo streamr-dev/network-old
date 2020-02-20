@@ -67,9 +67,9 @@ describe('tracker assigns storage node to streams on any resend', () => {
             requestRange: () => intoStream.object([]),
         }])
 
+        storageNode.addBootstrapTracker(tracker.getAddress())
         subscriberOne.addBootstrapTracker(tracker.getAddress())
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
-        storageNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
@@ -79,10 +79,12 @@ describe('tracker assigns storage node to streams on any resend', () => {
     })
 
     afterAll(async () => {
-        await storageNode.stop()
-        await subscriberOne.stop()
-        await subscriberTwo.stop()
-        await tracker.stop()
+        await Promise.all([
+            storageNode.stop(),
+            subscriberOne.stop(),
+            subscriberTwo.stop(),
+            tracker.stop()
+        ])
     })
 
     it('tracker assigns storage node to any streams on any resend by default', async () => {
