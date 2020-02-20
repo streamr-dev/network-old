@@ -23,10 +23,9 @@ describe('duplicate connections are closed', () => {
     })
 
     test('if two endpoints open a connection (socket) to each other concurrently, one of them should be closed', async () => {
-        const newConnectionSpy1 = jest.spyOn(wsEndpoint1, '_onNewConnection')
         const emitSpy1 = jest.spyOn(wsEndpoint1, 'emit')
-        const newConnectionSpy2 = jest.spyOn(wsEndpoint2, '_onNewConnection')
         const emitSpy2 = jest.spyOn(wsEndpoint2, 'emit')
+
         const connectionsClosedReasons = []
 
         await Promise.all([
@@ -42,21 +41,18 @@ describe('duplicate connections are closed', () => {
             connectionsClosedReasons.push(reason)
         })
 
-        const calls1 = emitSpy1.mock.calls
-        const calls2 = emitSpy2.mock.calls
-
         const calls = []
-        calls1.forEach((call) => calls.push(call[0]))
-        calls2.forEach((call) => calls.push(call[0]))
+        emitSpy1.mock.calls.forEach((call) => calls.push(call[0]))
+        emitSpy2.mock.calls.forEach((call) => calls.push(call[0]))
 
-
-        // expect(calls1.length).toEqual(2) // 1 in, 1 out call
-        // expect(calls2.length).toEqual(2) // 1 in, 1 out call
         expect(connectionsClosedReasons).toEqual([disconnectionReasons.DUPLICATE_SOCKET])
 
-        console.log(calls1)
-        console.log(calls2)
+        // TODO fix
+        // expect(wsEndpoint1.getPeers().size).toEqual(1)
+        // expect(wsEndpoint2.getPeers().size).toEqual(1)
+
+        // TODO fix PEER_CONNECTED on duplicate connection
         // expect(calls.filter((x) => x === events.PEER_CONNECTED).length).toBe(2)
-        // expect(calls.filter((x) => x === events.PEER_DISCONNECTED).length).toBe(1)
+        expect(calls.filter((x) => x === events.PEER_DISCONNECTED).length).toBe(1)
     }, 10000)
 })

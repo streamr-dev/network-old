@@ -452,19 +452,15 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('_onNewConnection:closed:dupicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
             closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
-        } else {
-            this.debug(address)
-            this.debug(this.connections.get(address))
-
-            this.peerBook.add(address, peerInfo)
-            this.connections.set(address, ws)
-            this.metrics.set('connections', this.connections.size)
-            this.debug('added %s [%s] to connection list', peerInfo, address)
-
-            this.debug('%s connected to %s', out ? '===>' : '<===', address)
-            this.emit(events.PEER_CONNECTED, peerInfo)
-            this.debug('new CONNECTION')
+            return
         }
+
+        this.peerBook.add(address, peerInfo)
+        this.connections.set(address, ws)
+        this.metrics.set('connections', this.connections.size)
+        this.debug('added %s [%s] to connection list', peerInfo, address)
+        this.debug('%s connected to %s', out ? '===>' : '<===', address)
+        this.emit(events.PEER_CONNECTED, peerInfo)
     }
 
     _onClose(address, code, reason, peerInfo) {
