@@ -1,6 +1,6 @@
 const { Readable } = require('stream')
-const { StreamMessage } = require('streamr-client-protocol').MessageLayer
 
+const { StreamMessage } = require('streamr-client-protocol').MessageLayer
 const intoStream = require('into-stream')
 const { waitForEvent, wait } = require('streamr-test-utils')
 
