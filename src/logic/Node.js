@@ -163,13 +163,13 @@ class Node extends EventEmitter {
             try {
                 node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             } catch (e) {
-                this.debug('failed to connect to node at %s (%j), to subscribe streamId %s', nodeAddress, e, streamId)
+                this.debug('failed to connect to node at %s (%o), to subscribe streamId %s', nodeAddress, e, streamId)
                 return
             }
             try {
                 await this._subscribeToStreamOnNode(node, streamId)
             } catch (e) {
-                this.debug('failed to subscribe to node %s (%j), streamId %s', node, e, streamId)
+                this.debug('failed to subscribe to node %s (%o), streamId %s', node, e, streamId)
                 return
             }
             nodeIds.push(node)

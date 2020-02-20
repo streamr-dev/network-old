@@ -354,28 +354,10 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
+                        this._addListeners(ws, peerAddress, serverPeerInfo)
                         this._onNewConnection(ws, peerAddress, serverPeerInfo, true)
                         resolve(this.peerBook.getPeerId(peerAddress))
                     }
-                })
-
-                ws.on('message', (message) => {
-                    // TODO check message.type [utf8|binary]
-                    this.metrics.speed('_inSpeed')(message.length)
-                    this.metrics.speed('_msgSpeed')(1)
-                    this.metrics.speed('_msgInSpeed')(1)
-
-                    setImmediate(() => this.onReceive(serverPeerInfo, peerAddress, message), 0)
-                })
-
-                ws.once('close', (code, reason) => {
-                    if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
-                        this.metrics.inc('_onNewConnection:closed:duplicate')
-                        this.debug('socket %s dropped from other side because existing connection already exists')
-                        return
-                    }
-
-                    this._onClose(peerAddress, code, reason, serverPeerInfo)
                 })
 
                 ws.on('error', (err) => {
@@ -442,6 +424,27 @@ class WsEndpoint extends EventEmitter {
 
     resolveAddress(peerId) {
         return this.peerBook.getAddress(peerId)
+    }
+
+    _addListeners(ws, address, peerInfo) {
+        ws.on('message', (message) => {
+            // TODO check message.type [utf8|binary]
+            this.metrics.speed('_inSpeed')(message.length)
+            this.metrics.speed('_msgSpeed')(1)
+            this.metrics.speed('_msgInSpeed')(1)
+
+            setImmediate(() => this.onReceive(peerInfo, address, message), 0)
+        })
+
+        ws.once('close', (code, reason) => {
+            if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
+                this.metrics.inc('_onNewConnection:closed:duplicate')
+                this.debug('socket %s dropped from other side because existing connection already exists')
+                return
+            }
+
+            this._onClose(address, code, reason, peerInfo)
+        })
     }
 
     _onNewConnection(ws, address, peerInfo, out = true) {
