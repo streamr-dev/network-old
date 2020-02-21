@@ -48,7 +48,7 @@ const decode = (source, message) => {
         case msgTypes.STORAGE_NODES:
             return new StorageNodesMessage(
                 new StreamIdAndPartition(payload.streamId, payload.streamPartition),
-                payload.nodeAddresses,
+                payload.nodeIds,
                 source
             )
 
@@ -99,10 +99,10 @@ module.exports = {
         streamId: streamId.id,
         streamPartition: streamId.partition
     }),
-    storageNodesMessage: (streamId, nodeAddresses) => encode(msgTypes.STORAGE_NODES, {
+    storageNodesMessage: (streamId, nodeIds) => encode(msgTypes.STORAGE_NODES, {
         streamId: streamId.id,
         streamPartition: streamId.partition,
-        nodeAddresses
+        nodeIds
     }),
     wrapperMessage: (controlLayerPayload) => encode(msgTypes.WRAPPER, {
         serializedControlLayerPayload: controlLayerPayload.serialize()

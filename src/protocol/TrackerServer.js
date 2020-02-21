@@ -28,8 +28,7 @@ class TrackerServer extends EventEmitter {
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {
-        const listOfNodeAddresses = listOfNodeIds.map((nodeId) => this.endpoint.resolveAddress(nodeId))
-        return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeAddresses))
+        return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeIds))
     }
 
     sendRtcOffer(receiverNodeId, originatorInfo, data) {

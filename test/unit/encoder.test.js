@@ -99,16 +99,16 @@ describe('encoder', () => {
     })
 
     it('check encoding STORAGE_NODES', () => {
-        const actual = encoder.storageNodesMessage(new StreamIdAndPartition('stream-id', 0), ['ws://node-1', 'ws://node-2'])
+        const actual = encoder.storageNodesMessage(new StreamIdAndPartition('stream-id', 0), ['node-1', 'node-2'])
         expect(JSON.parse(actual)).toEqual({
             code: encoder.STORAGE_NODES,
             version,
             payload: {
                 streamId: 'stream-id',
                 streamPartition: 0,
-                nodeAddresses: [
-                    'ws://node-1',
-                    'ws://node-2'
+                nodeIds: [
+                    'node-1',
+                    'node-2'
                 ]
             }
         })
@@ -121,9 +121,9 @@ describe('encoder', () => {
             payload: {
                 streamId: 'stream-id',
                 streamPartition: 0,
-                nodeAddresses: [
-                    'ws://node-1',
-                    'ws://node-2'
+                nodeIds: [
+                    'node-1',
+                    'node-2'
                 ]
             }
         }))
@@ -134,7 +134,7 @@ describe('encoder', () => {
         expect(unicastMessage.getSource()).toEqual('source')
 
         expect(unicastMessage.getStreamId()).toEqual(new StreamIdAndPartition('stream-id', 0))
-        expect(unicastMessage.getNodeAddresses()).toEqual(['ws://node-1', 'ws://node-2'])
+        expect(unicastMessage.getNodeIds()).toEqual(['node-1', 'node-2'])
     })
 
     it('check encoding RTC_OFFER', () => {

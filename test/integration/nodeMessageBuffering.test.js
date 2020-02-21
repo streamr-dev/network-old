@@ -21,12 +21,10 @@ describe('message buffering of Node', () => {
         tracker = await startTracker(LOCALHOST, 30320, 'tracker')
 
         sourceNode = await startNetworkNode(LOCALHOST, 30321, 'source-node')
-        await sourceNode.addBootstrapTracker(tracker.getAddress())
-
-        await wait(1000)
+        sourceNode.addBootstrapTracker(tracker.getAddress())
 
         destinationNode = await startNetworkNode(LOCALHOST, 30322, 'destination-node')
-        await destinationNode.addBootstrapTracker(tracker.getAddress())
+        destinationNode.addBootstrapTracker(tracker.getAddress())
     })
 
     afterAll(async () => {

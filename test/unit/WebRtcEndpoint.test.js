@@ -17,10 +17,10 @@ describe('WebRtcEndpoint', () => {
     let endpoint2
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 28600, 'tracker')
+        tracker = await startTracker(LOCALHOST, 28700, 'tracker')
 
-        const wss1 = await startWebSocketServer('127.0.0.1', 28511)
-        const wss2 = await startWebSocketServer('127.0.0.1', 28512)
+        const wss1 = await startWebSocketServer('127.0.0.1', 28701)
+        const wss2 = await startWebSocketServer('127.0.0.1', 28702)
         trackerNode1 = new TrackerNode(new WsEndpoint(wss1, PeerInfo.newNode('node-1'), null))
         trackerNode2 = new TrackerNode(new WsEndpoint(wss2, PeerInfo.newNode('node-2'), null))
 

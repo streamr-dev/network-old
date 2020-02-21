@@ -288,7 +288,10 @@ class Node extends EventEmitter {
         this._disconnectFromAllNodes()
         this._disconnectFromTrackers()
         this.messageBuffer.clear()
-        return this.protocols.nodeToNode.stop()
+        return Promise.all([
+            this.protocols.trackerNode.stop(),
+            this.protocols.nodeToNode.stop(),
+        ])
     }
 
     _disconnectFromTrackers() {

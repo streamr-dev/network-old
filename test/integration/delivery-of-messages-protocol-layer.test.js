@@ -44,7 +44,7 @@ describe('delivery of messages in protocol layer', () => {
         await waitForEvent(trackerServer, TrackerServer.events.NODE_CONNECTED)
     })
 
-    afterAll(() => {
+    afterAll(async () => {
         return Promise.all([
             nodeToNode2.stop(),
             nodeToNode1.stop(),
@@ -243,7 +243,7 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg).toBeInstanceOf(StorageNodesMessage)
         expect(msg.getSource()).toEqual('trackerServer')
         expect(msg.getStreamId()).toEqual(new StreamIdAndPartition('stream', 10))
-        expect(msg.getNodeAddresses()).toEqual(['ws://127.0.0.1:28513'])
+        expect(msg.getNodeIds()).toEqual(['trackerNode'])
     })
 
     test('sendRtcOffer is delivered (trackerServer->trackerNode)', async () => {

@@ -89,11 +89,15 @@ class WebRtcEndpoint extends EventEmitter {
 
     close(targetPeerId) {
         const connection = this.connections[targetPeerId]
+        const dataChannel = this.dataChannels[targetPeerId]
+        if (dataChannel) {
+            dataChannel.close()
+        }
         if (connection) {
             connection.close()
-            delete this.connections[targetPeerId]
-            delete this.dataChannels[targetPeerId]
         }
+        delete this.connections[targetPeerId]
+        delete this.dataChannels[targetPeerId]
     }
 
     getAddress() {
@@ -101,11 +105,8 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     stop() {
-        Object.values(this.dataChannels).forEach((dataChannel) => {
-            dataChannel.close()
-        })
-        Object.values(this.connections).forEach((connection) => {
-            connection.close()
+        Object.keys(this.connections).forEach((peerId) => {
+            this.close(peerId)
         })
         this.connections = {}
         this.dataChannels = {}

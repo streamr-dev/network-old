@@ -314,7 +314,8 @@ class StorageNodeResendStrategy {
 
         this.trackerNode.on(TrackerNode.events.STORAGE_NODES_RECEIVED, async (storageNodesMessage) => {
             const streamId = storageNodesMessage.getStreamId()
-            const storageNodeAddresses = storageNodesMessage.getNodeAddresses()
+            const storageNodeIds = storageNodesMessage.getNodeIds()
+            const tracker = storageNodesMessage.getSource()
 
             const entries = this.pendingTrackerResponse.popEntries(streamId)
             if (entries.length === 0) {
@@ -322,10 +323,10 @@ class StorageNodeResendStrategy {
             }
 
             let storageNode = null
-            while (storageNode === null && storageNodeAddresses.length > 0) {
-                const address = storageNodeAddresses.shift()
+            while (storageNode === null && storageNodeIds.length > 0) {
+                const nodeId = storageNodeIds.shift()
                 try {
-                    storageNode = await this.nodeToNode.connectToNode(address) // eslint-disable-line no-await-in-loop
+                    storageNode = await this.nodeToNode.connectToNode(nodeId, tracker) // eslint-disable-line no-await-in-loop
                 } catch (e) {
                     // nop
                 }
