@@ -1,9 +1,10 @@
-const { waitForEvent } = require('streamr-test-utils')
+const { waitForEvent, wait } = require('streamr-test-utils')
 
+const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { startNetworkNode, startTracker } = require('../../src/composition')
+const { startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
@@ -15,128 +16,82 @@ const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
  */
 describe('RTC signalling messages are routed to destination via tracker', () => {
     let tracker
-    let originatorNode
-    let targetNode
+    let originatorTrackerNode
+    let targetTrackerNode
 
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 28660, 'tracker')
-        originatorNode = await startNetworkNode(LOCALHOST, 28661, 'originatorNode')
-        targetNode = await startNetworkNode(LOCALHOST, 28662, 'targetNode')
+        const originatorEndpoint = await startEndpoint('127.0.0.1', 28661, PeerInfo.newNode('originator'), null)
+        const targetEndpoint = await startEndpoint('127.0.0.1', 28662, PeerInfo.newNode('target'), null)
 
-        originatorNode.addBootstrapTracker(tracker.getAddress())
-        targetNode.addBootstrapTracker(tracker.getAddress())
+        originatorTrackerNode = new TrackerNode(originatorEndpoint)
+        targetTrackerNode = new TrackerNode(targetEndpoint)
+
+        originatorTrackerNode.connectToTracker(tracker.getAddress())
+        targetTrackerNode.connectToTracker(tracker.getAddress())
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED),
+            waitForEvent(targetTrackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
+            waitForEvent(originatorTrackerNode, TrackerNode.events.CONNECTED_TO_TRACKER)
         ])
-    })
+    }, 30 * 1000)
 
     afterAll(async () => {
         await tracker.stop()
-        await originatorNode.stop()
-        await targetNode.stop()
+        await originatorTrackerNode.stop()
+        await targetTrackerNode.stop()
     })
 
-    // TODO: better to use Node events and methods directly instead of invoking accessing internals
     it('RTC_OFFER messages are delivered', async () => {
-        originatorNode.protocols.trackerNode.sendRtcOffer(
-            'tracker',
-            'targetNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [rtcOffer] = await waitForEvent(
-            targetNode.protocols.trackerNode,
-            TrackerNode.events.RTC_OFFER_RECEIVED
-        )
+        originatorTrackerNode.sendRtcOffer('tracker', 'target', PeerInfo.newNode('originator'), 'data')
+        const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RTC_OFFER_RECEIVED, 15 * 1000)
         expect(rtcOffer).toEqual(new RtcOfferMessage(
-            PeerInfo.newNode('originatorNode'),
-            'targetNode',
+            PeerInfo.newNode('originator'),
+            'target',
             'data',
             'tracker'
         ))
     })
 
-    // TODO: better to use Node events and methods directly instead of invoking accessing internals
     it('RTC_ANSWER messages are delivered', async () => {
-        originatorNode.protocols.trackerNode.sendRtcAnswer(
-            'tracker',
-            'targetNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [rtcAnswer] = await waitForEvent(
-            targetNode.protocols.trackerNode,
-            TrackerNode.events.RTC_ANSWER_RECEIVED
-        )
+        originatorTrackerNode.sendRtcAnswer('tracker', 'target', PeerInfo.newNode('originator'), 'data')
+        const [rtcAnswer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RTC_ANSWER_RECEIVED)
         expect(rtcAnswer).toEqual(new RtcAnswerMessage(
-            PeerInfo.newNode('originatorNode'),
-            'targetNode',
+            PeerInfo.newNode('originator'),
+            'target',
             'data',
             'tracker'
         ))
     })
 
-    // TODO: better to use Node events and methods directly instead of invoking accessing internals
     it('ICE_CANDIDATE messages are delivered', async () => {
-        originatorNode.protocols.trackerNode.sendIceCandidate(
-            'tracker',
-            'targetNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [iceCandidate] = await waitForEvent(
-            targetNode.protocols.trackerNode,
-            TrackerNode.events.ICE_CANDIDATE_RECEIVED
-        )
+        originatorTrackerNode.sendIceCandidate('tracker', 'target', PeerInfo.newNode('originator'), 'data')
+        const [iceCandidate] = await waitForEvent(targetTrackerNode, TrackerNode.events.ICE_CANDIDATE_RECEIVED)
         expect(iceCandidate).toEqual(new IceCandidateMessage(
-            PeerInfo.newNode('originatorNode'),
-            'targetNode',
+            PeerInfo.newNode('originator'),
+            'target',
             'data',
             'tracker'
         ))
     })
 
     it('RTC_OFFER message with invalid target results in RTC_ERROR response sent to originator', async () => {
-        originatorNode.protocols.trackerNode.sendRtcOffer(
-            'tracker',
-            'nonExistingNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [rtcError] = await waitForEvent(
-            originatorNode.protocols.trackerNode,
-            TrackerNode.events.RTC_ERROR_RECEIVED
-        )
+        originatorTrackerNode.sendRtcOffer('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
+        const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
         expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
     })
 
     it('RTC_ANSWER message with invalid target results in RTC_ERROR response sent to originator', async () => {
-        originatorNode.protocols.trackerNode.sendRtcAnswer(
-            'tracker',
-            'nonExistingNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [rtcError] = await waitForEvent(
-            originatorNode.protocols.trackerNode,
-            TrackerNode.events.RTC_ERROR_RECEIVED
-        )
+        originatorTrackerNode.sendRtcAnswer('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
+        const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
         expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
     })
 
     it('ICE_CANDIDATE message with invalid target results in RTC_ERROR response sent to originator', async () => {
-        originatorNode.protocols.trackerNode.sendIceCandidate(
-            'tracker',
-            'nonExistingNode',
-            PeerInfo.newNode('originatorNode'),
-            'data'
-        )
-        const [rtcError] = await waitForEvent(
-            originatorNode.protocols.trackerNode,
-            TrackerNode.events.RTC_ERROR_RECEIVED
-        )
+        originatorTrackerNode.sendIceCandidate('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
+        const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
         expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
     })
 })
