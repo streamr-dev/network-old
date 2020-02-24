@@ -10,7 +10,7 @@ const url = require('url')
 const createDebug = require('debug')
 const WebSocket = require('@streamr/sc-uws')
 
-const { disconnectionReasons } = require('../messages/messageTypes')
+const { disconnectionCodes, disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
 
 const { PeerBook } = require('./PeerBook')
@@ -328,8 +328,8 @@ class WsEndpoint extends EventEmitter {
             this._onNewConnection(ws, address, clientPeerInfo)
         } catch (e) {
             this.debug('dropped incoming connection from %s because of %s', req.connection.remoteAddress, e)
-            this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
-            ws.close(1002, `${e}`)
+            this.metrics.inc('_onIncomingConnection:closed:missing-required-parameter')
+            ws.close(disconnectionCodes.MISSING_REQUIRED_PARAMETER, `${e}`)
         }
     }
 
@@ -340,7 +340,7 @@ class WsEndpoint extends EventEmitter {
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             this.metrics.inc('_onNewConnection:closed:dublicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
-            ws.close(1000, disconnectionReasons.DUPLICATE_SOCKET)
+            ws.close(disconnectionCodes.DUPLICATE_SOCKET, disconnectionReasons.DUPLICATE_SOCKET)
             return
         }
 
