@@ -109,7 +109,7 @@ class Node extends EventEmitter {
     }
 
     unsubscribeFromStream(streamId) {
-        this.debug('remove %s from streams', streamId)
+        this.debug('unsubscribeFromStream: remove %s from streams', streamId)
         const nodes = this.streams.removeStream(streamId)
         nodes.forEach(async (n) => {
             try {
