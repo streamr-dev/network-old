@@ -1,8 +1,6 @@
-const { waitForEvent, waitForCondition } = require('streamr-test-utils')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerNode = require('../../src/protocol/TrackerNode')
-const Node = require('../../src/logic/Node')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const { LOCALHOST } = require('../util')
 const { StreamIdAndPartition } = require('../../src/identifiers')
@@ -19,7 +17,6 @@ describe('check tracker, nodes and statuses from nodes', () => {
     const port2 = 33972
 
     const s1 = new StreamIdAndPartition('stream-1', 0)
-    // const s2 = new StreamIdAndPartition('stream-2', 2)
 
     beforeEach(async () => {
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
