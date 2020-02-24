@@ -283,7 +283,7 @@ class WsEndpoint extends EventEmitter {
     stop() {
         clearInterval(this.checkConnectionsInterval)
         this.connections.forEach((connection) => {
-            connection.terminate()
+            connection.close(disconnectionCodes.GRACEFUL_SHUTDOWN, disconnectionReasons.GRACEFUL_SHUTDOWN)
         })
 
         return new Promise((resolve, reject) => {
