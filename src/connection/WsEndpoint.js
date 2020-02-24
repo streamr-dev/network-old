@@ -262,8 +262,12 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
-                        this._onNewConnection(ws, peerAddress, serverPeerInfo)
-                        resolve(this.peerBook.getPeerId(peerAddress))
+                        const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
+                        if (result) {
+                            resolve(this.peerBook.getPeerId(peerAddress))
+                        } else {
+                            reject(new Error('duplicate connection is dropped'))
+                        }
                     }
                 })
 
@@ -347,7 +351,7 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('_onNewConnection:closed:dublicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
             ws.close(disconnectionCodes.DUPLICATE_SOCKET, disconnectionReasons.DUPLICATE_SOCKET)
-            return
+            return false
         }
 
         ws.on('message', (message) => {
@@ -380,6 +384,8 @@ class WsEndpoint extends EventEmitter {
         this.metrics.set('connections', this.connections.size)
         this.debug('added %s [%s] to connection list', peerInfo, address)
         this.emit(events.PEER_CONNECTED, peerInfo)
+
+        return peerInfo
     }
 
     getMetrics() {
