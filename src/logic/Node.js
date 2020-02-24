@@ -335,17 +335,21 @@ class Node extends EventEmitter {
 
     async _subscribeToStreamOnNode(node, streamId) {
         if (!this.streams.hasInboundNode(streamId, node)) {
-            await this.protocols.nodeToNode.sendSubscribe(node, streamId)
+            // more strict, so when we get reject from from connect, it will be catched
+            return this.protocols.nodeToNode.sendSubscribe(node, streamId).then(() => {
+                this.streams.addInboundNode(streamId, node)
+                this.streams.addOutboundNode(streamId, node)
 
-            this.streams.addInboundNode(streamId, node)
-            this.streams.addOutboundNode(streamId, node)
-
-            // TODO get prove message from node that we successfully subscribed
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                node
+                // TODO get prove message from node that we successfully subscribed
+                this.emit(events.NODE_SUBSCRIBED, {
+                    streamId,
+                    node
+                })
+                return true
             })
         }
+
+        return false
     }
 
     async _unsubscribeFromStreamOnNode(node, streamId) {
