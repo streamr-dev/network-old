@@ -375,12 +375,13 @@ describe('ResendHandler', () => {
             }
 
             let streamHasEnded = false
-            waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
+            await waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
                 .finally(() => {
                     streamHasEnded = true
                 })
+
             setTimeout(() => {
-                expect(streamHasEnded).toEqual(false)
+                expect(streamHasEnded).toEqual(true)
                 done()
             }, maxInactivityPeriodInMs + 10)
         })
