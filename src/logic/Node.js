@@ -345,7 +345,6 @@ class Node extends EventEmitter {
                     streamId,
                     node
                 })
-                return true
             })
         }
 
