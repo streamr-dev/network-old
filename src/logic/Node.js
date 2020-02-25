@@ -333,6 +333,7 @@ class Node extends EventEmitter {
         }
     }
 
+    // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
         if (!this.streams.hasInboundNode(streamId, node)) {
             // more strict, so when we get reject from connect, it will be caught
