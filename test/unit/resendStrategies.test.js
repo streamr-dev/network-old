@@ -403,9 +403,9 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             setImmediate(() => {
                 jest.runAllTimers()
                 expect(nodeToNode.connectToNode).toBeCalledTimes(3)
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-1', 'tracker')
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-2', 'tracker')
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-3', 'tracker')
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-1', 'tracker', true)
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-2', 'tracker', true)
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-3', 'tracker', true)
                 done()
             })
         })

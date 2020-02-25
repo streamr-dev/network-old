@@ -44,8 +44,8 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('connection between nodes is established when both nodes invoke connect()', async () => {
-        endpoint1.connect('node-2', 'tracker')
-        endpoint2.connect('node-1', 'tracker')
+        endpoint1.connect('node-2', 'tracker', true)
+        endpoint2.connect('node-1', 'tracker', false)
 
         await Promise.all([
             waitForEvent(endpoint1, events.PEER_CONNECTED),

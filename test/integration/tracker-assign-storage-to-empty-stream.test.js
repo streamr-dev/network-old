@@ -3,6 +3,7 @@ const { waitForEvent, waitForCondition, waitForStreamToEnd } = require('streamr-
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
+const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const { LOCALHOST, getPort } = require('../util')
 

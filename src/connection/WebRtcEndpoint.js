@@ -20,7 +20,7 @@ class WebRtcEndpoint extends EventEmitter {
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
             const { peerId } = originatorInfo
-            this._createConnectionAndDataChannelIfNeeded(peerId, routerId)
+            this._createConnectionAndDataChannelIfNeeded(peerId, routerId, false)
             this.peerInfos[peerId] = originatorInfo
             const connection = this.connections[peerId]
             const description = new RTCSessionDescription(offer)
@@ -54,8 +54,8 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     // TODO: get rid of promise
-    connect(targetPeerId, routerId) {
-        this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId)
+    connect(targetPeerId, routerId, isOffering) {
+        this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering)
         return Promise.resolve(targetPeerId) // compatibility
     }
 
@@ -112,7 +112,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.dataChannels = {}
     }
 
-    _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId) {
+    _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId) {
         if (this.connections[targetPeerId] != null) {
             return
         }
@@ -131,7 +131,6 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections[targetPeerId] = connection
         this.dataChannels[targetPeerId] = dataChannel
 
-        const isOffering = this.id < targetPeerId
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
                 const offer = await connection.createOffer()
