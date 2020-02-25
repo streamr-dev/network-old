@@ -347,8 +347,6 @@ class Node extends EventEmitter {
                 })
             })
         }
-
-        return false
     }
 
     async _unsubscribeFromStreamOnNode(node, streamId) {
