@@ -44,7 +44,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         await tracker.stop()
     })
 
-    it('if failed to follow tracker instructions, inform tracker immediately about current status', async () => {
+    it('if failed to follow tracker instructions, inform tracker about current status', async () => {
         const trackerInstruction = encoder.instructionMessage(s1, [`ws://${LOCALHOST}:${port1}`, `ws://${LOCALHOST}:${port2}`, 'OOPS'])
 
         await Promise.all([
