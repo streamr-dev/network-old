@@ -292,17 +292,17 @@ class WsEndpoint extends EventEmitter {
 
     close(recipientId, reason) {
         const recipientAddress = this.resolveAddress(recipientId)
-        this.metrics.inc('closeWs')
+        this.metrics.inc('close')
         if (!this.isConnected(recipientAddress)) {
-            this.metrics.inc('closeWs:error:not-connected')
-            this.debug('cannot closeWs connection to %s because not connected', recipientAddress)
+            this.metrics.inc('close:error:not-connected')
+            this.debug('cannot close connection to %s because not connected', recipientAddress)
         } else {
             const ws = this.connections.get(recipientAddress)
             try {
                 this.debug('closing connection to %s, reason %s', recipientAddress, reason)
                 closeWs(ws, 1000, reason)
             } catch (e) {
-                this.metrics.inc('closeWs:error:failed')
+                this.metrics.inc('close:error:failed')
                 console.error('closing connection to %s failed because of %s', recipientAddress, e)
             }
         }
@@ -310,13 +310,11 @@ class WsEndpoint extends EventEmitter {
 
     connect(peerAddress) {
         this.metrics.inc('connect')
-
         if (this.isConnected(peerAddress)) {
             this.metrics.inc('connect:already-connected')
             this.debug('already connected to %s', peerAddress)
             return Promise.resolve(this.peerBook.getPeerId(peerAddress))
         }
-
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
             this.debug('pending connection to %s', peerAddress)
@@ -354,9 +352,13 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
-                        this._addListeners(ws, peerAddress, serverPeerInfo)
-                        this._onNewConnection(ws, peerAddress, serverPeerInfo, true)
-                        resolve(this.peerBook.getPeerId(peerAddress))
+                        const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
+                        if (result) {
+                            this._addListeners(ws, peerAddress, serverPeerInfo)
+                            resolve(this.peerBook.getPeerId(peerAddress))
+                        } else {
+                            reject(new Error('duplicate connection is dropped'))
+                        }
                     }
                 })
 
@@ -369,7 +371,7 @@ class WsEndpoint extends EventEmitter {
             } catch (err) {
                 this.metrics.inc('connect:failed-to-connect')
                 this.debug('failed to connect to %s, error: %o', peerAddress, err)
-                reject(new Error(err))
+                reject(err)
             }
         }).finally(() => {
             this.pendingConnections.delete(peerAddress)
@@ -380,7 +382,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     stop() {
-        // clearInterval(this.checkConnectionsInterval)
+        clearInterval(this.checkConnectionsInterval)
 
         return new Promise((resolve, reject) => {
             try {
@@ -455,7 +457,7 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('_onNewConnection:closed:dupicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
             closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
-            return
+            return false
         }
 
         this.peerBook.add(address, peerInfo)
@@ -464,6 +466,8 @@ class WsEndpoint extends EventEmitter {
         this.debug('added %s [%s] to connection list', peerInfo, address)
         this.debug('%s connected to %s', out ? '===>' : '<===', address)
         this.emit(events.PEER_CONNECTED, peerInfo)
+
+        return peerInfo
     }
 
     _onClose(address, code, reason, peerInfo) {
