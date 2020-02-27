@@ -432,27 +432,6 @@ class WsEndpoint extends EventEmitter {
         }
     }
 
-    _addListeners(ws, address, peerInfo) {
-        ws.on('message', (message) => {
-            // TODO check message.type [utf8|binary]
-            this.metrics.speed('_inSpeed')(message.length)
-            this.metrics.speed('_msgSpeed')(1)
-            this.metrics.speed('_msgInSpeed')(1)
-
-            setImmediate(() => this.onReceive(peerInfo, address, message))
-        })
-
-        ws.once('close', (code, reason) => {
-            if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
-                this.metrics.inc('_onNewConnection:closed:duplicate')
-                this.debug('socket %s dropped from other side because existing connection already exists')
-                return
-            }
-
-            this._onClose(address, code, reason, peerInfo)
-        })
-    }
-
     _onNewConnection(ws, address, peerInfo, out = true) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
@@ -472,6 +451,27 @@ class WsEndpoint extends EventEmitter {
         this.emit(events.PEER_CONNECTED, peerInfo)
 
         return peerInfo
+    }
+
+    _addListeners(ws, address, peerInfo) {
+        ws.on('message', (message) => {
+            // TODO check message.type [utf8|binary]
+            this.metrics.speed('_inSpeed')(message.length)
+            this.metrics.speed('_msgSpeed')(1)
+            this.metrics.speed('_msgInSpeed')(1)
+
+            setImmediate(() => this.onReceive(peerInfo, address, message))
+        })
+
+        ws.once('close', (code, reason) => {
+            if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
+                this.metrics.inc('_onNewConnection:closed:duplicate')
+                this.debug('socket %s dropped from other side because existing connection already exists')
+                return
+            }
+
+            this._onClose(address, code, reason, peerInfo)
+        })
     }
 
     _onClose(address, code, reason, peerInfo) {
