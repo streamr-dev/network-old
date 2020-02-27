@@ -97,6 +97,9 @@ class WsEndpoint extends EventEmitter {
         this.metrics.createSpeedometer('_msgOutSpeed')
 
         this.connections = new Map()
+        this.lastCheckedReadyState = new Map()
+        this.pendingConnections = new Map()
+        this.peerBook = new PeerBook()
 
         this.wss.get('/', (res, req) => {
             // write into headers need information and redirect to ws
@@ -167,10 +170,6 @@ class WsEndpoint extends EventEmitter {
             }
         })
 
-        this.lastCheckedReadyState = new Map()
-        this.pendingConnections = new Map()
-        this.peerBook = new PeerBook()
-
         this.debug('listening on: %s', this.getAddress())
         this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 10 * 1000)
     }
@@ -190,7 +189,7 @@ class WsEndpoint extends EventEmitter {
                     try {
                         ws.terminate()
                     } catch (e) {
-                        console.error('failed to closeWs closed socket because of %s', e)
+                        console.error('failed to close socket because of %s', e)
                     } finally {
                         this.lastCheckedReadyState.delete(address)
                     }
@@ -227,7 +226,7 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
                         this.debug('sent failed because readyState of socket is %d', ws.readyState)
                     }
-                }, 0)
+                })
             } catch (e) {
                 this.metrics.inc('send:failed')
                 console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
@@ -282,7 +281,7 @@ class WsEndpoint extends EventEmitter {
     onReceive(peerInfo, address, message) {
         this.metrics.inc('onReceive')
         this.debug('<=== received from %s [%s] message "%s"', peerInfo, address, message)
-        setImmediate(() => this.emit(events.MESSAGE_RECEIVED, peerInfo, message), 0)
+        setImmediate(() => this.emit(events.MESSAGE_RECEIVED, peerInfo, message))
     }
 
     close(recipientId, reason) {
@@ -436,7 +435,7 @@ class WsEndpoint extends EventEmitter {
             this.metrics.speed('_msgSpeed')(1)
             this.metrics.speed('_msgInSpeed')(1)
 
-            setImmediate(() => this.onReceive(peerInfo, address, message), 0)
+            setImmediate(() => this.onReceive(peerInfo, address, message))
         })
 
         ws.once('close', (code, reason) => {
