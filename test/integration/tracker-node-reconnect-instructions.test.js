@@ -50,7 +50,7 @@ describe('Check tracker instructions to node', () => {
         })
     })
 
-    it('if tracker sends empty list of nodes, so node-one will not disconnect from node two, and will unsubscribe only after unsubscribe call', async () => {
+    it('if tracker sends empty list of nodes, so node-one will not disconnect from node two, and will disconnect only after unsubscribe call', async () => {
         await Promise.race([
             waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
