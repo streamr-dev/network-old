@@ -3,6 +3,10 @@ node_js:
 - 13.9.0
 git:
   depth: false
+branches:
+  only:
+    - master
+    - "/^v\\d+\\.\\d+(\\.\\d+)?(-\\S*)?$/"
 before_install:
 - npm i -g npm@6.14.1
 - npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
