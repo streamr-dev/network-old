@@ -158,29 +158,32 @@ class Node extends EventEmitter {
         this.debug('received instructions for %s', streamId)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        await Promise.all(nodeAddresses.map(async (nodeAddress) => {
-            let node
-            try {
-                node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
-            } catch (e) {
-                this.debug('failed to connect to node at %s (%o), to subscribe streamId %s', nodeAddress, e.toString(), streamId)
-                return
-            }
-            try {
-                await this._subscribeToStreamOnNode(node, streamId)
-            } catch (e) {
-                this.debug('failed to subscribe to node %s (%o), streamId %s', node, e, streamId)
-                return
-            }
-            nodeIds.push(node)
-        }))
+        if (nodeAddresses.length) {
+            await Promise.all(nodeAddresses.map(async (nodeAddress) => {
+                let node
+                try {
+                    node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
+                } catch (e) {
+                    this.debug('failed to connect to node at %s (%o), to subscribe streamId %s', nodeAddress, e.toString(), streamId)
+                    return
+                }
+                try {
+                    await this._subscribeToStreamOnNode(node, streamId)
+                } catch (e) {
+                    this.debug('failed to subscribe to node %s (%o), streamId %s', node, e, streamId)
+                    return
+                }
+                nodeIds.push(node)
+            }))
 
-        const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
-        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
+            const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
+            const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
 
-        nodesToUnsubscribeFrom.forEach((node) => {
-            this._unsubscribeFromStreamOnNode(node, streamId)
-        })
+            nodesToUnsubscribeFrom.forEach((node) => {
+                this.debug(`unsubscribing from node: ${node} and streamId: ${streamId}, based on tracker instructions`)
+                this._unsubscribeFromStreamOnNode(node, streamId)
+            })
+        }
     }
 
     onDataReceived(streamMessage, source = null) {

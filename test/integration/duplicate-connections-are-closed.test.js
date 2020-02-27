@@ -1,4 +1,4 @@
-const { waitForEvent } = require('streamr-test-utils')
+const { wait, waitForEvent } = require('streamr-test-utils')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
@@ -52,5 +52,10 @@ describe('duplicate connections are closed', () => {
 
         expect(connectionsOpened).toEqual(2) // sanity check
         expect(connectionsClosedReasons).toEqual([disconnectionReasons.DUPLICATE_SOCKET]) // length === 1
+
+        // to be sure that everything wrong happened
+        await wait(2000)
+        expect(wsEndpoint1.getPeers().size).toEqual(1)
+        expect(wsEndpoint2.getPeers().size).toEqual(1)
     })
 })

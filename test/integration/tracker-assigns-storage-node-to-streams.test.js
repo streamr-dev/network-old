@@ -4,6 +4,7 @@ const { waitForEvent, wait } = require('streamr-test-utils')
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
 const TrackerServer = require('../../src/protocol/TrackerServer')
+const TrackerNode = require('../../src/protocol/TrackerNode')
 const { LOCALHOST } = require('../util')
 
 describe('tracker assigns storage node to streams', () => {
@@ -24,14 +25,6 @@ describe('tracker assigns storage node to streams', () => {
         storageNode.addBootstrapTracker(tracker.getAddress())
         subscriberOne.addBootstrapTracker(tracker.getAddress())
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
-
-        await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-        ])
-
-        await wait(1000)
     })
 
     afterAll(async () => {
