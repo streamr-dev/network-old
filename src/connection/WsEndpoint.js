@@ -150,7 +150,7 @@ class WsEndpoint extends EventEmitter {
                 const connection = this.connections.get(ws.address)
 
                 if (connection) {
-                        this.emit('close', ws, code, reason) // back compatibility
+                    this.emit('close', ws, code, reason) // back compatibility
                     this._onClose(ws.address, code, reason, ws.peerInfo)
                 }
             }

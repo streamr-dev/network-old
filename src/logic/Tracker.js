@@ -162,10 +162,10 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('_formAndSendInstructions')
         Object.keys(streams).forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node)
-            Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
+            Object.entries(instructions).forEach(([nodeId, newNeighbors]) => {
                 try {
                     this.metrics.inc('sendInstruction')
-                    await this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
+                    this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
                     this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
                 } catch (e) {
                     this.metrics.inc('sendInstruction:failed')
@@ -192,10 +192,10 @@ module.exports = class Tracker extends EventEmitter {
                 }
 
                 if (streamsToSubscribe.length) {
-                    streamsToSubscribe.forEach(async (streamKey) => {
+                    streamsToSubscribe.forEach((streamKey) => {
                         try {
                             this.metrics.inc('sendInstructionStorages')
-                            await this.protocols.trackerServer.sendInstruction(storageNode, StreamIdAndPartition.fromKey(streamKey), [])
+                            this.protocols.trackerServer.sendInstruction(storageNode, StreamIdAndPartition.fromKey(streamKey), [])
                             this.debug('sent instruction %j for stream %s to storage node %s', [], streamKey, storageNode)
                         } catch (e) {
                             this.metrics.inc('sendInstructionStorages:failed')
