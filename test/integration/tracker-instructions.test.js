@@ -1,4 +1,4 @@
-const { waitForEvent } = require('streamr-test-utils')
+const { waitForEvent, wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
@@ -56,6 +56,9 @@ describe('check tracker, nodes and statuses from nodes', () => {
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
+
+        // to be sure that all duplicate disconnections happened
+        await wait(1000)
 
         expect(tracker.getTopology()).toEqual({
             'stream-1::0': {

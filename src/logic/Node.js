@@ -163,7 +163,7 @@ class Node extends EventEmitter {
             try {
                 node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
             } catch (e) {
-                this.debug('failed to connect to node at %s (%o), to subscribe streamId %s', nodeAddress, e, streamId)
+                this.debug('failed to connect to node at %s (%o), to subscribe streamId %s', nodeAddress, e.toString(), streamId)
                 return
             }
             try {
@@ -174,8 +174,6 @@ class Node extends EventEmitter {
             }
             nodeIds.push(node)
         }))
-
-        this._sendStatusToAllTrackers()
 
         const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
         const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))

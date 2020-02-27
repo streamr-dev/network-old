@@ -126,6 +126,7 @@ class WsEndpoint extends EventEmitter {
                     ws.address = address
 
                     this.debug('<=== %s connecting to me', address)
+                    this.emit('connection', ws) // back compatibility
                     this._onNewConnection(ws, address, clientPeerInfo, false)
                 } catch (e) {
                     this.debug('dropped incoming connection because of %s', e)
@@ -149,6 +150,7 @@ class WsEndpoint extends EventEmitter {
                 const connection = this.connections.get(ws.address)
 
                 if (connection) {
+                        this.emit('close', ws, code, reason) // back compatibility
                     this._onClose(ws.address, code, reason, ws.peerInfo)
                 }
             }
@@ -310,6 +312,7 @@ class WsEndpoint extends EventEmitter {
 
     connect(peerAddress) {
         this.metrics.inc('connect')
+
         if (this.isConnected(peerAddress)) {
             this.metrics.inc('connect:already-connected')
             this.debug('already connected to %s', peerAddress)
@@ -319,6 +322,11 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('connect:pending-connection')
             this.debug('pending connection to %s', peerAddress)
             return this.pendingConnections.get(peerAddress)
+        }
+        if (peerAddress === this.getAddress()) {
+            this.metrics.inc('connect:own-address')
+            this.debug('not allowed to connect to own address %s', peerAddress)
+            return Promise.reject(new Error('trying to connect to own address'))
         }
 
         this.debug('===> connecting to %s', peerAddress)
@@ -352,9 +360,9 @@ class WsEndpoint extends EventEmitter {
                         this.metrics.inc('connect:dropping-upgrade-never-received')
                         reject(new Error('dropping outgoing connection because upgrade event never received'))
                     } else {
+                        this._addListeners(ws, peerAddress, serverPeerInfo)
                         const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
                         if (result) {
-                            this._addListeners(ws, peerAddress, serverPeerInfo)
                             resolve(this.peerBook.getPeerId(peerAddress))
                         } else {
                             reject(new Error('duplicate connection is dropped'))
@@ -471,13 +479,14 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onClose(address, code, reason, peerInfo) {
-        this.metrics.inc(`_onClose:code=${code}`)
-        this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
-        this.connections.delete(address)
-        // this.lastCheckedReadyState.delete(address)
-        this.debug('removed %s [%s] from connection list', peerInfo, address)
-
-        this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+        if (reason !== disconnectionReasons.DUPLICATE_SOCKET) {
+            this.metrics.inc(`_onClose:code=${code}`)
+            this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+            this.connections.delete(address)
+            // this.lastCheckedReadyState.delete(address)
+            this.debug('removed %s [%s] from connection list', peerInfo, address)
+            this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+        }
     }
 
     getMetrics() {
