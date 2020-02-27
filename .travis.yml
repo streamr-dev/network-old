@@ -22,9 +22,13 @@ jobs:
     name: eslint
     script: npm run eslint
   - stage: publish
+    on:
+      branch: master
     if: tag IS present
     script: npm publish
   - stage: Deploy Staging
+    on:
+      branch: master
     if: NOT type IN (pull_request)
     script:
     - mkdir $TRAVIS_BUILD_DIR/build
@@ -59,6 +63,8 @@ jobs:
       deployment_group: eu-west-1-stg-tracker-node-deployment-group
       region: eu-west-1
   - stage: Build s3 Lisboa
+    on:
+      branch: master
     if: NOT type IN (pull_request)
     script:
     - mkdir $TRAVIS_BUILD_DIR/build
