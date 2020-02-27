@@ -90,15 +90,15 @@ describe('resend requests are fulfilled at L3', () => {
             requestRange: () => intoStream.object([]),
         }])
 
-        contactNode.subscribe('streamId', 0)
         neighborOne.subscribe('streamId', 0)
         neighborTwo.subscribe('streamId', 0)
-        // storageNode automatically assigned (subscribed) by tracker
+        contactNode.subscribe('streamId', 0)
 
+        // storageNode automatically assigned (subscribed) by tracker
         storageNode.addBootstrapTracker(tracker.getAddress())
-        contactNode.addBootstrapTracker(tracker.getAddress())
         neighborOne.addBootstrapTracker(tracker.getAddress())
         neighborTwo.addBootstrapTracker(tracker.getAddress())
+        contactNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),
