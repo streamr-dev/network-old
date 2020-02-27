@@ -3,7 +3,7 @@ const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
 const { waitForEvent, waitForStreamToEnd } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerServer= require('../../src/protocol/TrackerServer')
+const TrackerServer = require('../../src/protocol/TrackerServer')
 const { LOCALHOST } = require('../util')
 
 const { UnicastMessage } = ControlLayer
