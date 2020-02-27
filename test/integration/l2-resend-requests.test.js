@@ -27,7 +27,7 @@ describe('resend requests are fulfilled at L2', () => {
     let n1
     let n2
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         tracker = await startTracker(LOCALHOST, 28610, 'tracker')
         contactNode = await startNetworkNode(LOCALHOST, 28611, 'contactNode', [{
             store: () => {},
@@ -110,7 +110,7 @@ describe('resend requests are fulfilled at L2', () => {
         ])
     })
 
-    afterAll(async () => {
+    afterEach(async () => {
         await contactNode.stop()
         await n1.stop()
         await n2.stop()

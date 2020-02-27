@@ -295,22 +295,8 @@ class Node extends EventEmitter {
         this.debug('stopping')
         this.resendHandler.stop()
         this._clearConnectToBootstrapTrackersInterval()
-        this._disconnectFromAllNodes()
-        this._disconnectFromTrackers()
         this.messageBuffer.clear()
         return this.protocols.nodeToNode.stop()
-    }
-
-    _disconnectFromTrackers() {
-        this.trackers.forEach((tracker) => {
-            this.protocols.nodeToNode.disconnectFromNode(tracker, disconnectionReasons.GRACEFUL_SHUTDOWN)
-        })
-    }
-
-    _disconnectFromAllNodes() {
-        this.streams.getAllNodes().forEach((node) => {
-            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.GRACEFUL_SHUTDOWN)
-        })
     }
 
     _getStatus() {

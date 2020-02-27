@@ -30,7 +30,7 @@ describe('resend requests are fulfilled at L3', () => {
     let neighborTwo
     let storageNode
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         tracker = await startTracker(LOCALHOST, 28630, 'tracker')
         contactNode = await startNetworkNode(LOCALHOST, 28631, 'contactNode', [{
             store: () => {},
@@ -108,20 +108,12 @@ describe('resend requests are fulfilled at L3', () => {
         ])
     })
 
-    afterAll(async () => {
+    afterEach(async () => {
         await tracker.stop()
         await contactNode.stop()
         await neighborOne.stop()
         await neighborTwo.stop()
         await storageNode.stop()
-    })
-
-    beforeEach(() => {
-        // Prevent storageNode from being a neighbor of contactNode. Otherwise
-        // L2 will be used to fulfill resend request, which will mean that L3
-        // is skipped and we are just testing L2 again. TODO: find a better way
-        // eslint-disable-next-line no-underscore-dangle
-        storageNode._disconnectFromAllNodes()
     })
 
     test('requestResendLast', async () => {
