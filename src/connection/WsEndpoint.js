@@ -114,39 +114,7 @@ class WsEndpoint extends EventEmitter {
             compression: 0,
             maxPayloadLength: 1024 * 1024,
             open: (ws, req) => {
-                const { address } = qs.parse(req.getQuery())
-
-                const peerId = req.getHeader('streamr-peer-id') // case insensitive
-                const peerType = req.getHeader('streamr-peer-type')
-
-                try {
-                    if (!address) {
-                        throw new Error('address not given')
-                    }
-                    if (!peerId) {
-                        throw new Error('peerId not given')
-                    }
-                    if (!peerType) {
-                        throw new Error('peerType not given')
-                    }
-
-                    const clientPeerInfo = new PeerInfo(peerId, peerType)
-
-                    // Allowed by library https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#use-the-websocketgetuserdata-feature
-                    // see node_modules/uWebSockets.js/index.d.ts WebSocket definition
-                    // eslint-disable-next-line no-param-reassign
-                    ws.peerInfo = clientPeerInfo
-                    // eslint-disable-next-line no-param-reassign
-                    ws.address = address
-
-                    this.debug('<=== %s connecting to me', address)
-                    this.emit('connection', ws) // event for back compatibility
-                    this._onNewConnection(ws, address, clientPeerInfo, false)
-                } catch (e) {
-                    this.debug('dropped incoming connection because of %s', e)
-                    this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
-                    closeWs(ws, 1002, e.toString())
-                }
+                this._onIncomingConnection(ws, req)
             },
             message: (ws, message, isBinary) => {
                 const connection = this.connections.get(ws.address)
@@ -187,7 +155,7 @@ class WsEndpoint extends EventEmitter {
 
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
-                        ws.terminate()
+                        terminateWs(ws)
                     } catch (e) {
                         console.error('failed to close socket because of %s', e)
                     } finally {
@@ -310,15 +278,15 @@ class WsEndpoint extends EventEmitter {
             this.debug('already connected to %s', peerAddress)
             return Promise.resolve(this.peerBook.getPeerId(peerAddress))
         }
-        if (this.pendingConnections.has(peerAddress)) {
-            this.metrics.inc('connect:pending-connection')
-            this.debug('pending connection to %s', peerAddress)
-            return this.pendingConnections.get(peerAddress)
-        }
         if (peerAddress === this.getAddress()) {
             this.metrics.inc('connect:own-address')
             this.debug('not allowed to connect to own address %s', peerAddress)
             return Promise.reject(new Error('trying to connect to own address'))
+        }
+        if (this.pendingConnections.has(peerAddress)) {
+            this.metrics.inc('connect:pending-connection')
+            this.debug('pending connection to %s', peerAddress)
+            return this.pendingConnections.get(peerAddress)
         }
 
         this.debug('===> connecting to %s', peerAddress)
@@ -426,6 +394,42 @@ class WsEndpoint extends EventEmitter {
 
     resolveAddress(peerId) {
         return this.peerBook.getAddress(peerId)
+    }
+
+    _onIncomingConnection(ws, req) {
+        const { address } = qs.parse(req.getQuery())
+
+        const peerId = req.getHeader('streamr-peer-id') // case insensitive
+        const peerType = req.getHeader('streamr-peer-type')
+
+        try {
+            if (!address) {
+                throw new Error('address not given')
+            }
+            if (!peerId) {
+                throw new Error('peerId not given')
+            }
+            if (!peerType) {
+                throw new Error('peerType not given')
+            }
+
+            const clientPeerInfo = new PeerInfo(peerId, peerType)
+
+            // Allowed by library https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#use-the-websocketgetuserdata-feature
+            // see node_modules/uWebSockets.js/index.d.ts WebSocket definition
+            // eslint-disable-next-line no-param-reassign
+            ws.peerInfo = clientPeerInfo
+            // eslint-disable-next-line no-param-reassign
+            ws.address = address
+
+            this.debug('<=== %s connecting to me', address)
+            this.emit('connection', ws) // event for back compatibility
+            this._onNewConnection(ws, address, clientPeerInfo, false)
+        } catch (e) {
+            this.debug('dropped incoming connection because of %s', e)
+            this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
+            closeWs(ws, 1002, e.toString())
+        }
     }
 
     _addListeners(ws, address, peerInfo) {
