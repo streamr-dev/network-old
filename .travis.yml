@@ -5,6 +5,7 @@ sudo: true
 branches:
   only:
   - master
+  - update_uws
   - "/^v\\d+\\.\\d+(\\.\\d+)?(-\\S*)?$/"
 before_install:
 - npm i -g npm@6.9.0

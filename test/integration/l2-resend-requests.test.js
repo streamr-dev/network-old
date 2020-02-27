@@ -95,13 +95,13 @@ describe('resend requests are fulfilled at L2', () => {
             requestRange: () => intoStream.object([]),
         }])
 
+        contactNode.subscribe('streamId', 0)
         n1.subscribe('streamId', 0)
         n2.subscribe('streamId', 0)
-        contactNode.subscribe('streamId', 0)
 
+        contactNode.addBootstrapTracker(tracker.getAddress())
         n1.addBootstrapTracker(tracker.getAddress())
         n2.addBootstrapTracker(tracker.getAddress())
-        contactNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),
