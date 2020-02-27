@@ -435,9 +435,9 @@ class WsEndpoint extends EventEmitter {
     _onNewConnection(ws, address, peerInfo, out = true) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
-        // thereby leaving no connection behind.
+        // thereby leaving no connection behind.g
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
-            this.metrics.inc('_onNewConnection:closed:dupicate')
+            this.metrics.inc('_onNewConnection:closed:duplicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
             closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
             return false
