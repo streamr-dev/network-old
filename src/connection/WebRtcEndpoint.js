@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events')
 
+const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
 const events = Object.freeze({
@@ -17,6 +18,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.dataChannels = {}
         this.peerInfos = {}
+        this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
             const { peerId } = originatorInfo
@@ -144,16 +146,16 @@ class WebRtcEndpoint extends EventEmitter {
             }
         }
         connection.onconnectionstatechange = (event) => {
-            console.log('onconnectionstatechange', this.id, connection.connectionState, event)
+            this.debug('onconnectionstatechange', this.id, connection.connectionState, event)
         }
         connection.onsignalingstatechange = (event) => {
-            console.log('onsignalingstatechange', this.id, connection.connectionState, event)
+            this.debug('onsignalingstatechange', this.id, connection.connectionState, event)
         }
         connection.oniceconnectionstatechange = (event) => {
-            console.log('oniceconnectionstatechange', this.id, event)
+            this.debug('oniceconnectionstatechange', this.id, event)
         }
         connection.onicegatheringstatechange = (event) => {
-            console.log('onicegatheringstatechange', this.id, event)
+            this.debug('onicegatheringstatechange', this.id, event)
         }
         dataChannel.onopen = (event) => {
             this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
