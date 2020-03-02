@@ -146,27 +146,31 @@ class WebRtcEndpoint extends EventEmitter {
             }
         }
         connection.onconnectionstatechange = (event) => {
-            this.debug('onconnectionstatechange', this.id, connection.connectionState, event)
+            this.debug('onconnectionstatechange', this.id, targetPeerId, connection.connectionState, event)
         }
         connection.onsignalingstatechange = (event) => {
-            this.debug('onsignalingstatechange', this.id, connection.connectionState, event)
+            this.debug('onsignalingstatechange', this.id, targetPeerId, connection.connectionState, event)
         }
         connection.oniceconnectionstatechange = (event) => {
-            this.debug('oniceconnectionstatechange', this.id, event)
+            this.debug('oniceconnectionstatechange', this.id, targetPeerId, event)
         }
         connection.onicegatheringstatechange = (event) => {
-            this.debug('onicegatheringstatechange', this.id, event)
+            this.debug('onicegatheringstatechange', this.id, targetPeerId, event)
         }
         dataChannel.onopen = (event) => {
+            this.debug('dataChannel.onOpen', this.id, targetPeerId, event)
             this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
         }
         dataChannel.onclose = (event) => {
+            this.debug('dataChannel.onClose', this.id, targetPeerId, event)
             this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
         }
         dataChannel.onerror = (event) => {
+            this.debug('dataChannel.onError', this.id, targetPeerId, event)
             console.error(event)
         }
         dataChannel.onmessage = (event) => {
+            this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
             this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
         }
     }
