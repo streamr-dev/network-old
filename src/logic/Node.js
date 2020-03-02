@@ -109,7 +109,7 @@ class Node extends EventEmitter {
     }
 
     unsubscribeFromStream(streamId) {
-        this.debug('remove %s from streams', streamId)
+        this.debug('unsubscribeFromStream: remove %s from streams', streamId)
         const nodes = this.streams.removeStream(streamId)
         nodes.forEach(async (n) => {
             try {
@@ -164,11 +164,13 @@ class Node extends EventEmitter {
             try {
                 await this._subscribeToStreamOnNode(nodeId, streamId)
             } catch (e) {
-                this.debug('failed to subscribe to node %s (%j), streamId %s', nodeId, e, streamId)
+                this.debug('failed to subscribe to node %s (%o), streamId %s', nodeId, e, streamId)
                 return
             }
             successfulNodeIds.push(nodeId)
         }))
+
+        this._sendStatusToAllTrackers()
 
         const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
         const nodesToUnsubscribeFrom = currentNodes.filter((node) => !successfulNodeIds.includes(node))
@@ -262,7 +264,9 @@ class Node extends EventEmitter {
             })
         } else {
             this.debug('node %s tried to subscribe to stream %s, but it is not setup', source, streamId)
-            this.protocols.nodeToNode.sendUnsubscribe(source, streamId)
+            this.protocols.nodeToNode.sendUnsubscribe(source, streamId).catch((e) => {
+                console.error(`failed to send sendUnsubscribe to ${source}, because stream ${streamId} is not setUp, error ${e}`)
+            })
         }
     }
 
@@ -331,17 +335,19 @@ class Node extends EventEmitter {
         }
     }
 
+    // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
         if (!this.streams.hasInboundNode(streamId, node)) {
-            await this.protocols.nodeToNode.sendSubscribe(node, streamId)
+            // more strict, so when we get reject from connect, it will be caught
+            return this.protocols.nodeToNode.sendSubscribe(node, streamId).then(() => {
+                this.streams.addInboundNode(streamId, node)
+                this.streams.addOutboundNode(streamId, node)
 
-            this.streams.addInboundNode(streamId, node)
-            this.streams.addOutboundNode(streamId, node)
-
-            // TODO get prove message from node that we successfully subscribed
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                node
+                // TODO get prove message from node that we successfully subscribed
+                this.emit(events.NODE_SUBSCRIBED, {
+                    streamId,
+                    node
+                })
             })
         }
     }
@@ -384,7 +390,7 @@ class Node extends EventEmitter {
         this.bootstrapTrackerAddresses.forEach((address) => {
             this.protocols.trackerNode.connectToTracker(address)
                 .catch((err) => {
-                    console.error('Could not connect to tracker %s because %j', address, err)
+                    console.error('Could not connect to tracker %s because %j', address, err.toString())
                 })
         })
     }
