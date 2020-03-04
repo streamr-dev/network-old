@@ -1,10 +1,8 @@
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent, wait } = require('streamr-test-utils')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
-const TrackerServer = require('../../src/protocol/TrackerServer')
-const TrackerNode = require('../../src/protocol/TrackerNode')
 const { LOCALHOST } = require('../util')
 
 describe('tracker assigns storage node to streams', () => {
@@ -28,12 +26,10 @@ describe('tracker assigns storage node to streams', () => {
     })
 
     afterAll(async () => {
-        await Promise.all([
-            storageNode.stop(),
-            subscriberOne.stop(),
-            subscriberTwo.stop(),
-            tracker.stop()
-        ])
+        await storageNode.stop()
+        await subscriberOne.stop()
+        await subscriberTwo.stop()
+        await tracker.stop()
     })
 
     it('existing streams are assigned to storage node', async () => {
