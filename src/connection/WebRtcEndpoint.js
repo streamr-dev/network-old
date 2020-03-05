@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events')
 
+const Heap = require('heap')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
@@ -11,6 +12,44 @@ const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:message-received'
 })
 
+class QueueItem extends EventEmitter {
+    constructor(message) {
+        super()
+        this.message = message
+        this.tries = 0
+        this.no = QueueItem.nextNumber
+        QueueItem.nextNumber += 1
+    }
+
+    getMessage() {
+        return this.message
+    }
+
+    isFailed() {
+        return this.tries >= QueueItem.MAX_TRIES
+    }
+
+    delivered() {
+        this.emit(QueueItem.events.SENT)
+    }
+
+    incrementTries() {
+        this.tries += 1
+        if (this.isFailed()) {
+            this.emit(QueueItem.events.FAILED)
+        }
+    }
+}
+
+QueueItem.nextNumber = 0
+
+QueueItem.MAX_TRIES = 5
+
+QueueItem.events = Object.freeze({
+    SENT: 'sent',
+    FAILED: 'failed'
+})
+
 class WebRtcEndpoint extends EventEmitter {
     constructor(id, stunUrls, rtcSignaller) {
         super()
@@ -20,6 +59,8 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.dataChannels = {}
         this.peerInfos = {}
+        this.messageQueue = {}
+        this.flushTimeOutRefs = {}
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
@@ -58,54 +99,79 @@ class WebRtcEndpoint extends EventEmitter {
 
         rtcSignaller.setErrorListener(({ targetNode, errorCode }) => {
             const error = new Error(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
+            this.emit(`errored:${targetNode}`, error)
+        })
+
+        this.on(events.PEER_CONNECTED, (peerInfo) => {
+            this._attemptToFlushMessages(peerInfo.peerId)
         })
     }
 
     // TODO: get rid of promise
     connect(targetPeerId, routerId, isOffering) {
         this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering)
-        return Promise.resolve(targetPeerId) // compatibility
+        if (this._isConnected(targetPeerId)) {
+            return Promise.resolve(targetPeerId)
+        }
+        return new Promise((resolve, reject) => {
+            this.once(`connected:${targetPeerId}`, resolve)
+            this.once(`errored:${targetPeerId}`, reject)
+        })
     }
 
     // TODO: get rid of promises and just queue messages until connection comes available
     send(targetPeerId, message) {
-        const sendFn = (resolve, reject) => {
-            try {
-                this.dataChannels[targetPeerId].send(message)
-                resolve()
-            } catch (e) {
-                console.error(e)
-                reject(e)
+        const queueItem = new QueueItem(message)
+        this.messageQueue[targetPeerId].push(queueItem)
+        setImmediate(() => this._attemptToFlushMessages(targetPeerId))
+        return new Promise((resolve, reject) => {
+            queueItem.once(QueueItem.events.SENT, resolve)
+            queueItem.once(QueueItem.events.FAILED, reject)
+        })
+    }
+
+    _attemptToFlushMessages(targetPeerId) {
+        while (this.messageQueue[targetPeerId] && !this.messageQueue[targetPeerId].empty()) {
+            const queueItem = this.messageQueue[targetPeerId].peek()
+            if (queueItem.isFailed()) {
+                this.messageQueue[targetPeerId].pop()
+            } else {
+                try {
+                    this.dataChannels[targetPeerId].send(queueItem.getMessage())
+                    this.messageQueue[targetPeerId].pop()
+                    queueItem.delivered()
+                } catch (e) {
+                    console.error(e)
+                    queueItem.incrementTries()
+                    if (!queueItem.isFailed() && this.flushTimeOutRefs[targetPeerId] == null) {
+                        this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
+                            delete this.flushTimeOutRefs[targetPeerId]
+                            this._attemptToFlushMessages(targetPeerId)
+                        }, 100)
+                    }
+                    return
+                }
             }
         }
-
-        return new Promise((resolve, reject) => {
-            const connection = this.connections[targetPeerId]
-            if (connection && connection.connectionState === 'connected') {
-                sendFn(resolve, reject)
-            } else {
-                const fn = (peerInfo) => {
-                    if (peerInfo.peerId === targetPeerId) {
-                        this.removeListener(events.PEER_CONNECTED, fn)
-                        sendFn(resolve, reject)
-                    }
-                }
-                this.on(events.PEER_CONNECTED, fn)
-            }
-        })
     }
 
     close(targetPeerId) {
         const connection = this.connections[targetPeerId]
         const dataChannel = this.dataChannels[targetPeerId]
+        const flushTimeOutRef = this.flushTimeOutRefs[targetPeerId]
         if (dataChannel) {
             dataChannel.close()
         }
         if (connection) {
             connection.close()
         }
+        if (flushTimeOutRef) {
+            clearTimeout(flushTimeOutRef)
+        }
         delete this.connections[targetPeerId]
         delete this.dataChannels[targetPeerId]
+        delete this.messageQueue[targetPeerId]
+        delete this.flushTimeOutRefs[targetPeerId]
     }
 
     getAddress() {
@@ -116,8 +182,18 @@ class WebRtcEndpoint extends EventEmitter {
         Object.keys(this.connections).forEach((peerId) => {
             this.close(peerId)
         })
+
         this.connections = {}
         this.dataChannels = {}
+        this.messageQueue = {}
+        this.flushTimeOutRefs = {}
+
+        this.rtcSignaller.setOfferListener(() => {})
+        this.rtcSignaller.setAnswerListener(() => {})
+        this.rtcSignaller.setIceCandidateListener(() => {})
+        this.rtcSignaller.setErrorListener(() => {})
+
+        this.removeAllListeners()
     }
 
     _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId) {
@@ -139,6 +215,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections[targetPeerId] = connection
         this.dataChannels[targetPeerId] = dataChannel
         this.peerInfos[targetPeerId] = PeerInfo.newUnknown(targetPeerId)
+        this.messageQueue[targetPeerId] = new Heap((a, b) => a.no - b.no)
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
@@ -167,19 +244,27 @@ class WebRtcEndpoint extends EventEmitter {
         dataChannel.onopen = (event) => {
             this.debug('dataChannel.onOpen', this.id, targetPeerId, event)
             this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
+            this.emit(`connected:${targetPeerId}`, targetPeerId)
         }
         dataChannel.onclose = (event) => {
             this.debug('dataChannel.onClose', this.id, targetPeerId, event)
             this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
+            this.emit(`disconnected:${targetPeerId}`, targetPeerId)
         }
         dataChannel.onerror = (event) => {
             this.debug('dataChannel.onError', this.id, targetPeerId, event)
+            this.emit(`errored:${targetPeerId}`, event.error)
             console.error(event)
         }
         dataChannel.onmessage = (event) => {
             this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
             this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
         }
+    }
+
+    _isConnected(targetPeerId) {
+        const connection = this.connections[targetPeerId]
+        return connection && connection.connectionState === 'connected'
     }
 }
 
