@@ -39,8 +39,9 @@ class TrackerServer extends EventEmitter {
         return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, data))
     }
 
-    sendUnknownPeerRtcError(receiverNodeId) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER))
+    sendUnknownPeerRtcError(receiverNodeId, targetNodeId) {
+        return this.endpoint.send(receiverNodeId,
+            encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, targetNodeId))
     }
 
     sendIceCandidate(receiverNodeId, originatorInfo, data) {

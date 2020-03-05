@@ -53,6 +53,10 @@ class WebRtcEndpoint extends EventEmitter {
                 console.warn(`Unexpected ICE_CANDIDATE from ${originatorInfo} with contents: ${candidate}`)
             }
         })
+
+        rtcSignaller.setErrorListener(({ targetNode, errorCode }) => {
+            const error = new Error(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
+        })
     }
 
     // TODO: get rid of promise
@@ -132,6 +136,7 @@ class WebRtcEndpoint extends EventEmitter {
 
         this.connections[targetPeerId] = connection
         this.dataChannels[targetPeerId] = dataChannel
+        this.peerInfos[targetPeerId] = PeerInfo.newUnknown(targetPeerId)
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {

@@ -15,7 +15,10 @@ function attachRtcSignalling(trackerServer) {
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(rtcOfferMessage.getOriginatorInfo().peerId)
+                trackerServer.sendUnknownPeerRtcError(
+                    rtcOfferMessage.getOriginatorInfo().peerId,
+                    rtcOfferMessage.getTargetNode()
+                )
             } else {
                 throw err
             }
@@ -30,7 +33,10 @@ function attachRtcSignalling(trackerServer) {
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(rtcAnswerMessage.getOriginatorInfo().peerId)
+                trackerServer.sendUnknownPeerRtcError(
+                    rtcAnswerMessage.getOriginatorInfo().peerId,
+                    rtcAnswerMessage.getTargetNode()
+                )
             } else {
                 throw err
             }
@@ -45,7 +51,10 @@ function attachRtcSignalling(trackerServer) {
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(iceCandidateMessage.getOriginatorInfo().peerId)
+                trackerServer.sendUnknownPeerRtcError(
+                    iceCandidateMessage.getOriginatorInfo().peerId,
+                    iceCandidateMessage.getTargetNode()
+                )
             } else {
                 throw err
             }

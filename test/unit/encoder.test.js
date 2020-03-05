@@ -218,12 +218,13 @@ describe('encoder', () => {
     })
 
     it('check encoding RTC_ERROR', () => {
-        const actual = encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
+        const actual = encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'unknownTarget')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.RTC_ERROR,
             version,
             payload: {
-                errorCode: 'UNKNOWN_PEER'
+                errorCode: 'UNKNOWN_PEER',
+                targetNode: 'unknownTarget'
             }
         })
     })
@@ -233,7 +234,8 @@ describe('encoder', () => {
             code: encoder.RTC_ERROR,
             version,
             payload: {
-                errorCode: 'UNKNOWN_PEER'
+                errorCode: 'UNKNOWN_PEER',
+                targetNode: 'unknownTarget'
             }
         }))
 
@@ -241,6 +243,7 @@ describe('encoder', () => {
         expect(rtcErrorMessage.getVersion()).toEqual(version)
         expect(rtcErrorMessage.getCode()).toEqual(encoder.RTC_ERROR)
         expect(rtcErrorMessage.getSource()).toEqual('source')
+        expect(rtcErrorMessage.getTargetNode()).toEqual('unknownTarget')
 
         expect(rtcErrorMessage.getErrorCode()).toEqual(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
     })

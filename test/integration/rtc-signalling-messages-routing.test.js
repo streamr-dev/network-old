@@ -80,18 +80,18 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
     it('RTC_OFFER message with invalid target results in RTC_ERROR response sent to originator', async () => {
         originatorTrackerNode.sendRtcOffer('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
         const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
-        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
+        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'nonExistingNode', 'tracker'))
     })
 
     it('RTC_ANSWER message with invalid target results in RTC_ERROR response sent to originator', async () => {
         originatorTrackerNode.sendRtcAnswer('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
         const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
-        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
+        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'nonExistingNode', 'tracker'))
     })
 
     it('ICE_CANDIDATE message with invalid target results in RTC_ERROR response sent to originator', async () => {
         originatorTrackerNode.sendIceCandidate('tracker', 'nonExistingNode', PeerInfo.newNode('originator'), 'data')
         const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
-        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'tracker'))
+        expect(rtcError).toEqual(new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'nonExistingNode', 'tracker'))
     })
 })

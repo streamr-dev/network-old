@@ -1,7 +1,8 @@
 const peerTypes = Object.freeze({
     TRACKER: 'tracker',
     NODE: 'node',
-    STORAGE: 'storage'
+    STORAGE: 'storage',
+    UNKNOWN: 'unknown'
 })
 
 class PeerInfo {
@@ -15,6 +16,10 @@ class PeerInfo {
 
     static newStorage(peerId) {
         return new PeerInfo(peerId, peerTypes.STORAGE)
+    }
+
+    static newUnknown(peerId) {
+        return new PeerInfo(peerId, peerTypes.UNKNOWN)
     }
 
     static fromObject({ peerId, peerType }) {

@@ -72,7 +72,7 @@ const decode = (source, message) => {
             )
 
         case msgTypes.RTC_ERROR:
-            return new RtcErrorMessage(payload.errorCode, source)
+            return new RtcErrorMessage(payload.errorCode, payload.targetNode, source)
 
         case msgTypes.ICE_CANDIDATE:
             return new IceCandidateMessage(
@@ -117,8 +117,9 @@ module.exports = {
         targetNode,
         data
     }),
-    rtcErrorMessage: (errorCode) => encode(msgTypes.RTC_ERROR, {
-        errorCode
+    rtcErrorMessage: (errorCode, targetNode) => encode(msgTypes.RTC_ERROR, {
+        errorCode,
+        targetNode
     }),
     iceCandidateMessage: (originatorInfo, targetNode, data) => encode(msgTypes.ICE_CANDIDATE, {
         originatorInfo,

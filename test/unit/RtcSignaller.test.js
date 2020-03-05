@@ -1,13 +1,12 @@
 const { EventEmitter } = require('events')
 
-const { wait } = require('streamr-test-utils')
-
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
 const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
+const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
 
 describe('RtcSignaller', () => {
     let peerInfo
@@ -77,6 +76,20 @@ describe('RtcSignaller', () => {
             routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
             candidate: 'payload'
+        })
+    })
+
+    it('errorListener invoked when trackerNode emits RTC_ERROR_RECEIVED', () => {
+        const cbFn = jest.fn()
+        rtcSignaller.setErrorListener(cbFn)
+        trackerNodeMock.emit(
+            TrackerNode.events.RTC_ERROR_RECEIVED,
+            new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'unknownTargetNode', 'router')
+        )
+        expect(cbFn).toHaveBeenCalledWith({
+            routerId: 'router',
+            targetNode: 'unknownTargetNode',
+            errorCode: RtcErrorMessage.errorCodes.UNKNOWN_PEER
         })
     })
 })

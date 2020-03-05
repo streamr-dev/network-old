@@ -6,6 +6,7 @@ module.exports = class RtcSignaller {
         this.trackerNode = trackerNode
         this.offerListener = null
         this.answerListener = null
+        this.errorListener = null
         this.iceCandidateListener = null
 
         trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message) => {
@@ -29,6 +30,13 @@ module.exports = class RtcSignaller {
                 routerId: message.getSource(),
                 originatorInfo: message.getOriginatorInfo(),
                 candidate: message.getData()
+            })
+        })
+        trackerNode.on(TrackerNode.events.RTC_ERROR_RECEIVED, (message) => {
+            this.errorListener({
+                routerId: message.getSource(),
+                targetNode: message.getTargetNode(),
+                errorCode: message.getErrorCode()
             })
         })
     }
@@ -55,5 +63,9 @@ module.exports = class RtcSignaller {
 
     setIceCandidateListener(fn) {
         this.iceCandidateListener = fn
+    }
+
+    setErrorListener(fn) {
+        this.errorListener = fn
     }
 }

@@ -269,12 +269,13 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendUnknownPeerRtcError is delivered', async () => {
-        trackerServer.sendUnknownPeerRtcError('trackerNode')
+        trackerServer.sendUnknownPeerRtcError('trackerNode', 'unknownTargetNode')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcErrorMessage)
         expect(msg.getSource()).toEqual('trackerServer')
         expect(msg.getErrorCode()).toEqual(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
+        expect(msg.getTargetNode()).toEqual('unknownTargetNode')
     })
 
     test('sendIceCandidate is delivered (trackerServer->trackerNode)', async () => {
