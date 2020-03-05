@@ -243,7 +243,7 @@ class WsEndpoint extends EventEmitter {
                 return Promise.resolve(this.peerBook.getPeerId(peerAddress))
             }
 
-            this.debug(`=====================> already connected but readyState is ${ws.readyState}, closing connection`)
+            this.debug(`already connected but readyState is ${ws.readyState}, closing connection`)
             this.close(this.peerBook.getPeerId(peerAddress))
         }
 
