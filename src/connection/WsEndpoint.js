@@ -38,8 +38,8 @@ function fromHeaders(headers) {
 }
 
 class ReadyStateError extends Error {
-    constructor(readyState) {
-        super(`cannot send because socket.readyState=${readyState}`)
+    constructor(address, readyState) {
+        super(`cannot send to ${address} because socket.readyState=${readyState}`)
     }
 }
 
@@ -114,8 +114,8 @@ class WsEndpoint extends EventEmitter {
 
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
-                        console.error('terminating connection...')
-                        ws.terminate()
+                        console.error(`closing connection to ${address}...`)
+                        this.close(this.peerBook.getPeerId(address))
                     } catch (e) {
                         console.error('failed to close closed socket because of %s', e)
                     } finally {
@@ -152,9 +152,9 @@ class WsEndpoint extends EventEmitter {
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug('sent failed because readyState of socket is %d', ws.readyState)
+                        this.debug(`sent to ${recipientAddress} failed because readyState of socket is ${ws.readyState}`)
                     }
-                }, 0)
+                })
             } catch (e) {
                 this.metrics.inc('send:failed')
                 console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
@@ -186,13 +186,13 @@ class WsEndpoint extends EventEmitter {
                             } else {
                                 this.metrics.inc('send:success')
                                 this.debug('sent to %s message "%s"', recipientAddress, message)
-                                resolve()
+                                resolve(this.peerBook.getPeerId(recipientAddress))
                             }
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
                         this.debug('sent failed because readyState of socket is %d', ws.readyState)
-                        reject(new ReadyStateError(ws.readyState))
+                        reject(new ReadyStateError(recipientAddress, ws.readyState))
                     }
                 } catch (e) {
                     this.metrics.inc('send:failed')
@@ -234,10 +234,18 @@ class WsEndpoint extends EventEmitter {
         this.metrics.inc('connect')
 
         if (this.isConnected(peerAddress)) {
-            this.metrics.inc('connect:already-connected')
-            this.debug('already connected to %s', peerAddress)
-            return Promise.resolve(this.peerBook.getPeerId(peerAddress))
+            const ws = this.connections.get(peerAddress)
+
+            if (ws.readyState === 1) {
+                this.metrics.inc('connect:already-connected')
+                this.debug('already connected to %s', peerAddress)
+                return Promise.resolve(this.peerBook.getPeerId(peerAddress))
+            }
+
+            this.debug(`=====================> already connected but readyState is ${ws.readyState}, closing connection`)
+            this.close(this.peerBook.getPeerId(peerAddress))
         }
+
         if (peerAddress === this.getAddress()) {
             this.metrics.inc('connect:own-address')
             this.debug('not allowed to connect to own address %s', peerAddress)
@@ -266,9 +274,11 @@ class WsEndpoint extends EventEmitter {
                     } else {
                         const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
                         if (result) {
+                            this.debug('=====> resolivvvvvv alread to ' + peerAddress)
                             resolve(this.peerBook.getPeerId(peerAddress))
                         } else {
-                            reject(new Error('duplicate connection is dropped'))
+                            this.debug('=====> rejectiiii alread to ' + peerAddress)
+                            reject(new Error(`duplicate connection to ${peerAddress} is dropped`))
                         }
                     }
                 })

@@ -53,6 +53,7 @@
     "fastify-cors": "^3.0.2",
     "lru-cache": "^5.1.1",
     "pidusage": "^2.0.18",
+    "promise.allsettled": "^1.0.2",
     "speedometer": "^1.1.0",
     "streamr-client": "^3.1.2",
     "streamr-client-protocol": "^4.1.0",
