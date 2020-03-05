@@ -3,6 +3,8 @@ const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
+const { PeerInfo } = require('./PeerInfo')
+
 const events = Object.freeze({
     PEER_CONNECTED: 'streamr:peer:connect',
     PEER_DISCONNECTED: 'streamr:peer:disconnect',
