@@ -21,6 +21,7 @@ const events = Object.freeze({
     MESSAGE_PROPAGATED: 'streamr:node:message-propagated',
     NODE_SUBSCRIBED: 'streamr:node:subscribed-successfully',
     NODE_UNSUBSCRIBED: 'streamr:node:node-unsubscribed',
+    NODE_CONNECTED: 'streamr:node:node-connected',
     NODE_DISCONNECTED: 'streamr:node:node-disconnected',
     SUBSCRIPTION_REQUEST: 'streamr:node:subscription-received',
     RESEND_REQUEST_RECEIVED: 'streamr:node:resend-request-received',
@@ -75,6 +76,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, source) => this.onDataReceived(broadcastMessage.streamMessage, source))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage, source) => this.onSubscribeRequest(subscribeMessage, source))
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage, source) => this.onUnsubscribeRequest(unsubscribeMessage, source))
+        this.protocols.nodeToNode.on(NodeToNode.events.NODE_CONNECTED, (node) => this.emit(Node.events.NODE_CONNECTED, node))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
         this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {

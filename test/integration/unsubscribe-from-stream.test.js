@@ -1,5 +1,5 @@
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent } = require('streamr-test-utils')
+const { waitForEvent, wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
@@ -27,6 +27,8 @@ describe('node unsubscribing from a stream', () => {
         await Promise.all([
             waitForEvent(nodeA, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeB, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(nodeA, Node.events.NODE_CONNECTED),
+            waitForEvent(nodeB, Node.events.NODE_CONNECTED),
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
@@ -77,6 +79,7 @@ describe('node unsubscribing from a stream', () => {
     })
 
     test('connection between nodes is not kept if no shared streams', async () => {
+        await wait(100)
         nodeB.unsubscribe('s', 2)
         await waitForEvent(nodeA, Node.events.NODE_UNSUBSCRIBED)
 
