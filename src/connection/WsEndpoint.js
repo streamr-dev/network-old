@@ -115,7 +115,8 @@ class WsEndpoint extends EventEmitter {
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
                         console.error(`closing connection to ${address}...`)
-                        this.close(this.peerBook.getPeerId(address))
+                        // force close dead of connection
+                        this._onClose(address, this.peerBook.getPeerInfo(address), 1006, 'dead-connection')
                     } catch (e) {
                         console.error('failed to close closed socket because of %s', e)
                     } finally {
@@ -355,6 +356,22 @@ class WsEndpoint extends EventEmitter {
         }
     }
 
+    _onClose(address, peerInfo, code = 0, reason = '') {
+        if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
+            this.metrics.inc('_onNewConnection:closed:duplicate')
+            this.debug('socket %s dropped from other side because existing connection already exists')
+            return
+        }
+
+        this.metrics.inc(`_onClose:closed:code=${code}`)
+        this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+        this.connections.delete(address)
+        this.lastCheckedReadyState.delete(address)
+        this.peerBook.getPeerId(address)
+        this.debug('removed %s [%s] from connection list', peerInfo, address)
+        this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+    }
+
     _onNewConnection(ws, address, peerInfo) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
@@ -376,19 +393,7 @@ class WsEndpoint extends EventEmitter {
         })
 
         ws.once('close', (code, reason) => {
-            if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
-                this.metrics.inc('_onNewConnection:closed:dublicate')
-                this.debug('socket %s dropped from other side because existing connection already exists')
-                return
-            }
-
-            this.metrics.inc(`_onNewConnection:closed:code=${code}`)
-            this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
-            this.connections.delete(address)
-            this.lastCheckedReadyState.delete(address)
-            this.peerBook.getPeerId(address)
-            this.debug('removed %s [%s] from connection list', peerInfo, address)
-            this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+            this._onClose(address, peerInfo, code, reason)
         })
 
         this.peerBook.add(address, peerInfo)
