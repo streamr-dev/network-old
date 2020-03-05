@@ -28,7 +28,7 @@ for (let i = 0; i < program.streams; i++) {
 let debug = false
 
 const productionEnv = Object.create(process.env)
-productionEnv.DEBUG = 'streamr:*' // ,-streamr:connection:*'
+productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
 productionEnv.checkUncaughtException = true
 
 // create tracker

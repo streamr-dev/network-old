@@ -6,7 +6,7 @@
       <script value="network" />
     </scripts>
     <arguments value="10" />
-    <node-interpreter value="$USER_HOME$/.nvm/versions/node/v10.17.0/bin/node" />
+    <node-interpreter value="project" />
     <envs>
       <env name="DEBUG" value="streamr:*" />
     </envs>
