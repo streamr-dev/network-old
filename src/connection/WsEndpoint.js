@@ -252,6 +252,7 @@ class WsEndpoint extends EventEmitter {
             this.debug('not allowed to connect to own address %s', peerAddress)
             return Promise.reject(new Error('trying to connect to own address'))
         }
+
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
             this.debug('pending connection to %s', peerAddress)
@@ -275,10 +276,8 @@ class WsEndpoint extends EventEmitter {
                     } else {
                         const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
                         if (result) {
-                            this.debug('=====> resolivvvvvv alread to ' + peerAddress)
                             resolve(this.peerBook.getPeerId(peerAddress))
                         } else {
-                            this.debug('=====> rejectiiii alread to ' + peerAddress)
                             reject(new Error(`duplicate connection to ${peerAddress} is dropped`))
                         }
                     }
