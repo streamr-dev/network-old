@@ -1,9 +1,8 @@
 /* eslint-disable no-underscore-dangle */
 const allSettled = require('promise.allsettled')
-const { wait, waitForEvent } = require('streamr-test-utils')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const { LOCALHOST } = require('../util')
@@ -29,13 +28,12 @@ describe('check and kill dead connections', () => {
 
         node1.subscribe(s1, 0)
         node2.subscribe(s1, 0)
-
         node1.addBootstrapTracker(tracker.getAddress())
         node2.addBootstrapTracker(tracker.getAddress())
 
-        await Promise.race([
-            waitForEvent(node1.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED),
-            waitForEvent(node2.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await Promise.all([
+            waitForEvent(node1, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(node2, Node.events.NODE_SUBSCRIBED)
         ])
     })
 
@@ -48,11 +46,6 @@ describe('check and kill dead connections', () => {
     })
 
     it('if we find dead connection, we force close it', async () => {
-        await Promise.race([
-            waitForEvent(node1, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(node2, Node.events.NODE_SUBSCRIBED)
-        ])
-
         expect(node1.protocols.trackerNode.endpoint.getPeers().size).toBe(2)
 
         // get alive connection
