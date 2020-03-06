@@ -1,9 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 const allSettled = require('promise.allsettled')
-const { waitForEvent } = require('streamr-test-utils')
+const { wait, waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
+const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const { LOCALHOST } = require('../util')
 const { disconnectionReasons, disconnectionCodes } = require('../../src/messages/messageTypes')
@@ -56,20 +57,33 @@ describe('check and kill dead connections', () => {
 
         // get alive connection
         const connection = node1.protocols.trackerNode.endpoint.getPeers().get('ws://127.0.0.1:43972')
-        expect(connection.readyState).toBe(1)
+        expect(connection.readyState).toEqual(1)
 
         // break connection
         jest.spyOn(connection, 'readyState', 'get').mockReturnValue(10)
-        expect(connection.readyState).toBe(10)
+        expect(connection.readyState).toEqual(10)
 
-        node1.protocols.trackerNode.endpoint._onClose = jest.fn()
-
+        // check connections
         node1.protocols.trackerNode.endpoint._checkConnections()
+        jest.spyOn(node1.protocols.trackerNode.endpoint, '_onClose').mockImplementation(() => {})
+
         node1.protocols.trackerNode.endpoint._checkConnections()
 
         expect(node1.protocols.trackerNode.endpoint._onClose).toBeCalledTimes(1)
         expect(node1.protocols.trackerNode.endpoint._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
             peerId: 'node2', peerType: 'node'
         }, disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION)
+
+        node1.protocols.trackerNode.endpoint._onClose.mockRestore()
+
+        // get status in tracker
+        const [msg] = await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+
+        expect(msg.statusMessage.source).toEqual('node1')
+        expect(msg.statusMessage.status.streams).toEqual({
+            'stream-1::0': {
+                inboundNodes: [], outboundNodes: []
+            }
+        })
     })
 })
