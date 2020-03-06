@@ -116,6 +116,7 @@ class WsEndpoint extends EventEmitter {
                     try {
                         console.error(`closing connection to ${address}...`)
                         // force close dead of connection
+                        ws.terminate()
                         this._onClose(address, this.peerBook.getPeerInfo(address), 1006, 'dead-connection')
                     } catch (e) {
                         console.error('failed to close closed socket because of %s', e)
@@ -153,7 +154,7 @@ class WsEndpoint extends EventEmitter {
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug(`sent to ${recipientAddress} failed because readyState of socket is ${ws.readyState}`)
+                        this.debug(`send to ${recipientAddress} failed because readyState of socket is ${ws.readyState}`)
                     }
                 })
             } catch (e) {
@@ -187,7 +188,7 @@ class WsEndpoint extends EventEmitter {
                             } else {
                                 this.metrics.inc('send:success')
                                 this.debug('sent to %s message "%s"', recipientAddress, message)
-                                resolve(this.peerBook.getPeerId(recipientAddress))
+                                resolve(recipientId)
                             }
                         })
                     } else {
