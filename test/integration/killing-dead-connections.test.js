@@ -2,54 +2,39 @@
 const allSettled = require('promise.allsettled')
 const { waitForEvent } = require('streamr-test-utils')
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerServer = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
+const { startEndpoint } = require('../../src/connection/WsEndpoint')
+const { PeerInfo } = require('../../src/connection/PeerInfo')
+const { events } = require('../../src/connection/WsEndpoint')
 const { LOCALHOST } = require('../util')
 const { disconnectionReasons, disconnectionCodes } = require('../../src/messages/messageTypes')
 
 describe('check and kill dead connections', () => {
-    let tracker
-    const trackerPort = 42900
-
     let node1
     const port1 = 43971
 
     let node2
     const port2 = 43972
 
-    const s1 = 'stream-1'
-
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
+        node1 = await startEndpoint(LOCALHOST, port1, PeerInfo.newNode('node1'), null)
+        node2 = await startEndpoint(LOCALHOST, port2, PeerInfo.newNode('node2'), null)
 
-        node1 = await startNetworkNode(LOCALHOST, port1, 'node1')
-        node2 = await startNetworkNode(LOCALHOST, port2, 'node2')
-
-        node1.subscribe(s1, 0)
-        node2.subscribe(s1, 0)
-        node1.addBootstrapTracker(tracker.getAddress())
-        node2.addBootstrapTracker(tracker.getAddress())
-
-        await Promise.all([
-            waitForEvent(node1, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(node2, Node.events.NODE_SUBSCRIBED)
-        ])
+        node1.connect(`ws://${LOCALHOST}:${port2}`)
+        await waitForEvent(node1, events.PEER_CONNECTED)
     })
 
     afterEach(async () => {
         allSettled([
             node1.stop(),
-            node2.stop(),
-            tracker.stop()
+            node2.stop()
         ])
     })
 
     it('if we find dead connection, we force close it', async () => {
-        expect(node1.protocols.trackerNode.endpoint.getPeers().size).toBe(2)
+        expect(node1.getPeers().size).toBe(1)
 
         // get alive connection
-        const connection = node1.protocols.trackerNode.endpoint.getPeers().get('ws://127.0.0.1:43972')
+        const connection = node1.getPeers().get('ws://127.0.0.1:43972')
         expect(connection.readyState).toEqual(1)
 
         // break connection
@@ -57,26 +42,19 @@ describe('check and kill dead connections', () => {
         expect(connection.readyState).toEqual(10)
 
         // check connections
-        node1.protocols.trackerNode.endpoint._checkConnections()
-        jest.spyOn(node1.protocols.trackerNode.endpoint, '_onClose').mockImplementation(() => {})
+        node1._checkConnections()
+        jest.spyOn(node1, '_onClose').mockImplementation(() => {})
 
-        node1.protocols.trackerNode.endpoint._checkConnections()
+        node1._checkConnections()
 
-        expect(node1.protocols.trackerNode.endpoint._onClose).toBeCalledTimes(1)
-        expect(node1.protocols.trackerNode.endpoint._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
+        expect(node1._onClose).toBeCalledTimes(1)
+        expect(node1._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
             peerId: 'node2', peerType: 'node'
         }, disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION)
 
-        node1.protocols.trackerNode.endpoint._onClose.mockRestore()
+        node1._onClose.mockRestore()
 
-        // get status in tracker
-        const [msg] = await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-
-        expect(msg.statusMessage.source).toEqual('node1')
-        expect(msg.statusMessage.status.streams).toEqual({
-            'stream-1::0': {
-                inboundNodes: [], outboundNodes: []
-            }
-        })
+        const [peerInfo] = await waitForEvent(node1, events.PEER_DISCONNECTED)
+        expect(peerInfo).toEqual(new PeerInfo('node2', 'node'))
     })
 })
