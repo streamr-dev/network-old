@@ -115,7 +115,7 @@ class WsEndpoint extends EventEmitter {
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
                         console.error(`closing connection to ${address}...`)
-                        // force close dead of connection
+                        // force close dead connection
                         ws.terminate()
                         this._onClose(address, this.peerBook.getPeerInfo(address), 1006, 'dead-connection')
                     } catch (e) {
