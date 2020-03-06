@@ -22,8 +22,7 @@ describe('check and kill dead connections', () => {
 
     beforeEach(async () => {
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
-        // disable trackers formAndSendInstructions function
-        // eslint-disable-next-line no-underscore-dangle
+
         node1 = await startNetworkNode(LOCALHOST, port1, 'node1')
         node2 = await startNetworkNode(LOCALHOST, port2, 'node2')
 
