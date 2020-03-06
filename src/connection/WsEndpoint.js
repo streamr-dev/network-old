@@ -110,14 +110,17 @@ class WsEndpoint extends EventEmitter {
                 this.lastCheckedReadyState.set(address, ws.readyState)
 
                 this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
-                console.error(`${this.getAddress()} => ${address} = ${ws.readyState}`)
+                this.debug(`found suspicious connection: ${this.getAddress()} => ${address} = ${ws.readyState}`)
 
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
-                        console.error(`closing connection to ${address}...`)
+                        console.error(`closing dead connection to ${address}...`)
                         // force close dead connection
                         ws.terminate()
-                        this._onClose(address, this.peerBook.getPeerInfo(address), 1006, 'dead-connection')
+                        this._onClose(
+                            address, this.peerBook.getPeerInfo(address),
+                            disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION
+                        )
                     } catch (e) {
                         console.error('failed to close closed socket because of %s', e)
                     } finally {
