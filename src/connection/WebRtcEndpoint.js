@@ -43,7 +43,7 @@ class QueueItem extends EventEmitter {
 
 QueueItem.nextNumber = 0
 
-QueueItem.MAX_TRIES = 5
+QueueItem.MAX_TRIES = 10
 
 QueueItem.events = Object.freeze({
     SENT: 'sent',
@@ -141,9 +141,10 @@ class WebRtcEndpoint extends EventEmitter {
                     this.messageQueue[targetPeerId].pop()
                     queueItem.delivered()
                 } catch (e) {
-                    console.error(e)
                     queueItem.incrementTries()
-                    if (!queueItem.isFailed() && this.flushTimeOutRefs[targetPeerId] == null) {
+                    if (queueItem.isFailed()) {
+                        console.warn('Failed to send %j to %s after %d tries due to %e', queueItem.getMessage(), targetPeerId, QueueItem.MAX_TRIES, e)
+                    } else if (this.flushTimeOutRefs[targetPeerId] == null) {
                         this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
                             delete this.flushTimeOutRefs[targetPeerId]
                             this._attemptToFlushMessages(targetPeerId)
