@@ -142,26 +142,7 @@ class WsEndpoint extends EventEmitter {
             const ws = this.connections.get(recipientAddress)
 
             setImmediate(() => {
-                try {
-                    ws.send(message, (err) => {
-                        if (err) {
-                            throw new Error(err)
-                        } else {
-                            this.debug('sent to %s message "%s"', recipientAddress, message)
-                            this.metrics.inc('send:success')
-
-                            this.metrics.speed('_outSpeed')(message.length)
-                            this.metrics.speed('_msgSpeed')(1)
-                            this.metrics.speed('_msgOutSpeed')(1)
-                        }
-                    })
-                } catch (e) {
-                    this.metrics.inc('send:failed')
-                    console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
-                    if (ws.readyState === 2 || ws.readyState === 3) {
-                        ws.terminate()
-                    }
-                }
+                this._socketSend(ws, message, recipientId, recipientAddress)
             })
         }
     }
@@ -176,31 +157,40 @@ class WsEndpoint extends EventEmitter {
             } else {
                 const ws = this.connections.get(recipientAddress)
 
-                try {
-                    ws.send(message, (err) => {
-                        if (err) {
-                            reject(err)
-                        } else {
-                            this.debug('sent to %s message "%s"', recipientAddress, message)
-                            this.metrics.inc('send:success')
-
-                            this.metrics.speed('_outSpeed')(message.length)
-                            this.metrics.speed('_msgSpeed')(1)
-                            this.metrics.speed('_msgOutSpeed')(1)
-
-                            resolve(recipientId)
-                        }
-                    })
-                } catch (e) {
-                    this.metrics.inc('send:failed')
-                    console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
-                    if (ws.readyState === 2 || ws.readyState === 3) {
-                        ws.terminate()
-                    }
-                    reject(e)
-                }
+                this._socketSend(ws, message, recipientId, recipientAddress, resolve, reject)
             }
         })
+    }
+
+    _socketSend(ws, message, recipientId, recipientAddress, successCallback, errorCallback) {
+        try {
+            ws.send(message, (err) => {
+                if (err) {
+                    if (typeof errorCallback === 'function') {
+                        errorCallback(err)
+                    } else {
+                        throw new Error(err)
+                    }
+                } else {
+                    this.debug('sent to %s message "%s"', recipientAddress, message)
+                    this.metrics.inc('send:success')
+
+                    this.metrics.speed('_outSpeed')(message.length)
+                    this.metrics.speed('_msgSpeed')(1)
+                    this.metrics.speed('_msgOutSpeed')(1)
+
+                    if (typeof successCallback === 'function') {
+                        successCallback(recipientId)
+                    }
+                }
+            })
+        } catch (e) {
+            this.metrics.inc('send:failed')
+            console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
+            if (ws.readyState === 2 || ws.readyState === 3) {
+                ws.terminate()
+            }
+        }
     }
 
     onReceive(peerInfo, address, message) {
