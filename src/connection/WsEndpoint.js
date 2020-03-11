@@ -135,70 +135,62 @@ class WsEndpoint extends EventEmitter {
 
     sendSync(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
-        if (!this.isConnected(recipientAddress)) {
+        if (!this.isConnected(recipientAddress) || !this.connections.has(recipientAddress)) {
             this.metrics.inc('send:failed:not-connected')
             this.debug('cannot send to %s because not connected', recipientAddress)
         } else {
             const ws = this.connections.get(recipientAddress)
-            try {
-                setImmediate(() => {
-                    if (ws.readyState === ws.OPEN) {
-                        this.metrics.speed('_outSpeed')(message.length)
-                        this.metrics.speed('_msgSpeed')(1)
-                        this.metrics.speed('_msgOutSpeed')(1)
 
-                        ws.send(message, (err) => {
-                            if (!err) {
-                                this.metrics.inc('send:failed')
-                            } else {
-                                this.metrics.inc('send:success')
-                                this.debug('sent to %s message "%s"', recipientAddress, message)
-                            }
-                        })
-                    } else {
-                        this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug(`send to ${recipientAddress} failed because readyState of socket is ${ws.readyState}`)
+            setImmediate(() => {
+                try {
+                    ws.send(message, (err) => {
+                        if (err) {
+                            throw new Error(err)
+                        } else {
+                            this.debug('sent to %s message "%s"', recipientAddress, message)
+                            this.metrics.inc('send:success')
+
+                            this.metrics.speed('_outSpeed')(message.length)
+                            this.metrics.speed('_msgSpeed')(1)
+                            this.metrics.speed('_msgOutSpeed')(1)
+                        }
+                    })
+                } catch (e) {
+                    this.metrics.inc('send:failed')
+                    console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
+                    if (ws.readyState === 2 || ws.readyState === 3) {
+                        ws.terminate()
                     }
-                })
-            } catch (e) {
-                this.metrics.inc('send:failed')
-                console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
-                if (ws.readyState === 2 || ws.readyState === 3) {
-                    ws.terminate()
                 }
-            }
+            })
         }
     }
 
     send(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
         return new Promise((resolve, reject) => {
-            if (!this.isConnected(recipientAddress)) {
+            if (!this.isConnected(recipientAddress) || !this.connections.has(recipientAddress)) {
                 this.metrics.inc('send:failed:not-connected')
                 this.debug('cannot send to %s because not connected', recipientAddress)
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
                 const ws = this.connections.get(recipientAddress)
-                try {
-                    if (ws.readyState === ws.OPEN) {
-                        this.metrics.speed('_outSpeed')(message.length)
-                        this.metrics.speed('_msgSpeed')(1)
-                        this.metrics.speed('_msgOutSpeed')(1)
 
-                        ws.send(message, (err) => {
-                            if (err) {
-                                reject(err)
-                            } else {
-                                this.metrics.inc('send:success')
-                                this.debug('sent to %s message "%s"', recipientAddress, message)
-                                resolve(recipientId)
-                            }
-                        })
-                    } else {
-                        this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug('sent failed because readyState of socket is %d', ws.readyState)
-                        reject(new ReadyStateError(recipientAddress, ws.readyState))
-                    }
+                try {
+                    ws.send(message, (err) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            this.debug('sent to %s message "%s"', recipientAddress, message)
+                            this.metrics.inc('send:success')
+
+                            this.metrics.speed('_outSpeed')(message.length)
+                            this.metrics.speed('_msgSpeed')(1)
+                            this.metrics.speed('_msgOutSpeed')(1)
+
+                            resolve(recipientId)
+                        }
+                    })
                 } catch (e) {
                     this.metrics.inc('send:failed')
                     console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
