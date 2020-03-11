@@ -20,32 +20,29 @@ const { PeerInfo } = require('./PeerInfo')
 const ab2str = (buf) => Buffer.from(buf).toString('utf8')
 
 // TODO uWS will soon rename end -> close and end -> terminate
-// https://github.com/uNetworking/uWebSockets.js/blob/master/src/WebSocketWrapper.h#L66
 const closeWs = (ws, code, reason) => {
+    // only ws/ws lib has terminate method
     if (ws.terminate !== undefined) {
-        /* ws socket */
         ws.close(code, reason)
     } else {
-        /* uWS socket */
         ws.end(code, reason)
     }
 }
 
 const getBufferedAmount = (ws) => {
+    // only uws lib has getBufferedAmount method
     if (ws.getBufferedAmount !== undefined) {
-        /* uWS socket */
         return ws.getBufferedAmount()
     }
-    /* ws socket */
+
     return ws.bufferedAmount
 }
 
 const terminateWs = (ws) => {
+    // only ws/ws lib has terminate method
     if (ws.terminate !== undefined) {
-        /* ws socket */
         ws.terminate()
     } else {
-        /* uWS socket */
         ws.close()
     }
 }
@@ -132,7 +129,8 @@ class WsEndpoint extends EventEmitter {
                 const connection = this.connections.get(ws.address)
 
                 if (connection) {
-                    this.emit('close', ws, code, reason) // event for back compatibility
+                    // added 'close' event for test - duplicate-connections-are-closed.test.js
+                    this.emit('close', ws, code, reason)
                     this._onClose(ws.address, this.peerBook.getPeerInfo(ws.address), code, reason)
                 }
             }
@@ -256,10 +254,10 @@ class WsEndpoint extends EventEmitter {
     onReceive(peerInfo, address, message) {
         this.metrics.inc('onReceive')
         this.debug('<=== received from %s [%s] message "%s"', peerInfo, address, message)
-        setImmediate(() => this.emit(events.MESSAGE_RECEIVED, peerInfo, message))
+        this.emit(events.MESSAGE_RECEIVED, peerInfo, message)
     }
 
-    close(recipientId, reason) {
+    close(recipientId, reason = disconnectionReasons.GRACEFUL_SHUTDOWN) {
         const recipientAddress = this.resolveAddress(recipientId)
         this.metrics.inc('close')
         if (!this.isConnected(recipientAddress)) {
@@ -269,7 +267,7 @@ class WsEndpoint extends EventEmitter {
             const ws = this.connections.get(recipientAddress)
             try {
                 this.debug('closing connection to %s, reason %s', recipientAddress, reason)
-                closeWs(ws, 1000, reason)
+                closeWs(ws, disconnectionCodes.GRACEFUL_SHUTDOWN, reason)
             } catch (e) {
                 this.metrics.inc('close:error:failed')
                 console.error('closing connection to %s failed because of %s', recipientAddress, e)
@@ -333,11 +331,11 @@ class WsEndpoint extends EventEmitter {
                 ws.once('open', () => {
                     if (!serverPeerInfo) {
                         terminateWs(ws)
-                        this.metrics.inc('connect:dropping-upgrade-never-received')
-                        reject(new Error('dropping outgoing connection because upgrade event never received'))
+                        this.metrics.inc('connect:dropping-connection-headers-never-received')
+                        reject(new Error('dropping outgoing connection because connection headers never received'))
                     } else {
                         this._addListeners(ws, peerAddress, serverPeerInfo)
-                        const result = this._onNewConnection(ws, peerAddress, serverPeerInfo)
+                        const result = this._onNewConnection(ws, peerAddress, serverPeerInfo, true)
                         if (result) {
                             resolve(this.peerBook.getPeerId(peerAddress))
                         } else {
@@ -439,12 +437,13 @@ class WsEndpoint extends EventEmitter {
             ws.address = address
 
             this.debug('<=== %s connecting to me', address)
-            this.emit('connection', ws) // event for back compatibility
+            // added 'connection' event for test - duplicate-connections-are-closed.test.js
+            this.emit('connection', ws)
             this._onNewConnection(ws, address, clientPeerInfo, false)
         } catch (e) {
             this.debug('dropped incoming connection because of %s', e)
             this.metrics.inc('_onIncomingConnection:closed:no-required-parameter')
-            closeWs(ws, 1002, e.toString())
+            closeWs(ws, disconnectionCodes.MISSING_REQUIRED_PARAMETER, e.toString())
         }
     }
 
@@ -464,14 +463,14 @@ class WsEndpoint extends EventEmitter {
         this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
     }
 
-    _onNewConnection(ws, address, peerInfo, out = true) {
+    _onNewConnection(ws, address, peerInfo, out) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
         // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             this.metrics.inc('_onNewConnection:closed:duplicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
-            closeWs(ws, 1000, disconnectionReasons.DUPLICATE_SOCKET)
+            closeWs(ws, disconnectionCodes.DUPLICATE_SOCKET, disconnectionReasons.DUPLICATE_SOCKET)
             return false
         }
 
@@ -482,7 +481,7 @@ class WsEndpoint extends EventEmitter {
         this.debug('%s connected to %s', out ? '===>' : '<===', address)
         this.emit(events.PEER_CONNECTED, peerInfo)
 
-        return peerInfo
+        return true
     }
 
     _addListeners(ws, address, peerInfo) {
