@@ -96,12 +96,10 @@ describe('tracker assigns storage node to streams on any resend', () => {
     })
 
     afterAll(async () => {
-        await Promise.all([
-            storageNode.stop(),
-            subscriberOne.stop(),
-            subscriberTwo.stop(),
-            tracker.stop()
-        ])
+        await storageNode.stop()
+        await subscriberOne.stop()
+        await subscriberTwo.stop()
+        await tracker.stop()
     })
 
     it('tracker assigns storage node to any streams on any resend by default', async () => {

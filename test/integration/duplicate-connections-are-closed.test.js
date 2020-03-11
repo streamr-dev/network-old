@@ -11,8 +11,6 @@ describe('duplicate connections are closed', () => {
 
     let wsEndpoint1
     let wsEndpoint2
-    let ws1
-    let ws2
 
     beforeEach(async () => {
         wsEndpoint1 = await startEndpoint(LOCALHOST, port1, PeerInfo.newNode('wsEndpoint1'), null)
@@ -30,11 +28,9 @@ describe('duplicate connections are closed', () => {
 
         wsEndpoint1.on('connection', (ws) => {
             connectionsOpened += 1
-            ws1 = ws
         })
         wsEndpoint2.on('connection', (ws) => {
             connectionsOpened += 1
-            ws2 = ws
         })
         await Promise.all([
             wsEndpoint1.connect('ws://127.0.0.1:28502').catch((e) => console.log(e.toString())),

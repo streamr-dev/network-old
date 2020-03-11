@@ -526,9 +526,9 @@ async function startWebSocketServer(host, port) {
         // TODO add SSL support uWS.SSLApp()
         const server = uWS.App()
 
-        server.listen(host, port, (token) => {
-            if (token) {
-                resolve([server, token])
+        server.listen(host, port, (listenSocket) => {
+            if (listenSocket) {
+                resolve([server, listenSocket])
             } else {
                 reject(new Error(`Failed to start websocket server, host ${host}, port ${port}`))
             }
