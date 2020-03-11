@@ -5,6 +5,7 @@ const events = Object.freeze({
 })
 
 const { EventEmitter } = require('events')
+const url = require('url')
 
 const qs = require('qs')
 const createDebug = require('debug')
@@ -59,8 +60,8 @@ function toHeaders(peerInfo) {
 }
 
 class ReadyStateError extends Error {
-    constructor(readyState) {
-        super(`cannot send because socket.readyState=${readyState}`)
+    constructor(address, readyState) {
+        super(`cannot send to ${address} because socket.readyState=${readyState}`)
     }
 }
 
@@ -133,7 +134,7 @@ class WsEndpoint extends EventEmitter {
 
                 if (connection) {
                     this.emit('close', ws, code, reason) // event for back compatibility
-                    this._onClose(ws.address, code, reason, ws.peerInfo)
+                    this._onClose(ws.address, this.peerBook.getPeerInfo(ws.address), code, reason)
                 }
             }
         })
@@ -143,19 +144,26 @@ class WsEndpoint extends EventEmitter {
     }
 
     _checkConnections() {
-        Object.keys(this.connections).forEach((address) => {
+        const addresses = [...this.connections.keys()]
+        addresses.forEach((address) => {
             const ws = this.connections.get(address)
 
-            if (ws.readyState !== 1) {
+            if (ws.readyState && ws.readyState !== 1) {
                 const lastReadyState = this.lastCheckedReadyState.get(address)
                 this.lastCheckedReadyState.set(address, ws.readyState)
 
                 this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
-                console.error(address + '\t\t\t' + ws.readyState)
+                this.debug(`found suspicious connection: ${this.getAddress()} => ${address} = ${ws.readyState}`)
 
                 if (lastReadyState != null && lastReadyState === ws.readyState) {
                     try {
+                        console.error(`closing dead connection to ${address}...`)
+                        // force close dead connection
                         terminateWs(ws)
+                        this._onClose(
+                            address, this.peerBook.getPeerInfo(address),
+                            disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION
+                        )
                     } catch (e) {
                         console.error('failed to close socket because of %s', e)
                     } finally {
@@ -192,7 +200,7 @@ class WsEndpoint extends EventEmitter {
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
-                        this.debug('sent failed because readyState of socket is %d', ws.readyState)
+                        this.debug(`send to ${recipientAddress} failed because readyState of socket is ${ws.readyState}`)
                     }
                 })
             } catch (e) {
@@ -226,13 +234,13 @@ class WsEndpoint extends EventEmitter {
                             } else {
                                 this.metrics.inc('send:success')
                                 this.debug('sent to %s message "%s"', recipientAddress, message)
-                                resolve()
+                                resolve(recipientId)
                             }
                         })
                     } else {
                         this.metrics.inc(`send:failed:readyState=${ws.readyState}`)
                         this.debug('sent failed because readyState of socket is %d', ws.readyState)
-                        reject(new ReadyStateError(ws.readyState))
+                        reject(new ReadyStateError(recipientAddress, ws.readyState))
                     }
                 } catch (e) {
                     this.metrics.inc('send:failed')
@@ -274,15 +282,24 @@ class WsEndpoint extends EventEmitter {
         this.metrics.inc('connect')
 
         if (this.isConnected(peerAddress)) {
-            this.metrics.inc('connect:already-connected')
-            this.debug('already connected to %s', peerAddress)
-            return Promise.resolve(this.peerBook.getPeerId(peerAddress))
+            const ws = this.connections.get(peerAddress)
+
+            if (ws.readyState === 1) {
+                this.metrics.inc('connect:already-connected')
+                this.debug('already connected to %s', peerAddress)
+                return Promise.resolve(this.peerBook.getPeerId(peerAddress))
+            }
+
+            this.debug(`already connected but readyState is ${ws.readyState}, closing connection`)
+            this.close(this.peerBook.getPeerId(peerAddress))
         }
+
         if (peerAddress === this.getAddress()) {
             this.metrics.inc('connect:own-address')
             this.debug('not allowed to connect to own address %s', peerAddress)
             return Promise.reject(new Error('trying to connect to own address'))
         }
+
         if (this.pendingConnections.has(peerAddress)) {
             this.metrics.inc('connect:pending-connection')
             this.debug('pending connection to %s', peerAddress)
@@ -325,7 +342,7 @@ class WsEndpoint extends EventEmitter {
                         if (result) {
                             resolve(this.peerBook.getPeerId(peerAddress))
                         } else {
-                            reject(new Error('duplicate connection is dropped'))
+                            reject(new Error(`duplicate connection to ${peerAddress} is dropped`))
                         }
                     }
                 })
@@ -432,10 +449,26 @@ class WsEndpoint extends EventEmitter {
         }
     }
 
+    _onClose(address, peerInfo, code = 0, reason = '') {
+        if (reason === disconnectionReasons.DUPLICATE_SOCKET) {
+            this.metrics.inc('_onNewConnection:closed:duplicate')
+            this.debug('socket %s dropped from other side because existing connection already exists')
+            return
+        }
+
+        this.metrics.inc(`_onClose:closed:code=${code}`)
+        this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
+        this.connections.delete(address)
+        this.lastCheckedReadyState.delete(address)
+        this.peerBook.getPeerId(address)
+        this.debug('removed %s [%s] from connection list', peerInfo, address)
+        this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
+    }
+
     _onNewConnection(ws, address, peerInfo, out = true) {
         // Handle scenario where two peers have opened a socket to each other at the same time.
         // Second condition is a tiebreaker to avoid both peers of simultaneously disconnecting their socket,
-        // thereby leaving no connection behind.g
+        // thereby leaving no connection behind.
         if (this.isConnected(address) && this.getAddress().localeCompare(address) === 1) {
             this.metrics.inc('_onNewConnection:closed:duplicate')
             this.debug('dropped new connection with %s because an existing connection already exists', address)
@@ -470,25 +503,13 @@ class WsEndpoint extends EventEmitter {
                 return
             }
 
-            this._onClose(address, code, reason, peerInfo)
+            this._onClose(address, this.peerBook.getPeerInfo(address), code, reason)
         })
     }
 
-    _onClose(address, code, reason, peerInfo) {
-        if (reason !== disconnectionReasons.DUPLICATE_SOCKET) {
-            this.metrics.inc(`_onClose:code=${code}`)
-            this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
-            this.connections.delete(address)
-            this.lastCheckedReadyState.delete(address)
-            this.debug('removed %s [%s] from connection list', peerInfo, address)
-            this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
-        }
-    }
-
     getMetrics() {
-        const totalBufferSize = [...this.connections.values()].reduce((totalBufferSizeSum, ws) => {
-            return totalBufferSizeSum + getBufferedAmount(ws)
-        }, 0)
+        const sockets = this.connections.values()
+        const totalBufferSize = [...sockets].reduce((totalBufferSizeSum, ws) => totalBufferSizeSum + getBufferedAmount(ws), 0)
 
         return {
             msgSpeed: this.metrics.speed('_msgSpeed')(),
