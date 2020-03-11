@@ -5,7 +5,6 @@ const events = Object.freeze({
 })
 
 const { EventEmitter } = require('events')
-const url = require('url')
 
 const qs = require('qs')
 const createDebug = require('debug')

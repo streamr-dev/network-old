@@ -45,7 +45,7 @@
   },
   "engineStrict": true,
   "dependencies": {
-    "@sentry/node": "^5.13.2",
+    "@sentry/node": "^5.14.0",
     "commander": "^4.1.1",
     "debug": "4.1.1",
     "fastify": "^2.12.1",
