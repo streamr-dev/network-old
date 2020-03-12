@@ -135,7 +135,7 @@ class WsEndpoint extends EventEmitter {
 
     sendSync(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
-        if (!this.isConnected(recipientAddress) || !this.connections.has(recipientAddress)) {
+        if (!this.isConnected(recipientAddress)) {
             this.metrics.inc('send:failed:not-connected')
             this.debug('cannot send to %s because not connected', recipientAddress)
         } else {
@@ -150,7 +150,7 @@ class WsEndpoint extends EventEmitter {
     send(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
         return new Promise((resolve, reject) => {
-            if (!this.isConnected(recipientAddress) || !this.connections.has(recipientAddress)) {
+            if (!this.isConnected(recipientAddress)) {
                 this.metrics.inc('send:failed:not-connected')
                 this.debug('cannot send to %s because not connected', recipientAddress)
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
