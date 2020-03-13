@@ -45,30 +45,16 @@ module.exports = class Tracker extends EventEmitter {
 
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        let { streams } = status
+        const { streams } = status
 
         if (isStorage) {
             this.storageNodes.set(source, streams)
-            streams = this._addMissingStreams(streams)
         }
 
+        this._createNewOverlayTopologies(streams)
+        this._updateAllStorages(streams)
         this._updateNode(source, streams)
         this._formAndSendInstructions(source, streams)
-    }
-
-    _addMissingStreams(streams) {
-        const existingStreams = Object.keys(this.overlayPerStream)
-        const storageStreams = Object.keys(streams)
-        const missingStreams = existingStreams.filter((stream) => !storageStreams.includes(stream))
-
-        missingStreams.forEach((stream) => {
-            // eslint-disable-next-line no-param-reassign
-            streams[stream] = {
-                inboundNodes: [], outboundNodes: []
-            }
-        })
-
-        return streams
     }
 
     onNodeDisconnected(node) {
@@ -86,26 +72,25 @@ module.exports = class Tracker extends EventEmitter {
         // especially those that aren't actively being subscribed or produced to. Thus on encountering a
         // unknown streamId, we need to create a new topology and assign storage node(s) to it to ensure
         // that resend requests for inactive streams get properly handled.
-        if (this.storageNodes.size && this.overlayPerStream[streamId] == null) {
-            this.overlayPerStream[streamId] = this._createNewOverlayTopology()
+        const requestStreams = {}
+        requestStreams[streamId.key()] = {
+            inboundNodes: [], outboundNodes: []
         }
 
-        const foundStorageNodes = []
+        this._createNewOverlayTopologies(requestStreams)
+
+        let foundStorageNodes = []
         this.storageNodes.forEach((streams, node) => {
             if (Object.keys(streams).includes(streamId.key())) {
                 foundStorageNodes.push(node)
             }
         })
 
-        // TODO: this works for single storage node scenario. How to deal with multiple?
         if (!foundStorageNodes.length) {
-            const randomStorage = this._getRandomStorage()
-
-            if (randomStorage) {
-                foundStorageNodes.push(randomStorage)
-            }
+            foundStorageNodes = foundStorageNodes.concat([...this.storageNodes.keys()])
         }
 
+        this._updateAllStorages(requestStreams)
         this.protocols.trackerServer.sendStorageNodes(source, streamId, foundStorageNodes)
     }
 
@@ -118,58 +103,71 @@ module.exports = class Tracker extends EventEmitter {
         return this.protocols.trackerServer.getAddress()
     }
 
-    _getRandomStorage() {
-        const listOfStorages = [...this.storageNodes.keys()]
-        return listOfStorages[Math.floor(Math.random() * listOfStorages.length)]
+    _addMissingStreams(streams) {
+        const existingStreams = Object.keys(this.overlayPerStream)
+        const storageStreams = Object.keys(streams)
+        const missingStreams = existingStreams.filter((stream) => !storageStreams.includes(stream))
+
+        missingStreams.forEach((stream) => {
+            // eslint-disable-next-line no-param-reassign
+            streams[stream] = {
+                inboundNodes: [], outboundNodes: []
+            }
+        })
+
+        return streams
+    }
+
+    _updateAllStorages() {
+        this.storageNodes.forEach((streams, storageId) => {
+            const updateStreams = this._addMissingStreams(streams)
+
+            this.storageNodes.set(storageId, updateStreams)
+            this._updateNode(storageId, updateStreams)
+        })
+    }
+
+    _createNewOverlayTopologies(streams) {
+        Object.keys(streams).forEach((streamId) => {
+            if (this.overlayPerStream[streamId] == null) {
+                this.overlayPerStream[streamId] = this._createNewOverlayTopology()
+            }
+        })
     }
 
     _createNewOverlayTopology() {
         const overlayTopology = new OverlayTopology(this.opts.maxNeighborsPerNode)
-
-        // add to the new OverlayTopology random storage
-        if (this.storageNodes.size) {
-            const randomStorage = this._getRandomStorage()
-
-            if (randomStorage) {
-                overlayTopology.update(this._getRandomStorage(), new Set())
-            }
-        }
-
         return overlayTopology
     }
 
     _updateNode(node, streams) {
-        let newNode = true
+        const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
 
-        if (streams === {}) {
-            this._removeNode(node)
+        if (!isEmpty(streams)) {
+            let newNode = true
+
+            // Add or update
+            Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
+                newNode = this.overlayPerStream[streamKey].hasNode(node) ? false : newNode
+                const neighbors = new Set([...inboundNodes, ...outboundNodes])
+                this.overlayPerStream[streamKey].update(node, neighbors)
+            })
+
+            // Remove
+            const currentStreamKeys = new Set(Object.keys(streams))
+            Object.entries(this.overlayPerStream)
+                .filter(([streamKey, _]) => !currentStreamKeys.has(streamKey))
+                .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
+
+            if (newNode) {
+                this.debug('registered new node %s for streams %j', node, Object.keys(streams))
+            } else {
+                this.debug('setup existing node %s for streams %j', node, Object.keys(streams))
+            }
             return
         }
 
-        // Add or update
-        Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
-            if (this.overlayPerStream[streamKey] == null) {
-                this.overlayPerStream[streamKey] = this._createNewOverlayTopology()
-            }
-
-            newNode = this.overlayPerStream[streamKey].hasNode(node) ? false : newNode
-
-            const neighbors = new Set([...inboundNodes, ...outboundNodes])
-
-            this.overlayPerStream[streamKey].update(node, neighbors)
-        })
-
-        // Remove
-        const currentStreamKeys = new Set(Object.keys(streams))
-        Object.entries(this.overlayPerStream)
-            .filter(([streamKey, _]) => !currentStreamKeys.has(streamKey))
-            .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
-
-        if (newNode) {
-            this.debug('registered new node %s for streams %j', node, Object.keys(streams))
-        } else {
-            this.debug('setup existing node %s for streams %j', node, Object.keys(streams))
-        }
+        this._removeNode(node)
     }
 
     _formAndSendInstructions(node, streams) {

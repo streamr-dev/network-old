@@ -130,13 +130,7 @@ describe('tracker assigns storage node to streams on any resend', () => {
         await tracker.stop()
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
 
-        await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-        ])
-
-        await waitForCondition(() => Object.keys(tracker.getTopology()).length === 2)
+        await waitForCondition(() => Object.keys(tracker.getTopology()).length === 2, 10000)
 
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
