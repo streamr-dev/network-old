@@ -48,7 +48,7 @@ module.exports = class Tracker extends EventEmitter {
         let { streams } = status
 
         if (isStorage) {
-            this.storageNodes.set(source, status)
+            this.storageNodes.set(source, streams)
             streams = this._addMissingStreams(streams)
         }
 
@@ -91,9 +91,8 @@ module.exports = class Tracker extends EventEmitter {
         }
 
         const foundStorageNodes = []
-        this.storageNodes.forEach((status, node) => {
-            const streams = Object.keys(status.streams)
-            if (streams.includes(streamId.key())) {
+        this.storageNodes.forEach((streams, node) => {
+            if (Object.keys(streams).includes(streamId.key())) {
                 foundStorageNodes.push(node)
             }
         })
