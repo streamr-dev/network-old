@@ -45,14 +45,30 @@ module.exports = class Tracker extends EventEmitter {
 
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
+        let { streams } = status
 
         if (isStorage) {
             this.storageNodes.set(source, status)
+            streams = this._addMissingStreams(streams)
         }
 
-        this._updateNode(source, status.streams)
-        this._formAndSendInstructions(source, status.streams)
-        this._formAndSendInstructionsToStorages()
+        this._updateNode(source, streams)
+        this._formAndSendInstructions(source, streams)
+    }
+
+    _addMissingStreams(streams) {
+        const existingStreams = Object.keys(this.overlayPerStream)
+        const storageStreams = Object.keys(streams)
+        const missingStreams = existingStreams.filter((stream) => !storageStreams.includes(stream))
+
+        missingStreams.forEach((stream) => {
+            // eslint-disable-next-line no-param-reassign
+            streams[stream] = {
+                inboundNodes: [], outboundNodes: []
+            }
+        })
+
+        return streams
     }
 
     onNodeDisconnected(node) {
@@ -72,7 +88,6 @@ module.exports = class Tracker extends EventEmitter {
         // that resend requests for inactive streams get properly handled.
         if (this.storageNodes.size && this.overlayPerStream[streamId] == null) {
             this.overlayPerStream[streamId] = this._createNewOverlayTopology()
-            this._formAndSendInstructionsToStorages()
         }
 
         const foundStorageNodes = []
@@ -172,37 +187,6 @@ module.exports = class Tracker extends EventEmitter {
                 }
             })
         })
-    }
-
-    _formAndSendInstructionsToStorages() {
-        const existingStreams = Object.keys(this.overlayPerStream)
-
-        if (existingStreams.length) {
-            let streamsToSubscribe
-
-            this.storageNodes.forEach(async (status, storageNode) => {
-                const alreadyConnected = Object.keys(status.streams)
-
-                if (!alreadyConnected.length) {
-                    streamsToSubscribe = existingStreams
-                } else {
-                    streamsToSubscribe = existingStreams.filter((x) => !alreadyConnected.includes(x))
-                }
-
-                if (streamsToSubscribe.length) {
-                    streamsToSubscribe.forEach(async (streamKey) => {
-                        try {
-                            this.metrics.inc('sendInstructionStorages')
-                            await this.protocols.trackerServer.sendInstruction(storageNode, StreamIdAndPartition.fromKey(streamKey), [])
-                            this.debug('sent instruction %j for stream %s to storage node %s', [], streamKey, storageNode)
-                        } catch (e) {
-                            this.metrics.inc('sendInstructionStorages:failed')
-                            this.debug('failed to send instruction %j for stream %s to storage node %s because of %s', [], streamKey, storageNode, e)
-                        }
-                    })
-                }
-            })
-        }
     }
 
     _removeNode(node) {
