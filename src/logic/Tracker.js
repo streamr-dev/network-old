@@ -7,6 +7,8 @@ const OverlayTopology = require('../logic/OverlayTopology')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
 
+const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
+
 module.exports = class Tracker extends EventEmitter {
     constructor(opts) {
         super()
@@ -61,6 +63,7 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('onNodeDisconnected')
         this.storageNodes.delete(node)
         this._removeNode(node)
+        this.debug('unregistered node %s from tracker', node)
     }
 
     findStorageNodes(findStorageNodesMessage) {
@@ -121,7 +124,6 @@ module.exports = class Tracker extends EventEmitter {
     _updateAllStorages() {
         this.storageNodes.forEach((streams, storageId) => {
             const updateStreams = this._addMissingStreams(streams)
-
             this.storageNodes.set(storageId, updateStreams)
             this._updateNode(storageId, updateStreams)
         })
@@ -141,8 +143,6 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _updateNode(node, streams) {
-        const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
-
         if (!isEmpty(streams)) {
             let newNode = true
 
@@ -190,7 +190,6 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('_removeNode')
         Object.entries(this.overlayPerStream)
             .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
-        this.debug('unregistered node %s from tracker', node)
     }
 
     _leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node) {
