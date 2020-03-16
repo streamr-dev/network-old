@@ -9,8 +9,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "mqtt": "^3.0.0",
-    "streamr-network": "^17.4.0"
-  }
+  "dependencies": {}
 }
