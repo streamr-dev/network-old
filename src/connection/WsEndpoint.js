@@ -105,7 +105,7 @@ class WsEndpoint extends EventEmitter {
         addresses.forEach((address) => {
             const ws = this.connections.get(address)
 
-            if (ws.readyState !== 1) {
+            if (ws.readyState !== ws.OPEN) {
                 const lastReadyState = this.lastCheckedReadyState.get(address)
                 this.lastCheckedReadyState.set(address, ws.readyState)
 
@@ -187,9 +187,7 @@ class WsEndpoint extends EventEmitter {
         } catch (e) {
             this.metrics.inc('send:failed')
             console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
-            if (ws.readyState === 2 || ws.readyState === 3) {
-                ws.terminate()
-            }
+            ws.terminate()
         }
     }
 
@@ -223,7 +221,7 @@ class WsEndpoint extends EventEmitter {
         if (this.isConnected(peerAddress)) {
             const ws = this.connections.get(peerAddress)
 
-            if (ws.readyState === 1) {
+            if (ws.readyState === ws.OPEN) {
                 this.metrics.inc('connect:already-connected')
                 this.debug('already connected to %s', peerAddress)
                 return Promise.resolve(this.peerBook.getPeerId(peerAddress))
