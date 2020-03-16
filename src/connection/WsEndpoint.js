@@ -110,6 +110,7 @@ class WsEndpoint extends EventEmitter {
         }).ws('/ws', {
             compression: 0,
             maxPayloadLength: 1024 * 1024,
+            idleTimeout: 0,
             open: (ws, req) => {
                 this._onIncomingConnection(ws, req)
             },
