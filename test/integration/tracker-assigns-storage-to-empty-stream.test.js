@@ -1,6 +1,6 @@
 const intoStream = require('into-stream')
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
-const { wait, waitForEvent, waitForCondition, waitForStreamToEnd } = require('streamr-test-utils')
+const { waitForEvent, waitForCondition, waitForStreamToEnd } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
