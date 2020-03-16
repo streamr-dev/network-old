@@ -132,14 +132,9 @@ module.exports = class Tracker extends EventEmitter {
     _createNewOverlayTopologies(streams) {
         Object.keys(streams).forEach((streamId) => {
             if (this.overlayPerStream[streamId] == null) {
-                this.overlayPerStream[streamId] = this._createNewOverlayTopology()
+                this.overlayPerStream[streamId] = new OverlayTopology(this.opts.maxNeighborsPerNode)
             }
         })
-    }
-
-    _createNewOverlayTopology() {
-        const overlayTopology = new OverlayTopology(this.opts.maxNeighborsPerNode)
-        return overlayTopology
     }
 
     _updateNode(node, streams) {
@@ -173,15 +168,10 @@ module.exports = class Tracker extends EventEmitter {
     _formAndSendInstructions(node, streams) {
         Object.keys(streams).forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node)
-            Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
-                try {
-                    this.metrics.inc('sendInstruction')
-                    await this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
-                    this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
-                } catch (e) {
-                    this.metrics.inc('sendInstruction:failed')
-                    this.debug('failed to send instruction %j for stream %s to node %s because of %s', newNeighbors, streamKey, nodeId, e)
-                }
+            Object.entries(instructions).forEach(([nodeId, newNeighbors]) => {
+                this.metrics.inc('sendInstruction')
+                this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
+                this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
             })
         })
     }
