@@ -1,4 +1,4 @@
-const { wait, waitForEvent } = require('streamr-test-utils')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
@@ -26,12 +26,13 @@ describe('duplicate connections are closed', () => {
         let connectionsOpened = 0
         const connectionsClosedReasons = []
 
-        wsEndpoint1.on('connection', (ws) => {
+        wsEndpoint1.on('connection', () => {
             connectionsOpened += 1
         })
-        wsEndpoint2.on('connection', (ws) => {
+        wsEndpoint2.on('connection', () => {
             connectionsOpened += 1
         })
+
         await Promise.all([
             wsEndpoint1.connect('ws://127.0.0.1:28502').catch((e) => console.log(e.toString())),
             wsEndpoint2.connect('ws://127.0.0.1:28501').catch((e) => console.log(e.toString()))
@@ -50,7 +51,6 @@ describe('duplicate connections are closed', () => {
         expect(connectionsClosedReasons).toEqual([disconnectionReasons.DUPLICATE_SOCKET]) // length === 1
 
         // to be sure that everything wrong happened
-        await wait(2000)
         expect(wsEndpoint1.getPeers().size).toEqual(1)
         expect(wsEndpoint2.getPeers().size).toEqual(1)
     })
