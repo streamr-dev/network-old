@@ -164,7 +164,6 @@ class Node extends EventEmitter {
         this.debug('received instructions for %s, nodes to connect %o', streamId, nodeAddresses)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-
         const connectedNodes = []
         await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
             results.forEach((result) => {
