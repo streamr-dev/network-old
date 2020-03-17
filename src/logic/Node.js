@@ -287,12 +287,6 @@ class Node extends EventEmitter {
             streamId,
             source
         })
-        // } else {
-        //     this.debug('node %s tried to subscribe to stream %s, but it is not setup', source, streamId)
-        //     this.protocols.nodeToNode.sendUnsubscribe(source, streamId).catch((e) => {
-        //         console.error(`failed to send sendUnsubscribe to ${source}, because stream ${streamId} is not setUp, error ${e}`)
-        //     })
-        // }
     }
 
     onUnsubscribeRequest(unsubscribeMessage, source) {
