@@ -28,7 +28,7 @@ base.
 
 ## Installation
 
-Prerequisites: [Node.js](https://nodejs.org/) (`>=^10.13.0`), npm version 6+.
+Prerequisites: [Node.js](https://nodejs.org/) (`>=^13.11.0`), npm version 6.14.2.
 
 You can install Streamr Network using npm:
 
