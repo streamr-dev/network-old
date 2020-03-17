@@ -109,16 +109,18 @@ class Node extends EventEmitter {
         }
     }
 
-    unsubscribeFromStream(streamId) {
+    async unsubscribeFromStream(streamId) {
         this.debug('unsubscribeFromStream: remove %s from streams', streamId)
         const nodes = this.streams.removeStream(streamId)
-        nodes.forEach(async (n) => {
-            try {
-                await this.protocols.nodeToNode.sendUnsubscribe(n, streamId)
-            } catch (e) {
-                this.debug('unsubscribed, but failed to send unsubscribe request for the stream %s because of %j', streamId, e)
-            }
+
+        await allSettled(nodes.map((nodeAddress) => this.protocols.nodeToNode.sendUnsubscribe(nodeAddress, streamId))).then((results) => {
+            results.forEach((result) => {
+                if (result.status !== 'fulfilled') {
+                    this.debug(`unsubscribed, but failed to send unsubscribe request for the stream ${streamId}, reason: ${result.reason}`)
+                }
+            })
         })
+
         this._sendStatusToAllTrackers()
     }
 
@@ -274,23 +276,23 @@ class Node extends EventEmitter {
             source
         })
 
-        if (this.streams.isSetUp(streamId)) {
-            this.subscribeToStreamIfHaveNotYet(streamId)
+        // if (this.streams.isSetUp(streamId)) {
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
-            this.streams.addOutboundNode(streamId, source)
-            this.streams.addInboundNode(streamId, source)
+        this.streams.addOutboundNode(streamId, source)
+        this.streams.addInboundNode(streamId, source)
 
-            this.debug('node %s subscribed to stream %s', source, streamId)
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                source
-            })
-        } else {
-            this.debug('node %s tried to subscribe to stream %s, but it is not setup', source, streamId)
-            this.protocols.nodeToNode.sendUnsubscribe(source, streamId).catch((e) => {
-                console.error(`failed to send sendUnsubscribe to ${source}, because stream ${streamId} is not setUp, error ${e}`)
-            })
-        }
+        this.debug('node %s subscribed to stream %s', source, streamId)
+        this.emit(events.NODE_SUBSCRIBED, {
+            streamId,
+            source
+        })
+        // } else {
+        //     this.debug('node %s tried to subscribe to stream %s, but it is not setup', source, streamId)
+        //     this.protocols.nodeToNode.sendUnsubscribe(source, streamId).catch((e) => {
+        //         console.error(`failed to send sendUnsubscribe to ${source}, because stream ${streamId} is not setUp, error ${e}`)
+        //     })
+        // }
     }
 
     onUnsubscribeRequest(unsubscribeMessage, source) {

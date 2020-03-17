@@ -79,8 +79,7 @@ describe('tracker assigns storage node to streams', () => {
             content: {},
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
         }))
-
-        const [msg1] = await waitForEvent(storageNode, Node.events.UNSEEN_MESSAGE_RECEIVED)
+        const [msg1] = await waitForEvent(storageNode, Node.events.UNSEEN_MESSAGE_RECEIVED, 10000)
 
         subscriberTwo.publish(StreamMessage.from({
             streamId: 'new-stream-2',
@@ -94,8 +93,8 @@ describe('tracker assigns storage node to streams', () => {
             content: {},
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
         }))
+        const [msg2] = await waitForEvent(storageNode, Node.events.UNSEEN_MESSAGE_RECEIVED, 10000)
 
-        const [msg2] = await waitForEvent(storageNode, Node.events.UNSEEN_MESSAGE_RECEIVED)
         expect(msg1.getStreamId()).toEqual('new-stream-1')
         expect(msg2.getStreamId()).toEqual('new-stream-2')
     })

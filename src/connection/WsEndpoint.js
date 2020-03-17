@@ -228,7 +228,7 @@ class WsEndpoint extends EventEmitter {
         } catch (e) {
             this.metrics.inc('send:failed')
             console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
-            ws.terminate()
+            terminateWs(ws)
         }
     }
 
