@@ -7,6 +7,7 @@ const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
 
 const OverlayTopology = require('./OverlayTopology')
+
 const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
 
 module.exports = class Tracker extends EventEmitter {
