@@ -45,8 +45,8 @@
   },
   "engineStrict": true,
   "dependencies": {
-    "@sentry/node": "^5.14.0",
-    "commander": "^4.1.1",
+    "@sentry/node": "^5.14.2",
+    "commander": "^5.0.0",
     "debug": "4.1.1",
     "fastify": "^2.12.1",
     "fastify-cors": "^3.0.2",
@@ -63,15 +63,16 @@
   },
   "devDependencies": {
     "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-config-streamr-nodejs": "^1.1.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-config-streamr-nodejs": "^1.3.0",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-import-order": "2.1.4",
     "eslint-plugin-promise": "^4.2.1",
     "into-stream": "^5.1.1",
     "jest": "^25.1.0",
     "portfinder": "^1.0.25",
-    "streamr-test-utils": "^1.0.4"
+    "streamr-test-utils": "^1.0.4",
+    "ws": "^7.2.3"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.1",

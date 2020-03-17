@@ -10,8 +10,8 @@ const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
-const { GapMisMatchError, InvalidNumberingError } = require('../logic/DuplicateMessageDetector')
 
+const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
 const ResendHandler = require('./ResendHandler')
 const proxyRequestStream = require('./proxyRequestStream')
@@ -129,6 +129,11 @@ class Node extends EventEmitter {
             request.constructor.name,
             request.requestId)
         this.emit(events.RESEND_REQUEST_RECEIVED, request, source)
+
+        if (this.peerInfo.isStorage()) {
+            const { streamId, streamPartition } = request
+            this.subscribeToStreamIfHaveNotYet(new StreamIdAndPartition(streamId, streamPartition))
+        }
 
         const requestStream = this.resendHandler.handleRequest(request, source)
         if (source != null) {
