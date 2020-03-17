@@ -164,45 +164,44 @@ class Node extends EventEmitter {
         this.debug('received instructions for %s, nodes to connect %o', streamId, nodeAddresses)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        if (nodeAddresses.length) {
-            const connectedNodes = []
-            await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
+
+        const connectedNodes = []
+        await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
+            results.forEach((result) => {
+                if (result.status === 'fulfilled') {
+                    connectedNodes.push(result.value)
+                } else {
+                    this.debug(`failed to connect to node ${result.reason}`)
+                }
+            })
+        })
+
+        if (connectedNodes.length) {
+            await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
                 results.forEach((result) => {
                     if (result.status === 'fulfilled') {
-                        connectedNodes.push(result.value)
+                        nodeIds.push(result.value)
                     } else {
-                        this.debug(`failed to connect to node ${result.reason}`)
-                    }
-                })
-            })
-
-            if (connectedNodes.length) {
-                await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
-                    results.forEach((result) => {
-                        if (result.status === 'fulfilled') {
-                            nodeIds.push(result.value)
-                        } else {
-                            this.debug(`failed to subscribe to node ${result.reason}`)
-                        }
-                    })
-                })
-            }
-
-            if (nodeAddresses.length !== nodeIds.length) {
-                this.debug('error: failed to fulfill tracker instructions')
-            }
-
-            const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
-            const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
-
-            await allSettled(nodesToUnsubscribeFrom.map((nodeId) => this._unsubscribeFromStreamOnNode(nodeId, streamId))).then((results) => {
-                results.forEach((result) => {
-                    if (result.status === 'rejected') {
-                        this.debug(`failed to unsubscribe to node ${result.reason}`)
+                        this.debug(`failed to subscribe to node ${result.reason}`)
                     }
                 })
             })
         }
+
+        if (nodeAddresses.length !== nodeIds.length) {
+            this.debug('error: failed to fulfill tracker instructions')
+        }
+
+        const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
+        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !nodeIds.includes(node))
+
+        await allSettled(nodesToUnsubscribeFrom.map((nodeId) => this._unsubscribeFromStreamOnNode(nodeId, streamId))).then((results) => {
+            results.forEach((result) => {
+                if (result.status === 'rejected') {
+                    this.debug(`failed to unsubscribe to node ${result.reason}`)
+                }
+            })
+        })
     }
 
     onDataReceived(streamMessage, source = null) {

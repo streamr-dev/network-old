@@ -50,8 +50,8 @@ describe('Check tracker instructions to node', () => {
         })
     })
 
-    it('if tracker sends empty list of nodes, so node-one will not disconnect from node two, and will disconnect only after unsubscribe call', async () => {
-        await Promise.race([
+    it('if tracker sends empty list of nodes, so node-one will disconnect from node two', async () => {
+        await Promise.all([
             waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
@@ -63,12 +63,12 @@ describe('Check tracker instructions to node', () => {
 
         await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
 
-        expect(nodeOne.protocols.trackerNode.endpoint.getPeers().size).toBe(2) // tracker + node
-        expect(nodeTwo.protocols.trackerNode.endpoint.getPeers().size).toBe(2) // tracker + node
+        expect(nodeOne.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
 
         nodeOne.unsubscribe(streamId, 0)
 
         const msg = await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, endpointEvents.PEER_DISCONNECTED)
         expect(msg[1]).toBe(disconnectionReasons.NO_SHARED_STREAMS)
+        expect(nodeTwo.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
     })
 })
