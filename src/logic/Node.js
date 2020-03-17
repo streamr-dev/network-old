@@ -276,7 +276,6 @@ class Node extends EventEmitter {
             source
         })
 
-        // if (this.streams.isSetUp(streamId)) {
         this.subscribeToStreamIfHaveNotYet(streamId)
 
         this.streams.addOutboundNode(streamId, source)
