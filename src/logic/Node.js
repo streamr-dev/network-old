@@ -338,6 +338,10 @@ class Node extends EventEmitter {
 
     // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
+        if (this.streams.isNodePresent(node)) {
+            return node
+        }
+
         return this.protocols.nodeToNode.sendSubscribe(node, streamId).then((nodeId) => {
             this.streams.addInboundNode(streamId, node)
             this.streams.addOutboundNode(streamId, node)

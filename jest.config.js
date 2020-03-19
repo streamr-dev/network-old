@@ -1,12 +1,6 @@
 // For a detailed explanation regarding each configuration property, visit:
 // https://jestjs.io/docs/en/configuration.html
 
-require('leaked-handles').set({
-    fullStack: true, // use full stack traces
-    // timeout: 30000, // run every 30 seconds instead of 5.
-    debugSockets: true // pretty print tcp thrown exceptions.
-})
-
 module.exports = {
     // All imported modules in your tests should be mocked automatically
     // automock: false,
