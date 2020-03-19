@@ -24,7 +24,7 @@ class TrackerServer extends EventEmitter {
     }
 
     sendInstruction(receiverNodeId, streamId, nodeIds) {
-        return this.endpoint.send(receiverNodeId, encoder.instructionMessage(streamId, nodeIds))
+        this.endpoint.sendSync(receiverNodeId, encoder.instructionMessage(streamId, nodeIds))
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {

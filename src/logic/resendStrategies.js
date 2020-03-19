@@ -4,7 +4,7 @@ const { ControlLayer } = require('streamr-client-protocol')
 
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
-const { StreamIdAndPartition } = require('../../src/identifiers')
+const { StreamIdAndPartition } = require('../identifiers')
 
 function toUnicastMessage(request) {
     return new Transform({

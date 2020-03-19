@@ -2,6 +2,7 @@ const { EventEmitter } = require('events')
 
 const createDebug = require('debug')
 const LRU = require('lru-cache')
+const allSettled = require('promise.allsettled')
 
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
@@ -9,8 +10,8 @@ const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
-const { GapMisMatchError, InvalidNumberingError } = require('../logic/DuplicateMessageDetector')
 
+const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
 const ResendHandler = require('./ResendHandler')
 const proxyRequestStream = require('./proxyRequestStream')
@@ -110,16 +111,18 @@ class Node extends EventEmitter {
         }
     }
 
-    unsubscribeFromStream(streamId) {
+    async unsubscribeFromStream(streamId) {
         this.debug('unsubscribeFromStream: remove %s from streams', streamId)
         const nodes = this.streams.removeStream(streamId)
-        nodes.forEach(async (n) => {
-            try {
-                await this.protocols.nodeToNode.sendUnsubscribe(n, streamId)
-            } catch (e) {
-                this.debug('unsubscribed, but failed to send unsubscribe request for the stream %s because of %j', streamId, e)
-            }
+
+        await allSettled(nodes.map((nodeAddress) => this.protocols.nodeToNode.sendUnsubscribe(nodeAddress, streamId))).then((results) => {
+            results.forEach((result) => {
+                if (result.status !== 'fulfilled') {
+                    this.debug(`unsubscribed, but failed to send unsubscribe request for the stream ${streamId}, reason: ${result.reason}`)
+                }
+            })
         })
+
         this._sendStatusToAllTrackers()
     }
 
@@ -130,6 +133,11 @@ class Node extends EventEmitter {
             request.constructor.name,
             request.requestId)
         this.emit(events.RESEND_REQUEST_RECEIVED, request, source)
+
+        if (this.peerInfo.isStorage()) {
+            const { streamId, streamPartition } = request
+            this.subscribeToStreamIfHaveNotYet(new StreamIdAndPartition(streamId, streamPartition))
+        }
 
         const requestStream = this.resendHandler.handleRequest(request, source)
         if (source != null) {
@@ -158,27 +166,45 @@ class Node extends EventEmitter {
         const tracker = instructionMessage.getSource()
         const successfulNodeIds = []
 
-        this.debug('received instructions for %s', streamId)
+        this.debug('received instructions for %s, nodes to connect %o', streamId, assignedNodeIds)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
-        await Promise.all(assignedNodeIds.map(async (nodeId) => {
-            await this.protocols.nodeToNode.connectToNode(nodeId, tracker)
-            try {
-                await this._subscribeToStreamOnNode(nodeId, streamId)
-            } catch (e) {
-                this.debug('failed to subscribe to node %s (%o), streamId %s', nodeId, e, streamId)
-                return
-            }
-            successfulNodeIds.push(nodeId)
-        }))
+        const connectedNodes = []
+        await allSettled(assignedNodeIds.map((nodeId) => this.protocols.nodeToNode.connectToNode(nodeId, tracker))).then((results) => {
+            results.forEach((result) => {
+                if (result.status === 'fulfilled') {
+                    connectedNodes.push(result.value)
+                } else {
+                    this.debug(`failed to connect to node ${result.reason}`)
+                }
+            })
+        })
 
-        this._sendStatusToAllTrackers()
+        if (connectedNodes.length) {
+            await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
+                results.forEach((result) => {
+                    if (result.status === 'fulfilled') {
+                        successfulNodeIds.push(result.value)
+                    } else {
+                        this.debug(`failed to subscribe to node ${result.reason}`)
+                    }
+                })
+            })
+        }
+
+        if (assignedNodeIds.length !== successfulNodeIds.length) {
+            this.debug('error: failed to fulfill tracker instructions')
+        }
 
         const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
         const nodesToUnsubscribeFrom = currentNodes.filter((node) => !successfulNodeIds.includes(node))
 
-        nodesToUnsubscribeFrom.forEach((node) => {
-            this._unsubscribeFromStreamOnNode(node, streamId)
+        await allSettled(nodesToUnsubscribeFrom.map((nodeId) => this._unsubscribeFromStreamOnNode(nodeId, streamId))).then((results) => {
+            results.forEach((result) => {
+                if (result.status === 'rejected') {
+                    this.debug(`failed to unsubscribe to node ${result.reason}`)
+                }
+            })
         })
     }
 
@@ -253,23 +279,16 @@ class Node extends EventEmitter {
             source
         })
 
-        if (this.streams.isSetUp(streamId)) {
-            this.subscribeToStreamIfHaveNotYet(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId)
 
-            this.streams.addOutboundNode(streamId, source)
-            this.streams.addInboundNode(streamId, source)
+        this.streams.addOutboundNode(streamId, source)
+        this.streams.addInboundNode(streamId, source)
 
-            this.debug('node %s subscribed to stream %s', source, streamId)
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                source
-            })
-        } else {
-            this.debug('node %s tried to subscribe to stream %s, but it is not setup', source, streamId)
-            this.protocols.nodeToNode.sendUnsubscribe(source, streamId).catch((e) => {
-                console.error(`failed to send sendUnsubscribe to ${source}, because stream ${streamId} is not setUp, error ${e}`)
-            })
-        }
+        this.debug('node %s subscribed to stream %s', source, streamId)
+        this.emit(events.NODE_SUBSCRIBED, {
+            streamId,
+            source
+        })
     }
 
     onUnsubscribeRequest(unsubscribeMessage, source) {
@@ -291,25 +310,11 @@ class Node extends EventEmitter {
         this.debug('stopping')
         this.resendHandler.stop()
         this._clearConnectToBootstrapTrackersInterval()
-        this._disconnectFromAllNodes()
-        this._disconnectFromTrackers()
         this.messageBuffer.clear()
         return Promise.all([
             this.protocols.trackerNode.stop(),
             this.protocols.nodeToNode.stop(),
         ])
-    }
-
-    _disconnectFromTrackers() {
-        this.trackers.forEach((tracker) => {
-            this.protocols.nodeToNode.disconnectFromNode(tracker, disconnectionReasons.GRACEFUL_SHUTDOWN)
-        })
-    }
-
-    _disconnectFromAllNodes() {
-        this.streams.getAllNodes().forEach((node) => {
-            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.GRACEFUL_SHUTDOWN)
-        })
     }
 
     _getStatus() {
@@ -339,27 +344,29 @@ class Node extends EventEmitter {
 
     // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
-        if (!this.streams.hasInboundNode(streamId, node)) {
-            // more strict, so when we get reject from connect, it will be caught
-            return this.protocols.nodeToNode.sendSubscribe(node, streamId).then(() => {
-                this.streams.addInboundNode(streamId, node)
-                this.streams.addOutboundNode(streamId, node)
+        return this.protocols.nodeToNode.sendSubscribe(node, streamId).then((nodeId) => {
+            this.streams.addInboundNode(streamId, node)
+            this.streams.addOutboundNode(streamId, node)
 
-                // TODO get prove message from node that we successfully subscribed
-                this.emit(events.NODE_SUBSCRIBED, {
-                    streamId,
-                    node
-                })
+            // TODO get prove message from node that we successfully subscribed
+            this.emit(events.NODE_SUBSCRIBED, {
+                streamId,
+                node
             })
-        }
+
+            return nodeId
+        })
     }
 
     async _unsubscribeFromStreamOnNode(node, streamId) {
         this.streams.removeNodeFromStream(streamId, node)
-        await this.protocols.nodeToNode.sendUnsubscribe(node, streamId).catch((err) => {
-            console.error(`Failed to send unsubscribed from ${node} because '${err}'`)
-        })
-        this.debug('unsubscribed from node %s (tracker instruction)', node)
+
+        if (!this.streams.isNodePresent(node)) {
+            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
+            return node
+        }
+
+        return this.protocols.nodeToNode.sendUnsubscribe(node, streamId)
     }
 
     onNodeDisconnected(node) {

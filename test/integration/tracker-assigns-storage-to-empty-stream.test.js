@@ -85,9 +85,9 @@ describe('tracker assigns storage node to streams on any resend', () => {
             requestRange: () => intoStream.object([]),
         }])
 
+        storageNode.addBootstrapTracker(tracker.getAddress())
         subscriberOne.addBootstrapTracker(tracker.getAddress())
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
-        storageNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
@@ -107,8 +107,9 @@ describe('tracker assigns storage node to streams on any resend', () => {
         expect(tracker.getTopology()).toEqual({})
 
         const stream = subscriberOne.requestResendLast('streamId', 0, 'requestId', 10)
-        await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.FIND_STORAGE_NODES_REQUEST)
         await waitForStreamToEnd(stream)
+
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
                 storageNode: []
@@ -116,7 +117,7 @@ describe('tracker assigns storage node to streams on any resend', () => {
         })
 
         const stream2 = subscriberTwo.requestResendLast('streamId2', 1, 'requestId2', 10)
-        await waitForEvent(storageNode.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.FIND_STORAGE_NODES_REQUEST)
         await waitForStreamToEnd(stream2)
 
         expect(tracker.getTopology()).toEqual({
@@ -129,15 +130,10 @@ describe('tracker assigns storage node to streams on any resend', () => {
         })
 
         await tracker.stop()
+        // eslint-disable-next-line require-atomic-updates
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
 
-        await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-        ])
-
-        await waitForCondition(() => Object.keys(tracker.getTopology()).length === 2)
+        await waitForCondition(() => Object.keys(tracker.getTopology()).length === 2, 10000)
 
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
