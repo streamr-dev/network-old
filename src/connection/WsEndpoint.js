@@ -138,7 +138,7 @@ class WsEndpoint extends EventEmitter {
         })
 
         this.debug('listening on: %s', this.getAddress())
-        this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 10 * 1000)
+        this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 3000)
     }
 
     _checkConnections() {
@@ -416,6 +416,11 @@ class WsEndpoint extends EventEmitter {
             ws.peerInfo = clientPeerInfo
             // eslint-disable-next-line no-param-reassign
             ws.address = address
+
+            if (this.isConnected(address)) {
+                ws.close(disconnectionCodes.DUPLICATE_SOCKET, disconnectionReasons.DUPLICATE_SOCKET)
+                return
+            }
 
             this.debug('<=== %s connecting to me', address)
             // added 'connection' event for test - duplicate-connections-are-closed.test.js
