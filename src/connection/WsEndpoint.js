@@ -213,12 +213,15 @@ class WsEndpoint extends EventEmitter {
 
     _socketSend(ws, message, recipientId, recipientAddress, successCallback, errorCallback) {
         try {
-            ws.send(message, (err) => {
-                if (err) {
+            if (ws.constructor.name === 'uWS.WebSocket') {
+                const res = ws.send(message)
+
+                if (!res) {
+                    const errMsg = `Failed to send to message to ${recipientId}`
                     if (typeof errorCallback === 'function') {
-                        errorCallback(err)
+                        errorCallback(errMsg)
                     } else {
-                        throw new Error(err)
+                        throw new Error(errMsg)
                     }
                 } else {
                     this.debug('sent to %s message "%s"', recipientAddress, message)
@@ -232,7 +235,28 @@ class WsEndpoint extends EventEmitter {
                         successCallback(recipientId)
                     }
                 }
-            })
+            } else {
+                ws.send(message, (err) => {
+                    if (err) {
+                        if (typeof errorCallback === 'function') {
+                            errorCallback(err)
+                        } else {
+                            throw new Error(err)
+                        }
+                    } else {
+                        this.debug('sent to %s message "%s"', recipientAddress, message)
+                        this.metrics.inc('send:success')
+
+                        this.metrics.speed('_outSpeed')(message.length)
+                        this.metrics.speed('_msgSpeed')(1)
+                        this.metrics.speed('_msgOutSpeed')(1)
+
+                        if (typeof successCallback === 'function') {
+                            successCallback(recipientId)
+                        }
+                    }
+                })
+            }
         } catch (e) {
             this.metrics.inc('send:failed')
             console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)

@@ -169,7 +169,6 @@ class Node extends EventEmitter {
         const connectedNodes = []
         await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
             results.forEach((result) => {
-                console.log(results)
                 if (result.status === 'fulfilled') {
                     connectedNodes.push(result.value)
                 } else {
@@ -181,7 +180,6 @@ class Node extends EventEmitter {
         if (connectedNodes.length) {
             await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
                 results.forEach((result) => {
-                    console.log(result)
                     if (result.status === 'fulfilled') {
                         nodeIds.push(result.value)
                     } else {
@@ -340,7 +338,12 @@ class Node extends EventEmitter {
 
     // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
-        if (this.streams.isNodePresent(node)) {
+        if (this.streams.hasInboundNode(streamId, node) && this.streams.hasOutboundNode(streamId, node)) {
+            this.emit(events.NODE_SUBSCRIBED, {
+                streamId,
+                node
+            })
+
             return node
         }
 
