@@ -28,9 +28,12 @@ describe('check network stabilization', () => {
     })
 
     afterEach(async () => {
-        await allSettled(nodes.map((node) => node.stop()))
+        for (let i = 0; i < MAX_NODES; i++) {
+            // eslint-disable-next-line no-await-in-loop
+            await nodes[i].stop()
+        }
         await tracker.stop()
-    })
+    }, 10000)
 
     it('expect to _formAndSendInstructions not to be called when topology is stable', async () => {
         await wait(10000)
