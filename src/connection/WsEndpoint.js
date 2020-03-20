@@ -63,12 +63,6 @@ function toHeaders(peerInfo) {
     }
 }
 
-class ReadyStateError extends Error {
-    constructor(address, readyState) {
-        super(`cannot send to ${address} because socket.readyState=${readyState}`)
-    }
-}
-
 class WsEndpoint extends EventEmitter {
     constructor(host, port, wss, listenSocket, peerInfo, advertisedWsUrl) {
         super()
@@ -212,48 +206,43 @@ class WsEndpoint extends EventEmitter {
     }
 
     _socketSend(ws, message, recipientId, recipientAddress, successCallback, errorCallback) {
+        const onError = (err, callback) => {
+            if (typeof callback === 'function') {
+                callback(err)
+            } else {
+                throw new Error(err)
+            }
+        }
+
+        const onSuccess = (address, peerId, msg, callback) => {
+            this.debug('sent to %s message "%s"', address, msg)
+            this.metrics.inc('send:success')
+
+            this.metrics.speed('_outSpeed')(msg.length)
+            this.metrics.speed('_msgSpeed')(1)
+            this.metrics.speed('_msgOutSpeed')(1)
+
+            if (typeof callback === 'function') {
+                callback(peerId)
+            }
+        }
+
         try {
             if (ws.constructor.name === 'uWS.WebSocket') {
                 const res = ws.send(message)
 
                 if (!res) {
-                    const errMsg = `Failed to send to message to ${recipientId}`
-                    if (typeof errorCallback === 'function') {
-                        errorCallback(errMsg)
-                    } else {
-                        throw new Error(errMsg)
-                    }
+                    const err = `Failed to send to message to ${recipientId}`
+                    onError(err, errorCallback)
                 } else {
-                    this.debug('sent to %s message "%s"', recipientAddress, message)
-                    this.metrics.inc('send:success')
-
-                    this.metrics.speed('_outSpeed')(message.length)
-                    this.metrics.speed('_msgSpeed')(1)
-                    this.metrics.speed('_msgOutSpeed')(1)
-
-                    if (typeof successCallback === 'function') {
-                        successCallback(recipientId)
-                    }
+                    onSuccess(recipientAddress, recipientId, message, successCallback)
                 }
             } else {
                 ws.send(message, (err) => {
                     if (err) {
-                        if (typeof errorCallback === 'function') {
-                            errorCallback(err)
-                        } else {
-                            throw new Error(err)
-                        }
+                        onError(err, errorCallback)
                     } else {
-                        this.debug('sent to %s message "%s"', recipientAddress, message)
-                        this.metrics.inc('send:success')
-
-                        this.metrics.speed('_outSpeed')(message.length)
-                        this.metrics.speed('_msgSpeed')(1)
-                        this.metrics.speed('_msgOutSpeed')(1)
-
-                        if (typeof successCallback === 'function') {
-                            successCallback(recipientId)
-                        }
+                        onSuccess(recipientAddress, recipientId, message, successCallback)
                     }
                 })
             }
