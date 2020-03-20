@@ -96,7 +96,6 @@ class WsEndpoint extends EventEmitter {
         this.metrics.createSpeedometer('_msgOutSpeed')
 
         this.connections = new Map()
-        this.lastCheckedReadyState = new Map()
         this.pendingConnections = new Map()
         this.peerBook = new PeerBook()
 
@@ -148,30 +147,14 @@ class WsEndpoint extends EventEmitter {
         addresses.forEach((address) => {
             const ws = this.connections.get(address)
 
-            if (ws.readyState !== ws.OPEN) {
-                const lastReadyState = this.lastCheckedReadyState.get(address)
-                this.lastCheckedReadyState.set(address, ws.readyState)
-
-                this.metrics.inc(`_checkConnections:readyState=${ws.readyState}`)
-                this.debug(`found suspicious connection: ${this.getAddress()} => ${address} = ${ws.readyState}`)
-
-                if (lastReadyState != null && lastReadyState === ws.readyState) {
-                    try {
-                        console.error(`closing dead connection to ${address}...`)
-                        // force close dead connection
-                        terminateWs(ws)
-                        this._onClose(
-                            address, this.peerBook.getPeerInfo(address),
-                            disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION
-                        )
-                    } catch (e) {
-                        console.error('failed to close socket because of %s', e)
-                    } finally {
-                        this.lastCheckedReadyState.delete(address)
-                    }
-                }
-            } else {
-                this.lastCheckedReadyState.delete(address)
+            try {
+                ws.ping('ping')
+            } catch (e) {
+                terminateWs(ws)
+                this._onClose(
+                    address, this.peerBook.getPeerInfo(address),
+                    disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION
+                )
             }
         })
     }
@@ -464,7 +447,6 @@ class WsEndpoint extends EventEmitter {
         this.metrics.inc(`_onClose:closed:code=${code}`)
         this.debug('socket to %s closed (code %d, reason %s)', address, code, reason)
         this.connections.delete(address)
-        this.lastCheckedReadyState.delete(address)
         this.peerBook.getPeerId(address)
         this.debug('removed %s [%s] from connection list', peerInfo, address)
         this.emit(events.PEER_DISCONNECTED, peerInfo, reason)
