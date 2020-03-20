@@ -22,10 +22,14 @@ const ab2str = (buf) => Buffer.from(buf).toString('utf8')
 // TODO uWS will soon rename end -> close and end -> terminate
 const closeWs = (ws, code, reason) => {
     // only ws/ws lib has terminate method
-    if (ws.terminate !== undefined) {
-        ws.close(code, reason)
-    } else {
-        ws.end(code, reason)
+    try {
+        if (ws.terminate !== undefined) {
+            ws.close(code, reason)
+        } else {
+            ws.end(code, reason)
+        }
+    } catch (e) {
+        //
     }
 }
 
@@ -39,11 +43,15 @@ const getBufferedAmount = (ws) => {
 }
 
 const terminateWs = (ws) => {
-    // only ws/ws lib has terminate method
-    if (ws.terminate !== undefined) {
-        ws.terminate()
-    } else {
-        ws.close()
+    try {
+        // only ws/ws lib has terminate method
+        if (ws.terminate !== undefined) {
+            ws.terminate()
+        } else {
+            ws.close()
+        }
+    } catch (e) {
+        //
     }
 }
 

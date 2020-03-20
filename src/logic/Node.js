@@ -169,6 +169,7 @@ class Node extends EventEmitter {
         const connectedNodes = []
         await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
             results.forEach((result) => {
+                console.log(results)
                 if (result.status === 'fulfilled') {
                     connectedNodes.push(result.value)
                 } else {
@@ -180,6 +181,7 @@ class Node extends EventEmitter {
         if (connectedNodes.length) {
             await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
                 results.forEach((result) => {
+                    console.log(result)
                     if (result.status === 'fulfilled') {
                         nodeIds.push(result.value)
                     } else {
