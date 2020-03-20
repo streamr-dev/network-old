@@ -38,7 +38,7 @@ describe('check network stabilization', () => {
     it('expect to _formAndSendInstructions not to be called when topology is stable', async () => {
         await wait(10000)
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
-        await wait(5000)
+        await wait(10000)
         expect(spy).not.toHaveBeenCalled()
         jest.restoreAllMocks()
     }, 30000)
