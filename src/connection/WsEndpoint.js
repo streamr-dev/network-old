@@ -150,6 +150,7 @@ class WsEndpoint extends EventEmitter {
             try {
                 ws.ping('ping')
             } catch (e) {
+                console.log(`Failed to send ping to ${address}, terminating connection`)
                 terminateWs(ws)
                 this._onClose(
                     address, this.peerBook.getPeerInfo(address),
