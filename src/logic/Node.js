@@ -164,28 +164,34 @@ class Node extends EventEmitter {
         const streamId = instructionMessage.getStreamId()
         const assignedNodeIds = instructionMessage.getNodeIds()
         const tracker = instructionMessage.getSource()
-        const successfulNodeIds = []
 
         this.debug('received instructions for %s, nodes to connect %o', streamId, assignedNodeIds)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
         const connectedNodes = []
-        await allSettled(assignedNodeIds.map((nodeId) => this.protocols.nodeToNode.connectToNode(nodeId, tracker))).then((results) => {
+        await allSettled(assignedNodeIds.map((nodeId) => {
+            return this.protocols.nodeToNode.connectToNode(nodeId, tracker)
+        })).then((results) => {
             results.forEach((result) => {
                 if (result.status === 'fulfilled') {
                     connectedNodes.push(result.value)
                 } else {
+                    console.error(result.reason)
                     this.debug(`failed to connect to node ${result.reason}`)
                 }
             })
         })
 
+        const successfulNodeIds = []
         if (connectedNodes.length) {
-            await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
+            await allSettled(connectedNodes.map((nodeId) => {
+                return this._subscribeToStreamOnNode(nodeId, streamId)
+            })).then((results) => {
                 results.forEach((result) => {
                     if (result.status === 'fulfilled') {
                         successfulNodeIds.push(result.value)
                     } else {
+                        console.error(result.reason)
                         this.debug(`failed to subscribe to node ${result.reason}`)
                     }
                 })
