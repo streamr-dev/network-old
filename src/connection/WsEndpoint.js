@@ -178,7 +178,7 @@ class WsEndpoint extends EventEmitter {
         const recipientAddress = this.resolveAddress(recipientId)
         if (!this.isConnected(recipientAddress)) {
             this.metrics.inc('send:failed:not-connected')
-            this.debug('cannot send to %s because not connected', recipientAddress)
+            this.debug('cannot send to %s [%s] because not connected', recipientId, recipientAddress)
         } else {
             const ws = this.connections.get(recipientAddress)
 
@@ -193,8 +193,8 @@ class WsEndpoint extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (!this.isConnected(recipientAddress)) {
                 this.metrics.inc('send:failed:not-connected')
-                this.debug('cannot send to %s because not connected', recipientAddress)
-                reject(new Error(`cannot send to ${recipientAddress} because not connected`))
+                this.debug('cannot send to %s [%s] because not connected', recipientId, recipientAddress)
+                reject(new Error(`cannot send to ${recipientId} [${recipientAddress}] because not connected`))
             } else {
                 const ws = this.connections.get(recipientAddress)
 
@@ -213,7 +213,7 @@ class WsEndpoint extends EventEmitter {
                         throw new Error(err)
                     }
                 } else {
-                    this.debug('sent to %s message "%s"', recipientAddress, message)
+                    this.debug('sent to %s [%s] message "%s"', recipientId, recipientAddress, message)
                     this.metrics.inc('send:success')
 
                     this.metrics.speed('_outSpeed')(message.length)
@@ -227,7 +227,7 @@ class WsEndpoint extends EventEmitter {
             })
         } catch (e) {
             this.metrics.inc('send:failed')
-            console.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
+            console.error('sending to %s [%s] failed because of %s, readyState is', recipientId, recipientAddress, e, ws.readyState)
             terminateWs(ws)
         }
     }
@@ -243,15 +243,15 @@ class WsEndpoint extends EventEmitter {
         this.metrics.inc('close')
         if (!this.isConnected(recipientAddress)) {
             this.metrics.inc('close:error:not-connected')
-            this.debug('cannot close connection to %s because not connected', recipientAddress)
+            this.debug('cannot close connection to %s [%s] because not connected', recipientId, recipientAddress)
         } else {
             const ws = this.connections.get(recipientAddress)
             try {
-                this.debug('closing connection to %s, reason %s', recipientAddress, reason)
+                this.debug('closing connection to %s [%s], reason %s', recipientId, recipientAddress, reason)
                 closeWs(ws, disconnectionCodes.GRACEFUL_SHUTDOWN, reason)
             } catch (e) {
                 this.metrics.inc('close:error:failed')
-                console.error('closing connection to %s failed because of %s', recipientAddress, e)
+                console.error('closing connection to %s [%s] failed because of %s', recipientId, recipientAddress, e)
             }
         }
     }

@@ -104,9 +104,9 @@ describe('resend requests are fulfilled at L2', () => {
         contactNode.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
-            waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(n2, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(n1, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(contactNode, Node.events.NODE_CONNECTED),
+            waitForEvent(n2, Node.events.NODE_CONNECTED),
+            waitForEvent(n1, Node.events.NODE_CONNECTED)
         ])
     })
 
