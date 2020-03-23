@@ -37,7 +37,7 @@ describe('check network stabilization', () => {
     }, 40000)
 
     it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
-        await wait(15000)
+        await wait(20000)
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
         await wait(10000)
         expect(spy).not.toHaveBeenCalled()
