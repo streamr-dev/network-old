@@ -26,7 +26,7 @@ describe('check network stabilization', () => {
             node.addBootstrapTracker(tracker.getAddress())
             nodes.push(node)
         }
-    })
+    }, 20000)
 
     afterEach(async () => {
         for (let i = 0; i < MAX_NODES; i++) {
