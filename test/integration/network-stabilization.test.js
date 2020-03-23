@@ -21,7 +21,6 @@ describe('check network stabilization', () => {
         for (let i = 0; i < MAX_NODES; i++) {
             // eslint-disable-next-line no-await-in-loop
             const node = await startNetworkNode(LOCALHOST, startingPort + i, `node${i}`)
-
             node.subscribe(stream, 0)
             node.addBootstrapTracker(tracker.getAddress())
             nodes.push(node)
@@ -37,7 +36,7 @@ describe('check network stabilization', () => {
     }, 10000)
 
     it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
-        await wait(10000)
+        await wait(15000)
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
         await wait(10000)
         expect(spy).not.toHaveBeenCalled()

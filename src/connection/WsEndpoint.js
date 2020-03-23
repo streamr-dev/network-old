@@ -354,11 +354,7 @@ class WsEndpoint extends EventEmitter {
         return new Promise((resolve, reject) => {
             try {
                 this.connections.forEach((ws) => {
-                    try {
-                        closeWs(ws, disconnectionCodes.GRACEFUL_SHUTDOWN, disconnectionReasons.GRACEFUL_SHUTDOWN)
-                    } catch (e) {
-                        console.warn(`Failed to close websocket on shutdown, reason ${e}`)
-                    }
+                    closeWs(ws, disconnectionCodes.GRACEFUL_SHUTDOWN, disconnectionReasons.GRACEFUL_SHUTDOWN)
                 })
 
                 if (this._listenSocket) {
