@@ -7,7 +7,7 @@ describe('check network stabilization', () => {
     let tracker
     const trackerPort = 39000
 
-    const nodes = []
+    let nodes
     const MAX_NODES = 30
     const startingPort = 39001
 
@@ -18,6 +18,7 @@ describe('check network stabilization', () => {
         // eslint-disable-next-line no-underscore-dangle
         expect(tracker._formAndSendInstructions).toBeInstanceOf(Function)
 
+        nodes = []
         for (let i = 0; i < MAX_NODES; i++) {
             // eslint-disable-next-line no-await-in-loop
             const node = await startNetworkNode(LOCALHOST, startingPort + i, `node${i}`)
@@ -33,7 +34,7 @@ describe('check network stabilization', () => {
             await nodes[i].stop()
         }
         await tracker.stop()
-    }, 10000)
+    }, 40000)
 
     it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
         await wait(15000)
@@ -41,5 +42,5 @@ describe('check network stabilization', () => {
         await wait(10000)
         expect(spy).not.toHaveBeenCalled()
         jest.restoreAllMocks()
-    }, 30000)
+    }, 40000)
 })

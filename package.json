@@ -50,7 +50,6 @@
     "debug": "4.1.1",
     "fastify": "^2.12.1",
     "fastify-cors": "^3.0.2",
-    "leaked-handles": "^5.2.0",
     "lru-cache": "^5.1.1",
     "pidusage": "^2.0.18",
     "promise.allsettled": "^1.0.2",
