@@ -181,15 +181,6 @@ class Node extends EventEmitter {
             await allSettled(connectedNodes.map((nodeId) => this._subscribeToStreamOnNode(nodeId, streamId))).then((results) => {
                 results.forEach((result) => {
                     if (result.status === 'fulfilled') {
-                        const node = result.value
-                        this.streams.addInboundNode(streamId, node)
-                        this.streams.addOutboundNode(streamId, node)
-
-                        this.emit(events.NODE_SUBSCRIBED, {
-                            streamId,
-                            node
-                        })
-
                         nodeIds.push(result.value)
                     } else {
                         this.debug(`failed to subscribe to node ${result.reason}`)
@@ -348,10 +339,21 @@ class Node extends EventEmitter {
     // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
         if (this.streams.hasInboundNode(streamId, node) && this.streams.hasOutboundNode(streamId, node)) {
+            this.emit(events.NODE_SUBSCRIBED, {
+                streamId,
+                node
+            })
             return node
         }
 
         return this.protocols.nodeToNode.sendSubscribe(node, streamId).then((nodeId) => {
+            this.streams.addInboundNode(streamId, node)
+            this.streams.addOutboundNode(streamId, node)
+
+            this.emit(events.NODE_SUBSCRIBED, {
+                streamId,
+                node
+            })
             return nodeId
         })
     }

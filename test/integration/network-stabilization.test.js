@@ -1,5 +1,4 @@
 const { wait } = require('streamr-test-utils')
-const allSettled = require('promise.allsettled')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
@@ -16,6 +15,8 @@ describe('check network stabilization', () => {
 
     beforeEach(async () => {
         tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
+        // eslint-disable-next-line no-underscore-dangle
+        expect(tracker._formAndSendInstructions).toBeInstanceOf(Function)
 
         for (let i = 0; i < MAX_NODES; i++) {
             // eslint-disable-next-line no-await-in-loop
@@ -35,7 +36,7 @@ describe('check network stabilization', () => {
         await tracker.stop()
     }, 10000)
 
-    it('expect to _formAndSendInstructions not to be called when topology is stable', async () => {
+    it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
         await wait(10000)
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
         await wait(10000)

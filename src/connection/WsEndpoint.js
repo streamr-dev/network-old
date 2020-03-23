@@ -29,7 +29,7 @@ const closeWs = (ws, code, reason) => {
             ws.end(code, reason)
         }
     } catch (e) {
-        //
+        console.error(`Failed to close ws, error: ${e}`)
     }
 }
 
@@ -51,7 +51,7 @@ const terminateWs = (ws) => {
             ws.close()
         }
     } catch (e) {
-        //
+        console.error(`Failed to terminate ws, error: ${e}`)
     }
 }
 
