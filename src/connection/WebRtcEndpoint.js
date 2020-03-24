@@ -143,7 +143,8 @@ class WebRtcEndpoint extends EventEmitter {
                 } catch (e) {
                     queueItem.incrementTries()
                     if (queueItem.isFailed()) {
-                        console.warn('Failed to send %j to %s after %d tries due to %e', queueItem.getMessage(), targetPeerId, QueueItem.MAX_TRIES, e)
+                        console.warn('Node %s failed to send message to %s after %d tries due to "%s" with contents: "%j"',
+                            this.id, targetPeerId, QueueItem.MAX_TRIES, e, queueItem.getMessage())
                     } else if (this.flushTimeOutRefs[targetPeerId] == null) {
                         this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
                             delete this.flushTimeOutRefs[targetPeerId]
