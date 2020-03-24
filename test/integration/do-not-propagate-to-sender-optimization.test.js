@@ -1,5 +1,5 @@
 const { StreamMessage } = require('streamr-client-protocol').MessageLayer
-const { wait } = require('streamr-test-utils')
+const { wait, waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
@@ -42,7 +42,6 @@ describe('optimization: do not propagate to sender', () => {
     // In a fully-connected network the number of duplicates should be (n-1)(n-2) instead of (n-1)^2 when not
     // propagating received messages back to their source
     test('total duplicates == 2 in a fully-connected network of 3 nodes', async () => {
-        await wait(1000)
         n1.publish(StreamMessage.from({
             streamId: 'stream-id',
             streamPartition: 0,
@@ -59,7 +58,9 @@ describe('optimization: do not propagate to sender', () => {
             },
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE
         }))
-        await wait(250)
+
+        await waitForCondition(() => n2.metrics.get('onDataReceived:ignoring:duplicate') !== 0)
+        await waitForCondition(() => n3.metrics.get('onDataReceived:ignoring:duplicate') !== 0)
 
         expect(n1.metrics.get('onDataReceived:ignoring:duplicate')
             + n2.metrics.get('onDataReceived:ignoring:duplicate')
