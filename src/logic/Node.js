@@ -350,7 +350,7 @@ class Node extends EventEmitter {
 
     // eslint-disable-next-line consistent-return
     async _subscribeToStreamOnNode(node, streamId) {
-        return this.protocols.nodeToNode.sendSubscribe(node, streamId).then((nodeId) => {
+        return this.protocols.nodeToNode.sendSubscribe(node, streamId).then(() => {
             this.streams.addInboundNode(streamId, node)
             this.streams.addOutboundNode(streamId, node)
 
@@ -360,7 +360,7 @@ class Node extends EventEmitter {
                 node
             })
 
-            return nodeId
+            return node
         })
     }
 
