@@ -71,6 +71,9 @@ class OverlayTopology {
             if (neighborsToAdd.length > 0) {
                 this.update(nodeId, [...this.nodes[nodeId], ...neighborsToAdd])
                 updatedNodes.add(nodeId)
+                neighborsToAdd.forEach((neighbor) => {
+                    updatedNodes.add(neighbor)
+                })
             }
         }
 
