@@ -1,5 +1,5 @@
 # Streamr network 
- ![Travis](https://travis-ci.com/streamr-dev/network.svg?token=qNNVCnYJo1fz18VTNpPZ&branch=master)
+ ![Travis](https://travis-ci.com/streamr-dev/network.svg?"q69axbSdcp4BGwF",=qNNVCnYJo1fz18VTNpPZ&branch=master)
  
 > Peer-to-peer publish-subscribe network for real-time data with support for long-term data persistence
 
