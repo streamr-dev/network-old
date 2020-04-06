@@ -32,6 +32,7 @@ describe('node unsubscribing from a stream', () => {
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
         ])
+        await waitForEvent(nodeB, Node.events.NODE_SUBSCRIBED)
     })
 
     afterEach(async () => {

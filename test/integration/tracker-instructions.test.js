@@ -46,19 +46,19 @@ describe('check tracker, nodes and statuses from nodes', () => {
     })
 
     it('if failed to follow tracker instructions, inform tracker about current status', async () => {
-        const trackerInstruction = encoder.instructionMessage(s1, [
-            'node1', 'node2', 'unknown'
+        const trackerInstruction1 = encoder.instructionMessage(s1, [
+            'node2', 'unknown'
+        ])
+        const trackerInstruction2 = encoder.instructionMessage(s1, [
+            'node1', 'unknown'
         ])
 
         await Promise.all([
-            node1.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction)),
-            node2.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction))
-        ]).catch((e) => {})
-
-        await Promise.race([
             waitForEvent(node1, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(node2, Node.events.NODE_SUBSCRIBED)
-        ])
+            waitForEvent(node2, Node.events.NODE_SUBSCRIBED),
+            node1.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction1)),
+            node2.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction2))
+        ]).catch((e) => {})
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),

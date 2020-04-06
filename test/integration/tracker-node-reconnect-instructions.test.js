@@ -8,7 +8,6 @@ const TrackerNode = require('../../src/protocol/TrackerNode')
 const encoder = require('../../src/helpers/MessageEncoder')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const endpointEvents = require('../../src/connection/WsEndpoint').events
-const { disconnectionReasons } = require('../../src/messages/messageTypes')
 
 /**
  * This test verifies that tracker can send instructions to node and node will connect and disconnect based on the instructions
@@ -67,8 +66,7 @@ describe('Check tracker instructions to node', () => {
 
         nodeOne.unsubscribe(streamId, 0)
 
-        const msg = await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, endpointEvents.PEER_DISCONNECTED)
-        expect(msg[1]).toBe(disconnectionReasons.NO_SHARED_STREAMS)
+        await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, endpointEvents.PEER_DISCONNECTED)
         expect(nodeTwo.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
     })
 })
