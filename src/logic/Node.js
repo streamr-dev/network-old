@@ -75,8 +75,6 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (tracker) => this.onTrackerDisconnected(tracker))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, source) => this.onDataReceived(broadcastMessage.streamMessage, source))
-        this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage, source) => this.onSubscribeRequest(subscribeMessage, source))
-        this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage, source) => this.onUnsubscribeRequest(unsubscribeMessage, source))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_CONNECTED, (node) => this.emit(Node.events.NODE_CONNECTED, node))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (node) => this.onNodeDisconnected(node))
         this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
@@ -111,18 +109,9 @@ class Node extends EventEmitter {
         }
     }
 
-    async unsubscribeFromStream(streamId) {
-        this.debug('unsubscribeFromStream: remove %s from streams', streamId)
-        const nodes = this.streams.removeStream(streamId)
-
-        await allSettled(nodes.map((nodeAddress) => this.protocols.nodeToNode.sendUnsubscribe(nodeAddress, streamId))).then((results) => {
-            results.forEach((result) => {
-                if (result.status !== 'fulfilled') {
-                    this.debug(`unsubscribed, but failed to send unsubscribe request for the stream ${streamId}, reason: ${result.reason}`)
-                }
-            })
-        })
-
+    unsubscribeFromStream(streamId) {
+        this.streams.removeStream(streamId)
+        this.debug('unsubscribed from %s', streamId)
         this._sendStatusToAllTrackers()
     }
 
@@ -182,35 +171,18 @@ class Node extends EventEmitter {
             })
         })
 
-        const successfulNodeIds = []
-        if (connectedNodes.length) {
-            await allSettled(connectedNodes.map((nodeId) => {
-                return this._subscribeToStreamOnNode(nodeId, streamId)
-            })).then((results) => {
-                results.forEach((result) => {
-                    if (result.status === 'fulfilled') {
-                        successfulNodeIds.push(result.value)
-                    } else {
-                        console.error(result.reason)
-                        this.debug(`failed to subscribe to node ${result.reason}`)
-                    }
-                })
-            })
-        }
+        connectedNodes.forEach((nodeId) => {
+            this._subscribeToStreamOnNode(nodeId, streamId)
+        })
 
-        if (assignedNodeIds.length !== successfulNodeIds.length) {
+        if (assignedNodeIds.length !== connectedNodes.length) {
             this.debug('error: failed to fulfill tracker instructions')
         }
 
         const currentNodes = this.streams.isSetUp(streamId) ? this.streams.getAllNodesForStream(streamId) : []
-        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !successfulNodeIds.includes(node))
-
-        await allSettled(nodesToUnsubscribeFrom.map((nodeId) => this._unsubscribeFromStreamOnNode(nodeId, streamId))).then((results) => {
-            results.forEach((result) => {
-                if (result.status === 'rejected') {
-                    this.debug(`failed to unsubscribe to node ${result.reason}`)
-                }
-            })
+        const nodesToUnsubscribeFrom = currentNodes.filter((node) => !connectedNodes.includes(node))
+        nodesToUnsubscribeFrom.forEach((nodeId) => {
+            this._unsubscribeFromStreamOnNode(nodeId, streamId)
         })
     }
 
@@ -277,41 +249,6 @@ class Node extends EventEmitter {
         }
     }
 
-    onSubscribeRequest(subscribeMessage, source) {
-        this.metrics.inc('onSubscribeRequest')
-        const streamId = new StreamIdAndPartition(subscribeMessage.streamId, subscribeMessage.streamPartition)
-        this.emit(events.SUBSCRIPTION_REQUEST, {
-            streamId,
-            source
-        })
-
-        this.subscribeToStreamIfHaveNotYet(streamId)
-
-        this.streams.addOutboundNode(streamId, source)
-        this.streams.addInboundNode(streamId, source)
-
-        this.debug('node %s subscribed to stream %s', source, streamId)
-        this.emit(events.NODE_SUBSCRIBED, {
-            streamId,
-            source
-        })
-    }
-
-    onUnsubscribeRequest(unsubscribeMessage, source) {
-        const streamIdAndPartition = new StreamIdAndPartition(unsubscribeMessage.streamId, unsubscribeMessage.streamPartition)
-
-        if (this.streams.isSetUp(streamIdAndPartition)) {
-            this.metrics.inc('onUnsubscribeRequest')
-            this.streams.removeNodeFromStream(streamIdAndPartition, source)
-            this.debug('node %s unsubscribed from stream %s', source, streamIdAndPartition)
-            this.emit(events.NODE_UNSUBSCRIBED, source, streamIdAndPartition)
-            this._sendStatusToAllTrackers()
-        }
-        if (!this.streams.isNodePresent(source)) {
-            this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.NO_SHARED_STREAMS)
-        }
-    }
-
     stop() {
         this.debug('stopping')
         this.resendHandler.stop()
@@ -348,31 +285,30 @@ class Node extends EventEmitter {
         }
     }
 
-    // eslint-disable-next-line consistent-return
-    async _subscribeToStreamOnNode(node, streamId) {
-        return this.protocols.nodeToNode.sendSubscribe(node, streamId).then(() => {
-            this.streams.addInboundNode(streamId, node)
-            this.streams.addOutboundNode(streamId, node)
+    _subscribeToStreamOnNode(node, streamId) {
+        this.streams.addInboundNode(streamId, node)
+        this.streams.addOutboundNode(streamId, node)
 
-            // TODO get prove message from node that we successfully subscribed
-            this.emit(events.NODE_SUBSCRIBED, {
-                streamId,
-                node
-            })
-
-            return node
+        // TODO get prove message from node that we successfully subscribed
+        this.emit(events.NODE_SUBSCRIBED, {
+            streamId,
+            node
         })
+
+        return node
     }
 
-    async _unsubscribeFromStreamOnNode(node, streamId) {
+    _unsubscribeFromStreamOnNode(node, streamId) {
+        this.metrics.inc('_unsubscribeFromStreamOnNode')
         this.streams.removeNodeFromStream(streamId, node)
+        this.debug('node %s unsubscribed from stream %s', node, streamId)
+        this.emit(events.NODE_UNSUBSCRIBED, node, streamId)
 
         if (!this.streams.isNodePresent(node)) {
+            this.debug('no shared streams with node %s, disconnecting', node)
             this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
-            return node
         }
-
-        return this.protocols.nodeToNode.sendUnsubscribe(node, streamId)
+        this._sendStatusToAllTrackers()
     }
 
     onNodeDisconnected(node) {
