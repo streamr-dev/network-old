@@ -13,6 +13,7 @@ class OverlayTopology {
         }
         this.maxNeighborsPerNode = maxNeighborsPerNode
         this.nodes = {}
+        this.updateNeeded = new Set()
         this.shuffleArray = shuffleArrayFunction || shuffleArray
         this.pickRandomElement = pickRandomElementFunction || pickRandomElement
     }
@@ -28,12 +29,20 @@ class OverlayTopology {
         knownNeighbors.forEach((neighbor) => this.nodes[neighbor].add(nodeId))
         Object.keys(this.nodes)
             .filter((n) => !this.nodes[nodeId].has(n))
-            .forEach((n) => this.nodes[n].delete(nodeId))
+            .forEach((n) => {
+                if (this.nodes[n].delete(nodeId)) {
+                    this.updateNeeded.add(n)
+                }
+            })
+        this.updateNeeded.add(nodeId)
     }
 
     leave(nodeId) {
         if (this.nodes[nodeId] != null) {
-            this.nodes[nodeId].forEach((neighbor) => this.nodes[neighbor].delete(nodeId))
+            this.nodes[nodeId].forEach((neighbor) => {
+                this.nodes[neighbor].delete(nodeId)
+                this.updateNeeded.add(neighbor)
+            })
             delete this.nodes[nodeId]
         }
     }
@@ -113,6 +122,13 @@ class OverlayTopology {
                 }
             }
         }
+
+        this.updateNeeded.forEach((n) => {
+            if (this.hasNode(n)) {
+                updatedNodes.add(n)
+            }
+        })
+        this.updateNeeded.clear()
 
         // check invariant: no node should be a neighbor of itself
         // TODO: can be removed for performance optimization

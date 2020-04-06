@@ -59,7 +59,7 @@ module.exports = class Tracker extends EventEmitter {
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
         this._updateNode(source, streams)
-        this._formAndSendInstructions(source, streams)
+        this._formAndSendInstructions(source, Object.keys(streams))
     }
 
     onNodeDisconnected(node) {
@@ -169,7 +169,7 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _formAndSendInstructions(node, streams) {
-        Object.keys(streams).forEach((streamKey) => {
+        streams.forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node)
             Object.entries(instructions).forEach(([nodeId, newNeighbors]) => {
                 this.metrics.inc('sendInstruction')
