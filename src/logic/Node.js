@@ -289,7 +289,7 @@ class Node extends EventEmitter {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
 
-        // TODO get prove message from node that we successfully subscribed
+
         this.emit(events.NODE_SUBSCRIBED, {
             streamId,
             node
