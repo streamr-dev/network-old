@@ -168,9 +168,9 @@ module.exports = class Tracker extends EventEmitter {
         }
     }
 
-    _formAndSendInstructions(node, streams) {
+    _formAndSendInstructions(node, streams, forceGenerate = false) {
         streams.forEach((streamKey) => {
-            const instructions = this.overlayPerStream[streamKey].formInstructions(node)
+            const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
             Object.entries(instructions).forEach(([nodeId, newNeighbors]) => {
                 this.metrics.inc('sendInstruction')
                 this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
@@ -186,10 +186,14 @@ module.exports = class Tracker extends EventEmitter {
     }
 
     _leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node) {
-        overlayTopology.leave(node)
+        const neighbors = overlayTopology.leave(node)
 
         if (overlayTopology.isEmpty()) {
             delete this.overlayPerStream[streamKey]
+        } else {
+            neighbors.forEach((neighbor) => {
+                this._formAndSendInstructions(neighbor, [streamKey], true)
+            })
         }
     }
 

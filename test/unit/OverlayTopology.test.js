@@ -8,9 +8,7 @@ describe('overlay creation', () => {
 
         expect(topology.hasNode('node-1')).toEqual(false)
         topology.update('node-1', [])
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-1': []
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.hasNode('node-1')).toEqual(true)
 
         topology.update('node-2', [])
@@ -22,10 +20,7 @@ describe('overlay creation', () => {
         topology.update('node-1', ['node-2'])
         topology.update('node-2', ['node-1'])
 
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-1': ['node-2'],
-            'node-2': ['node-1']
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.formInstructions('node-2')).toEqual({})
 
         topology.update('node-3', [])
@@ -38,17 +33,12 @@ describe('overlay creation', () => {
         topology.update('node-3', ['node-1', 'node-2'])
         topology.update('node-1', ['node-2', 'node-3'])
 
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-1': ['node-2', 'node-3'],
-            'node-3': ['node-1', 'node-2']
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.formInstructions('node-2')).toEqual({})
         expect(topology.formInstructions('node-3')).toEqual({})
 
         topology.update('node-2', ['node-1', 'node-3'])
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-2': ['node-1', 'node-3']
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.formInstructions('node-2')).toEqual({})
         expect(topology.formInstructions('node-3')).toEqual({})
 
@@ -83,13 +73,7 @@ describe('overlay creation', () => {
             ]
         })
 
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-4': [
-                'node-1',
-                'node-2',
-                'node-3'
-            ]
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.formInstructions('node-2')).toEqual({})
         expect(topology.formInstructions('node-3')).toEqual({})
         expect(topology.formInstructions('node-4')).toEqual({})
@@ -117,22 +101,7 @@ describe('overlay creation', () => {
         topology.update('node-2', ['node-3', 'node-4', 'node-5'])
         topology.update('node-1', ['node-3', 'node-4', 'node-5'])
 
-        expect(topology.formInstructions('node-1')).toEqual({
-            'node-1': [
-                'node-3',
-                'node-4',
-                'node-5'
-            ],
-            'node-2': [
-                'node-3',
-                'node-4',
-                'node-5'
-            ],
-            'node-5': [
-                'node-1',
-                'node-2'
-            ]
-        })
+        expect(topology.formInstructions('node-1')).toEqual({})
         expect(topology.formInstructions('node-2')).toEqual({})
         expect(topology.formInstructions('node-3')).toEqual({})
         expect(topology.formInstructions('node-5')).toEqual({})
@@ -202,7 +171,6 @@ describe('overlay creation', () => {
         expect(topology.formInstructions('node-1')).toEqual({
             'node-1': ['node-4', 'node-5', 'node-3'],
             'node-3': ['node-2', 'node-4', 'node-1'],
-            'node-5': ['node-1', 'node-2'],
         })
         expect(topology.state()).toEqual({
             'node-1': [

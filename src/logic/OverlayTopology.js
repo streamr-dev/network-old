@@ -13,7 +13,6 @@ class OverlayTopology {
         }
         this.maxNeighborsPerNode = maxNeighborsPerNode
         this.nodes = {}
-        this.updateNeeded = new Set()
         this.shuffleArray = shuffleArrayFunction || shuffleArray
         this.pickRandomElement = pickRandomElementFunction || pickRandomElement
     }
@@ -32,21 +31,21 @@ class OverlayTopology {
         Object.keys(this.nodes)
             .filter((n) => !this.nodes[nodeId].has(n))
             .forEach((n) => {
-                if (this.nodes[n].delete(nodeId)) {
-                    this.updateNeeded.add(n)
-                }
+                this.nodes[n].delete(nodeId)
             })
-        this.updateNeeded.add(nodeId)
+        //
     }
 
     leave(nodeId) {
         if (this.nodes[nodeId] != null) {
+            const neighbors = [...this.nodes[nodeId]]
             this.nodes[nodeId].forEach((neighbor) => {
                 this.nodes[neighbor].delete(nodeId)
-                this.updateNeeded.add(neighbor)
             })
             delete this.nodes[nodeId]
+            return neighbors
         }
+        return []
     }
 
     isEmpty() {
@@ -61,7 +60,7 @@ class OverlayTopology {
         })) : {}
     }
 
-    formInstructions(nodeId) {
+    formInstructions(nodeId, forceGenerate = false) {
         const updatedNodes = new Set()
 
         const excessNeighbors = -this._numOfMissingNeighbors(nodeId)
@@ -125,12 +124,9 @@ class OverlayTopology {
             }
         }
 
-        this.updateNeeded.forEach((n) => {
-            if (this.hasNode(n)) {
-                updatedNodes.add(n)
-            }
-        })
-        this.updateNeeded.clear()
+        if (forceGenerate) {
+            updatedNodes.add(nodeId)
+        }
 
         // check invariant: no node should be a neighbor of itself
         // TODO: can be removed for performance optimization
