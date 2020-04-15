@@ -3,6 +3,7 @@ const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const LRU = require('lru-cache')
 const allSettled = require('promise.allsettled')
+const HashRing = require('hashring')
 
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
@@ -69,6 +70,7 @@ class Node extends EventEmitter {
         this.resendHandler = new ResendHandler(this.opts.resendStrategies, console.error.bind(console))
 
         this.trackers = new Set()
+        this.trackersRing = new HashRing([], 'sha256')
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
@@ -97,7 +99,10 @@ class Node extends EventEmitter {
 
     onConnectedToTracker(tracker) {
         this.debug('connected to tracker %s', tracker)
+
         this.trackers.add(tracker)
+        this.trackersRing.add(tracker)
+
         this._sendStatus(tracker)
     }
 
@@ -378,6 +383,7 @@ class Node extends EventEmitter {
 
     onTrackerDisconnected(tracker) {
         this.trackers.delete(tracker)
+        this.trackersRing.remove(tracker)
     }
 
     _handleBufferedMessages(streamId) {
