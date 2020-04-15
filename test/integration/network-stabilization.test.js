@@ -26,7 +26,6 @@ describe('check network stabilization', () => {
             node.addBootstrapTracker(tracker.getAddress())
             nodes.push(node)
         }
-        await wait(3000)
     }, 20000)
 
     afterEach(async () => {
@@ -40,7 +39,7 @@ describe('check network stabilization', () => {
     it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
         await wait(15000)
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
-        await wait(10000)
+        await wait(5000)
         expect(spy).not.toHaveBeenCalled()
         jest.restoreAllMocks()
     }, 40000)

@@ -320,9 +320,9 @@ class Node extends EventEmitter {
         return this.protocols.nodeToNode.stop()
     }
 
-    _getStatus() {
+    _getStatus(tracker, trackersRing) {
         return {
-            streams: this.streams.getStreamsWithConnections(),
+            streams: this.streams.getStreamsWithConnections(tracker, trackersRing),
             started: this.started
         }
     }
@@ -335,7 +335,7 @@ class Node extends EventEmitter {
     }
 
     async _sendStatus(tracker) {
-        const status = this._getStatus()
+        const status = this._getStatus(tracker, this.trackersRing)
 
         try {
             await this.protocols.trackerNode.sendStatus(tracker, status)
@@ -359,6 +359,10 @@ class Node extends EventEmitter {
         })
 
         return node
+    }
+
+    _getTracker(streamKey) {
+        return this.trackersRing.get(streamKey)
     }
 
     async _unsubscribeFromStreamOnNode(node, streamId) {
