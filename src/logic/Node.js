@@ -73,7 +73,7 @@ class Node extends EventEmitter {
         this.trackersRing = new HashRing([], 'sha256')
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
-        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
+        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (trackerId, streamMessage) => this.onTrackerInstructionReceived(trackerId, streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (tracker) => this.onTrackerDisconnected(tracker))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, source) => this.onDataReceived(broadcastMessage.streamMessage, source))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage, source) => this.onSubscribeRequest(subscribeMessage, source))
@@ -162,8 +162,7 @@ class Node extends EventEmitter {
         return requestStream
     }
 
-    async onTrackerInstructionReceived(instructionMessage) {
-        console.log(instructionMessage)
+    async onTrackerInstructionReceived(trackerId, instructionMessage) {
         this.metrics.inc('onTrackerInstructionReceived')
         const streamId = instructionMessage.getStreamId()
         const nodeAddresses = instructionMessage.getNodeAddresses()
@@ -331,7 +330,6 @@ class Node extends EventEmitter {
 
     // TODO check situation
     _sendStreamStatus(streamId) {
-        console.log(streamId)
         clearTimeout(this.sendStatusTimeout)
         this.sendStatusTimeout = setTimeout(() => {
             const trackerId = this.trackersRing.get(streamId.key())

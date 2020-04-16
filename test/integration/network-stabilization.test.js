@@ -25,6 +25,9 @@ describe('check network stabilization', () => {
             node.subscribe(stream, 0)
             node.addBootstrapTracker(tracker.getAddress())
             nodes.push(node)
+
+            // eslint-disable-next-line no-await-in-loop
+            await wait(100)
         }
     }, 20000)
 
