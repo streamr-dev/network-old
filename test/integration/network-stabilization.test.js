@@ -1,5 +1,3 @@
-const { wait } = require('streamr-test-utils')
-
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 
@@ -8,7 +6,7 @@ describe('check network stabilization', () => {
     const trackerPort = 39000
 
     let nodes
-    const MAX_NODES = 10
+    const MAX_NODES = 50
     const startingPort = 39001
 
     const stream = 'super-stream'
@@ -25,9 +23,6 @@ describe('check network stabilization', () => {
             node.subscribe(stream, 0)
             node.addBootstrapTracker(tracker.getAddress())
             nodes.push(node)
-
-            // eslint-disable-next-line no-await-in-loop
-            await wait(200)
         }
     }, 20000)
 
@@ -39,11 +34,17 @@ describe('check network stabilization', () => {
         await tracker.stop()
     }, 40000)
 
-    it('expect _formAndSendInstructions not to be called when topology is stable', async () => {
-        await wait(15000)
-        const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {})
-        await wait(5000)
-        expect(spy).not.toHaveBeenCalled()
-        jest.restoreAllMocks()
-    }, 40000)
+    it('netowork must become stable in less than 15 seconds', async (done) => {
+        let doneTimeout
+        const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {
+            // reset spy calls and timeout
+            clearTimeout(doneTimeout)
+            jest.clearAllMocks()
+
+            doneTimeout = setTimeout(() => {
+                expect(spy).not.toHaveBeenCalled()
+                done()
+            }, 5000)
+        })
+    }, 15000)
 })
