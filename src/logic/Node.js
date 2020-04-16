@@ -163,6 +163,7 @@ class Node extends EventEmitter {
     }
 
     async onTrackerInstructionReceived(instructionMessage) {
+        console.log(instructionMessage)
         this.metrics.inc('onTrackerInstructionReceived')
         const streamId = instructionMessage.getStreamId()
         const nodeAddresses = instructionMessage.getNodeAddresses()
@@ -315,6 +316,7 @@ class Node extends EventEmitter {
     stop() {
         this.debug('stopping')
         this.resendHandler.stop()
+        clearTimeout(this.sendStatusTimeout)
         this._clearConnectToBootstrapTrackersInterval()
         this.messageBuffer.clear()
         return this.protocols.nodeToNode.stop()
@@ -329,6 +331,7 @@ class Node extends EventEmitter {
 
     // TODO check situation
     _sendStreamStatus(streamId) {
+        console.log(streamId)
         clearTimeout(this.sendStatusTimeout)
         this.sendStatusTimeout = setTimeout(() => {
             const trackerId = this.trackersRing.get(streamId.key())
