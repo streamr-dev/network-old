@@ -82,7 +82,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {
             this._handleBufferedMessages(streamId)
-            this._sendStatusToAllTrackers()
+            this._sendStreamStatus(streamId)
         })
 
         this.debug = createDebug(`streamr:logic:node:${this.peerInfo.peerId}`)
@@ -110,7 +110,7 @@ class Node extends EventEmitter {
         if (!this.streams.isSetUp(streamId)) {
             this.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
-            this._sendStatusToAllTrackers()
+            this._sendStreamStatus(streamId)
         }
     }
 
@@ -126,7 +126,7 @@ class Node extends EventEmitter {
             })
         })
 
-        this._sendStatusToAllTrackers()
+        this._sendStreamStatus(streamId)
     }
 
     requestResend(request, source) {
@@ -305,7 +305,7 @@ class Node extends EventEmitter {
             this.streams.removeNodeFromStream(streamIdAndPartition, source)
             this.debug('node %s unsubscribed from stream %s', source, streamIdAndPartition)
             this.emit(events.NODE_UNSUBSCRIBED, source, streamIdAndPartition)
-            this._sendStatusToAllTrackers()
+            this._sendStreamStatus(streamIdAndPartition)
         }
         if (!this.streams.isNodePresent(source)) {
             this.protocols.nodeToNode.disconnectFromNode(source, disconnectionReasons.NO_SHARED_STREAMS)
@@ -327,10 +327,12 @@ class Node extends EventEmitter {
         }
     }
 
-    _sendStatusToAllTrackers() {
+    // TODO check situation
+    _sendStreamStatus(streamId) {
         clearTimeout(this.sendStatusTimeout)
         this.sendStatusTimeout = setTimeout(() => {
-            this.trackers.forEach((tracker) => this._sendStatus(tracker))
+            const trackerId = this.trackersRing.get(streamId.key())
+            this._sendStatus(trackerId)
         }, this.opts.sendStatusToAllTrackersInterval)
     }
 
@@ -381,13 +383,11 @@ class Node extends EventEmitter {
         this.resendHandler.cancelResendsOfNode(node)
         this.streams.removeNodeFromAllStreams(node)
         this.debug('removed all subscriptions of node %s', node)
-        this._sendStatusToAllTrackers()
         this.emit(events.NODE_DISCONNECTED, node)
     }
 
     onTrackerDisconnected(tracker) {
         this.trackers.delete(tracker)
-        this.trackersRing.remove(tracker)
     }
 
     _handleBufferedMessages(streamId) {
