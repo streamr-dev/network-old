@@ -27,7 +27,7 @@ describe('check network stabilization', () => {
             nodes.push(node)
 
             // eslint-disable-next-line no-await-in-loop
-            await wait(100)
+            await wait(200)
         }
     }, 20000)
 

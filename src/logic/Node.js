@@ -163,8 +163,16 @@ class Node extends EventEmitter {
     }
 
     async onTrackerInstructionReceived(trackerId, instructionMessage) {
-        this.metrics.inc('onTrackerInstructionReceived')
         const streamId = instructionMessage.getStreamId()
+        const expectedTrackerId = this.trackersRing.get(streamId.key())
+
+        if (trackerId !== expectedTrackerId) {
+            this.metrics.inc('onTrackerInstructionReceived.unexpected_tracker')
+            console.warn(`Got instructions from unexpected tracker. Expected ${expectedTrackerId}, got from ${trackerId}`)
+            return
+        }
+
+        this.metrics.inc('onTrackerInstructionReceived')
         const nodeAddresses = instructionMessage.getNodeAddresses()
         const nodeIds = []
 
