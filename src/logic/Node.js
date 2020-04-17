@@ -60,7 +60,7 @@ class Node extends EventEmitter {
             this._connectToBootstrapTrackers.bind(this),
             this.opts.connectToBootstrapTrackersInterval
         )
-        this.sendStatusTimeout = null
+        this.sendStatusTimeout = new Map()
         this.bootstrapTrackerAddresses = []
         this.protocols = this.opts.protocols
         this.peerInfo = this.opts.peerInfo
@@ -323,7 +323,10 @@ class Node extends EventEmitter {
     stop() {
         this.debug('stopping')
         this.resendHandler.stop()
-        clearTimeout(this.sendStatusTimeout)
+
+        const timeouts = [...this.sendStatusTimeout.values()]
+        timeouts.forEach((timeout) => clearTimeout(timeout))
+
         this._clearConnectToBootstrapTrackersInterval()
         this.messageBuffer.clear()
         return this.protocols.nodeToNode.stop()
@@ -338,11 +341,13 @@ class Node extends EventEmitter {
 
     // TODO check situation
     _sendStreamStatus(streamId) {
-        clearTimeout(this.sendStatusTimeout)
-        this.sendStatusTimeout = setTimeout(() => {
-            const trackerId = this.trackersRing.get(streamId.key())
+        const streamKey = streamId.key()
+        clearTimeout(this.sendStatusTimeout.get(streamKey))
+        const timeout = setTimeout(() => {
+            const trackerId = this.trackersRing.get(streamKey)
             this._sendStatus(trackerId)
         }, this.opts.sendStatusToAllTrackersInterval)
+        this.sendStatusTimeout.set(streamKey, timeout)
     }
 
     async _sendStatus(tracker) {
