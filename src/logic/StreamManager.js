@@ -91,14 +91,14 @@ module.exports = class StreamManager {
     getStreamsWithConnections(tracker, trackersRing) {
         const result = {}
         this.streams.forEach(({ inboundNodes, outboundNodes }, streamKey) => {
-            let add = true
+            let addToStatus = true
 
             if (tracker && trackersRing) {
                 const targetTracker = trackersRing.get(streamKey)
-                add = targetTracker === tracker
+                addToStatus = targetTracker === tracker
             }
 
-            if (add) {
+            if (addToStatus) {
                 result[streamKey] = {
                     inboundNodes: [...inboundNodes],
                     outboundNodes: [...outboundNodes]

@@ -6,7 +6,7 @@ describe('check network stabilization', () => {
     const trackerPort = 39000
 
     let nodes
-    const MAX_NODES = 50
+    const MAX_NODES = 10
     const startingPort = 39001
 
     const stream = 'super-stream'

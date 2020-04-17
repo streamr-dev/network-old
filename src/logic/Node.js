@@ -339,10 +339,10 @@ class Node extends EventEmitter {
         }
     }
 
-    // TODO check situation
     _sendStreamStatus(streamId) {
         const streamKey = streamId.key()
         clearTimeout(this.sendStatusTimeout.get(streamKey))
+
         const timeout = setTimeout(() => {
             const trackerId = this.trackersRing.get(streamKey)
             this._sendStatus(trackerId)
