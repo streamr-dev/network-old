@@ -70,7 +70,7 @@
     "eslint-plugin-import-order": "2.1.4",
     "eslint-plugin-promise": "^4.2.1",
     "into-stream": "^5.1.1",
-    "jest": "^25.3.0",
+    "jest": "^25.4.0",
     "portfinder": "^1.0.25",
     "streamr-test-utils": "^1.0.4",
     "ws": "^7.2.3"
