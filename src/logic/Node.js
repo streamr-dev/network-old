@@ -332,26 +332,27 @@ class Node extends EventEmitter {
         return this.protocols.nodeToNode.stop()
     }
 
-    _getStatus(tracker, trackersRing) {
+    _getStatus(tracker) {
         return {
-            streams: this.streams.getStreamsWithConnections(tracker, trackersRing),
+            streams: this.streams.getStreamsWithConnections(tracker, this.trackersRing),
             started: this.started
         }
     }
 
     _sendStreamStatus(streamId) {
         const streamKey = streamId.key()
-        clearTimeout(this.sendStatusTimeout.get(streamKey))
+        const trackerId = this.trackersRing.get(streamKey)
+        clearTimeout(this.sendStatusTimeout.get(trackerId))
 
         const timeout = setTimeout(() => {
-            const trackerId = this.trackersRing.get(streamKey)
             this._sendStatus(trackerId)
         }, this.opts.sendStatusToAllTrackersInterval)
-        this.sendStatusTimeout.set(streamKey, timeout)
+
+        this.sendStatusTimeout.set(trackerId, timeout)
     }
 
     async _sendStatus(tracker) {
-        const status = this._getStatus(tracker, this.trackersRing)
+        const status = this._getStatus(tracker)
 
         try {
             await this.protocols.trackerNode.sendStatus(tracker, status)

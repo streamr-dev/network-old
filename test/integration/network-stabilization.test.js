@@ -34,7 +34,7 @@ describe('check network stabilization', () => {
         await tracker.stop()
     }, 40000)
 
-    it('netowork must become stable in less than 15 seconds', async (done) => {
+    it('network must become stable in less than 15 seconds', async (done) => {
         let doneTimeout
         const spy = jest.spyOn(tracker, '_formAndSendInstructions').mockImplementation(() => {
             // reset spy calls and timeout
