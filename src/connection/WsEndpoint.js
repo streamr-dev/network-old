@@ -148,11 +148,7 @@ class WsEndpoint extends EventEmitter {
         })
 
         this.debug('listening on: %s', this.getAddress())
-        this.checkConnectionsInterval = setInterval(this._checkConnections.bind(this), 3000)
-
-        this._pingInterval = setInterval(() => {
-            this._pingConnections()
-        }, pingInterval)
+        this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
     }
 
     _pingConnections() {
@@ -173,21 +169,7 @@ class WsEndpoint extends EventEmitter {
                 ws.ping()
                 this.debug(`pinging ${address}, current rtt ${ws.rtt}`)
             } catch (e) {
-                console.error(`Failed to ping connection: ${address}, error ${e}`)
-                // connection.emit('forceClose')
-            }
-        })
-    }
-
-    _checkConnections() {
-        const addresses = [...this.connections.keys()]
-        addresses.forEach((address) => {
-            const ws = this.connections.get(address)
-
-            try {
-                ws.ping('ping')
-            } catch (e) {
-                console.error(`Failed to send ping to ${address}, terminating connection`)
+                console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
                 terminateWs(ws)
                 this._onClose(
                     address, this.peerBook.getPeerInfo(address),
