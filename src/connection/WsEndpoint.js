@@ -261,7 +261,6 @@ class WsEndpoint extends EventEmitter {
 
     close(recipientId, reason = disconnectionReasons.GRACEFUL_SHUTDOWN) {
         const recipientAddress = this.resolveAddress(recipientId)
-        clearInterval(this._pingInterval)
 
         this.metrics.inc('close')
         if (!this.isConnected(recipientAddress)) {
@@ -368,7 +367,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     stop() {
-        clearInterval(this.checkConnectionsInterval)
+        clearInterval(this._pingInterval)
 
         return new Promise((resolve, reject) => {
             try {
