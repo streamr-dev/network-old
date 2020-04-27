@@ -140,7 +140,7 @@ class WsEndpoint extends EventEmitter {
                 const connection = this.connections.get(ws.address)
 
                 if (connection) {
-                    this.debug(`received from ${ws.address} "pong" frame`)
+                    this.debug(`<== received from ${ws.address} "pong" frame`)
                     connection.respondedPong = true
                     connection.rttEnd = Date.now()
                 }
@@ -497,8 +497,8 @@ class WsEndpoint extends EventEmitter {
             setImmediate(() => this.onReceive(peerInfo, address, message))
         })
 
-        ws.on('ping', () => {
-            this.debug('got ping event')
+        ws.on('pong', () => {
+            this.debug(`=> got pong event ws ${address}`)
             // eslint-disable-next-line no-param-reassign
             ws.respondedPong = true
             // eslint-disable-next-line no-param-reassign
