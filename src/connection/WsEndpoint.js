@@ -142,7 +142,7 @@ class WsEndpoint extends EventEmitter {
                 if (connection) {
                     this.debug(`<== received from ${ws.address} "pong" frame`)
                     connection.respondedPong = true
-                    connection.rttEnd = Date.now()
+                    connection.rtt = Date.now() - connection.rttStart
                 }
             }
         })
@@ -165,7 +165,6 @@ class WsEndpoint extends EventEmitter {
                 // eslint-disable-next-line no-param-reassign
                 ws.respondedPong = false
                 ws.rttStart = Date.now()
-                ws.rtt = ws.rttStart - ws.rttEnd
                 ws.ping()
                 this.debug(`pinging ${address}, current rtt ${ws.rtt}`)
             } catch (e) {
@@ -502,7 +501,7 @@ class WsEndpoint extends EventEmitter {
             // eslint-disable-next-line no-param-reassign
             ws.respondedPong = true
             // eslint-disable-next-line no-param-reassign
-            ws.rttEnd = Date.now()
+            ws.rtt = Date.now() - ws.rttStart
         })
 
         ws.once('close', (code, reason) => {
