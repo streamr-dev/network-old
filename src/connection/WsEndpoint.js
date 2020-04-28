@@ -209,7 +209,7 @@ class WsEndpoint extends EventEmitter {
             if (typeof callback === 'function') {
                 callback(err)
             } else {
-                throw new Error(err)
+                console.error(err)
             }
         }
 
