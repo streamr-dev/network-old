@@ -3,6 +3,7 @@ const { EventEmitter } = require('events')
 const createDebug = require('debug')
 const LRU = require('lru-cache')
 const allSettled = require('promise.allsettled')
+const HashRing = require('hashring')
 
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
@@ -60,8 +61,8 @@ class Node extends EventEmitter {
             this._connectToBootstrapTrackers.bind(this),
             this.opts.connectToBootstrapTrackersInterval
         )
-        this.sendStatusTimeout = null
-        this.bootstrapTrackerAddresses = []
+        this.sendStatusTimeout = new Map()
+        this.bootstrapTrackerAddresses = new Set()
         this.protocols = this.opts.protocols
         this.peerInfo = this.opts.peerInfo
 
@@ -70,9 +71,10 @@ class Node extends EventEmitter {
         this.resendHandler = new ResendHandler(this.opts.resendStrategies, console.error.bind(console))
 
         this.trackers = new Set()
+        this.trackersRing = new HashRing([], 'sha256')
 
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (tracker) => this.onConnectedToTracker(tracker))
-        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage) => this.onTrackerInstructionReceived(streamMessage))
+        this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (trackerId, streamMessage) => this.onTrackerInstructionReceived(trackerId, streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (tracker) => this.onTrackerDisconnected(tracker))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, source) => this.onDataReceived(broadcastMessage.streamMessage, source))
         this.protocols.nodeToNode.on(NodeToNode.events.NODE_CONNECTED, (node) => this.emit(Node.events.NODE_CONNECTED, node))
@@ -80,7 +82,7 @@ class Node extends EventEmitter {
         this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {
             this._handleBufferedMessages(streamId)
-            this._sendStatusToAllTrackers()
+            this._sendStreamStatus(streamId)
         })
 
         this.debug = createDebug(`streamr:logic:node:${this.peerInfo.peerId}`)
@@ -97,7 +99,10 @@ class Node extends EventEmitter {
 
     onConnectedToTracker(tracker) {
         this.debug('connected to tracker %s', tracker)
+
         this.trackers.add(tracker)
+        this.trackersRing.add(tracker)
+
         this._sendStatus(tracker)
     }
 
@@ -105,14 +110,14 @@ class Node extends EventEmitter {
         if (!this.streams.isSetUp(streamId)) {
             this.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
-            this._sendStatusToAllTrackers()
+            this._sendStreamStatus(streamId)
         }
     }
 
     unsubscribeFromStream(streamId) {
         this.streams.removeStream(streamId)
         this.debug('unsubscribed from %s', streamId)
-        this._sendStatusToAllTrackers()
+        this._sendStreamStatus(streamId)
     }
 
     requestResend(request, source) {
@@ -148,9 +153,17 @@ class Node extends EventEmitter {
         return requestStream
     }
 
-    async onTrackerInstructionReceived(instructionMessage) {
-        this.metrics.inc('onTrackerInstructionReceived')
+    async onTrackerInstructionReceived(trackerId, instructionMessage) {
         const streamId = instructionMessage.getStreamId()
+        const expectedTrackerId = this.trackersRing.get(streamId.key())
+
+        if (trackerId !== expectedTrackerId) {
+            this.metrics.inc('onTrackerInstructionReceived.unexpected_tracker')
+            console.warn(`Got instructions from unexpected tracker. Expected ${expectedTrackerId}, got from ${trackerId}`)
+            return
+        }
+
+        this.metrics.inc('onTrackerInstructionReceived')
         const assignedNodeIds = instructionMessage.getNodeIds()
         const tracker = instructionMessage.getSource()
 
@@ -236,7 +249,11 @@ class Node extends EventEmitter {
 
         if (subscribers.length) {
             subscribers.forEach((subscriber) => {
-                this.protocols.nodeToNode.sendData(subscriber, streamMessage)
+                try {
+                    this.protocols.nodeToNode.sendData(subscriber, streamMessage)
+                } catch (e) {
+                    console.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
+                }
             })
 
             this.seenButNotPropagated.del(messageIdToStr(streamMessage.messageId))
@@ -252,6 +269,10 @@ class Node extends EventEmitter {
     stop() {
         this.debug('stopping')
         this.resendHandler.stop()
+
+        const timeouts = [...this.sendStatusTimeout.values()]
+        timeouts.forEach((timeout) => clearTimeout(timeout))
+
         this._clearConnectToBootstrapTrackersInterval()
         this.messageBuffer.clear()
         return Promise.all([
@@ -260,22 +281,30 @@ class Node extends EventEmitter {
         ])
     }
 
-    _getStatus() {
+    _getStatus(tracker) {
         return {
-            streams: this.streams.getStreamsWithConnections(),
+            streams: this.streams.getStreamsWithConnections(tracker, this.trackersRing),
             started: this.started
         }
     }
 
-    _sendStatusToAllTrackers() {
-        clearTimeout(this.sendStatusTimeout)
-        this.sendStatusTimeout = setTimeout(() => {
-            this.trackers.forEach((tracker) => this._sendStatus(tracker))
-        }, this.opts.sendStatusToAllTrackersInterval)
+    _sendStreamStatus(streamId) {
+        const streamKey = streamId.key()
+        const trackerId = this.trackersRing.get(streamKey)
+
+        if (trackerId) {
+            clearTimeout(this.sendStatusTimeout.get(trackerId))
+
+            const timeout = setTimeout(() => {
+                this._sendStatus(trackerId)
+            }, this.opts.sendStatusToAllTrackersInterval)
+
+            this.sendStatusTimeout.set(trackerId, timeout)
+        }
     }
 
     async _sendStatus(tracker) {
-        const status = this._getStatus()
+        const status = this._getStatus(tracker)
 
         try {
             await this.protocols.trackerNode.sendStatus(tracker, status)
@@ -298,6 +327,10 @@ class Node extends EventEmitter {
         return node
     }
 
+    _getTracker(streamKey) {
+        return this.trackersRing.get(streamKey)
+    }
+
     _unsubscribeFromStreamOnNode(node, streamId) {
         this.metrics.inc('_unsubscribeFromStreamOnNode')
         this.streams.removeNodeFromStream(streamId, node)
@@ -316,7 +349,6 @@ class Node extends EventEmitter {
         this.resendHandler.cancelResendsOfNode(node)
         this.streams.removeNodeFromAllStreams(node)
         this.debug('removed all subscriptions of node %s', node)
-        this._sendStatusToAllTrackers()
         this.emit(events.NODE_DISCONNECTED, node)
     }
 
@@ -333,7 +365,7 @@ class Node extends EventEmitter {
     }
 
     addBootstrapTracker(trackerAddress) {
-        this.bootstrapTrackerAddresses.push(trackerAddress)
+        this.bootstrapTrackerAddresses.add(trackerAddress)
         this._connectToBootstrapTrackers()
     }
 
