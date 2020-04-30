@@ -1,4 +1,7 @@
 const { wait } = require('streamr-test-utils')
+const SegfaultHandler = require('segfault-handler');
+
+SegfaultHandler.registerHandler("crash.log")
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
