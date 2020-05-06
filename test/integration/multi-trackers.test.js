@@ -127,10 +127,10 @@ describe('multi trackers', () => {
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(0)
+        expect(spyNodeOne).toBeCalledTimes(1)
         expect(spyNodeTwo).toBeCalledTimes(1)
 
-        expect(spyTrackerOne).toBeCalledTimes(1)
+        expect(spyTrackerOne).toBeCalledTimes(2)
         expect(spyTrackerTwo).toBeCalledTimes(0)
         expect(spyTrackerThree).toBeCalledTimes(0)
         jest.clearAllMocks()
@@ -144,11 +144,11 @@ describe('multi trackers', () => {
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(0)
+        expect(spyNodeOne).toBeCalledTimes(1)
         expect(spyNodeTwo).toBeCalledTimes(1)
 
         expect(spyTrackerOne).toBeCalledTimes(0)
-        expect(spyTrackerTwo).toBeCalledTimes(1)
+        expect(spyTrackerTwo).toBeCalledTimes(2)
         expect(spyTrackerThree).toBeCalledTimes(0)
         jest.clearAllMocks()
 
@@ -161,12 +161,12 @@ describe('multi trackers', () => {
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(0)
+        expect(spyNodeOne).toBeCalledTimes(1)
         expect(spyNodeTwo).toBeCalledTimes(1)
 
         expect(spyTrackerOne).toBeCalledTimes(0)
         expect(spyTrackerTwo).toBeCalledTimes(0)
-        expect(spyTrackerThree).toBeCalledTimes(1)
+        expect(spyTrackerThree).toBeCalledTimes(2)
         jest.clearAllMocks()
     })
 
