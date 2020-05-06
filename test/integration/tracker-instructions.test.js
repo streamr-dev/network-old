@@ -53,9 +53,9 @@ describe('check tracker, nodes and statuses from nodes', () => {
             'node1', 'unknown'
         ])
 
-        await Promise.all([
-            node1.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction1)),
-            node2.onTrackerInstructionReceived(encoder.decode('tracker', trackerInstruction2))
+        await Promise.race([
+            node1.onTrackerInstructionReceived('tracker', encoder.decode('tracker', trackerInstruction1)),
+            node2.onTrackerInstructionReceived('tracker', encoder.decode('tracker', trackerInstruction2))
         ]).catch((e) => {})
 
         await Promise.race([

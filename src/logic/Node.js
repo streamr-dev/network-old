@@ -318,7 +318,6 @@ class Node extends EventEmitter {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
 
-
         this.emit(events.NODE_SUBSCRIBED, {
             streamId,
             node
@@ -341,7 +340,7 @@ class Node extends EventEmitter {
             this.debug('no shared streams with node %s, disconnecting', node)
             this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
         }
-        this._sendStatusToAllTrackers()
+        this._sendStreamStatus(streamId)
     }
 
     onNodeDisconnected(node) {
