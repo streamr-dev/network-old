@@ -380,7 +380,7 @@ class WsEndpoint extends EventEmitter {
                     this._listenSocket = null
                 }
 
-                setTimeout(() => resolve(), 100)
+                setTimeout(() => resolve(), 500)
             } catch (e) {
                 console.error(e)
                 reject(new Error(`Failed to stop websocket server, because of ${e}`))
