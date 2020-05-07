@@ -221,6 +221,9 @@ class WebRtcEndpoint extends EventEmitter {
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
+                if (connection.signalingState === 'closed') { // TODO: is this necessary?
+                    return
+                }
                 const offer = await connection.createOffer()
                 await connection.setLocalDescription(offer)
                 this.rtcSignaller.offer(routerId, targetPeerId, offer)
