@@ -36,7 +36,7 @@ class QueueItem extends EventEmitter {
     incrementTries() {
         this.tries += 1
         if (this.isFailed()) {
-            this.emit(QueueItem.events.FAILED)
+            this.emit(QueueItem.events.FAILED, new Error('Failed to deliver message.'))
         }
     }
 }
@@ -143,8 +143,16 @@ class WebRtcEndpoint extends EventEmitter {
                 } catch (e) {
                     queueItem.incrementTries()
                     if (queueItem.isFailed()) {
-                        console.warn('Node %s failed to send message to %s after %d tries due to "%s" with contents: "%j"',
-                            this.id, targetPeerId, QueueItem.MAX_TRIES, e, queueItem.getMessage())
+                        const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
+                            + `${QueueItem.MAX_TRIES} tries due to\n`
+                            + `\terror="${e}",\n`
+                            + `\tconnection.iceConnectionState=${this.connections[targetPeerId].iceConnectionState},\n`
+                            + `\tconnection.connectionState=${this.connections[targetPeerId].connectionState},\n`
+                            + `\tdataChannel.readyState=${this.dataChannels[targetPeerId].readyState},\n`
+                            + `message=${queueItem.getMessage()})]`
+                        console.warn(warnMessage)
+                        this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
+                        this.emit(`disconnected:${targetPeerId}`, targetPeerId)
                     } else if (this.flushTimeOutRefs[targetPeerId] == null) {
                         this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
                             delete this.flushTimeOutRefs[targetPeerId]
