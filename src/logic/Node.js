@@ -44,6 +44,7 @@ class Node extends EventEmitter {
             sendStatusToAllTrackersInterval: 1000,
             bufferTimeoutInMs: 60 * 1000,
             bufferMaxSize: 10000,
+            disconnectionWaitTime: 10 * 1000,
             protocols: [],
             resendStrategies: []
         }
@@ -90,6 +91,8 @@ class Node extends EventEmitter {
 
         this.started = new Date().toLocaleString()
         this.metrics = new Metrics(this.peerInfo.peerId)
+
+        this.disconnectionTimers = {}
 
         this.seenButNotPropagated = new LRU({
             max: this.opts.bufferMaxSize,
@@ -180,7 +183,11 @@ class Node extends EventEmitter {
         this.subscribeToStreamIfHaveNotYet(streamId)
 
         const connectedNodes = []
-        await allSettled(nodeAddresses.map((nodeAddress) => this.protocols.nodeToNode.connectToNode(nodeAddress))).then((results) => {
+        await allSettled(nodeAddresses.map(async (nodeAddress) => {
+            const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
+            this._clearDisconnectionTimer(node)
+            return node
+        })).then((results) => {
             results.forEach((result) => {
                 if (result.status === 'fulfilled') {
                     connectedNodes.push(result.value)
@@ -389,8 +396,13 @@ class Node extends EventEmitter {
         this.streams.removeNodeFromStream(streamId, node)
 
         if (!this.streams.isNodePresent(node)) {
-            this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
-            return node
+            this._clearDisconnectionTimer(node)
+            this.disconnectionTimers[node] = setTimeout(() => {
+                if (!this.streams.isNodePresent(node)) {
+                    this.debug('no shared streams with node %s, disconnecting', node)
+                    this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
+                }
+            }, this.opts.disconnectionWaitTime)
         }
 
         return this.protocols.nodeToNode.sendUnsubscribe(node, streamId)
@@ -434,6 +446,13 @@ class Node extends EventEmitter {
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
+        }
+    }
+
+    _clearDisconnectionTimer(nodeId) {
+        if (this.disconnectionTimers[nodeId] != null) {
+            clearTimeout(this.disconnectionTimers[nodeId])
+            delete this.disconnectionTimers[nodeId]
         }
     }
 
