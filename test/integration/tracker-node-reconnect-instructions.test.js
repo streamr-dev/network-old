@@ -67,6 +67,7 @@ describe('Check tracker instructions to node', () => {
         )
 
         await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(nodeOne, Node.events.NODE_DISCONNECTED)
 
         expect(nodeOne.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
 
