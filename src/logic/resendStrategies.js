@@ -328,7 +328,8 @@ class StorageNodeResendStrategy {
             while (storageNode === null && storageNodeIds.length > 0) {
                 const nodeId = storageNodeIds.shift()
                 try {
-                    storageNode = await this.nodeToNode.connectToNode(nodeId, tracker, true) // eslint-disable-line no-await-in-loop
+                    // eslint-disable-next-line require-atomic-updates,no-await-in-loop
+                    storageNode = await this.nodeToNode.connectToNode(nodeId, tracker, true)
                 } catch (e) {
                     // nop
                 }
