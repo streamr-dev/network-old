@@ -1,4 +1,4 @@
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const TrackerNode = require('../protocol/TrackerNode')
 
 module.exports = class RtcSignaller {
     constructor(peerInfo, trackerNode) {
