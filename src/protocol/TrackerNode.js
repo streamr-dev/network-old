@@ -32,15 +32,15 @@ class TrackerNode extends EventEmitter {
     }
 
     sendRtcOffer(trackerId, targetNode, originatorInfo, data) {
-        return this.endpoint.send(trackerId, encoder.rtcOfferMessage(originatorInfo, targetNode, data))
+        this.endpoint.sendSync(trackerId, encoder.rtcOfferMessage(originatorInfo, targetNode, data))
     }
 
     sendRtcAnswer(trackerId, targetNode, originatorInfo, data) {
-        return this.endpoint.send(trackerId, encoder.rtcAnswerMessage(originatorInfo, targetNode, data))
+        this.endpoint.sendSync(trackerId, encoder.rtcAnswerMessage(originatorInfo, targetNode, data))
     }
 
     sendIceCandidate(trackerId, targetNode, originatorNode, data) {
-        return this.endpoint.send(trackerId, encoder.iceCandidateMessage(originatorNode, targetNode, data))
+        this.endpoint.sendSync(trackerId, encoder.iceCandidateMessage(originatorNode, targetNode, data))
     }
 
     stop() {
