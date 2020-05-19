@@ -45,7 +45,7 @@ class Node extends EventEmitter {
             sendStatusToAllTrackersInterval: 1000,
             bufferTimeoutInMs: 60 * 1000,
             bufferMaxSize: 10000,
-            disconnectionWaitTime: 10 * 1000,
+            disconnectionWaitTime: 30 * 1000,
             protocols: [],
             resendStrategies: []
         }
