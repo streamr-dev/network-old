@@ -16,7 +16,7 @@ program
     .option('--trackers <trackers>', 'trackers', (value) => value.split(','), ['ws://127.0.0.1:27777'])
     .option('--streamId <streamId>', 'streamId to publish', 'stream-0')
     .option('--metrics <metrics>', 'log metrics', false)
-    .option('--intervalInMs <intervalInMs>', 'interval to publish in ms', 200)
+    .option('--intervalInMs <intervalInMs>', 'interval to publish in ms', 2000)
     .description('Run publisher')
     .parse(process.argv)
 
