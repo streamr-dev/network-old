@@ -151,7 +151,7 @@ class WebRtcEndpoint extends EventEmitter {
                     if (queueItem.isFailed()) {
                         const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
                             + `${QueueItem.MAX_TRIES} tries due to\n`
-                            + `\terrors="${queueItem.getErrors()}",\n`
+                            + `\terrors="${queueItem.getErrors().join('\n')}",\n`
                             + `\tconnection.iceConnectionState=${this.connections[targetPeerId].iceConnectionState},\n`
                             + `\tconnection.connectionState=${this.connections[targetPeerId].connectionState},\n`
                             + `\tdataChannel.readyState=${this.dataChannels[targetPeerId].readyState},\n`
