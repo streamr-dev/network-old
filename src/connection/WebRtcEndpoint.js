@@ -17,12 +17,17 @@ class QueueItem extends EventEmitter {
         super()
         this.message = message
         this.tries = 0
+        this.errors = []
         this.no = QueueItem.nextNumber
         QueueItem.nextNumber += 1
     }
 
     getMessage() {
         return this.message
+    }
+
+    getErrors() {
+        return this.errors
     }
 
     isFailed() {
@@ -33,8 +38,9 @@ class QueueItem extends EventEmitter {
         this.emit(QueueItem.events.SENT)
     }
 
-    incrementTries() {
+    incrementTries(error) {
         this.tries += 1
+        this.errors.push(error)
         if (this.isFailed()) {
             this.emit(QueueItem.events.FAILED, new Error('Failed to deliver message.'))
         }
@@ -145,7 +151,7 @@ class WebRtcEndpoint extends EventEmitter {
                     if (queueItem.isFailed()) {
                         const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
                             + `${QueueItem.MAX_TRIES} tries due to\n`
-                            + `\terror="${e}",\n`
+                            + `\terrors="${queueItem.getErrors()}",\n`
                             + `\tconnection.iceConnectionState=${this.connections[targetPeerId].iceConnectionState},\n`
                             + `\tconnection.connectionState=${this.connections[targetPeerId].connectionState},\n`
                             + `\tdataChannel.readyState=${this.dataChannels[targetPeerId].readyState},\n`
