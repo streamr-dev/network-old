@@ -155,9 +155,9 @@ class WebRtcEndpoint extends EventEmitter {
                         message: queueItem.getMessage()
                     })
                     if (queueItem.isFailed()) {
-                        const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n')
+                        const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
                         const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
-                            + `${QueueItem.MAX_TRIES} tries due to\n${infoText}`
+                            + `${QueueItem.MAX_TRIES} tries due to\n\t${infoText}`
                         console.warn(warnMessage)
                         this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
                         this.emit(`disconnected:${targetPeerId}`, targetPeerId)
