@@ -147,7 +147,7 @@ class WebRtcEndpoint extends EventEmitter {
                     this.messageQueue[targetPeerId].pop()
                     queueItem.delivered()
                 } catch (e) {
-                    queueItem.incrementTries()
+                    queueItem.incrementTries(e)
                     if (queueItem.isFailed()) {
                         const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
                             + `${QueueItem.MAX_TRIES} tries due to\n`
