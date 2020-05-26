@@ -17,7 +17,7 @@ class QueueItem extends EventEmitter {
         super()
         this.message = message
         this.tries = 0
-        this.errors = []
+        this.infos = []
         this.no = QueueItem.nextNumber
         QueueItem.nextNumber += 1
     }
@@ -26,8 +26,8 @@ class QueueItem extends EventEmitter {
         return this.message
     }
 
-    getErrors() {
-        return this.errors
+    getInfos() {
+        return this.infos
     }
 
     isFailed() {
@@ -38,9 +38,9 @@ class QueueItem extends EventEmitter {
         this.emit(QueueItem.events.SENT)
     }
 
-    incrementTries(error) {
+    incrementTries(info) {
         this.tries += 1
-        this.errors.push(error)
+        this.infos.push(info)
         if (this.isFailed()) {
             this.emit(QueueItem.events.FAILED, new Error('Failed to deliver message.'))
         }
@@ -147,15 +147,17 @@ class WebRtcEndpoint extends EventEmitter {
                     this.messageQueue[targetPeerId].pop()
                     queueItem.delivered()
                 } catch (e) {
-                    queueItem.incrementTries(e)
+                    queueItem.incrementTries({
+                        error: e.toString(),
+                        'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                        'connection.connectionState': this.connections[targetPeerId].connectionState,
+                        'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                        message: queueItem.getMessage()
+                    })
                     if (queueItem.isFailed()) {
+                        const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n')
                         const warnMessage = `Node ${this.id} failed to send message to ${targetPeerId} after `
-                            + `${QueueItem.MAX_TRIES} tries due to\n`
-                            + `\terrors="${queueItem.getErrors().join('\n')}",\n`
-                            + `\tconnection.iceConnectionState=${this.connections[targetPeerId].iceConnectionState},\n`
-                            + `\tconnection.connectionState=${this.connections[targetPeerId].connectionState},\n`
-                            + `\tdataChannel.readyState=${this.dataChannels[targetPeerId].readyState},\n`
-                            + `message=${queueItem.getMessage()})]`
+                            + `${QueueItem.MAX_TRIES} tries due to\n${infoText}`
                         console.warn(warnMessage)
                         this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
                         this.emit(`disconnected:${targetPeerId}`, targetPeerId)
