@@ -1,9 +1,9 @@
 const OverlayTopology = require('../../src/logic/OverlayTopology')
 
 const numOfNeighbors = 4
-const numOfRounds = 100000
-const numOfNodes = 10
-const printProgress = false
+const numOfRounds = 1000
+const numOfNodes = 1000
+const printProgress = true
 
 const idxToNodeId = (idx) => `${idx + 1}`
 const nodeIdToIdx = (nodeId) => parseInt(nodeId, 10) - 1
@@ -21,9 +21,22 @@ for (let i = 0; i < numOfRounds; ++i) {
 
     states.push(topology.state())
     if (printProgress && i % 100 === 0) {
-        console.info(`Running topology experiment... ${Math.round((i / numOfRounds) * 100)}%`)
+        console.warn(`Running topology experiment... ${Math.round((i / numOfRounds) * 100)}%`)
     }
 }
+
+/*
+// Print raw data as CSV
+console.info('round,node,neighbor')
+states.forEach((state, round) => {
+    Object.entries(state).forEach(([nodeId, neighbors]) => {
+        neighbors.forEach((neighbor) => {
+            console.info([round, nodeId, neighbor].join(","))
+        })
+    })
+})
+return
+*/
 
 // Set up occurrence matrix filled with zeroes
 const occurrenceMatrix = []
@@ -43,19 +56,6 @@ states.forEach((state) => {
         })
     })
 })
-
-/*
-// Print raw data as CSV
-console.info('round,node,neighbor')
-states.forEach((state, round) => {
-    Object.entries(state).forEach(([nodeId, neighbors]) => {
-        neighbors.forEach((neighbor) => {
-            console.info([round, nodeId, neighbor].join(","))
-        })
-    })
-})
-return
- */
 
 // Print as grid
 console.info(`Pair-wise occurrences with rounds=${numOfRounds}, nodes=${numOfNodes}, neighbors=${numOfNeighbors}`)
