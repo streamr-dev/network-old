@@ -1,8 +1,23 @@
 const WebSocket = require('ws')
 const url = require('url')
+const program = require('commander')
+
+program
+    .usage('<host> <port>')
+    .description('Run example signaller')
+    .parse(process.argv)
+
+if (program.args.length !== 2) {
+    program.outputHelp()
+    process.exit(1)
+}
+
+const host = program.args[0]
+const port = parseInt(program.args[1], 10)
 
 const wss = new WebSocket.Server({
-    port: 8080
+    host,
+    port
 })
 
 const idToWs = {}
