@@ -34,6 +34,7 @@ console.info('Report interval ms: ', reportInterval)
 
 const connections = {}
 const dataChannels = {}
+const readyChannels = new Set()
 let numOfMessagesReceived = 0
 let numOfBytesReceived = 0
 let numOfMessagesSent = 0
@@ -97,6 +98,7 @@ function setUpWebRtcConnection(targetPeerId, isOffering) {
     }
     dataChannel.onopen = (event) => {
         debug('dataChannel.onOpen', nodeId, targetPeerId, event)
+        readyChannels.add(dataChannel)
     }
     dataChannel.onclose = (event) => {
         debug('dataChannel.onClose', nodeId, targetPeerId, event)
@@ -165,10 +167,16 @@ ws.on('open', () => {
 
     setInterval(() => {
         Object.values(dataChannels).forEach((dataChannel) => {
-            const str = randomString(2048)
-            dataChannel.send(str)
-            numOfMessagesSent += 1
-            numOfBytesSent += 1
+            if (readyChannels.has(dataChannel)) {
+                const str = randomString(2048)
+                try {
+                    dataChannel.send(str)
+                    numOfMessagesSent += 1
+                    numOfBytesSent += 1
+                } catch (e) {
+                    console.error(e)
+                }
+            }
         })
     }, publishInterval)
 })
