@@ -48,10 +48,12 @@ let numOfMessagesReceived = 0
 let numOfBytesReceived = 0
 let numOfMessagesSent = 0
 let numOfBytesSent = 0
+let totalLatency = 0.0
 let lastReportedNumOfMessagesReceived = 0
 let lastReportedNumofBytesReceived = 0
 let lastReportedNumOfMessagesSent = 0
 let lastReportedNumofBytesSent = 0
+let lastReportedLatency = 0.0
 
 function setUpWebRtcConnection(targetPeerId, isOffering) {
     if (connections[targetPeerId]) {
@@ -118,8 +120,10 @@ function setUpWebRtcConnection(targetPeerId, isOffering) {
     }
     dataChannel.onmessage = (event) => {
         debug('dataChannel.onmessage', nodeId, targetPeerId, event.data)
+        const object = JSON.parse(event.data)
         numOfMessagesReceived += 1
         numOfBytesReceived += event.data.length
+        totalLatency += Date.now() - object.time
     }
 
     connections[targetPeerId] = connection
@@ -171,6 +175,7 @@ ws.on('open', () => {
             }
         } else {
             const error = new Error(`RTC error ${message} while attempting to signal with ${source}`)
+            console.warn(error)
         }
     })
 
@@ -179,7 +184,10 @@ ws.on('open', () => {
             if (readyChannels.has(dataChannel)) {
                 const str = randomString(2048)
                 try {
-                    dataChannel.send(str)
+                    dataChannel.send(JSON.stringify({
+                        str,
+                        time: Date.now()
+                    }))
                     numOfMessagesSent += 1
                     numOfBytesSent += 1
                 } catch (e) {
@@ -203,6 +211,9 @@ setInterval(async () => {
     console.info('Total bytes received %d (%s per second)',
         numOfBytesReceived,
         ((numOfBytesReceived - lastReportedNumofBytesReceived) / (reportInterval / 1000.0)).toFixed(2))
+    console.info('Mean latency %s ms per message (%s ms per message)',
+        (totalLatency / numOfMessagesReceived).toFixed(2),
+        ((totalLatency - lastReportedLatency) / (numOfMessagesReceived - lastReportedNumOfMessagesReceived)).toFixed(2))
     console.info('Total messages sent %d (%d)',
         numOfMessagesSent,
         numOfMessagesSent - lastReportedNumOfMessagesSent)
@@ -218,6 +229,8 @@ setInterval(async () => {
             totalBytes: numOfBytesReceived,
             newMessages: numOfMessagesReceived - lastReportedNumOfMessagesReceived,
             newBytes: numOfBytesReceived - lastReportedNumofBytesReceived,
+            totalMeanLatency: totalLatency / numOfMessagesReceived,
+            newMeanLatency: (totalLatency - lastReportedLatency) / (numOfMessagesReceived - lastReportedNumOfMessagesReceived)
         },
         sent: {
             totalMessages: numOfMessagesSent,
@@ -245,4 +258,5 @@ setInterval(async () => {
     lastReportedNumofBytesReceived = numOfBytesReceived
     lastReportedNumOfMessagesSent = numOfMessagesSent
     lastReportedNumofBytesSent = numOfBytesSent
+    lastReportedLatency = totalLatency
 }, reportInterval)
