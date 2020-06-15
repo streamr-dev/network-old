@@ -8,7 +8,7 @@ const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 const program = require('commander')
 
 program
-    .usage('<node-id>')
+    .option('--node-id <node-id>', 'node-id', null)
     .option('--signaller <signaller>', 'signaller host info', 'ws://127.0.0.1:8080')
     .option('--stun-urls <stun-urls>', 'comma-separated URL(s) of STUN servers', 'stun:stun.l.google.com:19302')
     .option('--publish-interval <publisher-interval>', 'interval in ms to publish', '500')
@@ -17,12 +17,12 @@ program
     .description('Run WebRTC example node')
     .parse(process.argv)
 
-if (program.args.length !== 1) {
-    program.outputHelp()
+if (!program.nodeId) {
+    console.error('nodeId option is mandatory')
     process.exit(1)
 }
 
-const nodeId = program.args[0]
+const nodeId = program.nodeId
 const { signaller } = program
 const stunUrls = program.stunUrls.split(',')
 const publishInterval = parseInt(program.publishInterval, 10)
