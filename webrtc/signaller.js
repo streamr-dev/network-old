@@ -2,22 +2,31 @@ const WebSocket = require('ws')
 const url = require('url')
 const program = require('commander')
 
-program
-    .usage('<host> <port>')
-    .description('Run example signaller')
-    .parse(process.argv)
+const { logToFile } = require('./common')
 
-if (program.args.length !== 2) {
-    program.outputHelp()
-    process.exit(1)
+program
+  .usage('<host> <port>')
+  .option('--log-to-file <logToFile>', 'output logs to file', 'false')
+  .option('--log-file <logFile>', 'name of log file', 'signaller.log')
+  .description('Run example signaller')
+  .parse(process.argv)
+
+
+if (program.logToFile === true || program.logToFile.toLowerCase() === 'true') {
+  logToFile(program.logFile, process, true)
+}
+
+if (program.args.length < 2) {
+  program.outputHelp()
+  process.exit(1)
 }
 
 const host = program.args[0]
 const port = parseInt(program.args[1], 10)
 
 const wss = new WebSocket.Server({
-    host,
-    port
+  host,
+  port
 })
 
 const idToWs = {}

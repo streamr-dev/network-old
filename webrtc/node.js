@@ -6,16 +6,22 @@ const WebSocket = require('ws')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 const program = require('commander')
-
+const { logToFile } = require('./common')
 program
     .option('--node-id <node-id>', 'node-id', null)
     .option('--signaller <signaller>', 'signaller host info', 'ws://127.0.0.1:8080')
     .option('--stun-urls <stun-urls>', 'comma-separated URL(s) of STUN servers', 'stun:stun.l.google.com:19302')
     .option('--publish-interval <publisher-interval>', 'interval in ms to publish', '500')
     .option('--report-interval <report-interval>', 'interval in ms to report', '30000')
-    .option('--log-file <log-file>', 'log file to use', null)
+    .option('--metrics-file <metrics-file>', 'metrics log file to use', null)
+    .option('--log-to-file <logToFile>', 'output logs to file', 'false')
+    .option('--log-file <logFile>', 'name of log file', 'node.log')
     .description('Run WebRTC example node')
     .parse(process.argv)
+
+if (program.logToFile === true || program.logToFile.toLowerCase() === 'true') {
+    logToFile(program.logFile, process, true)
+}
 
 if (!program.nodeId) {
     console.error('nodeId option is mandatory')
@@ -27,7 +33,7 @@ const { signaller } = program
 const stunUrls = program.stunUrls.split(',')
 const publishInterval = parseInt(program.publishInterval, 10)
 const reportInterval = parseInt(program.reportInterval, 10)
-const logFile = program.logFile ? program.logFile : tmp.fileSync().name
+const metricsFile = program.metricsFile ? program.metricsFile : tmp.fileSync().name
 const debug = createDebug('node.js')
 
 console.info('Node ID:', nodeId)
@@ -35,9 +41,10 @@ console.info('Using STUN URL(s):', stunUrls)
 console.info('Connecting to signaller', signaller)
 console.info('Publish interval ms: ', publishInterval)
 console.info('Report interval ms: ', reportInterval)
-console.info('Logging to file: ', logFile)
+console.info('Metrics to file: ', metricsFile)
+console.info('Logs to file: ', program.logFile)
 
-const logFileStream = fs.createWriteStream(logFile, {
+const logFileStream = fs.createWriteStream(metricsFile, {
     flags: 'a'
 })
 
