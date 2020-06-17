@@ -86,19 +86,11 @@ describe('ws-endpoint', () => {
             let close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: address not given'])
 
-            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address`,
-                undefined,
-                {
-                    followRedirects: true
-                })
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address`)
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: address not given'])
 
-            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address`,
-                undefined,
-                {
-                    followRedirects: true
-                })
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address`)
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: peerId not given'])
 

@@ -319,7 +319,6 @@ class WsEndpoint extends EventEmitter {
                 const ws = new WebSocket(
                     `${peerAddress}/ws?address=${this.getAddress()}`,
                     {
-                        followRedirects: true,
                         headers: toHeaders(this.peerInfo)
                     }
                 )
