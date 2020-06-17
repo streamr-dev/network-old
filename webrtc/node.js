@@ -1,4 +1,3 @@
-const { EventEmitter } = require('events')
 const fs = require('fs')
 
 const tmp = require('tmp')
