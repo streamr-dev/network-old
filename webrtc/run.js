@@ -2,13 +2,9 @@
 
 const { spawn } = require('child_process')
 const path = require('path')
-
 const program = require('commander')
 
-const CURRENT_VERSION = require('../package.json').version
-
 program
-    .version(CURRENT_VERSION)
     .option('--nodes <nodes>', 'number of nodes', 10)
     .description('Run local WebRTC network')
     .parse(process.argv)
@@ -26,7 +22,7 @@ productionEnv.checkUncaughtException = true
 
 // create signaller
 const signaller = path.resolve('./signaller.js')
-let args = [signaller, '0.0.0.0 8080']
+let args = [signaller, '0.0.0.0', '8080']
 
 if (process.env.NODE_DEBUG_OPTION !== undefined) {
     debug = true
@@ -41,8 +37,10 @@ spawn('node', args, {
 setTimeout(() => {
     for (let i = 0; i < numberOfNodes; i++) {
         args = [
-            path.resolve('./bin/node.js'),
-            `--node-id=node-${i}`
+            path.resolve('./node.js'),
+            `--node-id=node-${i}`,
+            '--report-interval=50000',
+            '--publish-interval=10000'
         ]
 
         if (debug) {

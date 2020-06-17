@@ -5,7 +5,9 @@ const WebSocket = require('ws')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 const program = require('commander')
+
 const { logToFile } = require('./common')
+
 program
     .option('--node-id <node-id>', 'node-id', null)
     .option('--signaller <signaller>', 'signaller host info', 'ws://127.0.0.1:8080')
