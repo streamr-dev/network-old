@@ -9,7 +9,7 @@ const CURRENT_VERSION = require('../package.json').version
 
 program
     .version(CURRENT_VERSION)
-    .option('--nodes <nodes>', 'number of nodes', 100)
+    .option('--nodes <nodes>', 'number of nodes', 500)
     .option('--streams <streams>', 'number of streams', 1)
     .description('Run local network with stream (-s)')
     .parse(process.argv)
@@ -28,7 +28,7 @@ for (let i = 0; i < program.streams; i++) {
 let debug = false
 
 const productionEnv = Object.create(process.env)
-productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
+// productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
 productionEnv.checkUncaughtException = true
 
 // create tracker

@@ -182,6 +182,14 @@ class Node extends EventEmitter {
         this.debug('received instructions for %s, nodes to connect %o', streamId, nodeAddresses)
         this.subscribeToStreamIfHaveNotYet(streamId)
 
+        if (nodeAddresses.length > 4) {
+            console.error(`Got ${nodeAddresses.length} connections instructionMessage`)
+        }
+
+        if (this.protocols.nodeToNode.endpoint.connections.size > 5) {
+            console.error(`Websocket has ${this.protocols.nodeToNode.endpoint.connections.size} connections`)
+        }
+
         const connectedNodes = []
         await allSettled(nodeAddresses.map(async (nodeAddress) => {
             const node = await this.protocols.nodeToNode.connectToNode(nodeAddress)
