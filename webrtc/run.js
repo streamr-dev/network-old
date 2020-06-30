@@ -40,7 +40,8 @@ setTimeout(() => {
             path.resolve('./node.js'),
             `--node-id=node-${i}`,
             '--report-interval=50000',
-            '--publish-interval=10000'
+            '--publish-interval=10000',
+            '--metrics-file=metrics.json'
         ]
 
         if (debug) {
