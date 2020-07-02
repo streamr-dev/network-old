@@ -4,6 +4,7 @@ const createDebug = require('debug')
 
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
+const InstructionCounter = require('./InstructionCounter')
 const Metrics = require('../metrics')
 
 const OverlayTopology = require('./OverlayTopology')
