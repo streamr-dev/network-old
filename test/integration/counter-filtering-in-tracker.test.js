@@ -3,6 +3,7 @@ const { wait, waitForEvent } = require('streamr-test-utils')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
+const Tracker = require('../../src/logic/Tracker')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { LOCALHOST } = require('../util')
 
@@ -42,16 +43,15 @@ describe('tracker: counter filtering', () => {
             waitForEvent(trackerNode2, TrackerNode.events.CONNECTED_TO_TRACKER)
         ])
 
-        trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
+        // TODO: in the current version of the network, instructions are only sent to one of the
+        //  participants. This means that counters of trackerNode2 will be left at (0, 0) whilst counters of
+        //  trackerNode1 are incremented to be (1, 1). Thus this "reverse order" of sending statuses. This can be
+        //  put back to "normal order" with WebRTC branch.
         trackerNode2.sendStatus('tracker', formStatus(0, 0, [], []))
+        trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
 
-        const res = await Promise.all([
-            waitForEvent(trackerNode1, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED),
-            waitForEvent(trackerNode1, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED),
-            waitForEvent(trackerNode2, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED),
-            waitForEvent(trackerNode2, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
-        ])
-        expect(res.map(([_, instructionMessage]) => instructionMessage.getCounter())).toEqual([1, 1, 1, 1])
+        await waitForEvent(trackerNode1, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(trackerNode1, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
     })
 
     afterEach(async () => {
@@ -76,7 +76,7 @@ describe('tracker: counter filtering', () => {
         trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
 
         let numOfInstructions = 0
-        trackerNode1.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, () => {
+        trackerNode1.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (fafa, baba) => {
             numOfInstructions += 1
         })
 
