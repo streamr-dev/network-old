@@ -200,10 +200,6 @@ module.exports = class Tracker extends EventEmitter {
         this.overlayConnectionRtts[source] = rtts
     }
 
-    getOverlayConnectionRtts() {
-        return this.overlayConnectionRtts
-    }
-
     getTopology(streamId = null, partition = null) {
         const topology = {}
 
