@@ -352,6 +352,7 @@ class Node extends EventEmitter {
     _sendStreamStatus(streamId) {
         const streamKey = streamId.key()
         const trackerId = this.trackersRing.get(streamKey)
+
         if (trackerId) {
             clearTimeout(this.sendStatusTimeout.get(trackerId))
 
@@ -365,6 +366,7 @@ class Node extends EventEmitter {
 
     async _sendStatus(tracker) {
         const status = this._getStatus(tracker)
+
         try {
             await this.protocols.trackerNode.sendStatus(tracker, status)
             this.debug('sent status %j to tracker %s', status.streams, tracker)

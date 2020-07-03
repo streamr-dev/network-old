@@ -53,7 +53,6 @@ module.exports = class Tracker extends EventEmitter {
             this.storageNodes.set(source, streams)
         }
         this._updateRtts(source, rtts)
-        // console.log(this.overlayConnectionRtts)
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
         this._updateNode(source, streams)
@@ -184,6 +183,7 @@ module.exports = class Tracker extends EventEmitter {
 
     _removeNode(node) {
         this.metrics.inc('_removeNode')
+        delete this.overlayConnectionRtts[node]
         Object.entries(this.overlayPerStream)
             .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
     }
@@ -198,6 +198,10 @@ module.exports = class Tracker extends EventEmitter {
 
     _updateRtts(source, rtts) {
         this.overlayConnectionRtts[source] = rtts
+    }
+
+    getOverlayConnectionRtts() {
+        return this.overlayConnectionRtts
     }
 
     getTopology(streamId = null, partition = null) {
