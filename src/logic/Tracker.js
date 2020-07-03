@@ -28,6 +28,7 @@ module.exports = class Tracker extends EventEmitter {
         }
 
         this.overlayPerStream = {} // streamKey => overlayTopology, where streamKey = streamId::partition
+        this.overlayConnectionRtts = {} // nodeId => connected nodeId => rtt
         this.storageNodes = new Map()
 
         this.protocols = opts.protocols
@@ -45,15 +46,14 @@ module.exports = class Tracker extends EventEmitter {
 
     processNodeStatus(statusMessage, isStorage) {
         this.metrics.inc('processNodeStatus')
-
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        const { streams } = status
-
+        const { streams, rtts } = status
         if (isStorage) {
             this.storageNodes.set(source, streams)
         }
-
+        this._updateRtts(source, rtts)
+        // console.log(this.overlayConnectionRtts)
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
         this._updateNode(source, streams)
@@ -194,6 +194,10 @@ module.exports = class Tracker extends EventEmitter {
         if (overlayTopology.isEmpty()) {
             delete this.overlayPerStream[streamKey]
         }
+    }
+
+    _updateRtts(source, rtts) {
+        this.overlayConnectionRtts[source] = rtts
     }
 
     getTopology(streamId = null, partition = null) {
