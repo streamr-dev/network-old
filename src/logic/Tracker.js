@@ -4,9 +4,9 @@ const createDebug = require('debug')
 
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
-const InstructionCounter = require('./InstructionCounter')
 const Metrics = require('../metrics')
 
+const InstructionCounter = require('./InstructionCounter')
 const OverlayTopology = require('./OverlayTopology')
 
 const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object

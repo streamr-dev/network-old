@@ -25,8 +25,8 @@ module.exports = class InstructionCounter {
     }
 
     removeStream(streamKey) {
-        Object.values(this.counters).forEach((counterPerStream) => {
-            delete counterPerStream[streamKey]
+        Object.keys(this.counters).forEach((nodeId) => {
+            delete this.counters[nodeId][streamKey]
         })
     }
 
