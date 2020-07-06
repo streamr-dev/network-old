@@ -6,6 +6,7 @@ const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
 
+const InstructionCounter = require('./InstructionCounter')
 const OverlayTopology = require('./OverlayTopology')
 
 const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
@@ -29,6 +30,7 @@ module.exports = class Tracker extends EventEmitter {
 
         this.overlayPerStream = {} // streamKey => overlayTopology, where streamKey = streamId::partition
         this.overlayConnectionRtts = {} // nodeId => connected nodeId => rtt
+        this.instructionCounter = new InstructionCounter()
         this.storageNodes = new Map()
 
         this.protocols = opts.protocols
@@ -48,7 +50,8 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('processNodeStatus')
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        const { streams, rtts } = status
+        const { rtts } = status
+        const streams = this.instructionCounter.filterStatus(statusMessage)
         if (isStorage) {
             this.storageNodes.set(source, streams)
         }
@@ -172,8 +175,9 @@ module.exports = class Tracker extends EventEmitter {
             Object.entries(instructions).forEach(([nodeId, newNeighbors]) => {
                 this.metrics.inc('sendInstruction')
                 try {
-                    this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors)
-                    this.debug('sent instruction %j for stream %s to node %s', newNeighbors, streamKey, nodeId)
+                    const counterValue = this.instructionCounter.setOrIncrement(nodeId, streamKey)
+                    this.protocols.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors, counterValue)
+                    this.debug('sent instruction %j (%d) for stream %s to node %s', newNeighbors, counterValue, streamKey, nodeId)
                 } catch (e) {
                     console.error(`Failed to _formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
                 }
@@ -190,8 +194,10 @@ module.exports = class Tracker extends EventEmitter {
 
     _leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node) {
         overlayTopology.leave(node)
+        this.instructionCounter.removeNode(node)
 
         if (overlayTopology.isEmpty()) {
+            this.instructionCounter.removeStream(streamKey)
             delete this.overlayPerStream[streamKey]
         }
     }
