@@ -98,6 +98,12 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
+
+        setInterval(() => {
+            [...this.trackers.keys()].forEach((tracker) => {
+                this._sendStatus(tracker)
+            })
+        }, 20000)
     }
 
     onConnectedToTracker(tracker) {
