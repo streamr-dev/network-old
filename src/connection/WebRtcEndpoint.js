@@ -57,7 +57,7 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller) {
+    constructor(id, stunUrls, rtcSignaller, pingInterval = 5 * 1000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
@@ -111,6 +111,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.on(events.PEER_CONNECTED, (peerInfo) => {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
+        this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
     }
 
     // TODO: get rid of promise
@@ -278,9 +279,48 @@ class WebRtcEndpoint extends EventEmitter {
             console.error(event)
         }
         dataChannel.onmessage = (event) => {
-            this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
-            this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
+            if (event.data.ping) {
+                this.debug('dataChannel.onmessage.ping', this.id, targetPeerId, event.data)
+                this.pong(targetPeerId)
+            } else if (event.data.pong) {
+                this.debug('dataChannel.onmessage.pong', this.id, targetPeerId, event.data)
+                // eslint-disable-next-line no-param-reassign
+                dataChannel.respondedPong = true
+                // eslint-disable-next-line no-param-reassign
+                dataChannel.rtt = Date.now() - dataChannel.rttStart
+            } else {
+                this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
+                this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
+            }
         }
+    }
+
+    pong(peerId) {
+        this.send(peerId,{
+            pong: 'pong'
+        })
+    }
+
+    _pingConnections() {
+        const addresses = Object.keys(this.connections)
+        addresses.forEach((address) => {
+            const connection = this.connections[address]
+            const dc = this.dataChannels[address]
+            try {
+                if (dc.respondedPong !== undefined && !dc.respondedPong) {
+                    throw Error('ws is not active')
+                }
+
+                // eslint-disable-next-line no-param-reassign
+                dc.respondedPong = false
+                dc.rttStart = Date.now()
+                dc.send({
+                    ping: 'ping'
+                })
+            } catch (e) {
+                console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
+            }
+        })
     }
 
     _isConnected(targetPeerId) {
