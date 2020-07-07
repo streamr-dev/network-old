@@ -111,9 +111,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.on(events.PEER_CONNECTED, (peerInfo) => {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
-        this._pingInterval = setInterval(() => {
-            this._pingConnections()
-        }, pingInterval)
+        this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
     }
 
     // TODO: get rid of promise
@@ -297,13 +295,15 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     pong(peerId) {
-        this.dataChannels[peerId].send('pong')
+        const dataChannel = this.dataChannels[peerId]
+        if (dataChannel.readyState === 'open') {
+            dataChannel.send('pong')
+        }
     }
 
     _pingConnections() {
         const addresses = Object.keys(this.connections)
         addresses.forEach((address) => {
-            const connection = this.connections[address]
             const dc = this.dataChannels[address]
             try {
                 if (dc.readyState === 'open') {
