@@ -314,10 +314,8 @@ class WebRtcEndpoint extends EventEmitter {
                     dc.rttStart = Date.now()
                     dc.send('ping')
                 }
-
             } catch (e) {
                 console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
-                this.close(address)
             }
         })
     }
