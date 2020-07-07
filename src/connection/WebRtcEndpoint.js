@@ -316,6 +316,7 @@ class WebRtcEndpoint extends EventEmitter {
                 }
             } catch (e) {
                 console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
+                this.close(address)
             }
         })
     }
