@@ -307,7 +307,7 @@ class WebRtcEndpoint extends EventEmitter {
             const dc = this.dataChannels[address]
             try {
                 if (dc.readyState === 'open') {
-                    if (dc.respondedPong !== undefined && !dc.respondedPong) {
+                    if (dc.respondedPong === false) {
                         throw Error('dataChannel is not active')
                     }
                     dc.respondedPong = false
