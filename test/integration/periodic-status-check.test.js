@@ -3,7 +3,7 @@ const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 
 /**
- * This test verifies that tracker receives status messages from nodes with list of inBound and outBound connections
+ * This test verifies that tracker receives status messages periodically from nodes
  */
 describe('check status message flow between tracker and two nodes', () => {
     let tracker
