@@ -23,11 +23,12 @@ function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advert
     })
 }
 
-function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null) {
+function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, statusInterval = 30000) {
     const peerInfo = PeerInfo.newNode(id)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
+            statusInterval,
             protocols: {
                 trackerNode: new TrackerNode(endpoint),
                 nodeToNode: new NodeToNode(endpoint)
@@ -38,11 +39,12 @@ function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWs
     })
 }
 
-function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null) {
+function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, statusInterval = 30000) {
     const peerInfo = PeerInfo.newStorage(id)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
+            statusInterval,
             protocols: {
                 trackerNode: new TrackerNode(endpoint),
                 nodeToNode: new NodeToNode(endpoint)

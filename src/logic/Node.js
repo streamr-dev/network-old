@@ -42,7 +42,7 @@ class Node extends EventEmitter {
         const defaultOptions = {
             connectToBootstrapTrackersInterval: 5000,
             sendStatusToAllTrackersTimeout: 1000,
-            sendStatusToAllTrackersInterval: 30000,
+            statusInterval: 30000,
             bufferTimeoutInMs: 60 * 1000,
             bufferMaxSize: 10000,
             disconnectionWaitTime: 10 * 1000,
@@ -62,6 +62,7 @@ class Node extends EventEmitter {
             this._connectToBootstrapTrackers.bind(this),
             this.opts.connectToBootstrapTrackersInterval
         )
+        this.statusInterval = this.opts.statusInterval
         this.sendStatusTimeout = new Map()
         this.bootstrapTrackerAddresses = new Set()
         this.protocols = this.opts.protocols
@@ -99,12 +100,11 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
-
-        const statusInterval = setInterval(() => {
+        setInterval(() => {
             [...this.trackers.keys()].forEach((tracker) => {
                 this._sendStatus(tracker)
             })
-        }, this.opts.sendStatusToAllTrackersInterval)
+        }, this.statusInterval)
     }
 
     onConnectedToTracker(tracker) {
