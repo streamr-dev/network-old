@@ -100,11 +100,7 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
-        setInterval(() => {
-            [...this.trackers.keys()].forEach((tracker) => {
-                this._sendStatus(tracker)
-            })
-        }, this.statusInterval)
+        this.statusIntervals = {}
     }
 
     onConnectedToTracker(tracker) {
@@ -112,8 +108,10 @@ class Node extends EventEmitter {
 
         this.trackers.add(tracker)
         this.trackersRing.add(tracker)
-
         this._sendStatus(tracker)
+        this.statusIntervals[tracker] = setInterval(() => {
+            this._sendStatus(tracker)
+        }, this.statusInterval)
     }
 
     subscribeToStreamIfHaveNotYet(streamId) {
@@ -432,6 +430,7 @@ class Node extends EventEmitter {
 
     onTrackerDisconnected(tracker) {
         this.trackers.delete(tracker)
+        this._clearStatusInterval(tracker)
     }
 
     _handleBufferedMessages(streamId) {
@@ -467,6 +466,13 @@ class Node extends EventEmitter {
         if (this.disconnectionTimers[nodeId] != null) {
             clearTimeout(this.disconnectionTimers[nodeId])
             delete this.disconnectionTimers[nodeId]
+        }
+    }
+
+    _clearStatusInterval(trackerId) {
+        if (this.statusIntervals[trackerId]) {
+            clearInterval(this.statusIntervals[trackerId])
+            delete this.statusIntervals[trackerId]
         }
     }
 

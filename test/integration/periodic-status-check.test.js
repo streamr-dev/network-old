@@ -39,7 +39,7 @@ describe('check periodic status message flow between tracker and two nodes', () 
             if (statusMessage.getSource() === 'node-2') {
                 receivedTotalNode2 += 1
                 // eslint-disable-next-line no-underscore-dangle
-                expect(statusMessage.getStatus()).toEqual(nodeTwo.getStatus())
+                expect(statusMessage.getStatus()).toEqual(nodeTwo._getStatus())
             }
             if (receivedTotalNode1 > 2 && receivedTotalNode2 > 2) {
                 done()
