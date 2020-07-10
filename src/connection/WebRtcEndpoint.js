@@ -57,7 +57,7 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller) {
+    constructor(id, stunUrls, rtcSignaller, pingInterval = 5 * 1000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
@@ -111,6 +111,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.on(events.PEER_CONNECTED, (peerInfo) => {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
+        this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
     }
 
     // TODO: get rid of promise
@@ -282,9 +283,46 @@ class WebRtcEndpoint extends EventEmitter {
             console.error(event)
         }
         dataChannel.onmessage = (event) => {
-            this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
-            this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
+            if (event.data === 'ping') {
+                this.debug('dataChannel.onmessage.ping', this.id, targetPeerId, event.data)
+                this.pong(targetPeerId)
+
+            } else if (event.data === 'pong') {
+                this.debug('dataChannel.onmessage.pong', this.id, targetPeerId, event.data)
+                dataChannel.respondedPong = true
+                dataChannel.rtt = Date.now() - dataChannel.rttStart
+            } else {
+                this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
+                this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
+            }
         }
+    }
+
+    pong(peerId) {
+        const dataChannel = this.dataChannels[peerId]
+        if (dataChannel.readyState === 'open') {
+            dataChannel.send('pong')
+        }
+    }
+
+    _pingConnections() {
+        const addresses = Object.keys(this.connections)
+        addresses.forEach((address) => {
+            const dc = this.dataChannels[address]
+            try {
+                if (dc.readyState === 'open') {
+                    if (dc.respondedPong === false) {
+                        throw Error('dataChannel is not active')
+                    }
+                    dc.respondedPong = false
+                    dc.rttStart = Date.now()
+                    dc.send('ping')
+                }
+            } catch (e) {
+                console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
+                this.close(address)
+            }
+        })
     }
 
     _isConnected(targetPeerId) {
