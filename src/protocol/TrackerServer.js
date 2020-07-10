@@ -23,8 +23,8 @@ class TrackerServer extends EventEmitter {
         this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
     }
 
-    sendInstruction(receiverNodeId, streamId, nodeIds) {
-        this.endpoint.sendSync(receiverNodeId, encoder.instructionMessage(streamId, nodeIds))
+    sendInstruction(receiverNodeId, streamId, nodeIds, counter) {
+        this.endpoint.sendSync(receiverNodeId, encoder.instructionMessage(streamId, nodeIds, counter))
     }
 
     sendStorageNodes(receiverNodeId, streamId, listOfNodeIds) {
@@ -70,17 +70,18 @@ class TrackerServer extends EventEmitter {
 
     onMessageReceived(peerInfo, rawMessage) {
         const message = encoder.decode(peerInfo.peerId, rawMessage)
-        switch (message.getCode()) {
-            case encoder.STATUS:
-                this.emit(events.NODE_STATUS_RECEIVED, {
-                    statusMessage: message,
-                    isStorage: peerInfo.isStorage()
-                })
-                break
-            case encoder.FIND_STORAGE_NODES:
-                this.emit(events.FIND_STORAGE_NODES_REQUEST, message)
-                break
-            case encoder.RTC_OFFER:
+        if (message) {
+            switch (message.getCode()) {
+                case encoder.STATUS:
+                    this.emit(events.NODE_STATUS_RECEIVED, {
+                        statusMessage: message,
+                        isStorage: peerInfo.isStorage()
+                    })
+                    break
+                case encoder.FIND_STORAGE_NODES:
+                    this.emit(events.FIND_STORAGE_NODES_REQUEST, message)
+                    break
+                case encoder.RTC_OFFER:
                 this.emit(events.RTC_OFFER_RECEIVED, message)
                 break
             case encoder.RTC_ANSWER:
@@ -90,7 +91,7 @@ class TrackerServer extends EventEmitter {
                 this.emit(events.ICE_CANDIDATE_RECEIVED, message)
                 break
             default:
-                break
+                break}
         }
     }
 }

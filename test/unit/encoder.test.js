@@ -14,8 +14,8 @@ const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
 describe('encoder', () => {
-    it('check streamMessage encoding/decoding', () => {
-        const json = encoder.instructionMessage(new StreamIdAndPartition('stream-id', 0), ['node-1', 'node-2'])
+    it('check encoding INSTRUCTION', () => {
+        const json = encoder.instructionMessage(new StreamIdAndPartition('stream-id', 0), ['node-1', 'node-2'], 15)
         expect(JSON.parse(json)).toEqual({
             code: encoder.INSTRUCTION,
             version,
@@ -25,21 +25,43 @@ describe('encoder', () => {
                 nodeIds: [
                     'node-1',
                     'node-2'
-                ]
+                ],
+                counter: 15
             }
         })
+    })
 
-        const source = '127.0.0.1'
-        const streamMessage = encoder.decode(source, json)
+    it('check decoding INSTRUCTION', () => {
+        const instructionMessage = encoder.decode('127.0.0.1', JSON.stringify({
+            code: encoder.INSTRUCTION,
+            version,
+            payload: {
+                streamId: 'stream-id',
+                streamPartition: 0,
+                nodeIds: [
+                    'node-1',
+                    'node-2'
+                ],
+                counter: 15
+            }
+        }))
 
-        expect(streamMessage).toBeInstanceOf(InstructionMessage)
-        expect(streamMessage.getSource()).toEqual('127.0.0.1')
-        expect(streamMessage.getStreamId()).toEqual(new StreamIdAndPartition('stream-id', 0))
-        expect(streamMessage.getNodeIds()).toEqual(['node-1', 'node-2'])
+        expect(instructionMessage).toBeInstanceOf(InstructionMessage)
+        expect(instructionMessage.getVersion()).toEqual(version)
+        expect(instructionMessage.getCode()).toEqual(encoder.INSTRUCTION)
+        expect(instructionMessage.getSource()).toEqual('127.0.0.1')
+
+        expect(instructionMessage.getStreamId()).toEqual(new StreamIdAndPartition('stream-id', 0))
+        expect(instructionMessage.getNodeIds()).toEqual(['node-1', 'node-2'])
+        expect(instructionMessage.getCounter()).toEqual(15)
     })
 
     it('check encoding WRAPPER', () => {
-        const payload = ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId')
+        const payload = new ControlLayer.ResendResponseNoResend({
+            requestId: 'requestId',
+            streamId: 'streamId',
+            streamPartition: 0,
+        })
         const actual = encoder.wrapperMessage(payload)
         expect(JSON.parse(actual)).toEqual({
             code: encoder.WRAPPER,
@@ -51,7 +73,11 @@ describe('encoder', () => {
     })
 
     it('check decoding WRAPPER', () => {
-        const payload = ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId')
+        const payload = new ControlLayer.ResendResponseNoResend({
+            requestId: 'requestId',
+            streamId: 'streamId',
+            streamPartition: 0,
+        })
         const wrapperMessage = encoder.decode('source', JSON.stringify({
             code: encoder.WRAPPER,
             version,
@@ -286,6 +312,31 @@ describe('encoder', () => {
         expect(iceCandidateMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(iceCandidateMessage.getTargetNode()).toEqual('targetNode')
         expect(iceCandidateMessage.getData()).toEqual('some data here')
+    })
+
+    it('encoder.decode doesnt throw exception if failed to JSON.parse', () => {
+        expect(() => {
+            const message = encoder.decode('source', 'JUST_TEXT_NOT_JSON')
+            expect(message).toBeUndefined()
+        }).not.toThrowError()
+    })
+
+    it('encoder.decode doesnt throw exception if unknown message type', () => {
+        expect(() => {
+            const message = encoder.decode('source', JSON.stringify({
+                code: '777777',
+                version,
+                payload: {
+                    streamId: 'stream-id',
+                    streamPartition: 0,
+                    nodeAddresses: [
+                        'ws://node-1',
+                        'ws://node-2'
+                    ]
+                }
+            }))
+            expect(message).toBeUndefined()
+        }).not.toThrowError()
     })
 })
 

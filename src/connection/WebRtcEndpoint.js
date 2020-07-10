@@ -214,6 +214,10 @@ class WebRtcEndpoint extends EventEmitter {
         this.removeAllListeners()
     }
 
+    getRtts() {
+        return {}
+    }
+
     _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId) {
         if (this.connections[targetPeerId] != null) {
             return

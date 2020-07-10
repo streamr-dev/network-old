@@ -26,7 +26,14 @@ const encode = (type, payload) => {
 }
 
 const decode = (source, message) => {
-    const { code, payload } = JSON.parse(message)
+    let code
+    let payload
+
+    try {
+        ({ code, payload } = JSON.parse(message))
+    } catch (e) {
+        return undefined
+    }
 
     switch (code) {
         case msgTypes.STATUS:
@@ -36,6 +43,7 @@ const decode = (source, message) => {
             return new InstructionMessage(
                 new StreamIdAndPartition(payload.streamId, payload.streamPartition),
                 payload.nodeIds,
+                payload.counter,
                 source
             )
 
@@ -83,17 +91,19 @@ const decode = (source, message) => {
             )
 
         default:
-            throw new Error(`Unknown message type: ${code}`)
+            console.warn(`Got from "${source}" unknown message type with content: "${message}"`)
+            return undefined
     }
 }
 
 module.exports = {
     decode,
     statusMessage: (status) => encode(msgTypes.STATUS, status),
-    instructionMessage: (streamId, nodeIds) => encode(msgTypes.INSTRUCTION, {
+    instructionMessage: (streamId, nodeIds, counter) => encode(msgTypes.INSTRUCTION, {
         streamId: streamId.id,
         streamPartition: streamId.partition,
-        nodeIds
+        nodeIds,
+        counter
     }),
     findStorageNodesMessage: (streamId) => encode(msgTypes.FIND_STORAGE_NODES, {
         streamId: streamId.id,

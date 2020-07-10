@@ -49,14 +49,15 @@ class TrackerNode extends EventEmitter {
 
     onMessageReceived(peerInfo, rawMessage) {
         const message = encoder.decode(peerInfo.peerId, rawMessage)
-        switch (message.getCode()) {
-            case encoder.INSTRUCTION:
-                this.emit(events.TRACKER_INSTRUCTION_RECEIVED, peerInfo.peerId, message)
-                break
-            case encoder.STORAGE_NODES:
-                this.emit(events.STORAGE_NODES_RECEIVED, message)
-                break
-            case encoder.RTC_OFFER:
+        if (message) {
+            switch (message.getCode()) {
+                case encoder.INSTRUCTION:
+                    this.emit(events.TRACKER_INSTRUCTION_RECEIVED, peerInfo.peerId, message)
+                    break
+                case encoder.STORAGE_NODES:
+                    this.emit(events.STORAGE_NODES_RECEIVED, message)
+                    break
+                case encoder.RTC_OFFER:
                 this.emit(events.RTC_OFFER_RECEIVED, message)
                 break
             case encoder.RTC_ANSWER:
@@ -69,7 +70,7 @@ class TrackerNode extends EventEmitter {
                 this.emit(events.ICE_CANDIDATE_RECEIVED, message)
                 break
             default:
-                break
+                break}
         }
     }
 

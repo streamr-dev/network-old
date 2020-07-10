@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid')
+const Protocol = require('streamr-client-protocol')
 
 const TrackerServer = require('./protocol/TrackerServer')
 const TrackerNode = require('./protocol/TrackerNode')
@@ -66,4 +67,5 @@ module.exports = {
     startTracker,
     startNetworkNode,
     startStorageNode,
+    Protocol,
 }
