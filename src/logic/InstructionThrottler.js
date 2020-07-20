@@ -9,7 +9,6 @@ module.exports = class InstructionThrottler {
         this.handling = false
         this.handleFn = handleFn
         this.queue = {} // streamId => instructionMessage
-        this.timeout = null
     }
 
     add(instructionMessage) {
@@ -25,11 +24,6 @@ module.exports = class InstructionThrottler {
 
     isIdle() {
         return !this.handling
-    }
-
-    clear() {
-        this.queue = {}
-        clearTimeout(this.timeout)
     }
 
     async _invokeHandleFnWithLock() {

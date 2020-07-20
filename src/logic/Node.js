@@ -351,7 +351,6 @@ class Node extends EventEmitter {
 
         this._clearConnectToBootstrapTrackersInterval()
         this.messageBuffer.clear()
-        this.instructionThrottler.clear()
         return this.protocols.nodeToNode.stop()
     }
 
