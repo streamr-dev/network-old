@@ -15,6 +15,7 @@ const Metrics = require('../metrics')
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
 const ResendHandler = require('./ResendHandler')
+const InstructionThrottler = require('./InstructionThrottler')
 const proxyRequestStream = require('./proxyRequestStream')
 
 const events = Object.freeze({
@@ -98,6 +99,8 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
+
+        this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
     }
 
     onConnectedToTracker(tracker) {
@@ -119,6 +122,7 @@ class Node extends EventEmitter {
 
     unsubscribeFromStream(streamId) {
         this.streams.removeStream(streamId)
+        this.instructionThrottler.removeStreamId(streamId)
         this.debug('unsubscribed from %s', streamId)
         this._sendStreamStatus(streamId)
     }
@@ -156,11 +160,15 @@ class Node extends EventEmitter {
         return requestStream
     }
 
-    async onTrackerInstructionReceived(trackerId, instructionMessage) {
+    onTrackerInstructionReceived(trackerId, instructionMessage) {
+        this.instructionThrottler.add(instructionMessage)
+    }
+
+    async handleTrackerInstruction(instructionMessage) {
         const streamId = instructionMessage.getStreamId()
         const nodeIds = instructionMessage.getNodeIds()
         const counter = instructionMessage.getCounter()
-        const tracker = instructionMessage.getSource()
+        const trackerId = instructionMessage.getSource()
 
         // Check that tracker matches expected tracker
         const expectedTrackerId = this.trackersRing.get(streamId.key())
@@ -178,7 +186,7 @@ class Node extends EventEmitter {
         const nodesToUnsubscribeFrom = currentNodes.filter((nodeId) => !nodeIds.includes(nodeId))
 
         const subscribePromises = nodeIds.map(async (nodeId) => {
-            await this.protocols.nodeToNode.connectToNode(nodeId, tracker)
+            await this.protocols.nodeToNode.connectToNode(nodeId, trackerId)
             this._clearDisconnectionTimer(nodeId)
             await this._subscribeToStreamOnNode(nodeId, streamId)
             return nodeId
@@ -189,7 +197,9 @@ class Node extends EventEmitter {
         })
 
         const results = await allSettled([allSettled(subscribePromises), allSettled(unsubscribePromises)])
-        this.streams.updateCounter(streamId, counter)
+        if (this.streams.isSetUp(streamId)) {
+            this.streams.updateCounter(streamId, counter)
+        }
 
         // Log success / failures with this.debug
         const subscribeNodeIds = []
