@@ -5,19 +5,19 @@ const peerTypes = Object.freeze({
 })
 
 class PeerInfo {
-    static newTracker(peerId) {
-        return new PeerInfo(peerId, peerTypes.TRACKER)
+    static newTracker(peerId, peerName = 'TrackerNode') {
+        return new PeerInfo(peerId, peerTypes.TRACKER, peerName)
     }
 
     static newNode(peerId, peerName) {
-        return new PeerInfo(peerId, peerName, peerTypes.NODE)
+        return new PeerInfo(peerId, peerTypes.NODE, peerName)
     }
 
     static newStorage(peerId, peerName) {
-        return new PeerInfo(peerId, peerName, peerTypes.STORAGE)
+        return new PeerInfo(peerId, peerTypes.STORAGE, peerName)
     }
 
-    constructor(peerId, peerName, peerType) {
+    constructor(peerId, peerType, peerName = 'StreamrNetworkNode') {
         if (!peerId) {
             throw new Error('peerId not given')
         }
