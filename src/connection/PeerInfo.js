@@ -9,15 +9,15 @@ class PeerInfo {
         return new PeerInfo(peerId, peerTypes.TRACKER)
     }
 
-    static newNode(peerId) {
-        return new PeerInfo(peerId, peerTypes.NODE)
+    static newNode(peerId, peerName) {
+        return new PeerInfo(peerId, peerName, peerTypes.NODE)
     }
 
-    static newStorage(peerId) {
-        return new PeerInfo(peerId, peerTypes.STORAGE)
+    static newStorage(peerId, peerName) {
+        return new PeerInfo(peerId, peerName, peerTypes.STORAGE)
     }
 
-    constructor(peerId, peerType) {
+    constructor(peerId, peerName, peerType) {
         if (!peerId) {
             throw new Error('peerId not given')
         }
@@ -30,6 +30,7 @@ class PeerInfo {
 
         this.peerId = peerId
         this.peerType = peerType
+        this.peerName = peerName
     }
 
     isTracker() {
@@ -45,7 +46,7 @@ class PeerInfo {
     }
 
     toString() {
-        return `${this.peerId} (${this.peerType})`
+        return `${this.peerName} ${this.peerId} (${this.peerType})`
     }
 }
 
