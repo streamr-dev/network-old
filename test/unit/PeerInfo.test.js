@@ -32,7 +32,7 @@ describe('PeerInfo', () => {
     it('toString', () => {
         expect(nodeInfo.toString()).toEqual('NetworkNode node (node)')
         expect(storageInfo.toString()).toEqual('StorageNode storage (storage)')
-        expect(trackerInfo.toString()).toEqual('TrackerNode tracker (tracker)')
+        expect(trackerInfo.toString()).toEqual('tracker tracker (tracker)')
     })
 
     it('PeerInfo constructor throws if unknown peerType', () => {

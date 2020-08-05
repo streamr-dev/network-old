@@ -5,7 +5,7 @@ const peerTypes = Object.freeze({
 })
 
 class PeerInfo {
-    static newTracker(peerId, peerName = 'TrackerNode') {
+    static newTracker(peerId, peerName) {
         return new PeerInfo(peerId, peerTypes.TRACKER, peerName)
     }
 
@@ -17,12 +17,16 @@ class PeerInfo {
         return new PeerInfo(peerId, peerTypes.STORAGE, peerName)
     }
 
-    constructor(peerId, peerType, peerName = 'StreamrNetworkNode') {
+    constructor(peerId, peerType, peerName) {
         if (!peerId) {
             throw new Error('peerId not given')
         }
         if (!peerType) {
             throw new Error('peerType not given')
+        }
+        if (!peerName) {
+            // eslint-disable-next-line no-param-reassign
+            peerName = peerId
         }
         if (!Object.values(peerTypes).includes(peerType)) {
             throw new Error(`peerType ${peerType} not in peerTypes list`)
