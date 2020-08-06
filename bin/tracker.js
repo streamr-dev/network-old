@@ -28,9 +28,6 @@ program
     .description('Run tracker with reporting')
     .parse(process.argv)
 
-console.log(program.id)
-console.log(program.name)
-
 const id = program.id || `tracker-${program.port}`
 const name = program.trackerName || id
 
