@@ -108,9 +108,9 @@ function startServer(tracker, endpointServerPort) {
 
 startTracker(program.ip, parseInt(program.port, 10), id, parseInt(program.maxNeighborsPerNode, 10), name)
     .then((tracker) => {
-        console.info('started tracker id: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
+        console.info('started tracker id: %s, name: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
             + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s',
-        id, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
+        id, name, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
         program.metricsInterval, program.apiKey, program.streamId, program.sentryDns)
 
         if (client || program.metrics) {
