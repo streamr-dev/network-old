@@ -40,7 +40,7 @@
   "author": "",
   "license": "",
   "engines": {
-    "node": "13.11.0",
+    "node": "14.7.0",
     "npm": "6.14.2"
   },
   "engineStrict": true,
