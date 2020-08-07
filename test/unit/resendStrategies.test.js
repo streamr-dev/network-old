@@ -7,7 +7,6 @@ const { waitForStreamToEnd } = require('streamr-test-utils')
 const { AskNeighborsResendStrategy,
     StorageResendStrategy,
     StorageNodeResendStrategy } = require('../../src/logic/resendStrategies')
-const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
@@ -409,7 +408,12 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         test('if tracker responds with zero storage nodes, returns empty stream', async () => {
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [])
+                new ControlLayer.StorageNodesMessage({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: []
+                })
             )
             const streamAsArray = await waitForStreamToEnd(responseStream)
             expect(streamAsArray).toEqual([])
@@ -426,12 +430,17 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [
-                    'ws://storageNode-1',
-                    'ws://storageNode-2',
-                    'ws://storageNode-3',
-                    'ws://storageNode-4'
-                ])
+                new ControlLayer.StorageNodesMessage({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: [
+                        'ws://storageNode-1',
+                        'ws://storageNode-2',
+                        'ws://storageNode-3',
+                        'ws://storageNode-4'
+                    ]
+                })
             )
 
             setImmediate(() => {
@@ -450,10 +459,15 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [
-                    'ws://storageNode-1',
-                    'ws://storageNode-2'
-                ])
+                new ControlLayer.StorageNodesMessage({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: [
+                        'ws://storageNode-1',
+                        'ws://storageNode-2'
+                    ]
+                })
             )
 
             const streamAsArray = await waitForStreamToEnd(responseStream)
@@ -477,7 +491,12 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         const emitTrackerResponse = () => {
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                new ControlLayer.StorageNodesMessage({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: ['ws://storageNode']
+                })
             )
             return new Promise((resolve) => setImmediate(resolve))
         }
@@ -528,7 +547,12 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             setImmediate(() => { // wait for this.trackerNode.findStorageNodes(...)
                 trackerNode.emit(
                     TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                    new ControlLayer.StorageNodesMessage({
+                        requestId: 'requestId',
+                        streamId: 'streamId',
+                        streamPartition: 0,
+                        nodeAddresses: ['ws://storageNode']
+                    })
                 )
                 done()
             })
@@ -609,7 +633,12 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             setImmediate(() => {
                 trackerNode.emit(
                     TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                    new ControlLayer.StorageNodesMessage({
+                        requestId: 'requestId',
+                        streamId: 'streamId',
+                        streamPartition: 0,
+                        nodeAddresses: ['ws://storageNode']
+                    })
                 )
 
                 // Causes the stream to end. Other ways to end are a) failing to forward request and b) timeout. All of

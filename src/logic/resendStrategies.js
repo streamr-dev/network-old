@@ -318,8 +318,8 @@ class StorageNodeResendStrategy {
         this.pendingResends = {} // storageNode => [...proxiedResend]
 
         this.trackerNode.on(TrackerNode.events.STORAGE_NODES_RECEIVED, async (storageNodesMessage) => {
-            const streamId = storageNodesMessage.getStreamId()
-            const storageNodeAddresses = storageNodesMessage.getNodeAddresses()
+            const streamId = new StreamIdAndPartition(storageNodesMessage.streamId, storageNodesMessage.streamPartition)
+            const storageNodeAddresses = storageNodesMessage.nodeAddresses
 
             const entries = this.pendingTrackerResponse.popEntries(streamId)
             if (entries.length === 0) {

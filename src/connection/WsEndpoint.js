@@ -11,7 +11,7 @@ const createDebug = require('debug')
 const WebSocket = require('ws')
 const uWS = require('uWebSockets.js')
 
-const { disconnectionCodes, disconnectionReasons } = require('../messages/messageTypes')
+const { disconnectionCodes, disconnectionReasons } = require('../messageTypes')
 const Metrics = require('../metrics')
 
 const { PeerBook } = require('./PeerBook')
@@ -206,7 +206,6 @@ class WsEndpoint extends EventEmitter {
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
                 const ws = this.connections.get(recipientAddress)
-
                 this._socketSend(ws, message, recipientId, recipientAddress, resolve, reject)
             }
         })
@@ -567,9 +566,9 @@ async function startWebSocketServer(host, port) {
     })
 }
 
-async function startEndpoint(host, port, peerInfo, advertisedWsUrl) {
+async function startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval) {
     return startWebSocketServer(host, port).then(([wss, listenSocket]) => {
-        return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl)
+        return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl, pingInterval)
     })
 }
 

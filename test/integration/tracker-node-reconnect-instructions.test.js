@@ -1,14 +1,14 @@
 const { waitForEvent } = require('streamr-test-utils')
+const { ControlLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const encoder = require('../../src/helpers/MessageEncoder')
-const { StreamIdAndPartition } = require('../../src/identifiers')
+const { encode } = require('../../src/helpers/MessageEncoder')
 const endpointEvents = require('../../src/connection/WsEndpoint').events
-const { disconnectionReasons } = require('../../src/messages/messageTypes')
+const { disconnectionReasons } = require('../../src/messageTypes')
 
 /**
  * This test verifies that tracker can send instructions to node and node will connect and disconnect based on the instructions
@@ -63,7 +63,13 @@ describe('Check tracker instructions to node', () => {
         // send empty list
         await tracker.protocols.trackerServer.endpoint.sendSync(
             'node-1',
-            encoder.instructionMessage(new StreamIdAndPartition(streamId, 0), [])
+            encode(new ControlLayer.InstructionMessage({
+                requestId: 'requestId',
+                streamId,
+                streamPartition: 0,
+                nodeAddresses: [],
+                counter: 0
+            }))
         )
 
         await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
