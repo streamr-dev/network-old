@@ -9,7 +9,14 @@ const Tracker = require('./logic/Tracker')
 const NetworkNode = require('./NetworkNode')
 const { startEndpoint } = require('./connection/WsEndpoint')
 
-function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name) {
+const defaultLocation = {
+    latitude: null,
+    longitude: null,
+    country: null,
+    city: null
+}
+
+function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name, location = defaultLocation) {
     const peerInfo = PeerInfo.newTracker(id, name)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
@@ -23,7 +30,7 @@ function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advert
     })
 }
 
-function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name) {
+function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location = defaultLocation) {
     const peerInfo = PeerInfo.newNode(id, name)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
@@ -32,13 +39,14 @@ function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWs
                 trackerNode: new TrackerNode(endpoint),
                 nodeToNode: new NodeToNode(endpoint)
             },
-            storages
+            storages,
+            location
         }
         return new NetworkNode(opts)
     })
 }
 
-function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name) {
+function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location = defaultLocation) {
     const peerInfo = PeerInfo.newStorage(id, name)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
