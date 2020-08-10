@@ -373,16 +373,16 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         })
 
         test('attempts to find storage nodes via tracker', async () => {
-            trackerNode.findStorageNodes = jest.fn().mockReturnValueOnce(Promise.resolve())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValueOnce(Promise.resolve())
 
             resendStrategy.getResendResponseStream(request)
 
-            expect(trackerNode.findStorageNodes).toBeCalledTimes(1)
-            expect(trackerNode.findStorageNodes).toBeCalledWith('tracker', new StreamIdAndPartition('streamId', 0))
+            expect(trackerNode.sendStorageNodesRequest).toBeCalledTimes(1)
+            expect(trackerNode.sendStorageNodesRequest).toBeCalledWith('tracker', new StreamIdAndPartition('streamId', 0))
         })
 
         test('if communication with tracker fails, returns empty stream', async () => {
-            trackerNode.findStorageNodes = jest.fn().mockReturnValueOnce(Promise.reject())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValueOnce(Promise.reject())
 
             const responseStream = resendStrategy.getResendResponseStream(request)
             const streamAsArray = await waitForStreamToEnd(responseStream)
@@ -395,7 +395,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = jest.fn().mockReturnValue(Promise.resolve())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValue(Promise.resolve())
             responseStream = resendStrategy.getResendResponseStream(request)
         })
 
@@ -407,8 +407,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         test('if tracker responds with zero storage nodes, returns empty stream', async () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new ControlLayer.StorageNodesMessage({
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new ControlLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -429,8 +429,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
                 .mockReturnValueOnce(Promise.resolve())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new ControlLayer.StorageNodesMessage({
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new ControlLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -458,8 +458,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
                 .mockReturnValue(Promise.reject())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new ControlLayer.StorageNodesMessage({
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new ControlLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -480,7 +480,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn()
             nodeToNode.disconnectFromNode = jest.fn()
@@ -490,8 +490,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         const emitTrackerResponse = () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new ControlLayer.StorageNodesMessage({
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new ControlLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -537,17 +537,17 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach((done) => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn().mockResolvedValue(null)
             nodeToNode.disconnectFromNode = jest.fn()
 
             responseStream = resendStrategy.getResendResponseStream(request)
 
-            setImmediate(() => { // wait for this.trackerNode.findStorageNodes(...)
+            setImmediate(() => { // wait for this.trackerNode.sendStorageNodesRequest(...)
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new ControlLayer.StorageNodesMessage({
+                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    new ControlLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',
                         streamPartition: 0,
@@ -623,7 +623,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = () => Promise.resolve()
             nodeToNode.disconnectFromNode = jest.fn()
@@ -632,8 +632,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             setImmediate(() => {
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new ControlLayer.StorageNodesMessage({
+                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    new ControlLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',
                         streamPartition: 0,

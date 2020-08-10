@@ -38,7 +38,7 @@ module.exports = class Tracker extends EventEmitter {
 
         this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, (nodeId, isStorage) => this.onNodeDisconnected(nodeId))
         this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage, nodeId, isStorage) => this.processNodeStatus(statusMessage, nodeId, isStorage))
-        this.protocols.trackerServer.on(TrackerServer.events.FIND_STORAGE_NODES_REQUEST, (message, nodeId, isStorage) => this.findStorageNodes(message, nodeId))
+        this.protocols.trackerServer.on(TrackerServer.events.STORAGE_NODES_REQUEST, (message, nodeId, isStorage) => this.findStorageNodes(message, nodeId))
 
         this.metrics = new Metrics(this.peerInfo.peerId)
 
@@ -68,9 +68,9 @@ module.exports = class Tracker extends EventEmitter {
         this.debug('unregistered node %s from tracker', node)
     }
 
-    findStorageNodes(findStorageNodesMessage, source) {
+    findStorageNodes(storageNodesRequest, source) {
         this.metrics.inc('findStorageNodes')
-        const streamId = StreamIdAndPartition.fromMessage(findStorageNodesMessage)
+        const streamId = StreamIdAndPartition.fromMessage(storageNodesRequest)
 
         // Storage node may have restarted which means it will be no longer assigned to its previous streams,
         // especially those that aren't actively being subscribed or produced to. Thus on encountering a
@@ -95,7 +95,7 @@ module.exports = class Tracker extends EventEmitter {
         }
 
         this._updateAllStorages()
-        this.protocols.trackerServer.sendStorageNodes(source, streamId, foundStorageNodes)
+        this.protocols.trackerServer.sendStorageNodesResponse(source, streamId, foundStorageNodes)
             .catch((e) => console.error(`Failed to sendStorageNodes to node ${source}, ${streamId} because of ${e}`))
     }
 

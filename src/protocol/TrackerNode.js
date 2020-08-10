@@ -10,12 +10,12 @@ const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
     TRACKER_INSTRUCTION_RECEIVED: 'streamr:tracker-node:tracker-instruction-received',
     TRACKER_DISCONNECTED: 'streamr:tracker-node:tracker-disconnected',
-    STORAGE_NODES_RECEIVED: 'streamr:tracker-node:storage-nodes-received'
+    STORAGE_NODES_RESPONSE_RECEIVED: 'streamr:tracker-node:storage-nodes-received'
 })
 
 const eventPerType = {}
 eventPerType[ControlLayer.ControlMessage.TYPES.InstructionMessage] = events.TRACKER_INSTRUCTION_RECEIVED
-eventPerType[ControlLayer.ControlMessage.TYPES.StorageNodesMessage] = events.STORAGE_NODES_RECEIVED
+eventPerType[ControlLayer.ControlMessage.TYPES.StorageNodesResponse] = events.STORAGE_NODES_RESPONSE_RECEIVED
 
 class TrackerNode extends EventEmitter {
     constructor(endpoint) {
@@ -33,8 +33,8 @@ class TrackerNode extends EventEmitter {
         }))
     }
 
-    findStorageNodes(trackerId, streamId) {
-        return this.send(trackerId, new ControlLayer.FindStorageNodesMessage({
+    sendStorageNodesRequest(trackerId, streamId) {
+        return this.send(trackerId, new ControlLayer.StorageNodesRequest({
             requestId: uuidv4(),
             streamId: streamId.id,
             streamPartition: streamId.partition
