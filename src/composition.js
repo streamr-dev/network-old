@@ -16,7 +16,7 @@ const defaultLocation = {
     city: null
 }
 
-function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name, location = defaultLocation) {
+function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name) {
     const peerInfo = PeerInfo.newTracker(id, name)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
