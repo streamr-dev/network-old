@@ -51,8 +51,7 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('processNodeStatus')
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        const { rtts } = status
-        const { location } = status
+        const { rtts, location } = status
         const streams = this.instructionCounter.filterStatus(statusMessage)
         if (isStorage) {
             this.storageNodes.set(source, streams)
