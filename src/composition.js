@@ -9,15 +9,8 @@ const Tracker = require('./logic/Tracker')
 const NetworkNode = require('./NetworkNode')
 const { startEndpoint } = require('./connection/WsEndpoint')
 
-const defaultLocation = {
-    latitude: null,
-    longitude: null,
-    country: null,
-    city: null
-}
-
-function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name) {
-    const peerInfo = PeerInfo.newTracker(id, name)
+function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newTracker(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
@@ -30,8 +23,8 @@ function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advert
     })
 }
 
-function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location = defaultLocation) {
-    const peerInfo = PeerInfo.newNode(id, name)
+function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newNode(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
@@ -39,15 +32,14 @@ function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWs
                 trackerNode: new TrackerNode(endpoint),
                 nodeToNode: new NodeToNode(endpoint)
             },
-            storages,
-            location
+            storages
         }
         return new NetworkNode(opts)
     })
 }
 
-function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location = defaultLocation) {
-    const peerInfo = PeerInfo.newStorage(id, name)
+function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newStorage(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
