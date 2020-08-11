@@ -58,19 +58,20 @@ class TrackerNode extends EventEmitter {
                     this.emit(events.STORAGE_NODES_RECEIVED, message)
                     break
                 case encoder.RTC_OFFER:
-                this.emit(events.RTC_OFFER_RECEIVED, message)
-                break
-            case encoder.RTC_ANSWER:
-                this.emit(events.RTC_ANSWER_RECEIVED, message)
-                break
-            case encoder.RTC_ERROR:
-                this.emit(events.RTC_ERROR_RECEIVED, message)
-                break
-            case encoder.ICE_CANDIDATE:
-                this.emit(events.ICE_CANDIDATE_RECEIVED, message)
-                break
-            default:
-                break}
+                    this.emit(events.RTC_OFFER_RECEIVED, message)
+                    break
+                case encoder.RTC_ANSWER:
+                    this.emit(events.RTC_ANSWER_RECEIVED, message)
+                    break
+                case encoder.RTC_ERROR:
+                    this.emit(events.RTC_ERROR_RECEIVED, message)
+                    break
+                case encoder.ICE_CANDIDATE:
+                    this.emit(events.ICE_CANDIDATE_RECEIVED, message)
+                    break
+                default:
+                    break
+            }
         }
     }
 

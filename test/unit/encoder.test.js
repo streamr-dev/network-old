@@ -171,6 +171,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',
@@ -186,6 +187,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',
@@ -211,6 +213,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',
@@ -226,6 +229,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',
@@ -282,6 +286,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',
@@ -297,6 +302,7 @@ describe('encoder', () => {
             payload: {
                 originatorInfo: {
                     peerId: 'originatorNode',
+                    peerName: 'originatorNode',
                     peerType: 'node'
                 },
                 targetNode: 'targetNode',

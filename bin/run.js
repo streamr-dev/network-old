@@ -29,7 +29,7 @@ let debug = false
 
 const productionEnv = Object.create(process.env)
 if (!productionEnv.DEBUG) {
-  productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
+    productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
 }
 productionEnv.checkUncaughtException = true
 

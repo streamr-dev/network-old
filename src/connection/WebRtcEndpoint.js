@@ -216,7 +216,16 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     getRtts() {
-        return {}
+        const connections = Object.keys(this.connections)
+        const rtts = {}
+        connections.forEach((address) => {
+            const { rtt } = this.connections[address]
+            const nodeId = this.peerInfos[address]
+            if (rtt !== undefined && rtt !== null) {
+                rtts[nodeId] = rtt
+            }
+        })
+        return rtts
     }
 
     _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId) {
@@ -286,7 +295,6 @@ class WebRtcEndpoint extends EventEmitter {
             if (event.data === 'ping') {
                 this.debug('dataChannel.onmessage.ping', this.id, targetPeerId, event.data)
                 this.pong(targetPeerId)
-
             } else if (event.data === 'pong') {
                 this.debug('dataChannel.onmessage.pong', this.id, targetPeerId, event.data)
                 dataChannel.respondedPong = true
