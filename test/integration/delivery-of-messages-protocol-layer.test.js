@@ -61,8 +61,7 @@ describe('delivery of messages in protocol layer', () => {
             content: {
                 hello: 'world'
             },
-            contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
-            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+            messageType: StreamMessage.MESSAGE_TYPES.MESSAGE,
             signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
             signature: 'signature',
         })
@@ -87,8 +86,7 @@ describe('delivery of messages in protocol layer', () => {
             content: {
                 hello: 'world'
             },
-            contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
-            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+            messageType: StreamMessage.MESSAGE_TYPES.MESSAGE,
             signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
             signature: 'signature',
         })

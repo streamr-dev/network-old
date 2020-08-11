@@ -7,8 +7,8 @@ describe('PeerInfo', () => {
     let unknownInfo
 
     beforeEach(() => {
-        nodeInfo = PeerInfo.newNode('node')
-        storageInfo = PeerInfo.newStorage('storage')
+        nodeInfo = PeerInfo.newNode('node', 'NetworkNode')
+        storageInfo = PeerInfo.newStorage('storage', 'StorageNode')
         trackerInfo = PeerInfo.newTracker('tracker')
         unknownInfo = PeerInfo.newUnknown('unknown')
     })
@@ -35,9 +35,9 @@ describe('PeerInfo', () => {
     })
 
     it('toString', () => {
-        expect(nodeInfo.toString()).toEqual('node (node)')
-        expect(storageInfo.toString()).toEqual('storage (storage)')
-        expect(trackerInfo.toString()).toEqual('tracker (tracker)')
+        expect(nodeInfo.toString()).toEqual('NetworkNode node (node)')
+        expect(storageInfo.toString()).toEqual('StorageNode storage (storage)')
+        expect(trackerInfo.toString()).toEqual('tracker tracker (tracker)')
         expect(unknownInfo.toString()).toEqual('unknown (unknown)')
     })
 
