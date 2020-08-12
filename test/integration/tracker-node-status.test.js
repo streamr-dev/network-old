@@ -113,7 +113,7 @@ describe('check status message flow between tracker and two nodes', () => {
             if (statusMessage.getSource() === nodeTwo.opts.id) {
                 // eslint-disable-next-line no-underscore-dangle
                 expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
-                expect(tracker.nodeLocations['node-2']).toBeTruthy()
+                expect(tracker.nodeLocations['node-2'].country).toBe('FI')
             }
             receivedTotal += 1
             if (receivedTotal === 2) {
