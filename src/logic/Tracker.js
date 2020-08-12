@@ -244,7 +244,7 @@ module.exports = class Tracker extends EventEmitter {
     _updateLocation(node, location) {
         if (this._isValidNodeLocation(location)) {
             this.nodeLocations[node] = location
-        } else if (!this._isValidNodeLocation(this.getNodeLocation(node)) && !this._isValidNodeLocation(location)) {
+        } else if (!this._isValidNodeLocation(this.getNodeLocation(node))) {
             const geoip = this._getGeoIpLocation(node)
             if (geoip) {
                 this.nodeLocations[node] = {
@@ -274,7 +274,7 @@ module.exports = class Tracker extends EventEmitter {
 
     // eslint-disable-next-line class-methods-use-this
     _isValidNodeLocation(location) {
-        return location && !(!location.country && !location.city && !location.latitude && !location.longitude)
+        return location && (location.country || location.city || location.latitude || location.longitude)
     }
 
     getAllNodeLocations() {
