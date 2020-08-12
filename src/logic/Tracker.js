@@ -266,7 +266,7 @@ module.exports = class Tracker extends EventEmitter {
                 const ip = address.split(':')[1].replace('//', '')
                 return getGeoIp(ip)
             } catch (e) {
-                console.error('Could not parse ip from address', node, address)
+                console.error('Tracker could not parse ip from address', node, address)
             }
         }
         return null
