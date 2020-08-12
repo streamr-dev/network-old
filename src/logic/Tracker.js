@@ -1,6 +1,7 @@
 const { EventEmitter } = require('events')
 
 const createDebug = require('debug')
+const geoiplite = require('geoip-lite')
 
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
@@ -57,7 +58,7 @@ module.exports = class Tracker extends EventEmitter {
             this.storageNodes.set(source, streams)
         }
         this._updateRtts(source, rtts)
-        this.nodeLocations[source] = location
+        this._updateLocation(source, location)
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
         this._updateNode(source, streams)
@@ -238,6 +239,37 @@ module.exports = class Tracker extends EventEmitter {
         })
 
         return topology
+    }
+
+    _updateLocation(node, location) {
+        if (this._isValidNodeLocation(location)) {
+            this.nodeLocations[node] = location
+        } else if (!this._isValidNodeLocation(this.getNodeLocation(node)) && !this._isValidNodeLocation(location)) {
+            const geoip = this._geoIpLocation(node)
+            if (geoip) {
+                this.nodeLocations[node] = {
+                    country: geoip.country,
+                    city: geoip.city,
+                    latitude: geoip.ll[0],
+                    longitude: geoip.ll[1]
+                }
+            }
+        } else {
+            this.nodeLocations[node] = null
+        }
+    }
+
+    _geoIpLocation(node) {
+        const address = this.protocols.trackerServer.endpoint.peerBook.getAddress(node)
+        if (address) {
+            return geoiplite.lookup(address.split(':')[1].replace('//', ''))
+        }
+        return null
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    _isValidNodeLocation(location) {
+        return location && !(!location.country && !location.city && !location.latitude && !location.longitude)
     }
 
     getAllNodeLocations() {
