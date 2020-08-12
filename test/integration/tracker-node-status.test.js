@@ -120,7 +120,5 @@ describe('check status message flow between tracker and two nodes', () => {
                 done()
             }
         })
-        nodeOne.subscribe(streamId2, 0)
-        nodeTwo.subscribe(streamId2, 0)
     })
 })
