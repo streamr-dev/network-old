@@ -254,8 +254,6 @@ module.exports = class Tracker extends EventEmitter {
                     longitude: geoip.ll[1]
                 }
             }
-        } else {
-            this.nodeLocations[node] = null
         }
     }
 
