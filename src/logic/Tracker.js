@@ -1,11 +1,11 @@
 const { EventEmitter } = require('events')
 
 const createDebug = require('debug')
-const geoiplite = require('geoip-lite')
 
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
+const { getGeoIp } = require('../helpers/GeoIpLookup')
 
 const InstructionCounter = require('./InstructionCounter')
 const OverlayTopology = require('./OverlayTopology')
@@ -245,7 +245,7 @@ module.exports = class Tracker extends EventEmitter {
         if (this._isValidNodeLocation(location)) {
             this.nodeLocations[node] = location
         } else if (!this._isValidNodeLocation(this.getNodeLocation(node)) && !this._isValidNodeLocation(location)) {
-            const geoip = this._geoIpLocation(node)
+            const geoip = this._getGeoIpLocation(node)
             if (geoip) {
                 this.nodeLocations[node] = {
                     country: geoip.country,
@@ -259,10 +259,15 @@ module.exports = class Tracker extends EventEmitter {
         }
     }
 
-    _geoIpLocation(node) {
+    _getGeoIpLocation(node) {
         const address = this.protocols.trackerServer.endpoint.peerBook.getAddress(node)
         if (address) {
-            return geoiplite.lookup(address.split(':')[1].replace('//', ''))
+            try {
+                const ip = address.split(':')[1].replace('//', '')
+                return getGeoIp(ip)
+            } catch (e) {
+                console.error('Could not parse ip from address', node, address)
+            }
         }
         return null
     }
