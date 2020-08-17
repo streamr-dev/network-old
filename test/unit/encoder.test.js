@@ -13,6 +13,13 @@ const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
 const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
+const defaultLocation = {
+    latitude: null,
+    longitude: null,
+    country: null,
+    city: null
+}
+
 describe('encoder', () => {
     it('check encoding INSTRUCTION', () => {
         const json = encoder.instructionMessage(new StreamIdAndPartition('stream-id', 0), ['node-1', 'node-2'], 15)
@@ -172,7 +179,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
@@ -188,7 +196,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
@@ -214,7 +223,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
@@ -230,7 +240,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
@@ -287,7 +298,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
@@ -303,7 +315,8 @@ describe('encoder', () => {
                 originatorInfo: {
                     peerId: 'originatorNode',
                     peerName: 'originatorNode',
-                    peerType: 'node'
+                    peerType: 'node',
+                    location: defaultLocation
                 },
                 targetNode: 'targetNode',
                 data: 'some data here'
