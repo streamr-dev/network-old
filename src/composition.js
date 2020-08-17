@@ -13,8 +13,8 @@ const { WebRtcEndpoint } = require('./connection/WebRtcEndpoint')
 
 const STUN_URLS = ['stun:stun.l.google.com:19302'] // TODO: make configurable
 
-function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name) {
-    const peerInfo = PeerInfo.newTracker(id, name)
+function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newTracker(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const opts = {
             peerInfo,
@@ -27,8 +27,8 @@ function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advert
     })
 }
 
-function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name) {
-    const peerInfo = PeerInfo.newNode(id, name)
+function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newNode(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
@@ -45,8 +45,8 @@ function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWs
     })
 }
 
-function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name) {
-    const peerInfo = PeerInfo.newStorage(id, name)
+function startStorageNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location) {
+    const peerInfo = PeerInfo.newStorage(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
