@@ -5,6 +5,7 @@ const createDebug = require('debug')
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
+const { getGeoIp } = require('../helpers/GeoIpLookup')
 
 const InstructionCounter = require('./InstructionCounter')
 const OverlayTopology = require('./OverlayTopology')
@@ -30,6 +31,7 @@ module.exports = class Tracker extends EventEmitter {
 
         this.overlayPerStream = {} // streamKey => overlayTopology, where streamKey = streamId::partition
         this.overlayConnectionRtts = {} // nodeId => connected nodeId => rtt
+        this.nodeLocations = {} // nodeId => location
         this.instructionCounter = new InstructionCounter()
         this.storageNodes = new Map()
 
@@ -49,12 +51,13 @@ module.exports = class Tracker extends EventEmitter {
     processNodeStatus(statusMessage, source, isStorage) {
         this.metrics.inc('processNodeStatus')
         const { status } = statusMessage
-        const { rtts } = status
+        const { rtts, location } = status
         const streams = this.instructionCounter.filterStatus(status, source)
         if (isStorage) {
             this.storageNodes.set(source, streams)
         }
         this._updateRtts(source, rtts)
+        this._updateLocation(source, location)
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
         this._updateNode(source, streams)
@@ -92,6 +95,12 @@ module.exports = class Tracker extends EventEmitter {
 
         if (!foundStorageNodes.length) {
             foundStorageNodes = [...this.storageNodes.keys()]
+        }
+
+        // TODO remove after migration is done
+        if (process.env.NODE_ENV === 'production') {
+            // filter existing storage nodes, so we'll not get "Error: Id main-germany-1 not found in peer book"
+            foundStorageNodes = foundStorageNodes.filter((item) => item === '0x31546eEA76F2B2b3C5cC06B1c93601dc35c9D916')
         }
 
         this._updateAllStorages()
@@ -186,6 +195,7 @@ module.exports = class Tracker extends EventEmitter {
     _removeNode(node) {
         this.metrics.inc('_removeNode')
         delete this.overlayConnectionRtts[node]
+        delete this.nodeLocations[node]
         Object.entries(this.overlayPerStream)
             .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
     }
@@ -227,6 +237,48 @@ module.exports = class Tracker extends EventEmitter {
         })
 
         return topology
+    }
+
+    _updateLocation(node, location) {
+        if (this._isValidNodeLocation(location)) {
+            this.nodeLocations[node] = location
+        } else if (!this._isValidNodeLocation(this.getNodeLocation(node))) {
+            const geoip = this._getGeoIpLocation(node)
+            if (geoip) {
+                this.nodeLocations[node] = {
+                    country: geoip.country,
+                    city: geoip.city,
+                    latitude: geoip.ll[0],
+                    longitude: geoip.ll[1]
+                }
+            }
+        }
+    }
+
+    _getGeoIpLocation(node) {
+        const address = this.protocols.trackerServer.endpoint.peerBook.getAddress(node)
+        if (address) {
+            try {
+                const ip = address.split(':')[1].replace('//', '')
+                return getGeoIp(ip)
+            } catch (e) {
+                console.error('Tracker could not parse ip from address', node, address)
+            }
+        }
+        return null
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    _isValidNodeLocation(location) {
+        return location && (location.country || location.city || location.latitude || location.longitude)
+    }
+
+    getAllNodeLocations() {
+        return this.nodeLocations
+    }
+
+    getNodeLocation(node) {
+        return this.nodeLocations[node]
     }
 
     async getMetrics() {
