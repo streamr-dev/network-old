@@ -1,6 +1,6 @@
-const { startNetworkNode, startTracker } = require('../../src/composition')
 const { wait } = require('streamr-test-utils')
 
+const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 
