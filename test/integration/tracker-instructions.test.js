@@ -1,12 +1,12 @@
 const { waitForEvent } = require('streamr-test-utils')
-const { ControlLayer } = require('streamr-client-protocol')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const { LOCALHOST } = require('../util')
 const { StreamIdAndPartition } = require('../../src/identifiers')
-const { encode, decode } = require('../../src/helpers/MessageEncoder')
+const { decode } = require('../../src/helpers/MessageEncoder')
 
 describe('check tracker, nodes and statuses from nodes', () => {
     let tracker
@@ -47,7 +47,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
     })
 
     it('if failed to follow tracker instructions, inform tracker about current status', async () => {
-        const trackerInstruction = encode(new ControlLayer.InstructionMessage({
+        const trackerInstruction = new TrackerLayer.InstructionMessage({
             requestId: 'requestId',
             streamId: s1.id,
             streamPartition: s1.partition,
@@ -57,10 +57,10 @@ describe('check tracker, nodes and statuses from nodes', () => {
                 'OOPS'
             ],
             counter: 0
-        }))
+        })
 
-        await node1.onTrackerInstructionReceived('tracker', decode(trackerInstruction))
-        await node2.onTrackerInstructionReceived('tracker', decode(trackerInstruction))
+        await node1.onTrackerInstructionReceived('tracker', trackerInstruction)
+        await node2.onTrackerInstructionReceived('tracker', trackerInstruction)
 
         await Promise.race([
             waitForEvent(node1, Node.events.NODE_SUBSCRIBED),

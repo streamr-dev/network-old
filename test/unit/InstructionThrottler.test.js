@@ -1,5 +1,5 @@
 const { waitForCondition } = require('streamr-test-utils')
-const { ControlLayer } = require('streamr-client-protocol')
+const { ControlLayer, TrackerLayer } = require('streamr-client-protocol')
 
 const InstructionThrottler = require('../../src/logic/InstructionThrottler')
 
@@ -13,7 +13,7 @@ describe('InstructionThrottler', () => {
     })
 
     function createInstruction(streamId, counter) {
-        return new ControlLayer.InstructionMessage({
+        return new TrackerLayer.InstructionMessage({
             requestId: 'requestId',
             streamId,
             streamPartition: 0,

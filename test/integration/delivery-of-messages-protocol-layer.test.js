@@ -1,4 +1,4 @@
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
+const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
 const { waitForEvent } = require('streamr-test-utils')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
@@ -110,7 +110,7 @@ describe('delivery of messages in protocol layer', () => {
         const [msg, trackerId] = await waitForEvent(trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
 
         expect(trackerId).toEqual('trackerServer')
-        expect(msg).toBeInstanceOf(ControlLayer.InstructionMessage)
+        expect(msg).toBeInstanceOf(TrackerLayer.InstructionMessage)
         expect(msg.requestId).toMatch(UUID_REGEX)
         expect(msg.streamId).toEqual('stream')
         expect(msg.streamPartition).toEqual(10)
@@ -234,7 +234,7 @@ describe('delivery of messages in protocol layer', () => {
         })
         const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
 
-        expect(msg).toBeInstanceOf(ControlLayer.StatusMessage)
+        expect(msg).toBeInstanceOf(TrackerLayer.StatusMessage)
         expect(source).toEqual('trackerNode')
         expect(msg.requestId).toMatch(UUID_REGEX)
         expect(msg.status).toEqual({
@@ -268,7 +268,7 @@ describe('delivery of messages in protocol layer', () => {
         trackerNode.sendStorageNodesRequest('trackerServer', new StreamIdAndPartition('stream', 10))
         const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.STORAGE_NODES_REQUEST)
 
-        expect(msg).toBeInstanceOf(ControlLayer.StorageNodesRequest)
+        expect(msg).toBeInstanceOf(TrackerLayer.StorageNodesRequest)
         expect(source).toEqual('trackerNode')
         expect(msg.requestId).toMatch(UUID_REGEX)
         expect(msg.streamId).toEqual('stream')
@@ -279,7 +279,7 @@ describe('delivery of messages in protocol layer', () => {
         trackerServer.sendStorageNodesResponse('trackerNode', new StreamIdAndPartition('stream', 10), ['trackerNode'])
         const [msg, source] = await waitForEvent(trackerNode, TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED)
 
-        expect(msg).toBeInstanceOf(ControlLayer.StorageNodesResponse)
+        expect(msg).toBeInstanceOf(TrackerLayer.StorageNodesResponse)
         expect(source).toEqual('trackerServer')
         expect(msg.requestId).toMatch('')
         expect(msg.streamId).toEqual('stream')

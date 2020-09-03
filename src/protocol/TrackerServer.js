@@ -1,9 +1,9 @@
 const { EventEmitter } = require('events')
 
 const { v4: uuidv4 } = require('uuid')
-const { ControlLayer } = require('streamr-client-protocol')
+const { TrackerLayer } = require('streamr-client-protocol')
 
-const { encode, decode } = require('../helpers/MessageEncoder')
+const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
 const events = Object.freeze({
@@ -14,8 +14,8 @@ const events = Object.freeze({
 })
 
 const eventPerType = {}
-eventPerType[ControlLayer.ControlMessage.TYPES.StatusMessage] = events.NODE_STATUS_RECEIVED
-eventPerType[ControlLayer.ControlMessage.TYPES.StorageNodesRequest] = events.STORAGE_NODES_REQUEST
+eventPerType[TrackerLayer.TrackerMessage.TYPES.StatusMessage] = events.NODE_STATUS_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesRequest] = events.STORAGE_NODES_REQUEST
 
 class TrackerServer extends EventEmitter {
     constructor(endpoint) {
@@ -28,7 +28,7 @@ class TrackerServer extends EventEmitter {
 
     sendInstruction(receiverNodeId, streamId, listOfNodeIds, counter) {
         const nodeAddresses = listOfNodeIds.map((nodeId) => this.endpoint.resolveAddress(nodeId))
-        return this.send(receiverNodeId, new ControlLayer.InstructionMessage({
+        return this.send(receiverNodeId, new TrackerLayer.InstructionMessage({
             requestId: uuidv4(),
             streamId: streamId.id,
             streamPartition: streamId.partition,
@@ -39,7 +39,7 @@ class TrackerServer extends EventEmitter {
 
     sendStorageNodesResponse(receiverNodeId, streamId, listOfNodeIds) {
         const nodeAddresses = listOfNodeIds.map((nodeId) => this.endpoint.resolveAddress(nodeId))
-        return this.send(receiverNodeId, new ControlLayer.StorageNodesResponse({
+        return this.send(receiverNodeId, new TrackerLayer.StorageNodesResponse({
             requestId: '', // TODO: set requestId
             streamId: streamId.id,
             streamPartition: streamId.partition,
@@ -48,7 +48,7 @@ class TrackerServer extends EventEmitter {
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, encode(message))
+        return this.endpoint.send(receiverNodeId, message.serialize())
     }
 
     getAddress() {
@@ -72,7 +72,7 @@ class TrackerServer extends EventEmitter {
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        const message = decode(rawMessage)
+        const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
         if (message != null) {
             this.emit(eventPerType[message.type], message, peerInfo.peerId, peerInfo.isStorage())
         } else {

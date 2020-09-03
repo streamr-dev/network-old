@@ -1,12 +1,11 @@
 const { waitForEvent } = require('streamr-test-utils')
-const { ControlLayer } = require('streamr-client-protocol')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const { encode } = require('../../src/helpers/MessageEncoder')
 const endpointEvents = require('../../src/connection/WsEndpoint').events
 const { disconnectionReasons } = require('../../src/messageTypes')
 
@@ -63,13 +62,13 @@ describe('Check tracker instructions to node', () => {
         // send empty list
         await tracker.protocols.trackerServer.endpoint.sendSync(
             'node-1',
-            encode(new ControlLayer.InstructionMessage({
+            new TrackerLayer.InstructionMessage({
                 requestId: 'requestId',
                 streamId,
                 streamPartition: 0,
                 nodeAddresses: [],
                 counter: 0
-            }))
+            }).serialize()
         )
 
         await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)

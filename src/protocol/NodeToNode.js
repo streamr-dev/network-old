@@ -3,7 +3,7 @@ const { EventEmitter } = require('events')
 const { v4: uuidv4 } = require('uuid')
 const { ControlLayer } = require('streamr-client-protocol')
 
-const { encode, decode } = require('../helpers/MessageEncoder')
+const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
 const events = Object.freeze({
@@ -70,7 +70,7 @@ class NodeToNode extends EventEmitter {
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, encode(message))
+        return this.endpoint.send(receiverNodeId, message.serialize())
     }
 
     getAddress() {
@@ -94,11 +94,13 @@ class NodeToNode extends EventEmitter {
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        const message = decode(rawMessage)
-        if (message != null) {
-            this.emit(eventPerType[message.type], message, peerInfo.peerId)
-        } else {
-            console.warn(`NodeToNode: invalid message from ${peerInfo}: ${rawMessage}`)
+        if (peerInfo.isNode()) {
+            const message = decode(rawMessage, ControlLayer.ControlMessage.deserialize)
+            if (message != null) {
+                this.emit(eventPerType[message.type], message, peerInfo.peerId)
+            } else {
+                console.warn(`NodeToNode: invalid message from ${peerInfo}: ${rawMessage}`)
+            }
         }
     }
 

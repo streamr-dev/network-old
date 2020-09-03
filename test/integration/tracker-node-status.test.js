@@ -115,16 +115,20 @@ describe('check status message flow between tracker and two nodes', () => {
     it('tracker should receive location information from nodes', async (done) => {
         let receivedTotal = 0
 
+        nodeOne.addBootstrapTracker(tracker.getAddress())
+        nodeTwo.addBootstrapTracker(tracker.getAddress())
+
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
-        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage }) => {
-            if (statusMessage.getSource() === nodeOne.opts.id) {
+
+        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
+            if (nodeId === nodeOne.opts.id) {
                 // eslint-disable-next-line no-underscore-dangle
                 expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
                 expect(tracker.nodeLocations['node-1']).toBeNull()
             }
 
-            if (statusMessage.getSource() === nodeTwo.opts.id) {
+            if (nodeId === nodeTwo.opts.id) {
                 // eslint-disable-next-line no-underscore-dangle
                 expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
                 expect(tracker.nodeLocations['node-2'].country).toBe('FI')

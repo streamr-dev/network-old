@@ -1,10 +1,6 @@
-const { ControlLayer } = require('streamr-client-protocol')
-
-const encode = (controlMessage) => controlMessage.serialize()
-
-const decode = (serializedMessage) => {
+const decode = (serializedMessage, deserializeFn) => {
     try {
-        return ControlLayer.ControlMessage.deserialize(serializedMessage)
+        return deserializeFn(serializedMessage)
     } catch (e) {
         if (e.name === 'SyntaxError' || e.version != null || e.type != null) { // JSON parsing failed, version parse failed, type parse failed
             return null
@@ -15,5 +11,4 @@ const decode = (serializedMessage) => {
 
 module.exports = {
     decode,
-    encode
 }

@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 
 const intoStream = require('into-stream')
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
+const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
 const { waitForStreamToEnd } = require('streamr-test-utils')
 
 const { AskNeighborsResendStrategy,
@@ -408,7 +408,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         test('if tracker responds with zero storage nodes, returns empty stream', async () => {
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                new ControlLayer.StorageNodesResponse({
+                new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -430,7 +430,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                new ControlLayer.StorageNodesResponse({
+                new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -459,7 +459,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                new ControlLayer.StorageNodesResponse({
+                new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -491,7 +491,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         const emitTrackerResponse = () => {
             trackerNode.emit(
                 TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                new ControlLayer.StorageNodesResponse({
+                new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
@@ -547,7 +547,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             setImmediate(() => { // wait for this.trackerNode.sendStorageNodesRequest(...)
                 trackerNode.emit(
                     TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                    new ControlLayer.StorageNodesResponse({
+                    new TrackerLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',
                         streamPartition: 0,
@@ -633,7 +633,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
             setImmediate(() => {
                 trackerNode.emit(
                     TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
-                    new ControlLayer.StorageNodesResponse({
+                    new TrackerLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',
                         streamPartition: 0,

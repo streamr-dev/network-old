@@ -1,11 +1,10 @@
 const { waitForEvent } = require('streamr-test-utils')
-const { ControlLayer } = require('streamr-client-protocol')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const { LOCALHOST } = require('../util')
 const Node = require('../../src/logic/Node')
-const { encode, decode } = require('../../src/helpers/MessageEncoder')
 
 describe('multi trackers', () => {
     const ITERATIONS = 5
@@ -188,7 +187,7 @@ describe('multi trackers', () => {
         const spyOnTrackerInstructionReceived = jest.spyOn(nodeOne, 'onTrackerInstructionReceived')
         const subscribeToStreamIfHaveNotYet = jest.spyOn(nodeOne, 'subscribeToStreamIfHaveNotYet')
 
-        const trackerInstruction = encode(new ControlLayer.InstructionMessage({
+        const trackerInstruction = new TrackerLayer.InstructionMessage({
             requestId: 'requestId',
             streamId: 'stream-1',
             streamPartition: 0,
@@ -197,9 +196,9 @@ describe('multi trackers', () => {
                 'node-address-2'
             ],
             counter: 0
-        }))
+        })
 
-        await nodeOne.onTrackerInstructionReceived('trackerTwo', decode(trackerInstruction))
+        await nodeOne.onTrackerInstructionReceived('trackerTwo', trackerInstruction)
 
         expect(spyOnTrackerInstructionReceived).toBeCalledTimes(1)
         expect(subscribeToStreamIfHaveNotYet).not.toBeCalled()

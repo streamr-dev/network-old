@@ -1,9 +1,9 @@
 const { EventEmitter } = require('events')
 
 const { v4: uuidv4 } = require('uuid')
-const { ControlLayer } = require('streamr-client-protocol')
+const { TrackerLayer } = require('streamr-client-protocol')
 
-const { encode, decode } = require('../helpers/MessageEncoder')
+const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
 const events = Object.freeze({
@@ -14,8 +14,8 @@ const events = Object.freeze({
 })
 
 const eventPerType = {}
-eventPerType[ControlLayer.ControlMessage.TYPES.InstructionMessage] = events.TRACKER_INSTRUCTION_RECEIVED
-eventPerType[ControlLayer.ControlMessage.TYPES.StorageNodesResponse] = events.STORAGE_NODES_RESPONSE_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.InstructionMessage] = events.TRACKER_INSTRUCTION_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesResponse] = events.STORAGE_NODES_RESPONSE_RECEIVED
 
 class TrackerNode extends EventEmitter {
     constructor(endpoint) {
@@ -27,14 +27,14 @@ class TrackerNode extends EventEmitter {
     }
 
     sendStatus(trackerId, status) {
-        return this.send(trackerId, new ControlLayer.StatusMessage({
+        return this.send(trackerId, new TrackerLayer.StatusMessage({
             requestId: uuidv4(),
             status
         }))
     }
 
     sendStorageNodesRequest(trackerId, streamId) {
-        return this.send(trackerId, new ControlLayer.StorageNodesRequest({
+        return this.send(trackerId, new TrackerLayer.StorageNodesRequest({
             requestId: uuidv4(),
             streamId: streamId.id,
             streamPartition: streamId.partition
@@ -42,7 +42,7 @@ class TrackerNode extends EventEmitter {
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, encode(message))
+        return this.endpoint.send(receiverNodeId, message.serialize())
     }
 
     stop() {
@@ -50,7 +50,7 @@ class TrackerNode extends EventEmitter {
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        const message = decode(rawMessage)
+        const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
         if (message != null) {
             this.emit(eventPerType[message.type], message, peerInfo.peerId)
         } else {
