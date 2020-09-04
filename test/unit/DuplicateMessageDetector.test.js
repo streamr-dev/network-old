@@ -27,6 +27,14 @@ test('checking numbers in order introduces no new gaps', () => {
     expect(state).toEqual('(30|5, Infinity|Infinity]')
 })
 
+test('checking numbers not in order introduces no new gaps', () => {
+    const detector = new DuplicateMessageDetector()
+
+    expect(detector.markAndCheck(new NumberPair(20, 0), new NumberPair(30, 0))).toEqual(true)
+    expect(detector.markAndCheck(new NumberPair(10, 0), new NumberPair(20, 0))).toEqual(true)
+    expect(detector.markAndCheck(null, new NumberPair(10, 0))).toEqual(true)
+})
+
 test('skipping next expected messages creates gaps', () => {
     const detector = new DuplicateMessageDetector()
     detector.markAndCheck(null, new NumberPair(10, 0))
