@@ -12,10 +12,16 @@ describe('check status message flow between tracker and two nodes', () => {
     const streamId = 'stream-1'
     const streamId2 = 'stream-2'
 
+    const location = {
+        country: 'FI',
+        city: 'Helsinki',
+        latitude: null,
+        longitude: null
+    }
     beforeAll(async () => {
         tracker = await startTracker(LOCALHOST, 30750, 'tracker')
         nodeOne = await startNetworkNode(LOCALHOST, 30752, 'node-1')
-        nodeTwo = await startNetworkNode(LOCALHOST, 30753, 'node-2')
+        nodeTwo = await startNetworkNode(LOCALHOST, 30753, 'node-2', [], null, 'node-2', location)
     })
 
     afterAll(async () => {
@@ -90,5 +96,29 @@ describe('check status message flow between tracker and two nodes', () => {
         })
         nodeOne.subscribe(streamId2, 0)
         nodeTwo.subscribe(streamId2, 0)
+    })
+
+    it('tracker should receive location information from nodes', async (done) => {
+        let receivedTotal = 0
+
+        nodeOne.subscribe(streamId, 0)
+        nodeTwo.subscribe(streamId, 0)
+        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, ({ statusMessage }) => {
+            if (statusMessage.getSource() === nodeOne.opts.id) {
+                // eslint-disable-next-line no-underscore-dangle
+                expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
+                expect(tracker.nodeLocations['node-1']).toBeNull()
+            }
+
+            if (statusMessage.getSource() === nodeTwo.opts.id) {
+                // eslint-disable-next-line no-underscore-dangle
+                expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
+                expect(tracker.nodeLocations['node-2'].country).toBe('FI')
+            }
+            receivedTotal += 1
+            if (receivedTotal === 2) {
+                done()
+            }
+        })
     })
 })
