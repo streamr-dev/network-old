@@ -47,7 +47,6 @@
   "dependencies": {
     "@sentry/node": "^5.23.0",
     "commander": "^6.1.0",
-    "debug": "4.1.1",
     "fastify": "^3.3.0",
     "fastify-cors": "^4.1.0",
     "geoip-lite": "^1.4.2",

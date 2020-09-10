@@ -158,7 +158,7 @@ class Node extends EventEmitter {
                     } catch (e) {
                         // TODO: catch specific error
                         const requests = this.resendHandler.cancelResendsOfNode(source)
-                        console.warn('Failed to send resend response to %s,\n\tcancelling resends %j,\n\tError %s',
+                        this.logger.warn('Failed to send resend response to %s,\n\tcancelling resends %j,\n\tError %s',
                             source, requests, e)
                     }
                 },
@@ -260,7 +260,7 @@ class Node extends EventEmitter {
                 return
             }
             if (e instanceof GapMisMatchError) {
-                console.warn(e)
+                this.logger.warn(e)
                 this.logger.debug('received from %s data %j with gap mismatch detected', source, streamMessage.messageId)
                 this.metrics.inc('onDataReceived:ignoring:gap-mismatch')
                 return
@@ -291,7 +291,7 @@ class Node extends EventEmitter {
                 try {
                     this.protocols.nodeToNode.sendData(subscriber, streamMessage)
                 } catch (e) {
-                    console.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
+                    this.logger.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
                 }
             })
 
