@@ -67,9 +67,12 @@ class Node extends EventEmitter {
         this.protocols = this.opts.protocols
         this.peerInfo = this.opts.peerInfo
 
+        this.logger = getLogger(`streamr:logic:node:${this.peerInfo.peerId}`)
+        this.logger.debug('started %s (%s)', this.peerInfo.peerId, this.peerInfo.peerName)
+
         this.streams = new StreamManager()
         this.messageBuffer = new MessageBuffer(this.opts.bufferTimeoutInMs, this.opts.bufferMaxSize)
-        this.resendHandler = new ResendHandler(this.opts.resendStrategies, console.error.bind(console))
+        this.resendHandler = new ResendHandler(this.opts.resendStrategies, this.logger.error.bind(this.logger)) // TODO remove notifyError?
 
         this.trackers = new Set()
         this.trackersRing = new HashRing([], 'sha256')
@@ -86,9 +89,6 @@ class Node extends EventEmitter {
             this._handleBufferedMessages(streamId)
             this._sendStreamStatus(streamId)
         })
-
-        this.logger = getLogger(`streamr:logic:node:${this.peerInfo.peerId}`)
-        this.logger.debug('started %s (%s)', this.peerInfo.peerId, this.peerInfo.peerName)
 
         this.started = new Date().toLocaleString()
         this.metrics = new Metrics(this.peerInfo.peerId)
