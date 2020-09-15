@@ -1,5 +1,5 @@
 const { PeerBook } = require('../../src/connection/PeerBook')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+const PeerInfo = require('../../src/connection/PeerInfo')
 
 describe('PeerBook', () => {
     let peerBook

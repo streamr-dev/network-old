@@ -15,7 +15,7 @@ const Metrics = require('../metrics')
 const getLogger = require('../helpers/logger')
 
 const { PeerBook } = require('./PeerBook')
-const { PeerInfo } = require('./PeerInfo')
+const PeerInfo = require('./PeerInfo')
 
 const ab2str = (buf) => Buffer.from(buf).toString('utf8')
 

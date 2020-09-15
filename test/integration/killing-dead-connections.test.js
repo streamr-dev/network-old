@@ -3,7 +3,7 @@ const allSettled = require('promise.allsettled')
 const { waitForEvent } = require('streamr-test-utils')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+const PeerInfo = require('../../src/connection/PeerInfo')
 const { events } = require('../../src/connection/WsEndpoint')
 const { LOCALHOST } = require('../util')
 const { disconnectionReasons, disconnectionCodes } = require('../../src/messages/messageTypes')

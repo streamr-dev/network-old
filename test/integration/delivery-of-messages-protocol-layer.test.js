@@ -10,7 +10,7 @@ const FindStorageNodesMessage = require('../../src/messages/FindStorageNodesMess
 const InstructionMessage = require('../../src/messages/InstructionMessage')
 const StatusMessage = require('../../src/messages/StatusMessage')
 const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+const PeerInfo = require('../../src/connection/PeerInfo')
 const { LOCALHOST } = require('../util')
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer

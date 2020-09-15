@@ -3,7 +3,7 @@ const { waitForEvent } = require('streamr-test-utils')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { events } = require('../../src/connection/WsEndpoint')
 const { LOCALHOST } = require('../util')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+const PeerInfo = require('../../src/connection/PeerInfo')
 
 describe('passing address between WsEndpoints', () => {
     let wsEndpoint1

@@ -64,6 +64,4 @@ class PeerInfo {
     }
 }
 
-module.exports = {
-    PeerInfo
-}
+module.exports = PeerInfo
