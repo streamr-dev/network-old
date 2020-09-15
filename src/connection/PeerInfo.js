@@ -1,3 +1,8 @@
+const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+
+const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVersions()
+const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
+
 const peerTypes = Object.freeze({
     TRACKER: 'tracker',
     NODE: 'node',
@@ -5,24 +10,30 @@ const peerTypes = Object.freeze({
 })
 
 class PeerInfo {
-    static newTracker(peerId, peerName) {
-        return new PeerInfo(peerId, peerTypes.TRACKER, peerName)
+    static newTracker(peerId, peerName, location) {
+        return new PeerInfo(peerId, peerTypes.TRACKER, peerName, defaultControlLayerVersions, defaultMessageLayerVersions, location)
     }
 
-    static newNode(peerId, peerName) {
-        return new PeerInfo(peerId, peerTypes.NODE, peerName)
+    static newNode(peerId, peerName, location) {
+        return new PeerInfo(peerId, peerTypes.NODE, peerName, defaultControlLayerVersions, defaultMessageLayerVersions, location)
     }
 
-    static newStorage(peerId, peerName) {
-        return new PeerInfo(peerId, peerTypes.STORAGE, peerName)
+    static newStorage(peerId, peerName, location) {
+        return new PeerInfo(peerId, peerTypes.STORAGE, peerName, defaultControlLayerVersions, defaultMessageLayerVersions, location)
     }
 
-    constructor(peerId, peerType, peerName, location) {
+    constructor(peerId, peerType, peerName, controlLayerVersions, messageLayerVersions, location) {
         if (!peerId) {
             throw new Error('peerId not given')
         }
         if (!peerType) {
             throw new Error('peerType not given')
+        }
+        if (!controlLayerVersions || controlLayerVersions === []) {
+            throw new Error('controlLayerVersions not given')
+        }
+        if (!messageLayerVersions || messageLayerVersions === []) {
+            throw new Error('messageLayerVersions not given')
         }
         if (!peerName) {
             // eslint-disable-next-line no-param-reassign

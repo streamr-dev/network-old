@@ -8,7 +8,7 @@ describe('PeerBook', () => {
     beforeEach(() => {
         peerBook = new PeerBook()
 
-        nodeInfo = PeerInfo.newNode('node', 'NetworkNode')
+        nodeInfo = PeerInfo.newNode('node', 'NetworkNode', [1], [1])
     })
 
     it('add peer', () => {
