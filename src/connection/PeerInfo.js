@@ -56,6 +56,8 @@ class PeerInfo {
         this.peerType = peerType
         this.peerName = peerName
         this.location = location
+        this.controlLayerVersions = controlLayerVersions
+        this.messageLayerVersions = messageLayerVersions
     }
 
     isTracker() {

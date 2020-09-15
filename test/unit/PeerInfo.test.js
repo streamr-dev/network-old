@@ -1,4 +1,9 @@
+const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+
 const PeerInfo = require('../../src/connection/PeerInfo')
+
+const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVersions()
+const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
 
 describe('PeerInfo', () => {
     let nodeInfo
@@ -62,5 +67,22 @@ describe('PeerInfo', () => {
 
         const peerInfo = new PeerInfo('peerId', 'tracker', undefined, [1], [1], location)
         expect(peerInfo.location).toEqual(location)
+    })
+
+    it('defaultControlLayerVersions and defaultMessageLayerVersions ', () => {
+        expect(nodeInfo.controlLayerVersions).toEqual(defaultControlLayerVersions)
+        expect(storageInfo.controlLayerVersions).toEqual(defaultControlLayerVersions)
+        expect(trackerInfo.controlLayerVersions).toEqual(defaultControlLayerVersions)
+
+        expect(nodeInfo.messageLayerVersions).toEqual(defaultMessageLayerVersions)
+        expect(storageInfo.messageLayerVersions).toEqual(defaultMessageLayerVersions)
+        expect(trackerInfo.messageLayerVersions).toEqual(defaultMessageLayerVersions)
+    })
+
+    it('custom controlLayerVersions and messageLayerVersions', () => {
+        const peerInfo = new PeerInfo('peerId', 'tracker', undefined, [1, 2], [3, 4])
+
+        expect(peerInfo.controlLayerVersions).toEqual([1, 2])
+        expect(peerInfo.messageLayerVersions).toEqual([3, 4])
     })
 })
