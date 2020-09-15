@@ -12,16 +12,16 @@ describe('PeerBook', () => {
     })
 
     it('add peer', () => {
-        expect(peerBook.getPeerInfo('address1')).toEqual(null)
+        expect(peerBook.getPeerInfo('address1')).toBeUndefined()
         peerBook.add('address1', nodeInfo)
         expect(peerBook.getPeerInfo('address1')).toEqual(nodeInfo)
     })
 
     it('remove peer', () => {
         peerBook.add('address1', nodeInfo)
-        expect(peerBook.getPeerInfo('address1')).not.toEqual(null)
+        expect(peerBook.getPeerInfo('address1')).not.toBeUndefined()
         peerBook.remove('address1')
-        expect(peerBook.getPeerInfo('address1')).toEqual(null)
+        expect(peerBook.getPeerInfo('address1')).toBeUndefined()
     })
 
     it('getAddress', () => {
@@ -32,15 +32,5 @@ describe('PeerBook', () => {
     it('getPeerId', () => {
         peerBook.add('address1', nodeInfo)
         expect(peerBook.getPeerId('address1')).toEqual('node')
-    })
-
-    it('hasAddress', () => {
-        peerBook.add('address1', nodeInfo)
-        expect(peerBook.hasAddress('address1')).toBeTruthy()
-    })
-
-    it('hasPeerId', () => {
-        peerBook.add('address1', nodeInfo)
-        expect(peerBook.hasPeerId('node')).toBeTruthy()
     })
 })
