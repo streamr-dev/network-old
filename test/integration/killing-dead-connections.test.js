@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 const allSettled = require('promise.allsettled')
 const { waitForEvent } = require('streamr-test-utils')
+const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const PeerInfo = require('../../src/connection/PeerInfo')
@@ -55,15 +56,23 @@ describe('check and kill dead connections', () => {
         })
         node1._pingConnections()
 
+        const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVersions()
+        const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
+
         expect(node1._onClose).toBeCalledTimes(1)
         expect(node1._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
-            peerId: 'node2', peerName: 'node2', peerType: 'node', location: defaultLocation
+            controlLayerVersions: defaultControlLayerVersions,
+            messageLayerVersions: defaultMessageLayerVersions,
+            peerId: 'node2',
+            peerName: 'node2',
+            peerType: 'node',
+            location: defaultLocation
         }, disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION)
 
         node1._onClose.mockRestore()
         node1._pingConnections()
 
         const [peerInfo] = await waitForEvent(node1, events.PEER_DISCONNECTED)
-        expect(peerInfo).toEqual(new PeerInfo('node2', 'node', 'node2', defaultLocation))
+        expect(peerInfo).toEqual(new PeerInfo('node2', 'node', 'node2', defaultControlLayerVersions, defaultMessageLayerVersions, defaultLocation))
     })
 })

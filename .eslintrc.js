@@ -8,6 +8,7 @@ module.exports = {
         'plugin:promise/recommended'
     ],
     rules: {
+        radix: ['error', 'as-needed'],
         'max-len': [WARN, {
             code: 150
         }],

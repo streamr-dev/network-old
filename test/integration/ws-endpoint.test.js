@@ -57,7 +57,7 @@ describe('ws-endpoint', () => {
         const e1 = waitForEvent(endpointOne, endpointEvents.PEER_CONNECTED)
         const e2 = waitForEvent(endpointTwo, endpointEvents.PEER_CONNECTED)
 
-        endpointOne.connect(endpointTwo.getAddress())
+        await endpointOne.connect(endpointTwo.getAddress())
 
         const endpointOneArguments = await e1
         const endpointTwoArguments = await e2
@@ -81,7 +81,7 @@ describe('ws-endpoint', () => {
             await tracker.stop()
         })
 
-        it('tracker must check all required information for new incoming connection and not crash', async () => {
+        it('tracker must check all required information for new incoming connection and not crash', async (done) => {
             let ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws`)
             let close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: address not given'])
@@ -104,7 +104,7 @@ describe('ws-endpoint', () => {
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: peerType not given'])
 
-            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address`,
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=1`,
                 undefined, {
                     headers: {
                         'streamr-peer-id': 'peerId',
@@ -113,6 +113,38 @@ describe('ws-endpoint', () => {
                 })
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: peerType typiii not in peerTypes list'])
+
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address`,
+                undefined, {
+                    headers: {
+                        'streamr-peer-id': 'peerId',
+                        'streamr-peer-type': 'tracker',
+                    }
+                })
+            close = await waitForEvent(ws, 'close')
+            expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: controlLayerVersions not given'])
+
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1`,
+                undefined, {
+                    headers: {
+                        'streamr-peer-id': 'peerId',
+                        'streamr-peer-type': 'tracker',
+                    }
+                })
+            close = await waitForEvent(ws, 'close')
+            expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: messageLayerVersions not given'])
+
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=1`,
+                undefined, {
+                    headers: {
+                        'streamr-peer-id': 'peerId',
+                        'streamr-peer-type': 'tracker',
+                    }
+                })
+            ws.on('open', () => {
+                ws.close()
+                done()
+            })
         })
     })
 })

@@ -107,6 +107,8 @@ class WsEndpoint extends EventEmitter {
                 res.writeStatus('101 Switching Protocols')
                     .writeHeader('streamr-peer-id', this.peerInfo.peerId)
                     .writeHeader('streamr-peer-type', this.peerInfo.peerType)
+                    .writeHeader('control-layer-versions', this.peerInfo.controlLayerVersions.join(','))
+                    .writeHeader('message-layer-versions', this.peerInfo.messageLayerVersions.join(','))
 
                 /* This immediately calls open handler, you must not use res after this call */
                 res.upgrade({
@@ -319,18 +321,22 @@ class WsEndpoint extends EventEmitter {
             try {
                 let serverPeerInfo
                 const ws = new WebSocket(
-                    `${peerAddress}/ws?address=${this.getAddress()}`,
+                    `${peerAddress}/ws?address=${this.getAddress()}`
+                    + `&controlLayerVersions=${this.peerInfo.controlLayerVersions}`
+                    + `&messageLayerVersions=${this.peerInfo.messageLayerVersions}`,
                     {
                         headers: toHeaders(this.peerInfo)
                     }
                 )
 
                 ws.on('upgrade', (res) => {
-                    const peerId = res.headers['streamr-peer-id']
-                    const peerType = res.headers['streamr-peer-type']
+                    const { 'streamr-peer-id': peerId, 'streamr-peer-type': peerType } = res.headers
+                    const { 'control-layer-versions': controlLayerVersions, 'message-layer-versions': messageLayerVersions } = res.headers
 
-                    if (peerId && peerType) {
-                        serverPeerInfo = new PeerInfo(peerId, peerType)
+                    if (peerId && peerType && controlLayerVersions && messageLayerVersions) {
+                        const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
+                        const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
+                        serverPeerInfo = new PeerInfo(peerId, peerType, undefined, controlLayerVersionsArray, messageLayerVersionsArray)
                     }
                 })
 
@@ -426,7 +432,7 @@ class WsEndpoint extends EventEmitter {
     }
 
     _onIncomingConnection(ws) {
-        const { address } = qs.parse(ws.query)
+        const { address, controlLayerVersions, messageLayerVersions } = qs.parse(ws.query)
         const { peerId, peerType } = ws
 
         try {
@@ -439,8 +445,17 @@ class WsEndpoint extends EventEmitter {
             if (!peerType) {
                 throw new Error('peerType not given')
             }
+            if (!controlLayerVersions) {
+                throw new Error('controlLayerVersions not given')
+            }
+            if (!messageLayerVersions) {
+                throw new Error('messageLayerVersions not given')
+            }
 
-            const clientPeerInfo = new PeerInfo(peerId, peerType)
+            const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
+            const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
+
+            const clientPeerInfo = new PeerInfo(peerId, peerType, undefined, controlLayerVersionsArray, messageLayerVersionsArray)
 
             // Allowed by library https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#use-the-websocketgetuserdata-feature
             // see node_modules/uWebSockets.js/index.d.ts WebSocket definition

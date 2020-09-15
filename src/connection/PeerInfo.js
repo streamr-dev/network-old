@@ -29,6 +29,9 @@ class PeerInfo {
         if (!peerType) {
             throw new Error('peerType not given')
         }
+        if (!Object.values(peerTypes).includes(peerType)) {
+            throw new Error(`peerType ${peerType} not in peerTypes list`)
+        }
         if (!controlLayerVersions || controlLayerVersions === []) {
             throw new Error('controlLayerVersions not given')
         }
@@ -47,9 +50,6 @@ class PeerInfo {
                 country: null,
                 city: null
             }
-        }
-        if (!Object.values(peerTypes).includes(peerType)) {
-            throw new Error(`peerType ${peerType} not in peerTypes list`)
         }
 
         this.peerId = peerId
