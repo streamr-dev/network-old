@@ -91,7 +91,7 @@ function startServer(tracker, endpointServerPort) {
             throw Error('streamId must be a not empty string')
         }
 
-        const askedPartition = parseInt(request.params.partition, 10)
+        const askedPartition = parseInt(request.params.partition)
         if (Number.isNaN(askedPartition) || askedPartition < 0) {
             throw Error('partition must be a positive integer')
         }
@@ -121,7 +121,7 @@ function startServer(tracker, endpointServerPort) {
     })
 }
 
-startTracker(program.ip, parseInt(program.port, 10), id, parseInt(program.maxNeighborsPerNode, 10), name)
+startTracker(program.ip, parseInt(program.port), id, parseInt(program.maxNeighborsPerNode), name)
     .then((tracker) => {
         logger.info('started tracker id: %s, name: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
             + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s',

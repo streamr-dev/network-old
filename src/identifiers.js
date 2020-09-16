@@ -27,7 +27,7 @@ class StreamIdAndPartition {
 
     static fromKey(key) {
         const [id, partition] = key.split('::')
-        return new StreamIdAndPartition(id, Number.parseInt(partition, 10))
+        return new StreamIdAndPartition(id, Number.parseInt(partition))
     }
 }
 

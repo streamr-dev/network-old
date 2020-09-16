@@ -225,7 +225,7 @@ module.exports = class Tracker extends EventEmitter {
         } else {
             let askedStreamKey = null
             if (streamId && partition) {
-                askedStreamKey = new StreamIdAndPartition(streamId, parseInt(partition, 10))
+                askedStreamKey = new StreamIdAndPartition(streamId, parseInt(partition))
             }
 
             streamKeys = askedStreamKey

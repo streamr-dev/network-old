@@ -82,6 +82,7 @@ describe('ws-endpoint', () => {
         })
 
         it('tracker must check all required information for new incoming connection and not crash', async (done) => {
+            /* eslint-disable require-atomic-updates */
             let ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws`)
             let close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: address not given'])
@@ -145,6 +146,7 @@ describe('ws-endpoint', () => {
                 ws.close()
                 done()
             })
+            /* eslint-enable require-atomic-updates */
         })
     })
 })
