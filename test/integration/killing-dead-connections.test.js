@@ -56,9 +56,6 @@ describe('check and kill dead connections', () => {
         })
         node1._pingConnections()
 
-        const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVersions()
-        const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
-
         expect(node1._onClose).toBeCalledTimes(1)
         expect(node1._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
             controlLayerVersions: [2],
