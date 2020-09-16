@@ -9,6 +9,7 @@ const { EventEmitter } = require('events')
 const qs = require('qs')
 const WebSocket = require('ws')
 const uWS = require('uWebSockets.js')
+const { ControlLayer, MessageLayer, Errors } = require('streamr-client-protocol')
 
 const { disconnectionCodes, disconnectionReasons } = require('../messages/messageTypes')
 const Metrics = require('../metrics')
@@ -159,6 +160,30 @@ class WsEndpoint extends EventEmitter {
 
         this.logger.debug('listening on: %s', this.getAddress())
         this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
+    }
+
+    validateProtocolVersions(controlLayerVersions, messageLayerVersions) {
+        if (controlLayerVersions === undefined || messageLayerVersions === undefined || controlLayerVersions === [] || messageLayerVersions === []) {
+            throw new Error('Missing version negotiation! Must give controlLayerVersions and messageLayerVersions as query parameters!')
+        }
+
+        const controlLayerVersion = Math.max(...this.peerInfo.controlLayerVersions.filter((version) => controlLayerVersions.includes(version)))
+        const messageLayerVersion = Math.max(...this.peerInfo.messageLayerVersions.filter((version) => messageLayerVersions.includes(version)))
+
+        // Validate that the requested versions are supported
+        if (controlLayerVersion < 0) {
+            throw new Errors.UnsupportedVersionError(controlLayerVersions, `Supported ControlLayer versions: ${
+                JSON.stringify(ControlLayer.ControlMessage.getSupportedVersions())
+            }. Are you using an outdated library?`)
+        }
+
+        if (messageLayerVersion < 0) {
+            throw new Errors.UnsupportedVersionError(messageLayerVersions, `Supported MessageLayer versions: ${
+                JSON.stringify(MessageLayer.StreamMessage.getSupportedVersions())
+            }. Are you using an outdated library?`)
+        }
+
+        return [controlLayerVersion, messageLayerVersion]
     }
 
     _pingConnections() {
@@ -336,7 +361,19 @@ class WsEndpoint extends EventEmitter {
                     if (peerId && peerType && controlLayerVersions && messageLayerVersions) {
                         const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
                         const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
-                        serverPeerInfo = new PeerInfo(peerId, peerType, undefined, controlLayerVersionsArray, messageLayerVersionsArray)
+
+                        let controlLayerVersion
+                        let messageLayerVersion
+
+                        try {
+                            [controlLayerVersion, messageLayerVersion] = this.validateProtocolVersions(controlLayerVersionsArray, messageLayerVersionsArray)
+                        } catch (e) {
+                            this.logger.error(e)
+                            ws.close(disconnectionCodes.UNSUPPORTED_VERSION, e.toString())
+                            return
+                        }
+
+                        serverPeerInfo = new PeerInfo(peerId, peerType, peerId, [controlLayerVersion], [messageLayerVersion])
                     }
                 })
 
@@ -455,7 +492,18 @@ class WsEndpoint extends EventEmitter {
             const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
             const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
 
-            const clientPeerInfo = new PeerInfo(peerId, peerType, undefined, controlLayerVersionsArray, messageLayerVersionsArray)
+            let controlLayerVersion
+            let messageLayerVersion
+
+            try {
+                [controlLayerVersion, messageLayerVersion] = this.validateProtocolVersions(controlLayerVersionsArray, messageLayerVersionsArray)
+            } catch (e) {
+                this.logger.error(e.toString())
+                ws.close(disconnectionCodes.UNSUPPORTED_VERSION, e.toString())
+                return
+            }
+
+            const clientPeerInfo = new PeerInfo(peerId, peerType, peerId, [controlLayerVersion], [messageLayerVersion])
 
             // Allowed by library https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#use-the-websocketgetuserdata-feature
             // see node_modules/uWebSockets.js/index.d.ts WebSocket definition

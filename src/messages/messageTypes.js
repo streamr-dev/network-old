@@ -13,7 +13,8 @@ const disconnectionCodes = Object.freeze({
     DUPLICATE_SOCKET: 1002,
     NO_SHARED_STREAMS: 1000,
     MISSING_REQUIRED_PARAMETER: 1002,
-    DEAD_CONNECTION: 1002
+    DEAD_CONNECTION: 1002,
+    UNSUPPORTED_VERSION: 1002
 })
 
 const disconnectionReasons = Object.freeze({
@@ -21,7 +22,8 @@ const disconnectionReasons = Object.freeze({
     DUPLICATE_SOCKET: 'streamr:endpoint:duplicate-connection',
     NO_SHARED_STREAMS: 'streamr:node:no-shared-streams',
     MISSING_REQUIRED_PARAMETER: 'streamr:node:missing-required-parameter',
-    DEAD_CONNECTION: 'streamr:endpoint:dead-connection'
+    DEAD_CONNECTION: 'streamr:endpoint:dead-connection',
+    UNSUPPORTED_VERSION: 'streamr:endpoint:dead-connection',
 })
 
 module.exports = {

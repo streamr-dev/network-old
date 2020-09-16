@@ -62,8 +62,8 @@ describe('ws-endpoint', () => {
         const endpointOneArguments = await e1
         const endpointTwoArguments = await e2
 
-        expect(endpointOneArguments).toEqual([PeerInfo.newNode('endpointTwo')])
-        expect(endpointTwoArguments).toEqual([PeerInfo.newNode('endpointOne')])
+        expect(endpointOneArguments).toEqual([new PeerInfo('endpointTwo', 'node', undefined, [2], [32])])
+        expect(endpointTwoArguments).toEqual([new PeerInfo('endpointOne', 'node', undefined, [2], [32])])
 
         await endpointOne.stop()
         await endpointTwo.stop()
@@ -105,7 +105,7 @@ describe('ws-endpoint', () => {
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: peerType not given'])
 
-            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=1`,
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=32`,
                 undefined, {
                     headers: {
                         'streamr-peer-id': 'peerId',
@@ -135,18 +135,37 @@ describe('ws-endpoint', () => {
             close = await waitForEvent(ws, 'close')
             expect(close).toEqual([disconnectionCodes.MISSING_REQUIRED_PARAMETER, 'Error: messageLayerVersions not given'])
 
-            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=1`,
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=32`,
                 undefined, {
                     headers: {
                         'streamr-peer-id': 'peerId',
                         'streamr-peer-type': 'tracker',
                     }
                 })
-            ws.on('open', () => {
-                ws.close()
-                done()
-            })
-            /* eslint-enable require-atomic-updates */
+            ws.on('error', (err) => done(err))
+            ws.on('open', () => done())
+        })
+
+        it('close connection and get error if failed to negotiate version', async () => {
+            let ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=777&messageLayerVersions=32`,
+                undefined, {
+                    headers: {
+                        'streamr-peer-id': 'peerId',
+                        'streamr-peer-type': 'tracker',
+                    }
+                })
+            let res = await waitForEvent(ws, 'error')
+            expect(res[0].toString()).toEqual('Error: socket hang up')
+
+            ws = new WebSocket(`ws://${LOCALHOST}:${trackerPort}/ws?address=address&controlLayerVersions=1&messageLayerVersions=777`,
+                undefined, {
+                    headers: {
+                        'streamr-peer-id': 'peerId',
+                        'streamr-peer-type': 'tracker',
+                    }
+                })
+            res = await waitForEvent(ws, 'error')
+            expect(res[0].toString()).toEqual('Error: socket hang up')
         })
     })
 })
