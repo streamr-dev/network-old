@@ -11,7 +11,7 @@ const WebSocket = require('ws')
 const uWS = require('uWebSockets.js')
 const { ControlLayer, MessageLayer, Errors } = require('streamr-client-protocol')
 
-const { disconnectionCodes, disconnectionReasons } = require('../messages/messageTypes')
+const { disconnectionCodes, disconnectionReasons } = require('../messageTypes')
 const Metrics = require('../metrics')
 const getLogger = require('../helpers/logger')
 
@@ -233,7 +233,6 @@ class WsEndpoint extends EventEmitter {
                 reject(new Error(`cannot send to ${recipientAddress} because not connected`))
             } else {
                 const ws = this.connections.get(recipientAddress)
-
                 this._socketSend(ws, message, recipientId, recipientAddress, resolve, reject)
             }
         })
@@ -630,9 +629,9 @@ async function startWebSocketServer(host, port) {
     })
 }
 
-async function startEndpoint(host, port, peerInfo, advertisedWsUrl) {
+async function startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval) {
     return startWebSocketServer(host, port).then(([wss, listenSocket]) => {
-        return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl)
+        return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl, pingInterval)
     })
 }
 
