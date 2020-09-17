@@ -11,6 +11,7 @@ const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
+const { promiseTimeout } = require('../helpers/PromiseTimeout')
 
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
@@ -186,9 +187,9 @@ class Node extends EventEmitter {
         const nodesToUnsubscribeFrom = currentNodes.filter((nodeId) => !nodeIds.includes(nodeId))
 
         const subscribePromises = nodeIds.map(async (nodeId) => {
-            await this.protocols.nodeToNode.connectToNode(nodeId, trackerId)
+            await promiseTimeout(2000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
             this._clearDisconnectionTimer(nodeId)
-            await this._subscribeToStreamOnNode(nodeId, streamId)
+            await promiseTimeout(2000, this._subscribeToStreamOnNode(nodeId, streamId))
             return nodeId
         })
 
