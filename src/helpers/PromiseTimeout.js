@@ -6,7 +6,7 @@ const promiseTimeout = (ms, promise) => {
         }, ms)
 
         // Clear timeout if promise wins race
-        Promise.all([promise])
+        Promise.resolve(promise)
             .then(() => clearInterval(to))
             .catch((e) => console.error(e))
     })
