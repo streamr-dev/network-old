@@ -1,10 +1,14 @@
 const promiseTimeout = (ms, promise) => {
     const timeout = new Promise((resolve, reject) => {
-        const id = setTimeout(() => {
-            clearTimeout(id)
+        const to = setTimeout(() => {
             // eslint-disable-next-line prefer-promise-reject-errors
             reject('timed out in ' + ms + 'ms.')
         }, ms)
+
+        // Clear timeout if promise wins race
+        Promise.all([promise])
+            .then(() => clearInterval(to))
+            .catch((e) => console.error(e))
     })
 
     return Promise.race([
