@@ -57,17 +57,20 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller, pingInterval = 5 * 1000) {
+    constructor(id, stunUrls, rtcSignaller, pingInterval = 5 * 1000, maxRetries = 2, newConnectionTimeout = 10000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
+        this.maxRetries = maxRetries
+        this.newConnectionTimeout = newConnectionTimeout
         this.connections = {}
         this.dataChannels = {}
         this.peerInfos = {}
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
+
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
@@ -256,7 +259,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.newConnectionTimeouts[targetPeerId] = setTimeout(() => {
             this.close(targetPeerId)
             console.error(this.id, 'connection to', targetPeerId, 'timed out')
-        }, 10000)
+        }, this.newConnectionTimeout)
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
@@ -276,7 +279,7 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onconnectionstatechange = (event) => {
             this.debug('onconnectionstatechange', this.id, targetPeerId, connection.connectionState, event)
             if (connection.connectionState === 'failed') {
-                if (retry < 2) {
+                if (retry < this.maxRetries) {
                     console.error(this.id, 'connection to', targetPeerId, 'failed, attempting reconnect...')
                     this.close(targetPeerId)
                     const attempt = retry + 1
