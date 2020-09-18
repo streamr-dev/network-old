@@ -101,6 +101,8 @@ class Node extends EventEmitter {
             maxAge: this.opts.bufferMaxSize
         })
 
+        this.reattemptLatestTrackerInstruction = null
+
         this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
     }
 
@@ -165,11 +167,16 @@ class Node extends EventEmitter {
         this.instructionThrottler.add(instructionMessage)
     }
 
-    async handleTrackerInstruction(instructionMessage) {
+    async handleTrackerInstruction(instructionMessage, retry = false) {
         const streamId = instructionMessage.getStreamId()
         const nodeIds = instructionMessage.getNodeIds()
         const counter = instructionMessage.getCounter()
         const trackerId = instructionMessage.getSource()
+
+        if (this.reattemptLatestTrackerInstruction) {
+            clearTimeout(this.reattemptLatestTrackerInstruction)
+            this.reattemptLatestTrackerInstruction = null
+        }
 
         // Check that tracker matches expected tracker
         const expectedTrackerId = this.trackersRing.get(streamId.key())
@@ -226,6 +233,13 @@ class Node extends EventEmitter {
         if (subscribeNodeIds.length !== nodeIds.length) {
             this.debug('error: failed to fulfill all tracker instructions (streamId=%s, counter=%d)',
                 streamId, counter)
+        }
+
+        if (retry === true) {
+            this.reattemptLatestTrackerInstruction = setTimeout(() => {
+                this.debug('Retrying latest tracker instruction')
+                this.handleTrackerInstruction(instructionMessage, true)
+            }, 10000)
         }
     }
 

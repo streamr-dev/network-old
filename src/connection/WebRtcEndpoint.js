@@ -67,6 +67,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.peerInfos = {}
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
+        this.newConnectionTimeouts = {}
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
@@ -112,6 +113,10 @@ class WebRtcEndpoint extends EventEmitter {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
         this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
+
+        setInterval(() => {
+            console.log(id, Object.keys(this.connections).length)
+        }, 10000)
     }
 
     // TODO: get rid of promise
@@ -178,6 +183,7 @@ class WebRtcEndpoint extends EventEmitter {
         const connection = this.connections[targetPeerId]
         const dataChannel = this.dataChannels[targetPeerId]
         const flushTimeOutRef = this.flushTimeOutRefs[targetPeerId]
+        const newConnectionTimeout = this.newConnectionTimeouts[targetPeerId]
         if (dataChannel) {
             dataChannel.close()
         }
@@ -186,6 +192,9 @@ class WebRtcEndpoint extends EventEmitter {
         }
         if (flushTimeOutRef) {
             clearTimeout(flushTimeOutRef)
+        }
+        if (newConnectionTimeout) {
+            clearTimeout(newConnectionTimeout)
         }
         delete this.connections[targetPeerId]
         delete this.dataChannels[targetPeerId]
@@ -248,6 +257,10 @@ class WebRtcEndpoint extends EventEmitter {
         this.dataChannels[targetPeerId] = dataChannel
         this.peerInfos[targetPeerId] = PeerInfo.newUnknown(targetPeerId)
         this.messageQueue[targetPeerId] = new Heap((a, b) => a.no - b.no)
+        this.newConnectionTimeouts[targetPeerId] = setTimeout(() => {
+            this.close(targetPeerId)
+            console.error(this.id, 'connection to', targetPeerId, 'timed out')
+        }, 5000)
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
@@ -266,6 +279,9 @@ class WebRtcEndpoint extends EventEmitter {
         }
         connection.onconnectionstatechange = (event) => {
             this.debug('onconnectionstatechange', this.id, targetPeerId, connection.connectionState, event)
+            if (connection.connectionState === 'failed') {
+                this.close(targetPeerId)
+            }
         }
         connection.onsignalingstatechange = (event) => {
             this.debug('onsignalingstatechange', this.id, targetPeerId, connection.connectionState, event)
@@ -278,6 +294,7 @@ class WebRtcEndpoint extends EventEmitter {
         }
         dataChannel.onopen = (event) => {
             this.debug('dataChannel.onOpen', this.id, targetPeerId, event)
+            clearInterval(this.newConnectionTimeouts[targetPeerId])
             this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
             this.emit(`connected:${targetPeerId}`, targetPeerId)
         }
