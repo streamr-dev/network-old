@@ -54,8 +54,8 @@ module.exports = class Tracker extends EventEmitter {
         this.metrics.inc('processNodeStatus')
         const source = statusMessage.getSource()
         const status = statusMessage.getStatus()
-        const { rtts, location } = status
-        const streams = this.instructionCounter.filterStatus(statusMessage)
+        const { streams, rtts, location } = status
+        const filteredStreams = this.instructionCounter.filterStatus(statusMessage)
         if (isStorage) {
             this.storageNodes.set(source, streams)
         }
@@ -63,7 +63,7 @@ module.exports = class Tracker extends EventEmitter {
         this._updateLocation(source, location)
         this._createNewOverlayTopologies(streams)
         this._updateAllStorages()
-        this._updateNode(source, streams)
+        this._updateNode(source, filteredStreams, streams)
         this._formAndSendInstructions(source, Object.keys(streams))
     }
 
@@ -140,7 +140,7 @@ module.exports = class Tracker extends EventEmitter {
         this.storageNodes.forEach((streams, storageId) => {
             const updateStreams = this._addMissingStreams(streams)
             this.storageNodes.set(storageId, updateStreams)
-            this._updateNode(storageId, updateStreams)
+            this._updateNode(storageId, updateStreams, updateStreams)
         })
     }
 
@@ -152,8 +152,8 @@ module.exports = class Tracker extends EventEmitter {
         })
     }
 
-    _updateNode(node, streams) {
-        if (isEmpty(streams)) {
+    _updateNode(node, filteredStreams, allStreams) {
+        if (isEmpty(allStreams)) {
             this._removeNode(node)
             return
         }
@@ -161,22 +161,22 @@ module.exports = class Tracker extends EventEmitter {
         let newNode = true
 
         // Add or update
-        Object.entries(streams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
+        Object.entries(filteredStreams).forEach(([streamKey, { inboundNodes, outboundNodes }]) => {
             newNode = this.overlayPerStream[streamKey].hasNode(node) ? false : newNode
             const neighbors = new Set([...inboundNodes, ...outboundNodes])
             this.overlayPerStream[streamKey].update(node, neighbors)
         })
 
         // Remove
-        const currentStreamKeys = new Set(Object.keys(streams))
+        const currentStreamKeys = new Set(Object.keys(allStreams))
         Object.entries(this.overlayPerStream)
             .filter(([streamKey, _]) => !currentStreamKeys.has(streamKey))
             .forEach(([streamKey, overlayTopology]) => this._leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node))
 
         if (newNode) {
-            this.debug('registered new node %s for streams %j', node, Object.keys(streams))
+            this.debug('registered new node %s for streams %j', node, Object.keys(allStreams))
         } else {
-            this.debug('setup existing node %s for streams %j', node, Object.keys(streams))
+            this.debug('setup existing node %s for streams %j', node, Object.keys(allStreams))
         }
     }
 
