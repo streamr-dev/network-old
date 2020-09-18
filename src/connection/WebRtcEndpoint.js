@@ -113,10 +113,6 @@ class WebRtcEndpoint extends EventEmitter {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
         this._pingInterval = setInterval(() => this._pingConnections(), pingInterval)
-
-        setInterval(() => {
-            console.log(id, Object.keys(this.connections).length)
-        }, 10000)
     }
 
     // TODO: get rid of promise
@@ -260,7 +256,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.newConnectionTimeouts[targetPeerId] = setTimeout(() => {
             this.close(targetPeerId)
             console.error(this.id, 'connection to', targetPeerId, 'timed out')
-        }, 5000)
+        }, 10000)
 
         if (isOffering) {
             connection.onnegotiationneeded = async () => {
