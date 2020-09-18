@@ -233,7 +233,7 @@ class WebRtcEndpoint extends EventEmitter {
         return rtts
     }
 
-    _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId) {
+    _createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering = this.id < targetPeerId, retry = 0) {
         if (this.connections[targetPeerId] != null) {
             return
         }
@@ -276,7 +276,15 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onconnectionstatechange = (event) => {
             this.debug('onconnectionstatechange', this.id, targetPeerId, connection.connectionState, event)
             if (connection.connectionState === 'failed') {
-                this.close(targetPeerId)
+                if (retry < 2) {
+                    console.error(this.id, 'connection to', targetPeerId, 'failed, attempting reconnect...')
+                    this.close(targetPeerId)
+                    const attempt = retry + 1
+                    this._createConnectionAndDataChannelIfNeeded(targetPeerId, routerId, isOffering, attempt)
+                } else {
+                    console.error(this.id, 'connection to', targetPeerId, 'failed, closing connection')
+                    this.close(targetPeerId)
+                }
             }
         }
         connection.onsignalingstatechange = (event) => {
