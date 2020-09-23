@@ -7,20 +7,23 @@ const NodeToNode = require('./protocol/NodeToNode')
 const { PeerInfo } = require('./connection/PeerInfo')
 const Tracker = require('./logic/Tracker')
 const NetworkNode = require('./NetworkNode')
-const { startEndpoint } = require('./connection/WsEndpoint')
+const { startEndpoint, startWebSocketServer, WsEndpoint } = require('./connection/WsEndpoint')
 
 function startTracker(host, port, id = uuidv4(), maxNeighborsPerNode = 4, advertisedWsUrl = null, name, location, pingInterval) {
-    const peerInfo = PeerInfo.newTracker(id, name, location)
-    return startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval).then((endpoint) => {
-        const opts = {
-            peerInfo,
-            protocols: {
-                trackerServer: new TrackerServer(endpoint)
-            },
-            maxNeighborsPerNode
-        }
-        return new Tracker(opts)
-    })
+    // return startWebSocketServer(host, port).then(([wss, listenSocket]) => {
+    //     const opts = {
+    //         peerInfo,
+    //         protocols: {
+    //             trackerServer: new TrackerServer(endpoint)
+    //         },
+    //         maxNeighborsPerNode
+    //     }
+    //     return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl, pingInterval)
+    // })
+    // const peerInfo = PeerInfo.newTracker(id, name, location)
+    // return startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval).then((endpoint) => {
+
+    // })
 }
 
 function startNetworkNode(host, port, id = uuidv4(), storages = [], advertisedWsUrl = null, name, location, pingInterval) {
