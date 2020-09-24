@@ -53,6 +53,19 @@ const trackerHttpEndpoints = (wss, tracker) => {
         const nodeId = req.getParameter(0)
         const location = tracker.getNodeLocation(nodeId)
         res.end(JSON.stringify(location || {}))
+    }).get('/metrics/', async (res, req) => {
+        writeCorsHeaders(res, req)
+
+        /* Can't return or yield from here without responding or attaching an abort handler */
+        res.onAborted(() => {
+            res.aborted = true
+        })
+
+        const metrics = await tracker.getMetrics()
+
+        if (!res.aborted) {
+            res.end(JSON.stringify(metrics))
+        }
     })
 }
 
