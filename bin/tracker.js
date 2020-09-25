@@ -22,7 +22,6 @@ program
     .option('--sentryDns <sentryDns>', 'sentryDns', undefined)
     .option('--metrics <metrics>', 'output metrics to console', false)
     .option('--metricsInterval <metricsInterval>', 'metrics output interval (ms)', 5000)
-    .option('--endpointServerPort <endpointServerPort>', 'port for endpoint server', undefined)
     .description('Run tracker with reporting')
     .parse(process.argv)
 

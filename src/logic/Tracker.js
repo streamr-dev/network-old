@@ -222,7 +222,7 @@ module.exports = class Tracker extends EventEmitter {
             streamKeys = Object.keys(this.overlayPerStream).filter((streamKey) => streamKey.includes(streamId))
         } else {
             let askedStreamKey = null
-            if (streamId && partition) {
+            if (streamId && !Number.isNaN(partition) && partition >= 0) {
                 askedStreamKey = new StreamIdAndPartition(streamId, parseInt(partition))
             }
 
