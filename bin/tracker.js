@@ -22,6 +22,8 @@ program
     .option('--sentryDns <sentryDns>', 'sentryDns', undefined)
     .option('--metrics <metrics>', 'output metrics to console', false)
     .option('--metricsInterval <metricsInterval>', 'metrics output interval (ms)', 5000)
+    .option('--privateKeyFileName <privateKeyFileName>', 'private key filename', undefined)
+    .option('--certFileName <certFileName>', 'cert filename', undefined)
     .description('Run tracker with reporting')
     .parse(process.argv)
 
@@ -55,12 +57,15 @@ async function main() {
             id,
             maxNeighborsPerNode: parseInt(program.maxNeighborsPerNode),
             name,
-            exposeHttpEndpoints: program.exposeHttpEndpoints
+            exposeHttpEndpoints: program.exposeHttpEndpoints,
+            privateKeyFileName: program.privateKeyFileName,
+            certFileName: program.certFileName
         })
 
-        logger.info('started tracker id: %s, name: %s, port: %d, ip: %s, maxNeighborsPerNode: %d, '
-            + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s',
-        id, name, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
+        logger.info('started tracker id: %s, privateKeyFileName: %s, certFileName: %s\n, '
+            + 'name: %s, port: %d, ip: %s, maxNeighborsPerNode: %d\n '
+            + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s\n',
+        id, program.privateKeyFileName, program.certFileName, name, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
         program.metricsInterval, program.apiKey, program.streamId, program.sentryDns)
 
         if (program.metrics && program.apiKey && program.streamId) {
