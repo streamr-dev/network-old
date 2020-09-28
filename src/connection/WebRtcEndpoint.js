@@ -170,7 +170,7 @@ class WebRtcEndpoint extends EventEmitter {
                         this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
                             delete this.flushTimeOutRefs[targetPeerId]
                             this._attemptToFlushMessages(targetPeerId)
-                        }, 100)
+                        }, 10)
                     }
                     return
                 }
