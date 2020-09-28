@@ -166,15 +166,11 @@ class WebRtcEndpoint extends EventEmitter {
                         console.warn(warnMessage)
                         this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
                         this.emit(`disconnected:${targetPeerId}`, targetPeerId)
-                    } else {
-                        // delete this.flushTimeOutRefs[targetPeerId]
-                        this._attemptToFlushMessages(targetPeerId)
-                    }
-                    // else if (this.flushTimeOutRefs[targetPeerId] === null) {
-                    //     this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
-                    //         delete this.flushTimeOutRefs[targetPeerId]
-                    //         this._attemptToFlushMessages(targetPeerId)
-                    //     }, 10)
+                    } else if (this.flushTimeOutRefs[targetPeerId] === null) {
+                        this.flushTimeOutRefs[targetPeerId] = setTimeout(() => {
+                            delete this.flushTimeOutRefs[targetPeerId]
+                            this._attemptToFlushMessages(targetPeerId)
+                        }, 100)
                     return
                 }
             }
