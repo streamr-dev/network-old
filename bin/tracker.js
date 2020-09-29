@@ -93,7 +93,7 @@ async function main() {
 
                 // output to console
                 if (program.metrics) {
-                    logger.info(JSON.stringify(metrics, null, 3))
+                    logger.info(JSON.stringify(metrics, null, 4))
                 }
             }, program.metricsInterval)
         }
