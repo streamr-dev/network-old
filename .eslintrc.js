@@ -9,7 +9,6 @@ module.exports = {
     ],
     rules: {
         'newline-per-chained-call': DISABLED,
-        radix: ['error', 'as-needed'],
         'max-len': [WARN, {
             code: 150
         }],

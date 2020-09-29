@@ -53,9 +53,9 @@ async function main() {
     try {
         const tracker = await startTracker({
             host: program.ip,
-            port: parseInt(program.port),
+            port: Number.parseInt(program.port, 10),
             id,
-            maxNeighborsPerNode: parseInt(program.maxNeighborsPerNode),
+            maxNeighborsPerNode: Number.parseInt(program.maxNeighborsPerNode, 10),
             name,
             exposeHttpEndpoints: program.exposeHttpEndpoints,
             privateKeyFileName: program.privateKeyFileName,

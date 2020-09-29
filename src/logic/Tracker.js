@@ -223,7 +223,7 @@ module.exports = class Tracker extends EventEmitter {
         } else {
             let askedStreamKey = null
             if (streamId && !Number.isNaN(partition) && partition >= 0) {
-                askedStreamKey = new StreamIdAndPartition(streamId, parseInt(partition))
+                askedStreamKey = new StreamIdAndPartition(streamId, Number.parseInt(partition, 10))
             }
 
             streamKeys = askedStreamKey

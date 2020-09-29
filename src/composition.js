@@ -43,7 +43,7 @@ const trackerHttpEndpoints = (wss, tracker) => {
             res.writeStatus('500 streamId must be a not empty string').end()
         }
 
-        const askedPartition = parseInt(req.getParameter(1))
+        const askedPartition = Number.parseInt(req.getParameter(1), 10)
         if (Number.isNaN(askedPartition) || askedPartition < 0) {
             extraLogger.error('500 partition must be a positive integer')
             res.writeStatus('500 partition must be a positive integer').end()
