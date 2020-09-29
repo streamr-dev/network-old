@@ -1,5 +1,5 @@
 const got = require('got')
-const { wait } = require('streamr-test-utils')
+const { waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
@@ -35,7 +35,7 @@ describe('tracker endpoint', () => {
         nodeOne.addBootstrapTracker(tracker.getAddress())
         nodeTwo.addBootstrapTracker(tracker.getAddress())
 
-        await wait(1000)
+        await waitForCondition(() => Object.keys(tracker.overlayPerStream).length === 2)
     })
 
     afterEach(async () => {

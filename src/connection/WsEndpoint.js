@@ -576,8 +576,8 @@ async function startWebSocketServer(host, port, privateKeyFileName = undefined, 
     })
 }
 
-async function startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval) {
-    return startWebSocketServer(host, port).then(([wss, listenSocket]) => {
+async function startEndpoint(host, port, peerInfo, advertisedWsUrl, pingInterval, privateKeyFileName = undefined, certFileName = undefined) {
+    return startWebSocketServer(host, port, privateKeyFileName, certFileName).then(([wss, listenSocket]) => {
         return new WsEndpoint(host, port, wss, listenSocket, peerInfo, advertisedWsUrl, pingInterval)
     })
 }
