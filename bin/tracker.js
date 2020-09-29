@@ -16,7 +16,7 @@ program
     .option('--port <port>', 'port', 30300)
     .option('--ip <ip>', 'ip', '0.0.0.0')
     .option('--maxNeighborsPerNode <maxNeighborsPerNode>', 'maxNeighborsPerNode', 4)
-    .option('--exposeHttpEndpoints <exposeHttpEndpoints>', 'exposeHttpEndpoints', true)
+    .option('--exposeHttpEndpoints', 'expose http endpoints')
     .option('--apiKey <apiKey>', 'apiKey for StreamrClient', undefined)
     .option('--streamId <streamId>', 'streamId for StreamrClient', undefined)
     .option('--sentryDns <sentryDns>', 'sentryDns', undefined)
@@ -62,11 +62,19 @@ async function main() {
             certFileName: program.certFileName
         })
 
-        logger.info('started tracker id: %s, privateKeyFileName: %s, certFileName: %s\n, '
-            + 'name: %s, port: %d, ip: %s, maxNeighborsPerNode: %d\n '
-            + 'metrics: %s, metricsInterval: %d, apiKey: %s, streamId: %s, sentryDns: %s\n',
-        id, program.privateKeyFileName, program.certFileName, name, program.port, program.ip, program.maxNeighborsPerNode, program.metrics,
-        program.metricsInterval, program.apiKey, program.streamId, program.sentryDns)
+        const trackerObj = {}
+        const fields = [
+            'ip', 'port', 'maxNeighborsPerNode', 'privateKeyFileName', 'certFileName', 'metrics',
+            'metricsInterval', 'apiKey', 'streamId', 'sentryDns', 'exposeHttpEndpoints']
+        fields.forEach((prop) => {
+            trackerObj[prop] = program[prop]
+        })
+
+        logger.info('started tracker: %o', {
+            id,
+            name,
+            ...trackerObj
+        })
 
         if (program.metrics && program.apiKey && program.streamId) {
             const client = new StreamrClient({
