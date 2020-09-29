@@ -28,8 +28,9 @@ const trackerHttpEndpoints = (wss, tracker) => {
 
         const streamId = req.getParameter(0)
         if (streamId === '') {
-            extraLogger.error('500 streamId must be a not empty string')
-            res.writeStatus('500 streamId must be a not empty string').end()
+            extraLogger.error('422 streamId must be a not empty string')
+            res.writeStatus('422 streamId must be a not empty string').end()
+            return
         }
 
         extraLogger.debug(`request to /topology/${streamId}/`)
@@ -39,14 +40,16 @@ const trackerHttpEndpoints = (wss, tracker) => {
 
         const streamId = req.getParameter(0)
         if (streamId === '') {
-            extraLogger.error('500 streamId must be a not empty string')
-            res.writeStatus('500 streamId must be a not empty string').end()
+            extraLogger.error('422 streamId must be a not empty string')
+            res.writeStatus('422 streamId must be a not empty string').end()
+            return
         }
 
         const askedPartition = Number.parseInt(req.getParameter(1), 10)
         if (Number.isNaN(askedPartition) || askedPartition < 0) {
-            extraLogger.error('500 partition must be a positive integer')
-            res.writeStatus('500 partition must be a positive integer').end()
+            extraLogger.error('422 partition must be a positive integer')
+            res.writeStatus('422 partition must be a positive integer').end()
+            return
         }
 
         extraLogger.debug(`request to /topology/${streamId}/${askedPartition}/`)
