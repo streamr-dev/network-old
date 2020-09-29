@@ -46,8 +46,8 @@ const trackerHttpEndpoints = (wss, tracker) => {
         }
 
         const askedPartition = Number.parseInt(req.getParameter(1), 10)
-        if (Number.isNaN(askedPartition) || askedPartition < 0) {
-            extraLogger.error('422 partition must be a positive integer')
+        if (!Number.isSafeInteger(askedPartition) || askedPartition < 0) {
+            extraLogger.error(`422 partition must be a positive integer, askedPartition: ${askedPartition}`)
             res.writeStatus('422 partition must be a positive integer').end()
             return
         }
