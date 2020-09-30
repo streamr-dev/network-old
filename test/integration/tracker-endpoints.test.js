@@ -44,57 +44,32 @@ describe('tracker endpoint', () => {
         await tracker.stop()
     })
 
-    it('/topology/', async (done) => {
-        try {
-            const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/`).json()
-            expect(jsonResult['stream-1::0']).not.toBeUndefined()
-            expect(jsonResult['stream-2::0']).not.toBeUndefined()
-            done()
-        } catch (error) {
-            done(error)
-        }
+    it('/topology/', async () => {
+        const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/`).json()
+        expect(jsonResult['stream-1::0']).not.toBeUndefined()
+        expect(jsonResult['stream-2::0']).not.toBeUndefined()
     })
 
-    it('/topology/stream-1/', async (done) => {
-        try {
-            const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/`).json()
-            expect(jsonResult['stream-1::0']).not.toBeUndefined()
-            expect(jsonResult['stream-2::0']).toBeUndefined()
-            done()
-        } catch (error) {
-            done(error)
-        }
+    it('/topology/stream-1/', async () => {
+        const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/`).json()
+        expect(jsonResult['stream-1::0']).not.toBeUndefined()
+        expect(jsonResult['stream-2::0']).toBeUndefined()
     })
 
-    it('/topology/stream-1/0/', async (done) => {
-        try {
-            const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/0/`).json()
-            expect(jsonResult['stream-1::0']).not.toBeUndefined()
-            expect(jsonResult['stream-2::0']).toBeUndefined()
-            done()
-        } catch (error) {
-            done(error)
-        }
+    it('/topology/stream-1/0/', async () => {
+        const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/0/`).json()
+        expect(jsonResult['stream-1::0']).not.toBeUndefined()
+        expect(jsonResult['stream-2::0']).toBeUndefined()
     })
 
-    it('/location/', async (done) => {
-        try {
-            const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/0/`).json()
-            expect(jsonResult['stream-1::0']).not.toBeUndefined()
-            expect(jsonResult['stream-2::0']).toBeUndefined()
-            done()
-        } catch (error) {
-            done(error)
-        }
+    it('/location/', async () => {
+        const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/topology/stream-1/0/`).json()
+        expect(jsonResult['stream-1::0']).not.toBeUndefined()
+        expect(jsonResult['stream-2::0']).toBeUndefined()
     })
 
-    it('/metrics/ endpoint', async (done) => {
-        try {
-            const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/metrics/`).json()
-            expect(jsonResult.trackerMetrics).not.toBeUndefined()
-            done()
-        } catch (error) {
-            done(error)
-        }
+    it('/metrics/ endpoint', async () => {
+        const jsonResult = await got(`http://${LOCALHOST}:${trackerPort}/metrics/`).json()
+        expect(jsonResult.trackerMetrics).not.toBeUndefined()
     })
 })
