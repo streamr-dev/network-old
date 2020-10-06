@@ -7,8 +7,6 @@ const { LOCALHOST } = require('../util')
 const Node = require('../../src/logic/Node')
 
 describe('multi trackers', () => {
-    const ITERATIONS = 5
-
     let trackerOne
     const trackerOnePort = 49000
 
@@ -50,7 +48,7 @@ describe('multi trackers', () => {
         await trackerThree.stop()
     })
 
-    test.each([...Array(ITERATIONS).keys()])('(run %i) node sends stream status to specific tracker', async () => {
+    test('node sends stream status to specific tracker', async () => {
         nodeOne.addBootstrapTracker(trackerOne.getAddress())
         nodeOne.addBootstrapTracker(trackerTwo.getAddress())
         nodeOne.addBootstrapTracker(trackerThree.getAddress())
@@ -95,7 +93,7 @@ describe('multi trackers', () => {
         expect(spyTrackerThree).toBeCalledTimes(1)
     })
 
-    test.each([...Array(ITERATIONS).keys()])('(run %i) only one specific tracker sends instructions about stream', async () => {
+    test('only one specific tracker sends instructions about stream', async () => {
         nodeOne.addBootstrapTracker(trackerOne.getAddress())
         nodeOne.addBootstrapTracker(trackerTwo.getAddress())
         nodeOne.addBootstrapTracker(trackerThree.getAddress())
