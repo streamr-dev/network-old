@@ -71,7 +71,9 @@ class Node extends EventEmitter {
         this.logger.debug('started %s (%s)', this.peerInfo.peerId, this.peerInfo.peerName)
 
         this.streams = new StreamManager()
-        this.messageBuffer = new MessageBuffer(this.opts.bufferTimeoutInMs, this.opts.bufferMaxSize)
+        this.messageBuffer = new MessageBuffer(this.opts.bufferTimeoutInMs, this.opts.bufferMaxSize, (streamId) => {
+            this.logger.debug(`failed to deliver buffered messages of stream ${streamId}`)
+        })
         this.resendHandler = new ResendHandler(this.opts.resendStrategies, this.logger.error.bind(this.logger)) // TODO remove notifyError?
 
         this.trackers = new Set()
