@@ -202,17 +202,6 @@ class WsEndpoint extends EventEmitter {
         })
     }
 
-    sendSync(recipientId, message) {
-        const recipientAddress = this.resolveAddress(recipientId)
-        if (!this.isConnected(recipientAddress)) {
-            this.metrics.inc('send:failed:not-connected')
-            this.logger.debug('cannot send to %s because not connected', recipientAddress)
-        } else {
-            const ws = this.connections.get(recipientAddress)
-            this._socketSend(ws, message, recipientId, recipientAddress)
-        }
-    }
-
     send(recipientId, message) {
         const recipientAddress = this.resolveAddress(recipientId)
         return new Promise((resolve, reject) => {
