@@ -217,25 +217,13 @@ class WsEndpoint extends EventEmitter {
     }
 
     _socketSend(ws, message, recipientId, recipientAddress, successCallback, errorCallback) {
-        const onError = (err, callback) => {
-            if (typeof callback === 'function') {
-                callback(err)
-            } else {
-                this.logger.error(err)
-            }
-        }
-
-        const onSuccess = (address, peerId, msg, callback) => {
+        const onSuccess = (address, peerId, msg) => {
             this.logger.debug('sent to %s message "%s"', address, msg)
             this.metrics.inc('send:success')
-
             this.metrics.speed('_outSpeed')(msg.length)
             this.metrics.speed('_msgSpeed')(1)
             this.metrics.speed('_msgOutSpeed')(1)
-
-            if (typeof callback === 'function') {
-                callback(peerId)
-            }
+            successCallback(peerId)
         }
 
         try {
@@ -243,15 +231,14 @@ class WsEndpoint extends EventEmitter {
                 const res = ws.send(message)
 
                 if (!res) {
-                    const err = `Failed to send to message to ${recipientId}`
-                    onError(err, errorCallback)
+                    errorCallback(new Error(`Failed to send to message to ${recipientId}`))
                 } else {
-                    onSuccess(recipientAddress, recipientId, message, successCallback)
+                    onSuccess(recipientAddress, recipientId, message)
                 }
             } else {
                 ws.send(message, (err) => {
                     if (err) {
-                        onError(err, errorCallback)
+                        errorCallback(err)
                     } else {
                         onSuccess(recipientAddress, recipientId, message, successCallback)
                     }
