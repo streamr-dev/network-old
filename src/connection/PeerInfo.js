@@ -31,10 +31,10 @@ class PeerInfo {
         if (!location) {
             // eslint-disable-next-line no-param-reassign
             location = {
-                latitude: 1,
-                longitude: 1,
-                country: 'fin',
-                city: 'hel'
+                latitude: null,
+                longitude: null,
+                country: null,
+                city: null
             }
         }
         if (!Object.values(peerTypes).includes(peerType)) {
