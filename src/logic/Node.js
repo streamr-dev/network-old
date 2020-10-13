@@ -23,6 +23,7 @@ const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
     UNSEEN_MESSAGE_RECEIVED: 'streamr:node:unseen-message-received',
     MESSAGE_PROPAGATED: 'streamr:node:message-propagated',
+    MESSAGE_PROPAGATION_FAILED: 'streamr:node:message-propagation-failed',
     NODE_SUBSCRIBED: 'streamr:node:subscribed-successfully',
     NODE_UNSUBSCRIBED: 'streamr:node:node-unsubscribed',
     NODE_CONNECTED: 'streamr:node:node-connected',
@@ -283,6 +284,7 @@ class Node extends EventEmitter {
                     this.protocols.nodeToNode.sendData(subscriber, streamMessage)
                 } catch (e) {
                     console.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
+                    this.emit(streamMessage.MESSAGE_PROPAGATION_FAILED, e)
                 }
             })
 
