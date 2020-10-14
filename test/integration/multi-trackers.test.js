@@ -5,9 +5,10 @@ const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 
+// TODO: maybe worth re-designing this in a way that isn't this arbitrary?
 const FIRST_STREAM = 'stream-1' // assigned to trackerOne (arbitrarily by hashing algo)
-const SECOND_STREAM = 'stream-3' // assigned to trackerTwo
-const THIRD_STREAM = 'stream-5' // assigned to trackerThree
+const SECOND_STREAM = 'stream-8' // assigned to trackerTwo
+const THIRD_STREAM = 'stream-9' // assigned to trackerThree
 
 describe('multi trackers', () => {
     let trackerOne
