@@ -20,10 +20,9 @@ function toUnicastMessage(request) {
 }
 
 /**
- * Resend strategy that uses fetches streaming data from (local) storage.
- * Often used at L1.
+ * Resend strategy that uses fetches streaming data from local storage.
  */
-class StorageResendStrategy {
+class LocalResendStrategy {
     constructor(storage) {
         if (storage == null) {
             throw new Error('storage not given')
@@ -260,10 +259,9 @@ class PendingTrackerResponseBookkeeper {
 
 /**
  * Resend strategy that asks tracker for storage nodes, forwards resend request
- * to one of them, and then acts as a proxy in between.
- * Often used at L3.
+ * to (one of) them, and then acts as a proxy/relay in between.
  */
-class StorageNodeResendStrategy {
+class ForeignResendStrategy {
     constructor(trackerNode, nodeToNode, getTracker, isSubscribedTo, timeout = 20 * 1000) {
         this.trackerNode = trackerNode
         this.nodeToNode = nodeToNode
@@ -363,6 +361,6 @@ class StorageNodeResendStrategy {
 }
 
 module.exports = {
-    StorageResendStrategy,
-    StorageNodeResendStrategy
+    LocalResendStrategy,
+    ForeignResendStrategy
 }

@@ -4,7 +4,7 @@ const intoStream = require('into-stream')
 const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
 const { waitForStreamToEnd } = require('streamr-test-utils')
 
-const { StorageResendStrategy, StorageNodeResendStrategy } = require('../../src/logic/resendStrategies')
+const { LocalResendStrategy, ForeignResendStrategy } = require('../../src/resend/resendStrategies')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
@@ -76,13 +76,13 @@ const createUnicastMessage = (timestamp = 0) => {
     })
 }
 
-describe('StorageResendStrategy#getResendResponseStream', () => {
+describe('LocalResendStrategy#getResendResponseStream', () => {
     let storage
     let resendStrategy
 
     beforeEach(async () => {
         storage = {}
-        resendStrategy = new StorageResendStrategy(storage)
+        resendStrategy = new LocalResendStrategy(storage)
     })
 
     test('on receiving ResendLastRequest, storage#requestLast is invoked', async () => {
@@ -150,7 +150,7 @@ describe('StorageResendStrategy#getResendResponseStream', () => {
     })
 })
 
-describe('StorageNodeResendStrategy#getResendResponseStream', () => {
+describe('ForeignResendStrategy#getResendResponseStream', () => {
     let nodeToNode
     let trackerNode
     let getTracker
@@ -163,7 +163,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         trackerNode = new EventEmitter()
         getTracker = jest.fn()
         isSubscribedTo = jest.fn()
-        resendStrategy = new StorageNodeResendStrategy(trackerNode, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
+        resendStrategy = new ForeignResendStrategy(trackerNode, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
         request = resendLastRequest
     })
 

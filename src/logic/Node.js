@@ -14,9 +14,9 @@ const Metrics = require('../metrics')
 
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
-const ResendHandler = require('./ResendHandler')
+const ResendHandler = require('../resend/ResendHandler')
 const InstructionThrottler = require('./InstructionThrottler')
-const proxyRequestStream = require('./proxyRequestStream')
+const proxyRequestStream = require('../resend/proxyRequestStream')
 
 const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:node:message-received',
