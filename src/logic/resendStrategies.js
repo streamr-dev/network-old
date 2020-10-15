@@ -201,51 +201,6 @@ class ProxiedResend {
 }
 
 /**
- * Resend strategy that forwards resend request to neighbor nodes and then acts
- * as a proxy in between.
- * Often used at L2.
- */
-class AskNeighborsResendStrategy {
-    constructor(nodeToNode, getNeighbors, maxTries = 3, timeout = 20 * 1000) {
-        this.nodeToNode = nodeToNode
-        this.getNeighbors = getNeighbors
-        this.maxTries = maxTries
-        this.timeout = timeout
-        this.pending = new Set()
-    }
-
-    getResendResponseStream(request, source = null) {
-        const responseStream = new Readable({
-            objectMode: true,
-            read() {}
-        })
-
-        // L2 only works on local requests
-        if (source === null) {
-            const proxiedResend = new ProxiedResend(
-                request,
-                responseStream,
-                this.nodeToNode,
-                this.getNeighbors,
-                this.maxTries,
-                this.timeout,
-                () => this.pending.delete(proxiedResend)
-            )
-            this.pending.add(proxiedResend)
-            proxiedResend.commence()
-        } else {
-            responseStream.push(null)
-        }
-
-        return responseStream
-    }
-
-    stop() {
-        this.pending.forEach((proxiedResend) => proxiedResend.cancel())
-    }
-}
-
-/**
  * Internal class used by StorageNodeResendStrategy (L3) to keep track of
  * resend requests that are pending (STORAGE_NODES) response from tracker.
  * Also handles timeouts if tracker response not received in a timely manner.
@@ -408,7 +363,6 @@ class StorageNodeResendStrategy {
 }
 
 module.exports = {
-    AskNeighborsResendStrategy,
     StorageResendStrategy,
     StorageNodeResendStrategy
 }
