@@ -5,17 +5,22 @@ const { ResendResponseResending,
 module.exports = function proxyRequestStream(sendFn, request, requestStream) {
     const { streamId, streamPartition, requestId } = request
     let fulfilled = false
+    let first = true
     requestStream
-        .once('data', () => {
-            sendFn(new ResendResponseResending({
-                requestId, streamId, streamPartition
-            }))
-            fulfilled = true
+        .on('readable', () => {
+            let data = null
+            while ((data = requestStream.read()) != null) {
+                if (first) {
+                    first = false
+                    fulfilled = true
+                    sendFn(new ResendResponseResending({
+                        requestId, streamId, streamPartition
+                    }))
+                }
+                sendFn(data)
+            }
         })
-        .on('data', (unicastMessage) => {
-            sendFn(unicastMessage)
-        })
-        .on('end', () => {
+        .once('end', () => {
             if (fulfilled) {
                 sendFn(new ResendResponseResent({
                     requestId, streamId, streamPartition

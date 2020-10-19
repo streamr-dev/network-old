@@ -139,24 +139,23 @@ class Node extends EventEmitter {
             this.subscribeToStreamIfHaveNotYet(new StreamIdAndPartition(streamId, streamPartition))
         }
 
-        const requestStream = this.resendHandler.handleRequest(request, source)
+        const resendStream = this.resendHandler.handleRequest(request, source)
         if (source != null) {
             proxyRequestStream(
                 async (data) => {
                     try {
                         await this.protocols.nodeToNode.send(source, data)
                     } catch (e) {
-                        // TODO: catch specific error
-                        const requests = this.resendHandler.cancelResendsOfNode(source)
+                        const requests = this.resendHandler.stopResendsOfNode(source)
                         this.logger.warn('Failed to send resend response to %s,\n\tcancelling resends %j,\n\tError %s',
                             source, requests, e)
                     }
                 },
                 request,
-                requestStream
+                resendStream
             )
         }
-        return requestStream
+        return resendStream
     }
 
     onTrackerInstructionReceived(trackerId, instructionMessage) {
@@ -414,7 +413,7 @@ class Node extends EventEmitter {
 
     onNodeDisconnected(node) {
         this.metrics.inc('onNodeDisconnected')
-        this.resendHandler.cancelResendsOfNode(node)
+        this.resendHandler.stopResendsOfNode(node)
         this.streams.removeNodeFromAllStreams(node)
         this.logger.debug('removed all subscriptions of node %s', node)
         this.emit(events.NODE_DISCONNECTED, node)

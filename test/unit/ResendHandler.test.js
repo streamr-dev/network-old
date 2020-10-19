@@ -1,12 +1,11 @@
 const { Readable } = require('stream')
 
 const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const intoStream = require('into-stream')
-const { waitForStreamToEnd } = require('streamr-test-utils')
+const { waitForStreamToEnd, toReadableStream } = require('streamr-test-utils')
 
 const ResendHandler = require('../../src/resend/ResendHandler')
 
-const { StreamMessage, MessageID, MessageRef } = MessageLayer
+const { StreamMessage, MessageID } = MessageLayer
 
 const streamMessage1 = new StreamMessage({
     messageId: new MessageID('streamId', 0, 1000, 0, 'publisherId', 'msgChainId'),
@@ -54,7 +53,7 @@ describe('ResendHandler', () => {
     describe('initialized with strategy that returns empty stream', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
-                getResendResponseStream: () => intoStream.object([])
+                getResendResponseStream: () => toReadableStream()
             }], notifyError)
         })
 
@@ -67,7 +66,7 @@ describe('ResendHandler', () => {
     describe('initialized with strategy that returns stream that immediately errors', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
-                getResendResponseStream: () => intoStream.object(Promise.reject(new Error('yikes')))
+                getResendResponseStream: () => toReadableStream(new Error('yikes'))
             }], notifyError)
         })
 
@@ -85,10 +84,7 @@ describe('ResendHandler', () => {
     describe('initialized with strategy that returns stream with 2 messages', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
-                getResendResponseStream: () => intoStream.object([
-                    unicastMsg1,
-                    unicastMsg2,
-                ])
+                getResendResponseStream: () => toReadableStream(unicastMsg1, unicastMsg2)
             }], notifyError)
         })
 
@@ -101,20 +97,7 @@ describe('ResendHandler', () => {
     describe('initialized with strategy that returns stream with 2 messages but then errors', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
-                getResendResponseStream: () => {
-                    const stream = new Readable({
-                        objectMode: true,
-                        read() {}
-                    })
-
-                    setImmediate(() => stream.push(unicastMsg1))
-                    setImmediate(() => stream.push(unicastMsg2))
-                    setImmediate(() => {
-                        stream.emit('error', new Error('yikes'))
-                    })
-
-                    return stream
-                }
+                getResendResponseStream: () => toReadableStream(unicastMsg1, unicastMsg2, new Error('yikes'))
             }], notifyError)
         })
 
@@ -132,32 +115,16 @@ describe('ResendHandler', () => {
     describe('initialized with 1st strategy empty, 2nd erroring, and 3rd fulfilling', () => {
         beforeEach(() => {
             const firstStrategy = {
-                getResendResponseStream: () => intoStream.object([])
+                getResendResponseStream: () => toReadableStream()
             }
-
             const secondStrategy = {
-                getResendResponseStream: () => {
-                    const stream = new Readable({
-                        objectMode: true,
-                        read() {}
-                    })
-                    setImmediate(() => stream.push(unicastMsg2))
-                    setImmediate(() => {
-                        stream.emit('error', new Error('yikes'))
-                    })
-                    return stream
-                }
+                getResendResponseStream: () => toReadableStream(unicastMsg2, new Error('yikes'))
             }
-
             const thirdStrategy = {
-                getResendResponseStream: () => intoStream.object([
-                    unicastMsg1,
-                    unicastMsg2,
-                ])
+                getResendResponseStream: () => toReadableStream(unicastMsg1, unicastMsg2)
             }
 
-            resendHandler = new ResendHandler([firstStrategy, secondStrategy, thirdStrategy],
-                notifyError)
+            resendHandler = new ResendHandler([firstStrategy, secondStrategy, thirdStrategy], notifyError)
         })
 
         test('handleRequest(request) returns stream with expected messages', async () => {
@@ -177,7 +144,7 @@ describe('ResendHandler', () => {
             neverShouldBeInvokedFn = jest.fn()
 
             const firstStrategy = {
-                getResendResponseStream: () => intoStream.object([unicastMsg1])
+                getResendResponseStream: () => toReadableStream(unicastMsg1)
             }
 
             const secondStrategy = {
@@ -212,12 +179,13 @@ describe('ResendHandler', () => {
             expect(underlyingResponeStream.destroyed).toEqual(true)
             done()
         })
-        requestStream.destroy()
+        requestStream.resume()
+        setImmediate(() => requestStream.destroy())
     })
 
     test('arguments to notifyError are formed correctly', async () => {
         resendHandler = new ResendHandler([{
-            getResendResponseStream: () => intoStream.object(Promise.reject(new Error('yikes')))
+            getResendResponseStream: () => toReadableStream(new Error('yikes'))
         }], notifyError)
 
         await waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
@@ -235,7 +203,7 @@ describe('ResendHandler', () => {
 
     test('unicast messages are piped through without changes', async () => {
         resendHandler = new ResendHandler([{
-            getResendResponseStream: () => intoStream.object([unicastMsg1])
+            getResendResponseStream: () => toReadableStream(unicastMsg1)
         }], notifyError)
         const streamAsArray = await waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
 

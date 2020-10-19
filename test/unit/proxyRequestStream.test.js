@@ -6,9 +6,25 @@ const {
     UnicastMessage,
     ResendLastRequest,
 } = require('streamr-client-protocol').ControlLayer
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
+const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
 
+const ResendStream = require('../../src/resend/ResendStream')
 const proxyRequestStream = require('../../src/resend/proxyRequestStream')
+
+function wrapAsResendStream(readableStream) {
+    return new ResendStream({
+        request: null,
+        source: null,
+        maxInactivityPeriodInMs: 1000 * 1000 * 64,
+        onStop: () => {},
+        onError: () => {},
+        resendStrategies: [{
+            getResendResponseStream() {
+                return readableStream
+            }
+        }]
+    })
+}
 
 describe('proxyRequestStream', () => {
     let sendFn
@@ -26,7 +42,7 @@ describe('proxyRequestStream', () => {
     })
 
     it('empty requestStream causes only NoResend to be sent', (done) => {
-        const stream = intoStream.object([])
+        const stream = wrapAsResendStream(intoStream.object([]))
         proxyRequestStream(sendFn, request, stream)
         stream.on('end', () => {
             expect(sendFn.mock.calls).toEqual([
@@ -53,14 +69,14 @@ describe('proxyRequestStream', () => {
                 moi: 'maailma'
             },
         })
-        const stream = intoStream.object([
+        const stream = wrapAsResendStream(intoStream.object([
             new UnicastMessage({
                 requestId: 'requestId', streamMessage: firstMessage
             }),
             new UnicastMessage({
                 requestId: 'requestId', streamMessage: secondMessage
             }),
-        ])
+        ]))
 
         proxyRequestStream(sendFn, request, stream)
 

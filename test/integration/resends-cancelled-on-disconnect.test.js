@@ -51,9 +51,7 @@ const createSlowStream = () => {
 describe('resend cancellation on disconnect', () => {
     let tracker
     let contactNode
-    let neighborOne
-    let neighborTwo
-    let neighborThree
+    let storageNode
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -73,29 +71,10 @@ describe('resend cancellation on disconnect', () => {
                 requestRange: () => intoStream.object([]),
             }]
         })
-        neighborOne = await startNetworkNode({
+        storageNode = await startStorageNode({
             host: '127.0.0.1',
             port: 28652,
-            id: 'neighborOne',
-            trackers: [tracker.getAddress()],
-            storages: [{
-                store: () => {},
-                requestLast: () => createSlowStream(),
-                requestFrom: () => intoStream.object([]),
-                requestRange: () => intoStream.object([]),
-            }]
-        })
-        neighborTwo = await startNetworkNode({
-            host: '127.0.0.1',
-            port: 28653,
-            id: 'neighborTwo',
-            trackers: [tracker.getAddress()],
-            storages: []
-        })
-        neighborThree = await startStorageNode({
-            host: '127.0.0.1',
-            port: 28654,
-            id: 'neighborThree',
+            id: 'storageNode',
             trackers: [tracker.getAddress()],
             storages: [{
                 store: () => {},
@@ -106,38 +85,27 @@ describe('resend cancellation on disconnect', () => {
         })
 
         contactNode.subscribe('streamId', 0)
-        neighborOne.subscribe('streamId', 0)
-        neighborTwo.subscribe('streamId', 0)
-        neighborThree.subscribe('streamId', 0)
+        storageNode.subscribe('streamId', 0)
 
         contactNode.start()
-        neighborOne.start()
-        neighborTwo.start()
-        neighborThree.start()
+        storageNode.start()
 
         await Promise.all([
             waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(neighborOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(neighborTwo, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(neighborThree, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED),
         ])
     })
 
     afterAll(async () => {
         await tracker.stop()
         await contactNode.stop()
-        await neighborOne.stop()
-        await neighborTwo.stop()
-        await neighborThree.stop()
+        await storageNode.stop()
     })
 
     test('nodes do not attempt to fulfill a resend request after requesting node disconnects', async () => {
-        contactNode.requestResendLast('streamId', 0, 'subId', 10)
-        await Promise.race([
-            waitForEvent(neighborOne, Node.events.RESEND_REQUEST_RECEIVED),
-            waitForEvent(neighborTwo, Node.events.RESEND_REQUEST_RECEIVED),
-            waitForEvent(neighborThree, Node.events.RESEND_REQUEST_RECEIVED),
-        ])
+        const s = contactNode.requestResendLast('streamId', 0, 'subId', 10)
+        s.resume()
+        await waitForEvent(storageNode, Node.events.RESEND_REQUEST_RECEIVED)
         await contactNode.stop()
         return wait(500) // will throw if sending to non-connected address
     })
