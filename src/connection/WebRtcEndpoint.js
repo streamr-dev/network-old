@@ -149,7 +149,6 @@ class WebRtcEndpoint extends EventEmitter {
             } else {
                 try {
                     this.dataChannels[targetPeerId].send(queueItem.getMessage())
-                    console.log(this.dataChannels[targetPeerId].bufferedAmount)
                     this.messageQueue[targetPeerId].pop()
                     queueItem.delivered()
                 } catch (e) {
@@ -343,7 +342,7 @@ class WebRtcEndpoint extends EventEmitter {
                 dc.send('ping')
             }
         } catch (e) {
-            if (attempt < 3) {
+            if (attempt < 5) {
                 console.error(`Failed to ping connection: ${peerId}, error ${e}, reattempting`)
                 setTimeout(() => this.ping(peerId, attempt + 1), 2000)
             } else {
