@@ -149,6 +149,7 @@ class WebRtcEndpoint extends EventEmitter {
             } else {
                 try {
                     this.dataChannels[targetPeerId].send(queueItem.getMessage())
+                    console.log(this.dataChannels[targetPeerId].bufferedAmount)
                     this.messageQueue[targetPeerId].pop()
                     queueItem.delivered()
                 } catch (e) {
@@ -330,6 +331,28 @@ class WebRtcEndpoint extends EventEmitter {
         }
     }
 
+    ping(peerId, attempt = 0) {
+        const dc = this.dataChannels[peerId]
+        try {
+            if (dc.readyState === 'open') {
+                if (dc.respondedPong === false) {
+                    throw Error('dataChannel is not active')
+                }
+                dc.respondedPong = false
+                dc.rttStart = Date.now()
+                dc.send('ping')
+            }
+        } catch (e) {
+            if (attempt < 3) {
+                console.error(`Failed to ping connection: ${peerId}, error ${e}, reattempting`)
+                setTimeout(() => this.ping(peerId, attempt + 1), 2000)
+            } else {
+                console.error(`Failed all ping reattempts to connection: ${peerId}, error ${e}, terminating connection`)
+                this.close(peerId)
+            }
+        }
+    }
+
     pong(peerId) {
         const dataChannel = this.dataChannels[peerId]
         if (dataChannel.readyState === 'open') {
@@ -339,22 +362,7 @@ class WebRtcEndpoint extends EventEmitter {
 
     _pingConnections() {
         const addresses = Object.keys(this.connections)
-        addresses.forEach((address) => {
-            const dc = this.dataChannels[address]
-            try {
-                if (dc.readyState === 'open') {
-                    if (dc.respondedPong === false) {
-                        throw Error('dataChannel is not active')
-                    }
-                    dc.respondedPong = false
-                    dc.rttStart = Date.now()
-                    dc.send('ping')
-                }
-            } catch (e) {
-                console.error(`Failed to ping connection: ${address}, error ${e}, terminating connection`)
-                this.close(address)
-            }
-        })
+        addresses.forEach((address) => (this.ping(address)))
     }
 
     _isConnected(targetPeerId) {

@@ -284,7 +284,7 @@ class Node extends EventEmitter {
                     this.protocols.nodeToNode.sendData(subscriber, streamMessage)
                 } catch (e) {
                     console.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
-                    this.emit(streamMessage.MESSAGE_PROPAGATION_FAILED, e)
+                    this.emit(streamMessage.MESSAGE_PROPAGATION_FAILED, streamMessage, subscriber, e)
                 }
             })
 
