@@ -70,7 +70,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
-        this.bufferLow = 65535
+        this.bufferLow = 16384
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
