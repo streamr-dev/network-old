@@ -236,7 +236,6 @@ class WsEndpoint extends EventEmitter {
         try {
             if (ws.constructor.name === 'uWS.WebSocket') {
                 ws.send(message)
-                this._evaluateBackPressure(ws)
                 onSuccess(recipientAddress, recipientId, message)
             } else {
                 ws.send(message, (err) => {
@@ -247,6 +246,7 @@ class WsEndpoint extends EventEmitter {
                     }
                 })
             }
+            this._evaluateBackPressure(ws)
         } catch (e) {
             this.metrics.inc('send:failed')
             this.logger.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
@@ -258,12 +258,12 @@ class WsEndpoint extends EventEmitter {
         const bufferedAmount = getBufferedAmount(ws)
         if (!ws.highBackPressure && bufferedAmount > HIGH_BACK_PRESSURE) {
             this.logger.debug('Back pressure HIGH for %s at %d', this.id, bufferedAmount)
-            this.emit(events.HIGH_BACK_PRESSURE, this.peerBook.getPeerInfo(ws.address))
+            this.emit(events.HIGH_BACK_PRESSURE, ws.peerInfo)
             // eslint-disable-next-line no-param-reassign
             ws.highBackPressure = true
         } else if (ws.highBackPressure && bufferedAmount < LOW_BACK_PRESSURE) {
             this.logger.debug('Back pressure LOW for %s at %d', this.id, bufferedAmount)
-            this.emit(events.LOW_BACK_PRESSURE, this.peerBook.getPeerInfo(ws.address))
+            this.emit(events.LOW_BACK_PRESSURE, ws.peerInfo)
             // eslint-disable-next-line no-param-reassign
             ws.highBackPressure = false
         }
@@ -450,14 +450,6 @@ class WsEndpoint extends EventEmitter {
             }
 
             const clientPeerInfo = new PeerInfo(peerId, peerType)
-
-            // Allowed by library https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#use-the-websocketgetuserdata-feature
-            // see node_modules/uWebSockets.js/index.d.ts WebSocket definition
-            // eslint-disable-next-line no-param-reassign
-            ws.peerInfo = clientPeerInfo
-            // eslint-disable-next-line no-param-reassign
-            ws.address = address
-
             if (this.isConnected(address)) {
                 ws.close(disconnectionCodes.DUPLICATE_SOCKET, disconnectionReasons.DUPLICATE_SOCKET)
                 return
@@ -500,6 +492,10 @@ class WsEndpoint extends EventEmitter {
             return false
         }
 
+        // eslint-disable-next-line no-param-reassign
+        ws.peerInfo = peerInfo
+        // eslint-disable-next-line no-param-reassign
+        ws.address = address
         this.peerBook.add(address, peerInfo)
         this.connections.set(address, ws)
         this.metrics.set('connections', this.connections.size)
