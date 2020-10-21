@@ -25,7 +25,7 @@ program
 
 const publisherId = program.id || `publisher-${program.port}`
 const name = program.nodeName || publisherId
-const noise = parseInt(program.noise)
+const noise = parseInt(program.noise, 10)
 
 const messageChainId = `message-chain-id-${program.port}`
 const streamObj = new StreamIdAndPartition(program.streamId, 0)
