@@ -11,7 +11,7 @@ const MessageBuffer = require('../helpers/MessageBuffer')
 const { disconnectionReasons } = require('../messages/messageTypes')
 const { StreamIdAndPartition } = require('../identifiers')
 const Metrics = require('../metrics')
-const { promiseTimeout } = require('../helpers/PromiseTimeout')
+const { promiseTimeout } = require('../helpers/PromiseTools')
 
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')

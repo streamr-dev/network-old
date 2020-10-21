@@ -4,6 +4,8 @@ const Heap = require('heap')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
+const { sleep } = require('../helpers/PromiseTools')
+
 const { PeerInfo } = require('./PeerInfo')
 
 const events = Object.freeze({
@@ -141,7 +143,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
     }
 
-    _attemptToFlushMessages(targetPeerId) {
+    async _attemptToFlushMessages(targetPeerId) {
         while (this.messageQueue[targetPeerId] && !this.messageQueue[targetPeerId].empty()) {
             const queueItem = this.messageQueue[targetPeerId].peek()
             if (queueItem.isFailed()) {
@@ -154,15 +156,15 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        setTimeout(() => {
-                            queueItem.incrementTries({
-                                error: 'Buffer congested',
-                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
-                                'connection.connectionState': this.connections[targetPeerId].connectionState,
-                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
-                                message: queueItem.getMessage()
-                            })
-                        }, 1)
+                        // eslint-disable-next-line no-await-in-loop
+                        await sleep(1)
+                        queueItem.incrementTries({
+                            error: 'Buffer congested',
+                            'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                            'connection.connectionState': this.connections[targetPeerId].connectionState,
+                            'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                            message: queueItem.getMessage()
+                        })
                     }
                 } catch (e) {
                     queueItem.incrementTries({
