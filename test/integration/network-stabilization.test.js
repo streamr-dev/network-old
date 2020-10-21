@@ -1,4 +1,5 @@
 const assert = require('assert')
+
 const { wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
