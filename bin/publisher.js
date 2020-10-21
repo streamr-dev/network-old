@@ -19,15 +19,27 @@ program
     .option('--streamId <streamId>', 'streamId to publish', 'stream-0')
     .option('--metrics <metrics>', 'log metrics', false)
     .option('--intervalInMs <intervalInMs>', 'interval to publish in ms', 2000)
+    .option('--noise <noise>', 'bytes to add to messages', 64)
     .description('Run publisher')
     .parse(process.argv)
 
 const publisherId = program.id || `publisher-${program.port}`
 const name = program.nodeName || publisherId
+const noise = parseInt(program.noise)
 
 const messageChainId = `message-chain-id-${program.port}`
 const streamObj = new StreamIdAndPartition(program.streamId, 0)
 const { id: streamId, partition } = streamObj
+
+function generateString(length) {
+    let result = ''
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    const charactersLength = characters.length
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength))
+    }
+    return result
+}
 
 startNetworkNode(program.ip, program.port, publisherId, [], null, name)
     .then((publisher) => {
@@ -47,7 +59,8 @@ startNetworkNode(program.ip, program.port, publisherId, [], null, name)
                 messageId: new MessageID(streamId, partition, timestamp, sequenceNumber, publisherId, messageChainId),
                 prevMsgRef: lastTimestamp == null ? null : new MessageRef(lastTimestamp, sequenceNumber - 1),
                 content: {
-                    msg
+                    msg,
+                    noise: generateString(noise)
                 },
             })
             publisher.publish(streamMessage)

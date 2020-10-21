@@ -70,7 +70,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
-
+        this.bufferLow = 65535
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
@@ -148,9 +148,22 @@ class WebRtcEndpoint extends EventEmitter {
                 this.messageQueue[targetPeerId].pop()
             } else {
                 try {
-                    this.dataChannels[targetPeerId].send(queueItem.getMessage())
-                    this.messageQueue[targetPeerId].pop()
-                    queueItem.delivered()
+                    if (this.dataChannels[targetPeerId].bufferedAmount < this.bufferLow) {
+                        this.dataChannels[targetPeerId].send(queueItem.getMessage())
+                        this.messageQueue[targetPeerId].pop()
+                        queueItem.delivered()
+                    } else {
+                        this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
+                        setTimeout(() => {
+                            queueItem.incrementTries({
+                                error: 'Buffer congested',
+                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                                'connection.connectionState': this.connections[targetPeerId].connectionState,
+                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                                message: queueItem.getMessage()
+                            })
+                        }, 1)
+                    }
                 } catch (e) {
                     queueItem.incrementTries({
                         error: e.toString(),
