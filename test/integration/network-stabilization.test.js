@@ -6,7 +6,7 @@ const { startNetworkNode, startTracker } = require('../../src/composition')
 
 function areEqual(a, b) {
     try {
-        assert.deepStrictEqual(a, b);
+        assert.deepStrictEqual(a, b)
     } catch (error) {
         if (error.code === 'ERR_ASSERTION') {
             return false
