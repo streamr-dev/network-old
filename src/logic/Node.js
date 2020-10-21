@@ -155,6 +155,28 @@ class Node extends EventEmitter {
                 request,
                 requestStream
             )
+
+            //  Backpressure management
+            const pauseFn = (nodeId) => {
+                if (nodeId === source) {
+                    requestStream.pause()
+                }
+            }
+            const resumeFn = (nodeId) => {
+                if (nodeId === source) {
+                    requestStream.resume()
+                }
+            }
+            this.protocols.nodeToNode.on(NodeToNode.events.LOW_BACK_PRESSURE, resumeFn)
+            this.protocols.nodeToNode.on(NodeToNode.events.HIGH_BACK_PRESSURE, pauseFn)
+            requestStream.on('end', () => {
+                this.protocols.nodeToNode.removeListener(NodeToNode.events.LOW_BACK_PRESSURE, resumeFn)
+                this.protocols.nodeToNode.removeListener(NodeToNode.events.HIGH_BACK_PRESSURE, pauseFn)
+            })
+            requestStream.on('error', () => {
+                this.protocols.nodeToNode.removeListener(NodeToNode.events.LOW_BACK_PRESSURE, resumeFn)
+                this.protocols.nodeToNode.removeListener(NodeToNode.events.HIGH_BACK_PRESSURE, pauseFn)
+            })
         }
         return requestStream
     }

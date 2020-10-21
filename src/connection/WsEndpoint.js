@@ -11,10 +11,16 @@ const extraLogger = require('../helpers/logger')('streamr:ws-endpoint')
 const { PeerBook } = require('./PeerBook')
 const { PeerInfo } = require('./PeerInfo')
 
+const HIGH_BACK_PRESSURE = 1024 * 1024 * 2
+const LOW_BACK_PRESSURE = 1024 * 1024
+const WS_BUFFER_SIZE = HIGH_BACK_PRESSURE + 1024 // add 1 MB safety margin
+
 const events = Object.freeze({
     PEER_CONNECTED: 'streamr:peer:connect',
     PEER_DISCONNECTED: 'streamr:peer:disconnect',
-    MESSAGE_RECEIVED: 'streamr:message-received'
+    MESSAGE_RECEIVED: 'streamr:message-received',
+    HIGH_BACK_PRESSURE: 'streamr:high-back-pressure',
+    LOW_BACK_PRESSURE: 'streamr:low-back-pressure',
 })
 
 const disconnectionCodes = Object.freeze({
@@ -118,6 +124,7 @@ class WsEndpoint extends EventEmitter {
         this.wss.ws('/ws', {
             compression: 0,
             maxPayloadLength: 1024 * 1024,
+            maxBackpressure: WS_BUFFER_SIZE,
             idleTimeout: 0,
             upgrade: (res, req, context) => {
                 res.writeStatus('101 Switching Protocols')
@@ -147,7 +154,7 @@ class WsEndpoint extends EventEmitter {
                 }
             },
             drain: (ws) => {
-                this.logger.debug(`WebSocket backpressure: ${ws.getBufferedAmount()}`)
+                this._evaluateBackPressure(ws)
             },
             close: (ws, code, message) => {
                 const reason = ab2str(message)
@@ -228,10 +235,8 @@ class WsEndpoint extends EventEmitter {
 
         try {
             if (ws.constructor.name === 'uWS.WebSocket') {
-                const res = ws.send(message)
-                if (!res && ws.getBufferedAmount() > 8 * 1024 * 1024) {
-                    this.logger.warn(`buffer high for ${recipientId} at ${ws.getBufferedAmount()}`)
-                }
+                ws.send(message)
+                this._evaluateBackPressure(ws)
                 onSuccess(recipientAddress, recipientId, message)
             } else {
                 ws.send(message, (err) => {
@@ -246,6 +251,21 @@ class WsEndpoint extends EventEmitter {
             this.metrics.inc('send:failed')
             this.logger.error('sending to %s failed because of %s, readyState is', recipientAddress, e, ws.readyState)
             terminateWs(ws, this.logger)
+        }
+    }
+
+    _evaluateBackPressure(ws) {
+        const bufferedAmount = getBufferedAmount(ws)
+        if (!ws.highBackPressure && bufferedAmount > HIGH_BACK_PRESSURE) {
+            this.logger.debug('Back pressure HIGH for %s at %d', this.id, bufferedAmount)
+            this.emit(events.HIGH_BACK_PRESSURE, this.peerBook.getPeerInfo(ws.address))
+            // eslint-disable-next-line no-param-reassign
+            ws.highBackPressure = true
+        } else if (ws.highBackPressure && bufferedAmount < LOW_BACK_PRESSURE) {
+            this.logger.debug('Back pressure LOW for %s at %d', this.id, bufferedAmount)
+            this.emit(events.LOW_BACK_PRESSURE, this.peerBook.getPeerInfo(ws.address))
+            // eslint-disable-next-line no-param-reassign
+            ws.highBackPressure = false
         }
     }
 
