@@ -143,7 +143,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
     }
 
-    _attemptToFlushMessages(targetPeerId) {
+    async _attemptToFlushMessages(targetPeerId) {
         while (this.messageQueue[targetPeerId] && !this.messageQueue[targetPeerId].empty()) {
             const queueItem = this.messageQueue[targetPeerId].peek()
             if (queueItem.isFailed()) {
@@ -156,26 +156,15 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        if (queueItem.tries < 3) {
-                            queueItem.incrementTries({
-                                error: 'Buffer congested',
-                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
-                                'connection.connectionState': this.connections[targetPeerId].connectionState,
-                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
-                                message: queueItem.getMessage()
-                            })
-                            setImmediate(this._attemptToFlushMessages(targetPeerId))
-                            break
-                        } else {
-                            queueItem.incrementTries({
-                                error: 'Buffer congested',
-                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
-                                'connection.connectionState': this.connections[targetPeerId].connectionState,
-                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
-                                message: queueItem.getMessage()
-                            })
-                            setTimeout(this._attemptToFlushMessages(targetPeerId), 5)
-                        }
+                        // eslint-disable-next-line no-await-in-loop
+                        await immediateSleep()
+                        queueItem.incrementTries({
+                            error: 'Buffer congested',
+                            'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                            'connection.connectionState': this.connections[targetPeerId].connectionState,
+                            'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                            message: queueItem.getMessage()
+                        })
                     }
                 } catch (e) {
                     queueItem.incrementTries({
