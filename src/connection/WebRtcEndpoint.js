@@ -156,7 +156,7 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        setImmediate(this._attemptToFlushMessages(targetPeerId))
+                        setTimeout(this._attemptToFlushMessages(targetPeerId), 0)
                         break
                     }
                 } catch (e) {
