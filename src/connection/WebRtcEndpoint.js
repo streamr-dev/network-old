@@ -72,7 +72,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
-        this.bufferLow = 65536
+        this.bufferLow = 16384
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, offer }) => {
@@ -156,14 +156,6 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        // eslint-disable-next-line no-await-in-loop
-                        queueItem.incrementTries({
-                            error: 'Buffer congested',
-                            'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
-                            'connection.connectionState': this.connections[targetPeerId].connectionState,
-                            'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
-                            message: queueItem.getMessage()
-                        })
                         setImmediate(this._attemptToFlushMessages(targetPeerId))
                         break
                     }
