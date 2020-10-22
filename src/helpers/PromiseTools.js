@@ -23,7 +23,14 @@ const sleep = (ms) => {
     })
 }
 
+const immediateSleep = () => {
+    return new Promise((resolve) => {
+        setImmediate(resolve)
+    })
+}
+
 module.exports = {
     promiseTimeout,
-    sleep
+    sleep,
+    immediateSleep
 }
