@@ -143,7 +143,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
     }
 
-    async _attemptToFlushMessages(targetPeerId) {
+    _attemptToFlushMessages(targetPeerId) {
         while (this.messageQueue[targetPeerId] && !this.messageQueue[targetPeerId].empty()) {
             const queueItem = this.messageQueue[targetPeerId].peek()
             if (queueItem.isFailed()) {
@@ -157,7 +157,6 @@ class WebRtcEndpoint extends EventEmitter {
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
                         // eslint-disable-next-line no-await-in-loop
-                        await immediateSleep()
                         queueItem.incrementTries({
                             error: 'Buffer congested',
                             'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
@@ -165,6 +164,8 @@ class WebRtcEndpoint extends EventEmitter {
                             'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
                             message: queueItem.getMessage()
                         })
+                        setImmediate(this._attemptToFlushMessages(targetPeerId))
+                        break
                     }
                 } catch (e) {
                     queueItem.incrementTries({
