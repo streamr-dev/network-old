@@ -156,8 +156,26 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        setTimeout(this._attemptToFlushMessages(targetPeerId), 0)
-                        break
+                        if (queueItem.tries < 3) {
+                            queueItem.incrementTries({
+                                error: 'Buffer congested',
+                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                                'connection.connectionState': this.connections[targetPeerId].connectionState,
+                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                                message: queueItem.getMessage()
+                            })
+                            setImmediate(this._attemptToFlushMessages(targetPeerId))
+                            break
+                        } else {
+                            queueItem.incrementTries({
+                                error: 'Buffer congested',
+                                'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
+                                'connection.connectionState': this.connections[targetPeerId].connectionState,
+                                'dataChannel.readyState': this.dataChannels[targetPeerId].readyState,
+                                message: queueItem.getMessage()
+                            })
+                            setTimeout(this._attemptToFlushMessages(targetPeerId), 5)
+                        }
                     }
                 } catch (e) {
                     queueItem.incrementTries({
