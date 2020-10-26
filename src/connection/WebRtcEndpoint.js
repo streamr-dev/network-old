@@ -271,7 +271,7 @@ class WebRtcEndpoint extends EventEmitter {
             id: 0,
             negotiated: true
         })
-        dataChannel.bufferedAmountLowThreshold = 16384
+
         this.connections[targetPeerId] = connection
         this.dataChannels[targetPeerId] = dataChannel
         this.peerInfos[targetPeerId] = PeerInfo.newUnknown(targetPeerId)
@@ -347,9 +347,6 @@ class WebRtcEndpoint extends EventEmitter {
                 this.debug('dataChannel.onmessage', this.id, targetPeerId, event.data)
                 this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], event.data)
             }
-        }
-        dataChannel.onbufferedamountlow = (event) => {
-            console.log('Buffered amount low', event)
         }
     }
 
