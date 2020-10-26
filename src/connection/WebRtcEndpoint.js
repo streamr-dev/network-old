@@ -4,7 +4,7 @@ const Heap = require('heap')
 const createDebug = require('debug')
 const { RTCPeerConnection, RTCSessionDescription } = require('wrtc')
 
-const { immediateSleep } = require('../helpers/PromiseTools')
+const { immediateSleep, sleep } = require('../helpers/PromiseTools')
 
 const { PeerInfo } = require('./PeerInfo')
 
@@ -156,8 +156,13 @@ class WebRtcEndpoint extends EventEmitter {
                         queueItem.delivered()
                     } else {
                         this.debug('dataChannel.onmessage.AvoidingBufferOverflow', this.id, targetPeerId)
-                        // eslint-disable-next-line no-await-in-loop
-                        await immediateSleep()
+                        if (queueItem.tries < 5) {
+                            // eslint-disable-next-line no-await-in-loop
+                            await immediateSleep()
+                        } else {
+                            // eslint-disable-next-line no-await-in-loop
+                            await sleep(5)
+                        }
                         queueItem.incrementTries({
                             error: 'Buffer congested',
                             'connection.iceConnectionState': this.connections[targetPeerId].iceConnectionState,
