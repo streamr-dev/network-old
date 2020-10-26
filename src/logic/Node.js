@@ -44,7 +44,7 @@ class Node extends EventEmitter {
             disconnectionWaitTime: 10 * 1000,
             protocols: [],
             resendStrategies: [],
-            metricsContext:  new MetricsContext(null)
+            metricsContext: new MetricsContext(null)
         }
         this.opts = {
             ...defaultOptions, ...opts
