@@ -65,8 +65,6 @@
     "tmp": "^0.2.1",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v18.4.0",
     "uuid": "^8.3.0",
-    "wait-for-event": "^2.0.1",
-    "wrtc": "0.4.6",
     "ws": "^7.3.1"
   },
   "devDependencies": {
