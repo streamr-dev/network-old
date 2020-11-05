@@ -101,10 +101,7 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
-        setInterval(() => {
-            console.log('inbound ' + [...this.streams.streams.get('stream-0::0').inboundNodes].length)
-            console.log('connections ' + Object.keys(this.protocols.nodeToNode.endpoint.readyChannels).length)
-        }, 5000)
+
         this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
     }
 
