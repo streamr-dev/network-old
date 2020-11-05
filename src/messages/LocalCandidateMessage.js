@@ -10,17 +10,17 @@ module.exports = class LocalDescriptionMessage extends NetworkMessage {
         if (typeof targetNode === 'undefined') {
             throw new Error('targetNode cant be undefined')
         }
-        if (typeof mid === 'undefined') {
-            throw new Error('type cant be undefined')
-        }
         if (typeof candidate === 'undefined') {
             throw new Error('description cant be undefined')
+        }
+        if (typeof mid === 'undefined') {
+            throw new Error('type cant be undefined')
         }
 
         this.originatorInfo = originatorInfo
         this.targetNode = targetNode
-        this.mid = mid
         this.candidate = candidate
+        this.mid = mid
     }
 
     getOriginatorInfo() {
@@ -31,11 +31,11 @@ module.exports = class LocalDescriptionMessage extends NetworkMessage {
         return this.targetNode
     }
 
-    getMid() {
-        return this.mid
-    }
-
     getCandidate() {
         return this.candidate
+    }
+
+    getMid() {
+        return this.mid
     }
 }

@@ -10,18 +10,18 @@ module.exports = class RtcOfferMessage extends NetworkMessage {
         if (typeof targetNode === 'undefined') {
             throw new Error('targetNode cant be undefined')
         }
-        if (typeof description === 'undefined') {
-            throw new Error('description cant be undefined')
-        }
         if (typeof type === 'undefined') {
             throw new Error('type cant be undefined')
+        }
+        if (typeof description === 'undefined') {
+            throw new Error('description cant be undefined')
         }
 
         this.source = source
         this.originatorInfo = originatorInfo
         this.targetNode = targetNode
-        this.description = description
         this.type = type
+        this.description = description
     }
 
     getOriginatorInfo() {
@@ -32,12 +32,12 @@ module.exports = class RtcOfferMessage extends NetworkMessage {
         return this.targetNode
     }
 
-    getDescription() {
-        return this.description
-    }
-
     getType() {
         return this.type
+    }
+
+    getDescription() {
+        return this.description
     }
 
     getSource() {
