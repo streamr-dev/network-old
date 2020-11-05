@@ -275,7 +275,6 @@ class WebRtcEndpoint extends EventEmitter {
         }
         // eslint-disable-next-line no-param-reassign
         dataChannel.onClosed(() => {
-            console.log('dataChannel.onClosed', this.id, targetPeerId)
             this.debug('dataChannel.onClosed', this.id, targetPeerId)
             this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
             this.emit(`disconnected:${targetPeerId}`, targetPeerId)
