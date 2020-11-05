@@ -290,7 +290,6 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg.getTargetNode()).toEqual('trackerNode')
         expect(msg.getType()).toEqual('test')
         expect(msg.getDescription()).toEqual('description')
-        expect(msg.getSource()).toEqual('trackerServer')
     })
 
     test('sendRtcAnswer is delivered (trackerServer->trackerNode)', async () => {
@@ -303,7 +302,6 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg.getTargetNode()).toEqual('trackerNode')
         expect(msg.getType()).toEqual('test')
         expect(msg.getDescription()).toEqual('description')
-        expect(msg.getSource()).toEqual('trackerServer')
     })
 
     test('sendUnknownPeerRtcError is delivered', async () => {

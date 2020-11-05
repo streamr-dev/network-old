@@ -622,7 +622,6 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         test('if not (previously) subscribed to storage node, disconnect from storage node', async () => {
             isSubscribedTo.mockReturnValue(false)
             const stream = await waitForStreamToEnd(responseStream)
-            console.log(stream)
             expect(nodeToNode.disconnectFromNode).toBeCalledTimes(1)
             expect(nodeToNode.disconnectFromNode).toBeCalledWith('storageNode')
         })

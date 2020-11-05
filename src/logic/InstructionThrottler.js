@@ -4,7 +4,6 @@
  *  2. any new instructions arriving while an instruction is being handled are queued in a
  *     way where only the most latest instruction per streamId is kept in queue.
  */
-const { promiseTimeout } = require('../helpers/PromiseTools')
 
 module.exports = class InstructionThrottler {
     constructor(handleFn) {
