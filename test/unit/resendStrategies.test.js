@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 
 const intoStream = require('into-stream')
 const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const { waitForStreamToEnd } = require('streamr-test-utils')
+const { waitForStreamToEnd, wait } = require('streamr-test-utils')
 
 const { AskNeighborsResendStrategy,
     StorageResendStrategy,
@@ -433,13 +433,12 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
                     'storageNode-4'
                 ], 'tracker')
             )
-
             setImmediate(() => {
                 jest.runAllTimers()
                 expect(nodeToNode.connectToNode).toBeCalledTimes(3)
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-1', 'tracker', true)
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-2', 'tracker', true)
-                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-3', 'tracker', true)
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-1', 'tracker', true, false)
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-2', 'tracker', true, false)
+                expect(nodeToNode.connectToNode).toBeCalledWith('storageNode-3', 'tracker', true, false)
                 done()
             })
         })
@@ -622,7 +621,8 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         test('if not (previously) subscribed to storage node, disconnect from storage node', async () => {
             isSubscribedTo.mockReturnValue(false)
-            await waitForStreamToEnd(responseStream)
+            const stream = await waitForStreamToEnd(responseStream)
+            console.log(stream)
             expect(nodeToNode.disconnectFromNode).toBeCalledTimes(1)
             expect(nodeToNode.disconnectFromNode).toBeCalledWith('storageNode')
         })

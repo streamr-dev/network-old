@@ -65,8 +65,10 @@ describe('message propagation in network', () => {
         n2.subscribe('stream-1', 0)
         n3.subscribe('stream-1', 0)
 
-        await waitForEvent(n2, Node.events.NODE_SUBSCRIBED)
-        await waitForEvent(n3, Node.events.NODE_SUBSCRIBED)
+        await Promise.all([
+            waitForEvent(n2, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(n3, Node.events.NODE_SUBSCRIBED)
+        ])
 
         for (let i = 1; i <= 5; ++i) {
             n1.publish(new StreamMessage({

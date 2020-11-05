@@ -9,7 +9,10 @@ const msgTypes = {
     RTC_OFFER: 5,
     RTC_ANSWER: 6,
     RTC_ERROR: 7,
-    ICE_CANDIDATE: 8,
+    RTC_CONNECT: 8,
+    LOCAL_DESCRIPTION: 9,
+    LOCAL_CANDIDATE: 10,
+    REMOTE_CANDIDATE: 11
 }
 
 const disconnectionCodes = Object.freeze({

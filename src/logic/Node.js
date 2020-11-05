@@ -101,7 +101,10 @@ class Node extends EventEmitter {
             max: this.opts.bufferMaxSize,
             maxAge: this.opts.bufferMaxSize
         })
-
+        setInterval(() => {
+            console.log('inbound ' + [...this.streams.streams.get('stream-0::0').inboundNodes].length)
+            console.log('connections ' + Object.keys(this.protocols.nodeToNode.endpoint.readyChannels).length)
+        }, 5000)
         this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
     }
 
@@ -188,16 +191,23 @@ class Node extends EventEmitter {
         const nodesToUnsubscribeFrom = currentNodes.filter((nodeId) => !nodeIds.includes(nodeId))
 
         const subscribePromises = nodeIds.map(async (nodeId) => {
-            await promiseTimeout(2000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
-            this._clearDisconnectionTimer(nodeId)
-            await promiseTimeout(2000, this._subscribeToStreamOnNode(nodeId, streamId))
+            this._subscribeToStreamOnNode(nodeId, streamId)
+            try {
+                await promiseTimeout(2000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
+                this._clearDisconnectionTimer(nodeId)
+                this.emit(events.NODE_SUBSCRIBED, {
+                    streamId,
+                    nodeId
+                })
+            } catch (err) {
+                this._unsubscribeFromStreamOnNode(nodeId, streamId)
+            }
             return nodeId
         })
 
         const unsubscribePromises = nodesToUnsubscribeFrom.map((nodeId) => {
             return this._unsubscribeFromStreamOnNode(nodeId, streamId)
         })
-
         const results = await allSettled([allSettled(subscribePromises), allSettled(unsubscribePromises)])
         if (this.streams.isSetUp(streamId)) {
             this.streams.updateCounter(streamId, counter)
@@ -353,11 +363,6 @@ class Node extends EventEmitter {
     _subscribeToStreamOnNode(node, streamId) {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-
-        this.emit(events.NODE_SUBSCRIBED, {
-            streamId,
-            node
-        })
 
         return node
     }

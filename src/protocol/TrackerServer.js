@@ -9,9 +9,9 @@ const events = Object.freeze({
     NODE_STATUS_RECEIVED: 'streamr:tracker:peer-status',
     NODE_DISCONNECTED: 'streamr:tracker:node-disconnected',
     FIND_STORAGE_NODES_REQUEST: 'streamr:tracker:find-storage-nodes-request',
-    RTC_OFFER_RECEIVED: 'streamr:tracker:rtc-offer-received',
-    RTC_ANSWER_RECEIVED: 'streamr:tracker:rtc-answer-received',
-    ICE_CANDIDATE_RECEIVED: 'streamr:tracker:ice-candidate-received'
+    LOCAL_CANDIDATE_RECEIVED: 'streamr:tracker:local-candidate-received',
+    LOCAL_DESCRIPTION_RECEIVED: 'streamr:tracker:local-description-received',
+    RTC_CONNECT_RECEIVED: 'streamr:tracker:rtc-connect-received'
 })
 
 class TrackerServer extends EventEmitter {
@@ -31,21 +31,25 @@ class TrackerServer extends EventEmitter {
         return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeIds))
     }
 
-    sendRtcOffer(receiverNodeId, originatorInfo, data) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorInfo, receiverNodeId, data))
+    sendRtcOffer(receiverNodeId, originatorInfo, type, description, signaller) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorInfo, receiverNodeId, type, description, signaller))
     }
 
-    sendRtcAnswer(receiverNodeId, originatorInfo, data) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, data))
+    sendRtcAnswer(receiverNodeId, originatorInfo, type, description, signaller) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, type, description, signaller))
+    }
+
+    sendRtcConnect(receiverNodeId, originatorInfo, signaller) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcConnectMessage(originatorInfo, receiverNodeId, signaller))
+    }
+
+    sendRemoteCandidate(receiverNodeId, originatorInfo, candidate, mid) {
+        return this.endpoint.send(receiverNodeId, encoder.remoteCandidateMessage(originatorInfo, receiverNodeId, candidate, mid))
     }
 
     sendUnknownPeerRtcError(receiverNodeId, targetNodeId) {
         return this.endpoint.send(receiverNodeId,
             encoder.rtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, targetNodeId))
-    }
-
-    sendIceCandidate(receiverNodeId, originatorInfo, data) {
-        return this.endpoint.send(receiverNodeId, encoder.iceCandidateMessage(originatorInfo, receiverNodeId, data))
     }
 
     getAddress() {
@@ -81,14 +85,14 @@ class TrackerServer extends EventEmitter {
                 case encoder.FIND_STORAGE_NODES:
                     this.emit(events.FIND_STORAGE_NODES_REQUEST, message)
                     break
-                case encoder.RTC_OFFER:
-                    this.emit(events.RTC_OFFER_RECEIVED, message)
+                case encoder.LOCAL_DESCRIPTION:
+                    this.emit(events.LOCAL_DESCRIPTION_RECEIVED, message)
                     break
-                case encoder.RTC_ANSWER:
-                    this.emit(events.RTC_ANSWER_RECEIVED, message)
+                case encoder.LOCAL_CANDIDATE:
+                    this.emit(events.LOCAL_CANDIDATE_RECEIVED, message)
                     break
-                case encoder.ICE_CANDIDATE:
-                    this.emit(events.ICE_CANDIDATE_RECEIVED, message)
+                case encoder.RTC_CONNECT:
+                    this.emit(events.RTC_CONNECT_RECEIVED, message)
                     break
                 default:
                     break

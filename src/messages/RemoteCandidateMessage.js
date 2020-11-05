@@ -1,27 +1,26 @@
 const { msgTypes } = require('./messageTypes')
 const NetworkMessage = require('./NetworkMessage')
 
-module.exports = class RtcOfferMessage extends NetworkMessage {
-    constructor(originatorInfo, targetNode, type, description, source = null) {
-        super(msgTypes.RTC_OFFER, source)
+module.exports = class RemoteCandidateMessage extends NetworkMessage {
+    constructor(originatorInfo, targetNode, candidate, mid, source = null) {
+        super(msgTypes.REMOTE_CANDIDATE, source)
         if (typeof originatorInfo === 'undefined') {
             throw new Error('originatorInfo cant be undefined')
         }
         if (typeof targetNode === 'undefined') {
             throw new Error('targetNode cant be undefined')
         }
-        if (typeof description === 'undefined') {
-            throw new Error('description cant be undefined')
-        }
-        if (typeof type === 'undefined') {
+        if (typeof mid === 'undefined') {
             throw new Error('type cant be undefined')
         }
+        if (typeof candidate === 'undefined') {
+            throw new Error('description cant be undefined')
+        }
 
-        this.source = source
         this.originatorInfo = originatorInfo
         this.targetNode = targetNode
-        this.description = description
-        this.type = type
+        this.mid = mid
+        this.candidate = candidate
     }
 
     getOriginatorInfo() {
@@ -32,15 +31,11 @@ module.exports = class RtcOfferMessage extends NetworkMessage {
         return this.targetNode
     }
 
-    getDescription() {
-        return this.description
+    getMid() {
+        return this.mid
     }
 
-    getType() {
-        return this.type
-    }
-
-    getSource() {
-        return this.source
+    getCandidate() {
+        return this.candidate
     }
 }

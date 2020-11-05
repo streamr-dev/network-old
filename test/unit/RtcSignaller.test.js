@@ -5,7 +5,7 @@ const RtcSignaller = require('../../src/logic/RtcSignaller')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
-const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
+const RemoteCandidateMessage = require('../../src/messages/RemoteCandidateMessage')
 const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
 
 describe('RtcSignaller', () => {
@@ -19,22 +19,16 @@ describe('RtcSignaller', () => {
         rtcSignaller = new RtcSignaller(peerInfo, trackerNodeMock)
     })
 
-    it('invoking offer delegates to sendRtcOffer on trackerNode', () => {
-        trackerNodeMock.sendRtcOffer = jest.fn()
-        rtcSignaller.offer('router', 'targetNode', 'payload')
-        expect(trackerNodeMock.sendRtcOffer).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'payload')
+    it('invoking onLocalCandidate delegates to sendLocalCandidate on trackerNode', () => {
+        trackerNodeMock.sendLocalCandidate = jest.fn()
+        rtcSignaller.onLocalCandidate('router', 'targetNode', 'candidate', 'mid')
+        expect(trackerNodeMock.sendLocalCandidate).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'candidate', 'mid')
     })
 
-    it('invoking answer delegates to sendRtcAnswer on trackerNode', () => {
-        trackerNodeMock.sendRtcAnswer = jest.fn()
-        rtcSignaller.answer('router', 'targetNode', 'payload')
-        expect(trackerNodeMock.sendRtcAnswer).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'payload')
-    })
-
-    it('invoking onNewIceCandidate delegates to sendIceCandidate on trackerNode', () => {
-        trackerNodeMock.sendIceCandidate = jest.fn()
-        rtcSignaller.onNewIceCandidate('router', 'targetNode', 'payload')
-        expect(trackerNodeMock.sendIceCandidate).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'payload')
+    it('invoking onLocalDescription delegates to sendLocalDescription on trackerNode', () => {
+        trackerNodeMock.sendLocalDescription = jest.fn()
+        rtcSignaller.onLocalDescription('router', 'targetNode', 'type', 'description')
+        expect(trackerNodeMock.sendLocalDescription).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'type', 'description')
     })
 
     it('offerListener invoked when trackerNode emits RTC_OFFER_RECEIVED', () => {
@@ -42,12 +36,14 @@ describe('RtcSignaller', () => {
         rtcSignaller.setOfferListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.RTC_OFFER_RECEIVED,
-            new RtcOfferMessage(PeerInfo.newNode('originator'), 'node', 'payload', 'router')
+            new RtcOfferMessage(PeerInfo.newNode('originator'), 'node', 'type', 'description', 'router')
         )
         expect(cbFn).toHaveBeenCalledWith({
             routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
-            offer: 'payload'
+            type: 'type',
+            description: 'description',
+            source: 'router'
         })
     })
 
@@ -56,26 +52,28 @@ describe('RtcSignaller', () => {
         rtcSignaller.setAnswerListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.RTC_ANSWER_RECEIVED,
-            new RtcAnswerMessage(PeerInfo.newNode('originator'), 'node', 'payload', 'router')
+            new RtcAnswerMessage(PeerInfo.newNode('originator'), 'node', 'type', 'description', 'router')
         )
         expect(cbFn).toHaveBeenCalledWith({
             routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
-            answer: 'payload'
+            type: 'type',
+            description: 'description',
+            source: 'router'
         })
     })
 
-    it('iceCandidateListener invoked when trackerNode emits ICE_CANDIDATE_RECEIVED', () => {
+    it('remoteCandidateListener invoked when trackerNode emits REMOTE_CANDIDATE_RECEIVED', () => {
         const cbFn = jest.fn()
-        rtcSignaller.setIceCandidateListener(cbFn)
+        rtcSignaller.setRemoteCandidateListener(cbFn)
         trackerNodeMock.emit(
-            TrackerNode.events.ICE_CANDIDATE_RECEIVED,
-            new IceCandidateMessage(PeerInfo.newNode('originator'), 'node', 'payload', 'router')
+            TrackerNode.events.REMOTE_CANDIDATE_RECEIVED,
+            new RemoteCandidateMessage(PeerInfo.newNode('originator'), 'node', 'candidate', 'mid', 'router')
         )
         expect(cbFn).toHaveBeenCalledWith({
-            routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
-            candidate: 'payload'
+            candidate: 'candidate',
+            mid: 'mid'
         })
     })
 

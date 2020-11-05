@@ -6,54 +6,67 @@ function attachRtcSignalling(trackerServer) {
         throw new Error('trackerServer not instance of TrackerServer')
     }
 
-    trackerServer.on(TrackerServer.events.RTC_OFFER_RECEIVED, (rtcOfferMessage) => {
+    trackerServer.on(TrackerServer.events.LOCAL_DESCRIPTION_RECEIVED, (localDescriptionMessage) => {
         try {
-            trackerServer.sendRtcOffer(
-                rtcOfferMessage.getTargetNode(),
-                rtcOfferMessage.getOriginatorInfo(),
-                rtcOfferMessage.getData()
-            )
+            const type = localDescriptionMessage.getType()
+            if (type === 'answer') {
+                trackerServer.sendRtcAnswer(
+                    localDescriptionMessage.getTargetNode(),
+                    localDescriptionMessage.getOriginatorInfo(),
+                    type,
+                    localDescriptionMessage.getDescription(),
+                    trackerServer.endpoint.peerInfo.peerId
+                )
+            } else if (type === 'offer') {
+                trackerServer.sendRtcOffer(
+                    localDescriptionMessage.getTargetNode(),
+                    localDescriptionMessage.getOriginatorInfo(),
+                    type,
+                    localDescriptionMessage.getDescription(),
+                    trackerServer.endpoint.peerInfo.peerId
+                )
+            }
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
                 trackerServer.sendUnknownPeerRtcError(
-                    rtcOfferMessage.getOriginatorInfo().peerId,
-                    rtcOfferMessage.getTargetNode()
+                    localDescriptionMessage.getOriginatorInfo().peerId,
+                    localDescriptionMessage.getTargetNode()
                 )
             } else {
                 throw err
             }
         }
     })
-    trackerServer.on(TrackerServer.events.RTC_ANSWER_RECEIVED, (rtcAnswerMessage) => {
+    trackerServer.on(TrackerServer.events.LOCAL_CANDIDATE_RECEIVED, (localCandidateMessage) => {
         try {
-            trackerServer.sendRtcAnswer(
-                rtcAnswerMessage.getTargetNode(),
-                rtcAnswerMessage.getOriginatorInfo(),
-                rtcAnswerMessage.getData()
+            trackerServer.sendRemoteCandidate(
+                localCandidateMessage.getTargetNode(),
+                localCandidateMessage.getOriginatorInfo(),
+                localCandidateMessage.getCandidate(),
+                localCandidateMessage.getMid()
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
                 trackerServer.sendUnknownPeerRtcError(
-                    rtcAnswerMessage.getOriginatorInfo().peerId,
-                    rtcAnswerMessage.getTargetNode()
+                    localCandidateMessage.getOriginatorInfo().peerId,
+                    localCandidateMessage.getTargetNode()
                 )
             } else {
                 throw err
             }
         }
     })
-    trackerServer.on(TrackerServer.events.ICE_CANDIDATE_RECEIVED, (iceCandidateMessage) => {
+    trackerServer.on(TrackerServer.events.RTC_CONNECT_RECEIVED, (rtcConnectMessage) => {
         try {
-            trackerServer.sendIceCandidate(
-                iceCandidateMessage.getTargetNode(),
-                iceCandidateMessage.getOriginatorInfo(),
-                iceCandidateMessage.getData()
+            trackerServer.sendRtcConnect(
+                rtcConnectMessage.getTargetNode(),
+                rtcConnectMessage.getOriginatorInfo(),
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
                 trackerServer.sendUnknownPeerRtcError(
-                    iceCandidateMessage.getOriginatorInfo().peerId,
-                    iceCandidateMessage.getTargetNode()
+                    rtcConnectMessage.getOriginatorInfo().peerId,
+                    rtcConnectMessage.getTargetNode()
                 )
             } else {
                 throw err

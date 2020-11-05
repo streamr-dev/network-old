@@ -74,16 +74,16 @@ describe('tracker assigns storage node to streams on any resend', () => {
         const stream = subscriberOne.requestResendLast('streamId', 0, 'requestId', 10)
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.FIND_STORAGE_NODES_REQUEST)
         await waitForStreamToEnd(stream)
-
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {
                 storageNode: []
             }
         })
-
         const stream2 = subscriberTwo.requestResendLast('streamId2', 1, 'requestId2', 10)
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.FIND_STORAGE_NODES_REQUEST)
+        console.log('here')
         await waitForStreamToEnd(stream2)
+        console.log('here')
 
         expect(tracker.getTopology()).toEqual({
             'streamId::0': {

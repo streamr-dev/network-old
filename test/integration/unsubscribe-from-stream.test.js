@@ -69,6 +69,7 @@ describe('node unsubscribing from a stream', () => {
 
     test('connection between nodes is not kept if no shared streams', async () => {
         await wait(100)
+
         nodeB.unsubscribe('s', 2)
         await waitForEvent(nodeA, Node.events.NODE_UNSUBSCRIBED)
 

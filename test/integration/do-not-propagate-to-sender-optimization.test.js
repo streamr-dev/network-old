@@ -1,8 +1,9 @@
 const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { wait, waitForCondition } = require('streamr-test-utils')
+const { waitForEvent, waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { LOCALHOST } = require('../util')
+const Node = require('../../src/logic/Node')
 
 /**
  * This test verifies that on receiving a message, the receiver will not propagate the message to the sender as they
@@ -29,7 +30,11 @@ describe('optimization: do not propagate to sender', () => {
         n2.subscribe('stream-id', 0)
         n3.subscribe('stream-id', 0)
 
-        await wait(1000)
+        await Promise.all([
+            waitForEvent(n1, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(n2, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(n3, Node.events.NODE_SUBSCRIBED),
+        ])
     })
 
     afterAll(async () => {

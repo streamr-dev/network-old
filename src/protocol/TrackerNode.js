@@ -11,7 +11,9 @@ const events = Object.freeze({
     RTC_OFFER_RECEIVED: 'streamr:tracker-node:rtc-offer-received',
     RTC_ANSWER_RECEIVED: 'streamr:tracker-node:rtc-answer-received',
     RTC_ERROR_RECEIVED: 'streamr:tracker-node:rtc-error-received',
-    ICE_CANDIDATE_RECEIVED: 'streamr:tracker-node:ice-candidate-received'
+    REMOTE_CANDIDATE_RECEIVED: 'streamr:tracker-node:remote-candidate-received',
+    LOCAL_DESCRIPTION_RECEIVED: 'streamr:tracker-node:local-description-received',
+    LOCAL_CANDIDATE_RECEIVED: 'streamr:tracker-node:local-candidate-received',
 })
 
 class TrackerNode extends EventEmitter {
@@ -31,16 +33,16 @@ class TrackerNode extends EventEmitter {
         return this.endpoint.send(trackerId, encoder.findStorageNodesMessage(streamId))
     }
 
-    sendRtcOffer(trackerId, targetNode, originatorInfo, data) {
-        this.endpoint.sendSync(trackerId, encoder.rtcOfferMessage(originatorInfo, targetNode, data))
+    sendLocalDescription(trackerId, targetNode, originatorInfo, type, description) {
+        this.endpoint.sendSync(trackerId, encoder.localDescriptionMessage(originatorInfo, targetNode, type, description))
     }
 
-    sendRtcAnswer(trackerId, targetNode, originatorInfo, data) {
-        this.endpoint.sendSync(trackerId, encoder.rtcAnswerMessage(originatorInfo, targetNode, data))
+    sendLocalCandidate(trackerId, targetNode, originatorInfo, candidate, mid) {
+        this.endpoint.sendSync(trackerId, encoder.localCandidateMessage(originatorInfo, targetNode, candidate, mid))
     }
 
-    sendIceCandidate(trackerId, targetNode, originatorNode, data) {
-        this.endpoint.sendSync(trackerId, encoder.iceCandidateMessage(originatorNode, targetNode, data))
+    sendRtcConnect(trackerId, targetNode, originatorInfo) {
+        this.endpoint.sendSync(trackerId, encoder.rtcConnectMessage(originatorInfo, targetNode))
     }
 
     stop() {
@@ -66,8 +68,17 @@ class TrackerNode extends EventEmitter {
                 case encoder.RTC_ERROR:
                     this.emit(events.RTC_ERROR_RECEIVED, message)
                     break
-                case encoder.ICE_CANDIDATE:
-                    this.emit(events.ICE_CANDIDATE_RECEIVED, message)
+                case encoder.RTC_CONNECT:
+                    this.emit(events.RTC_CONNECT_RECEIVED, message)
+                    break
+                case encoder.LOCAL_DESCRIPTION:
+                    this.emit(events.LOCAL_DESCRIPTION_RECEIVED, message)
+                    break
+                case encoder.LOCAL_CANDIDATE:
+                    this.emit(events.LOCAL_CANDIDATE_RECEIVED, message)
+                    break
+                case encoder.REMOTE_CANDIDATE:
+                    this.emit(events.REMOTE_CANDIDATE_RECEIVED, message)
                     break
                 default:
                     break

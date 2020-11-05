@@ -10,7 +10,9 @@ const WrapperMessage = require('../../src/messages/WrapperMessage')
 const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
 const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
-const IceCandidateMessage = require('../../src/messages/IceCandidateMessage')
+const LocalCandidateMessage = require('../../src/messages/LocalCandidateMessage')
+const RemoteCandidateMessage = require('../../src/messages/RemoteCandidateMessage')
+const LocalDescriptionMessage = require('../../src/messages/LocalDescriptionMessage')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
 const defaultLocation = {
@@ -171,7 +173,7 @@ describe('encoder', () => {
     })
 
     it('check encoding RTC_OFFER', () => {
-        const actual = encoder.rtcOfferMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
+        const actual = encoder.rtcOfferMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'test', 'some data here')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.RTC_OFFER,
             version,
@@ -183,7 +185,8 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                description: 'some data here',
+                type: 'test',
             }
         })
     })
@@ -200,7 +203,8 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                description: 'some data here',
+                type: 'test',
             }
         }))
 
@@ -211,11 +215,12 @@ describe('encoder', () => {
 
         expect(rtcOfferMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(rtcOfferMessage.getTargetNode()).toEqual('targetNode')
-        expect(rtcOfferMessage.getData()).toEqual('some data here')
+        expect(rtcOfferMessage.getDescription()).toEqual('some data here')
+        expect(rtcOfferMessage.getType()).toEqual('test')
     })
 
     it('check encoding RTC_ANSWER', () => {
-        const actual = encoder.rtcAnswerMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
+        const actual = encoder.rtcAnswerMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'test', 'some data here')
         expect(JSON.parse(actual)).toEqual({
             code: encoder.RTC_ANSWER,
             version,
@@ -227,7 +232,8 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                description: 'some data here',
+                type: 'test',
             }
         })
     })
@@ -244,7 +250,8 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                type: 'test',
+                description: 'some data here',
             }
         }))
 
@@ -255,7 +262,54 @@ describe('encoder', () => {
 
         expect(rtcAnswerMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
         expect(rtcAnswerMessage.getTargetNode()).toEqual('targetNode')
-        expect(rtcAnswerMessage.getData()).toEqual('some data here')
+        expect(rtcAnswerMessage.getDescription()).toEqual('some data here')
+        expect(rtcAnswerMessage.getType()).toEqual('test')
+    })
+
+    it('check encoding LOCAL_DESCRIPTION', () => {
+        const actual = encoder.localDescriptionMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'test', 'some data here')
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.LOCAL_DESCRIPTION,
+            version,
+            payload: {
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerName: 'originatorNode',
+                    peerType: 'node',
+                    location: defaultLocation
+                },
+                targetNode: 'targetNode',
+                description: 'some data here',
+                type: 'test',
+            }
+        })
+    })
+
+    it('check decoding LOCAL_DESCRIPTION', () => {
+        const localDescriptionMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.LOCAL_DESCRIPTION,
+            version,
+            payload: {
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerName: 'originatorNode',
+                    peerType: 'node',
+                    location: defaultLocation
+                },
+                targetNode: 'targetNode',
+                type: 'test',
+                description: 'some data here'
+            }
+        }))
+
+        expect(localDescriptionMessage).toBeInstanceOf(LocalDescriptionMessage)
+        expect(localDescriptionMessage.getVersion()).toEqual(version)
+        expect(localDescriptionMessage.getCode()).toEqual(encoder.LOCAL_DESCRIPTION)
+
+        expect(localDescriptionMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
+        expect(localDescriptionMessage.getTargetNode()).toEqual('targetNode')
+        expect(localDescriptionMessage.getDescription()).toEqual('some data here')
+        expect(localDescriptionMessage.getType()).toEqual('test')
     })
 
     it('check encoding RTC_ERROR', () => {
@@ -289,10 +343,10 @@ describe('encoder', () => {
         expect(rtcErrorMessage.getErrorCode()).toEqual(RtcErrorMessage.errorCodes.UNKNOWN_PEER)
     })
 
-    it('check encoding ICE_CANDIDATE', () => {
-        const actual = encoder.iceCandidateMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'some data here')
+    it('check encoding LOCAL_CANDIDATE', () => {
+        const actual = encoder.localCandidateMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'candidate', 'data')
         expect(JSON.parse(actual)).toEqual({
-            code: encoder.ICE_CANDIDATE,
+            code: encoder.LOCAL_CANDIDATE,
             version,
             payload: {
                 originatorInfo: {
@@ -302,14 +356,15 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                candidate: 'candidate',
+                mid: 'data'
             }
         })
     })
 
-    it('check decoding ICE_CANDIDATE', () => {
-        const iceCandidateMessage = encoder.decode('source', JSON.stringify({
-            code: encoder.ICE_CANDIDATE,
+    it('check decoding LOCAL_CANDIDATE', () => {
+        const localCandidateMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.LOCAL_CANDIDATE,
             version,
             payload: {
                 originatorInfo: {
@@ -319,18 +374,65 @@ describe('encoder', () => {
                     location: defaultLocation
                 },
                 targetNode: 'targetNode',
-                data: 'some data here'
+                mid: 'data',
+                candidate: 'candidate'
             }
         }))
 
-        expect(iceCandidateMessage).toBeInstanceOf(IceCandidateMessage)
-        expect(iceCandidateMessage.getVersion()).toEqual(version)
-        expect(iceCandidateMessage.getCode()).toEqual(encoder.ICE_CANDIDATE)
-        expect(iceCandidateMessage.getSource()).toEqual('source')
+        expect(localCandidateMessage).toBeInstanceOf(LocalCandidateMessage)
+        expect(localCandidateMessage.getVersion()).toEqual(version)
+        expect(localCandidateMessage.getCode()).toEqual(encoder.LOCAL_CANDIDATE)
 
-        expect(iceCandidateMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
-        expect(iceCandidateMessage.getTargetNode()).toEqual('targetNode')
-        expect(iceCandidateMessage.getData()).toEqual('some data here')
+        expect(localCandidateMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
+        expect(localCandidateMessage.getTargetNode()).toEqual('targetNode')
+        expect(localCandidateMessage.getMid()).toEqual('data')
+        expect(localCandidateMessage.getCandidate()).toEqual('candidate')
+    })
+
+    it('check encoding REMOTE_CANDIDATE', () => {
+        const actual = encoder.remoteCandidateMessage(PeerInfo.newNode('originatorNode'), 'targetNode', 'candidate', 'data')
+        expect(JSON.parse(actual)).toEqual({
+            code: encoder.REMOTE_CANDIDATE,
+            version,
+            payload: {
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerName: 'originatorNode',
+                    peerType: 'node',
+                    location: defaultLocation
+                },
+                targetNode: 'targetNode',
+                candidate: 'candidate',
+                mid: 'data'
+            }
+        })
+    })
+
+    it('check decoding REMOTE_CANDIDATE', () => {
+        const remoteCandidateMessage = encoder.decode('source', JSON.stringify({
+            code: encoder.REMOTE_CANDIDATE,
+            version,
+            payload: {
+                originatorInfo: {
+                    peerId: 'originatorNode',
+                    peerName: 'originatorNode',
+                    peerType: 'node',
+                    location: defaultLocation
+                },
+                targetNode: 'targetNode',
+                mid: 'data',
+                candidate: 'candidate'
+            }
+        }))
+
+        expect(remoteCandidateMessage).toBeInstanceOf(RemoteCandidateMessage)
+        expect(remoteCandidateMessage.getVersion()).toEqual(version)
+        expect(remoteCandidateMessage.getCode()).toEqual(encoder.REMOTE_CANDIDATE)
+
+        expect(remoteCandidateMessage.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
+        expect(remoteCandidateMessage.getTargetNode()).toEqual('targetNode')
+        expect(remoteCandidateMessage.getMid()).toEqual('data')
+        expect(remoteCandidateMessage.getCandidate()).toEqual('candidate')
     })
 
     it('encoder.decode doesnt throw exception if failed to JSON.parse', () => {

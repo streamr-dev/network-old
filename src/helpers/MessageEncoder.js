@@ -4,7 +4,10 @@ const { PeerInfo } = require('../connection/PeerInfo')
 const RtcOfferMessage = require('../messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../messages/RtcAnswerMessage')
 const RtcErrorMessage = require('../messages/RtcErrorMessage')
-const IceCandidateMessage = require('../messages/IceCandidateMessage')
+const RtcConnectMessage = require('../messages/RtcConnectMessage')
+const LocalDescriptionMessage = require('../messages/LocalDescriptionMessage')
+const LocalCandidateMessage = require('../messages/LocalCandidateMessage')
+const RemoteCandidateMessage = require('../messages/RemoteCandidateMessage')
 const FindStorageNodesMessage = require('../messages/FindStorageNodesMessage')
 const InstructionMessage = require('../messages/InstructionMessage')
 const StatusMessage = require('../messages/StatusMessage')
@@ -14,7 +17,7 @@ const { StreamIdAndPartition } = require('../identifiers')
 const { msgTypes, CURRENT_VERSION } = require('../messages/messageTypes')
 
 const encode = (type, payload) => {
-    if (type < 0 || type > 8) {
+    if (type < 0 || type > 11) {
         throw new Error(`Unknown message type: ${type}`)
     }
 
@@ -67,7 +70,8 @@ const decode = (source, message) => {
             return new RtcOfferMessage(
                 PeerInfo.fromObject(payload.originatorInfo),
                 payload.targetNode,
-                payload.data,
+                payload.type,
+                payload.description,
                 source
             )
 
@@ -75,18 +79,45 @@ const decode = (source, message) => {
             return new RtcAnswerMessage(
                 PeerInfo.fromObject(payload.originatorInfo),
                 payload.targetNode,
-                payload.data,
+                payload.type,
+                payload.description,
                 source
             )
 
         case msgTypes.RTC_ERROR:
             return new RtcErrorMessage(payload.errorCode, payload.targetNode, source)
 
-        case msgTypes.ICE_CANDIDATE:
-            return new IceCandidateMessage(
+        case msgTypes.LOCAL_DESCRIPTION:
+            return new LocalDescriptionMessage(
                 PeerInfo.fromObject(payload.originatorInfo),
                 payload.targetNode,
-                payload.data,
+                payload.type,
+                payload.description,
+                source
+            )
+
+        case msgTypes.LOCAL_CANDIDATE:
+            return new LocalCandidateMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
+                payload.candidate,
+                payload.mid,
+                source
+            )
+
+        case msgTypes.REMOTE_CANDIDATE:
+            return new RemoteCandidateMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
+                payload.candidate,
+                payload.mid,
+                source
+            )
+
+        case msgTypes.RTC_CONNECT:
+            return new RtcConnectMessage(
+                PeerInfo.fromObject(payload.originatorInfo),
+                payload.targetNode,
                 source
             )
 
@@ -117,24 +148,43 @@ module.exports = {
     wrapperMessage: (controlLayerPayload) => encode(msgTypes.WRAPPER, {
         serializedControlLayerPayload: controlLayerPayload.serialize()
     }),
-    rtcOfferMessage: (originatorInfo, targetNode, data) => encode(msgTypes.RTC_OFFER, {
+    rtcOfferMessage: (originatorInfo, targetNode, type, description) => encode(msgTypes.RTC_OFFER, {
         originatorInfo,
         targetNode,
-        data
+        type,
+        description
     }),
-    rtcAnswerMessage: (originatorInfo, targetNode, data) => encode(msgTypes.RTC_ANSWER, {
+    rtcAnswerMessage: (originatorInfo, targetNode, type, description) => encode(msgTypes.RTC_ANSWER, {
         originatorInfo,
         targetNode,
-        data
+        type,
+        description
     }),
     rtcErrorMessage: (errorCode, targetNode) => encode(msgTypes.RTC_ERROR, {
         errorCode,
         targetNode
     }),
-    iceCandidateMessage: (originatorInfo, targetNode, data) => encode(msgTypes.ICE_CANDIDATE, {
+    rtcConnectMessage: (originatorInfo, targetNode) => encode(msgTypes.RTC_CONNECT, {
+        originatorInfo,
+        targetNode
+    }),
+    localDescriptionMessage: (originatorInfo, targetNode, type, description) => encode(msgTypes.LOCAL_DESCRIPTION, {
         originatorInfo,
         targetNode,
-        data
+        type,
+        description
+    }),
+    localCandidateMessage: (originatorInfo, targetNode, candidate, mid) => encode(msgTypes.LOCAL_CANDIDATE, {
+        originatorInfo,
+        targetNode,
+        candidate,
+        mid
+    }),
+    remoteCandidateMessage: (originatorInfo, targetNode, candidate, mid) => encode(msgTypes.REMOTE_CANDIDATE, {
+        originatorInfo,
+        targetNode,
+        candidate,
+        mid,
     }),
     ...msgTypes,
     CURRENT_VERSION
