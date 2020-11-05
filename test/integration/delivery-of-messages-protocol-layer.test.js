@@ -16,7 +16,6 @@ const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
 const RemoteCandidateMessage = require('../../src/messages/RemoteCandidateMessage')
 const LocalCandidateMessage = require('../../src/messages/LocalCandidateMessage')
 const LocalDescriptionMessage = require('../../src/messages/LocalDescriptionMessage')
-
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { LOCALHOST } = require('../util')
 

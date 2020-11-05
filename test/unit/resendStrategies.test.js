@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 
 const intoStream = require('into-stream')
 const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const { waitForStreamToEnd, wait } = require('streamr-test-utils')
+const { waitForStreamToEnd } = require('streamr-test-utils')
 
 const { AskNeighborsResendStrategy,
     StorageResendStrategy,
