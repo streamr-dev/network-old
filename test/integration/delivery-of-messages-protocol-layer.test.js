@@ -13,6 +13,7 @@ const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
 const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
 const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
 const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
+const RtcConnectMessage = require('../../src/messages/RtcConnectMessage')
 const RemoteCandidateMessage = require('../../src/messages/RemoteCandidateMessage')
 const LocalCandidateMessage = require('../../src/messages/LocalCandidateMessage')
 const LocalDescriptionMessage = require('../../src/messages/LocalDescriptionMessage')
@@ -304,6 +305,16 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg.getDescription()).toEqual('description')
     })
 
+    test('sendRtcConnect is delivered (trackerServer->trackerNode)', async () => {
+        trackerServer.sendRtcConnect('trackerNode', PeerInfo.newNode('originatorNode'))
+        const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_CONNECT_RECEIVED)
+
+        expect(msg).toBeInstanceOf(RtcConnectMessage)
+        expect(msg.getSource()).toEqual('trackerServer')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
+        expect(msg.getTargetNode()).toEqual('trackerNode')
+    })
+
     test('sendUnknownPeerRtcError is delivered', async () => {
         trackerServer.sendUnknownPeerRtcError('trackerNode', 'unknownTargetNode')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
@@ -348,5 +359,15 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg.getTargetNode()).toEqual('targetNode')
         expect(msg.getType()).toEqual('test')
         expect(msg.getDescription()).toEqual('description')
+    })
+
+    test('sendRtcConnect is delivered (trackerNode->trackerServer)', async () => {
+        trackerNode.sendRtcConnect('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'))
+        const [msg] = await waitForEvent(trackerServer, TrackerServer.events.RTC_CONNECT_RECEIVED)
+
+        expect(msg).toBeInstanceOf(RtcConnectMessage)
+        expect(msg.getSource()).toEqual('trackerNode')
+        expect(msg.getOriginatorInfo()).toEqual(PeerInfo.newNode('originatorNode'))
+        expect(msg.getTargetNode()).toEqual('targetNode')
     })
 })
