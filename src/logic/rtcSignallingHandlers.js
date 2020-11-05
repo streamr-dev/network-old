@@ -14,16 +14,14 @@ function attachRtcSignalling(trackerServer) {
                     localDescriptionMessage.getTargetNode(),
                     localDescriptionMessage.getOriginatorInfo(),
                     type,
-                    localDescriptionMessage.getDescription(),
-                    trackerServer.endpoint.peerInfo.peerId
+                    localDescriptionMessage.getDescription()
                 )
             } else if (type === 'offer') {
                 trackerServer.sendRtcOffer(
                     localDescriptionMessage.getTargetNode(),
                     localDescriptionMessage.getOriginatorInfo(),
                     type,
-                    localDescriptionMessage.getDescription(),
-                    trackerServer.endpoint.peerInfo.peerId
+                    localDescriptionMessage.getDescription()
                 )
             }
         } catch (err) {

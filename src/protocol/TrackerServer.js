@@ -31,16 +31,16 @@ class TrackerServer extends EventEmitter {
         return this.endpoint.send(receiverNodeId, encoder.storageNodesMessage(streamId, listOfNodeIds))
     }
 
-    sendRtcOffer(receiverNodeId, originatorInfo, type, description, signaller) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorInfo, receiverNodeId, type, description, signaller))
+    sendRtcOffer(receiverNodeId, originatorInfo, type, description) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcOfferMessage(originatorInfo, receiverNodeId, type, description))
     }
 
-    sendRtcAnswer(receiverNodeId, originatorInfo, type, description, signaller) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, type, description, signaller))
+    sendRtcAnswer(receiverNodeId, originatorInfo, type, description) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcAnswerMessage(originatorInfo, receiverNodeId, type, description))
     }
 
-    sendRtcConnect(receiverNodeId, originatorInfo, signaller) {
-        return this.endpoint.send(receiverNodeId, encoder.rtcConnectMessage(originatorInfo, receiverNodeId, signaller))
+    sendRtcConnect(receiverNodeId, originatorInfo) {
+        return this.endpoint.send(receiverNodeId, encoder.rtcConnectMessage(originatorInfo, receiverNodeId))
     }
 
     sendRemoteCandidate(receiverNodeId, originatorInfo, candidate, mid) {

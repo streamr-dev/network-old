@@ -281,7 +281,7 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendRtcOffer is delivered (trackerServer->trackerNode)', async () => {
-        trackerServer.sendRtcOffer('trackerNode', PeerInfo.newNode('originatorNode'), 'test', 'description', 'trackerServer')
+        trackerServer.sendRtcOffer('trackerNode', PeerInfo.newNode('originatorNode'), 'test', 'description')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_OFFER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcOfferMessage)
@@ -293,7 +293,7 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendRtcAnswer is delivered (trackerServer->trackerNode)', async () => {
-        trackerServer.sendRtcAnswer('trackerNode', PeerInfo.newNode('originatorNode'), 'test', 'description', 'trackerServer')
+        trackerServer.sendRtcAnswer('trackerNode', PeerInfo.newNode('originatorNode'), 'test', 'description')
         const [msg] = await waitForEvent(trackerNode, TrackerNode.events.RTC_ANSWER_RECEIVED)
 
         expect(msg).toBeInstanceOf(RtcAnswerMessage)
