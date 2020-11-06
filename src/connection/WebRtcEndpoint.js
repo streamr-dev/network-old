@@ -233,9 +233,9 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     getRtts() {
-        const dataChannels = Object.keys(this.readyChannels)
         const rtts = {}
-        dataChannels.forEach((address) => {
+        const addresses = Object.keys(this.readyChannels)
+        addresses.forEach((address) => {
             const { rtt } = this.readyChannels[address]
             const nodeId = this.peerInfos[address]
             if (rtt !== undefined && rtt !== null) {
