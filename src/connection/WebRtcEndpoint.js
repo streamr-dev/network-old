@@ -57,7 +57,7 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller, pingInterval = 5 * 1000, maxRetries = 2, newConnectionTimeout = 10000) {
+    constructor(id, stunUrls, rtcSignaller, pingIntervalInMs = 5 * 1000, maxRetries = 2, newConnectionTimeout = 10000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
@@ -72,7 +72,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
-        this.pingInterval = pingInterval
+        this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, type, description }) => {
@@ -118,8 +118,6 @@ class WebRtcEndpoint extends EventEmitter {
         this.on(events.PEER_CONNECTED, (peerInfo) => {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
-
-        this._pingInterval = setTimeout(() => this._pingConnections(), this.pingInterval)
     }
 
     // TODO: get rid of promise
@@ -397,8 +395,8 @@ class WebRtcEndpoint extends EventEmitter {
 
     _pingConnections() {
         const peerIds = Object.keys(this.readyChannels)
-        peerIds.forEach((peerId) => (this.ping(peerId)))
-        this._pingInterval = setTimeout(() => this._pingConnections(), this.pingInterval)
+        peerIds.forEach((peerId) => this.ping(peerId))
+        this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
     }
 
     _isConnected(targetPeerId) {
