@@ -5,7 +5,6 @@ const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { LOCALHOST } = require('../util')
 
 const WAIT_TIME = 200
 
@@ -30,7 +29,11 @@ describe('tracker: counter filtering', () => {
     let trackerNode2
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 30420, 'tracker')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 30420,
+            id: 'tracker'
+        })
         const endpoint1 = await startEndpoint('127.0.0.1', 30421, PeerInfo.newNode('trackerNode1'), null)
         const endpoint2 = await startEndpoint('127.0.0.1', 30422, PeerInfo.newNode('trackerNode2'), null)
         trackerNode1 = new TrackerNode(endpoint1)
@@ -72,7 +75,7 @@ describe('tracker: counter filtering', () => {
         trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
 
         let numOfInstructions = 0
-        trackerNode1.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (fafa, baba) => {
+        trackerNode1.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, () => {
             numOfInstructions += 1
         })
 

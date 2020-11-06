@@ -3,8 +3,7 @@ const { EventEmitter } = require('events')
 const { v4: uuidv4 } = require('uuid')
 const { ControlLayer } = require('streamr-client-protocol')
 
-const encoder = require('../helpers/MessageEncoder')
-const WrapperMessage = require('../messages/WrapperMessage')
+const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
 const events = Object.freeze({
@@ -15,7 +14,9 @@ const events = Object.freeze({
     NODE_DISCONNECTED: 'streamr:node-node:node-disconnected',
     RESEND_REQUEST: 'streamr:node-node:resend-request',
     RESEND_RESPONSE: 'streamr:node-node:resend-response',
-    UNICAST_RECEIVED: 'streamr:node-node:unicast-received'
+    UNICAST_RECEIVED: 'streamr:node-node:unicast-received',
+    LOW_BACK_PRESSURE: 'streamr:node-node:low-back-pressure',
+    HIGH_BACK_PRESSURE: 'streamr:node-node:high-back-pressure',
 })
 
 const eventPerType = {}
@@ -34,9 +35,11 @@ class NodeToNode extends EventEmitter {
     constructor(endpoint) {
         super()
         this.endpoint = endpoint
-        this.endpoint.on(endpointEvents.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
-        this.endpoint.on(endpointEvents.PEER_DISCONNECTED, (peerInfo, reason) => this.onPeerDisconnected(peerInfo, reason))
-        this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
+        endpoint.on(endpointEvents.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
+        endpoint.on(endpointEvents.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
+        endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
+        endpoint.on(endpointEvents.LOW_BACK_PRESSURE, (peerInfo) => this.onLowBackPressure(peerInfo))
+        endpoint.on(endpointEvents.HIGH_BACK_PRESSURE, (peerInfo) => this.onHighBackPressure(peerInfo))
     }
 
     connectToNode(receiverNodeId, trackerAddress, isOffering, trackerInstructed = true) {
@@ -44,7 +47,7 @@ class NodeToNode extends EventEmitter {
     }
 
     sendData(receiverNodeId, streamMessage) {
-        this.send(receiverNodeId, new ControlLayer.BroadcastMessage({
+        return this.send(receiverNodeId, new ControlLayer.BroadcastMessage({
             requestId: '', // TODO: how to echo here the requestId of the original SubscribeRequest?
             streamMessage,
         }))
@@ -71,7 +74,7 @@ class NodeToNode extends EventEmitter {
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, encoder.wrapperMessage(message))
+        return this.endpoint.send(receiverNodeId, message.serialize())
     }
 
     getAddress() {
@@ -88,16 +91,32 @@ class NodeToNode extends EventEmitter {
         }
     }
 
-    onPeerDisconnected(peerInfo, reason) {
+    onPeerDisconnected(peerInfo) {
         if (peerInfo.isNode()) {
             this.emit(events.NODE_DISCONNECTED, peerInfo.peerId)
         }
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        const message = encoder.decode(peerInfo.peerId, rawMessage)
-        if (message instanceof WrapperMessage) {
-            this.emit(eventPerType[message.controlLayerPayload.type], message.controlLayerPayload, message.getSource())
+        if (peerInfo.isNode()) {
+            const message = decode(rawMessage, ControlLayer.ControlMessage.deserialize)
+            if (message != null) {
+                this.emit(eventPerType[message.type], message, peerInfo.peerId)
+            } else {
+                console.warn(`NodeToNode: invalid message from ${peerInfo}: ${rawMessage}`)
+            }
+        }
+    }
+
+    onLowBackPressure(peerInfo) {
+        if (peerInfo.isNode()) {
+            this.emit(events.LOW_BACK_PRESSURE, peerInfo.peerId)
+        }
+    }
+
+    onHighBackPressure(peerInfo) {
+        if (peerInfo.isNode()) {
+            this.emit(events.HIGH_BACK_PRESSURE, peerInfo.peerId)
         }
     }
 

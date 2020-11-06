@@ -1,9 +1,7 @@
 const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent, waitForCondition } = require('streamr-test-utils')
+const { waitForCondition } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
-const Node = require('../../src/logic/Node')
 
 /**
  * This test verifies that on receiving a message, the receiver will not propagate the message to the sender as they
@@ -16,25 +14,41 @@ describe('optimization: do not propagate to sender', () => {
     let n3
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30410, 'tracker')
-        n1 = await startNetworkNode(LOCALHOST, 30411, 'node-1')
-        n2 = await startNetworkNode(LOCALHOST, 30412, 'node-2')
-        n3 = await startNetworkNode(LOCALHOST, 30413, 'node-3')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 30410,
+            id: 'tracker'
+        })
+        n1 = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30411,
+            id: 'node-1',
+            trackers: [tracker.getAddress()]
+        })
+        n2 = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30412,
+            id: 'node-2',
+            trackers: [tracker.getAddress()]
+        })
+        n3 = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30413,
+            id: 'node-3',
+            trackers: [tracker.getAddress()]
+        })
 
-        n1.addBootstrapTracker(tracker.getAddress())
-        n2.addBootstrapTracker(tracker.getAddress())
-        n3.addBootstrapTracker(tracker.getAddress())
+        n1.start()
+        n2.start()
+        n3.start()
 
         // Become subscribers (one-by-one, for well connected graph)
         n1.subscribe('stream-id', 0)
         n2.subscribe('stream-id', 0)
         n3.subscribe('stream-id', 0)
 
-        await Promise.all([
-            waitForEvent(n1, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(n2, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(n3, Node.events.NODE_SUBSCRIBED),
-        ])
+        // TODO: Promise.all thingy needed?
+        await waitForCondition(() => Object.keys(tracker.getTopology()['stream-id::0'] || {}).length === 3)
     })
 
     afterAll(async () => {
@@ -58,9 +72,14 @@ describe('optimization: do not propagate to sender', () => {
         await waitForCondition(() => n2.metrics.get('onDataReceived:ignoring:duplicate') !== 0)
         await waitForCondition(() => n3.metrics.get('onDataReceived:ignoring:duplicate') !== 0)
 
-        expect(n1.metrics.get('onDataReceived:ignoring:duplicate')
-            + n2.metrics.get('onDataReceived:ignoring:duplicate')
-            + n3.metrics.get('onDataReceived:ignoring:duplicate'))
-            .toEqual(2)
+        const reportN1 = await n1.metrics.report()
+        const reportN2 = await n2.metrics.report()
+        const reportN3 = await n3.metrics.report()
+
+        const totalDuplicates = reportN1['onDataReceived:ignoredDuplicate'].total
+            + reportN2['onDataReceived:ignoredDuplicate'].total
+            + reportN3['onDataReceived:ignoredDuplicate'].total
+
+        expect(totalDuplicates).toEqual(2)
     })
 })

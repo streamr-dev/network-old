@@ -1,10 +1,9 @@
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent, wait } = require('streamr-test-utils')
+const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { LOCALHOST } = require('../util')
 
 describe('node unsubscribing from a stream', () => {
     let tracker
@@ -12,12 +11,23 @@ describe('node unsubscribing from a stream', () => {
     let nodeB
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 30450, 'tracker')
-        nodeA = await startNetworkNode(LOCALHOST, 30451, 'a')
-        nodeB = await startNetworkNode(LOCALHOST, 30452, 'b')
-
-        nodeA.addBootstrapTracker(tracker.getAddress())
-        nodeB.addBootstrapTracker(tracker.getAddress())
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 30450,
+            id: 'tracker'
+        })
+        nodeA = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30451,
+            id: 'a',
+            trackers: [tracker.getAddress()]
+        })
+        nodeB = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30452,
+            id: 'b',
+            trackers: [tracker.getAddress()]
+        })
 
         // TODO: a better way of achieving this would be to pass via constructor, but currently not possible when using
         // startNetworkNode function
@@ -28,6 +38,9 @@ describe('node unsubscribing from a stream', () => {
         nodeB.subscribe('s', 1)
         nodeA.subscribe('s', 2)
         nodeB.subscribe('s', 2)
+
+        nodeA.start()
+        nodeB.start()
 
         await Promise.all([
             waitForEvent(nodeA, Node.events.NODE_SUBSCRIBED),
@@ -68,8 +81,6 @@ describe('node unsubscribing from a stream', () => {
     })
 
     test('connection between nodes is not kept if no shared streams', async () => {
-        await wait(100)
-
         nodeB.unsubscribe('s', 2)
         await waitForEvent(nodeA, Node.events.NODE_UNSUBSCRIBED)
 

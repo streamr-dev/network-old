@@ -1,8 +1,6 @@
 const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
 
-const { StorageResendStrategy,
-    AskNeighborsResendStrategy,
-    StorageNodeResendStrategy } = require('./logic/resendStrategies')
+const { LocalResendStrategy, ForeignResendStrategy } = require('./resend/resendStrategies')
 const Node = require('./logic/Node')
 const { StreamIdAndPartition } = require('./identifiers')
 
@@ -14,14 +12,11 @@ class NetworkNode extends Node {
         const networkOpts = {
             ...opts,
             resendStrategies: [
-                ...opts.storages.map((storage) => new StorageResendStrategy(storage)),
-                new AskNeighborsResendStrategy(opts.protocols.nodeToNode, (streamId) => {
-                    return this.streams.isSetUp(streamId) ? this.streams.getOutboundNodesForStream(streamId) : []
-                }),
-                new StorageNodeResendStrategy(
+                ...opts.storages.map((storage) => new LocalResendStrategy(storage)),
+                new ForeignResendStrategy(
                     opts.protocols.trackerNode,
                     opts.protocols.nodeToNode,
-                    (streamKey) => this._getTracker(streamKey),
+                    (streamKey) => this._getTrackerId(streamKey),
                     (node) => this.streams.isNodePresent(node)
                 )
             ]

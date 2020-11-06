@@ -4,9 +4,9 @@ const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
 const intoStream = require('into-stream')
 const { waitForStreamToEnd } = require('streamr-test-utils')
 
-const ResendHandler = require('../../src/logic/ResendHandler')
+const ResendHandler = require('../../src/resend/ResendHandler')
 
-const { StreamMessage, MessageID, MessageRef } = MessageLayer
+const { StreamMessage, MessageID } = MessageLayer
 
 const streamMessage1 = new StreamMessage({
     messageId: new MessageID('streamId', 0, 1000, 0, 'publisherId', 'msgChainId'),
@@ -215,6 +215,34 @@ describe('ResendHandler', () => {
         requestStream.destroy()
     })
 
+    test('pausing/resuming returned stream pauses/resumes underlying response stream ', (done) => {
+        let underlyingResponseStream = null
+
+        resendHandler = new ResendHandler([{
+            getResendResponseStream: () => {
+                underlyingResponseStream = new Readable({
+                    objectMode: true,
+                    read() {}
+                })
+                return underlyingResponseStream
+            }
+        }], notifyError)
+
+        const requestStream = resendHandler.handleRequest(request, 'source')
+
+        requestStream.on('pause', () => {
+            expect(underlyingResponseStream.isPaused()).toEqual(true)
+            requestStream.on('resume', () => {
+                expect(underlyingResponseStream.isPaused()).toEqual(false)
+                requestStream.destroy() // clean up
+                done()
+            })
+            requestStream.resume()
+        })
+
+        requestStream.pause()
+    })
+
     test('arguments to notifyError are formed correctly', async () => {
         resendHandler = new ResendHandler([{
             getResendResponseStream: () => intoStream.object(Promise.reject(new Error('yikes')))
@@ -249,7 +277,7 @@ describe('ResendHandler', () => {
         beforeEach(() => {
             resendHandler = new ResendHandler([{
                 getResendResponseStream: () => getResendResponseStreamFn()
-            }], notifyError, maxInactivityPeriodInMs)
+            }], notifyError, undefined, maxInactivityPeriodInMs)
         })
 
         afterEach(() => {
@@ -307,22 +335,79 @@ describe('ResendHandler', () => {
             }
         }], notifyError)
 
-        expect(resendHandler.metrics()).toEqual({
+        expect(await resendHandler.metrics.report()).toEqual({
             meanAge: 0,
             numOfOngoingResends: 0
         })
 
         const p1 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
         const p2 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
-        expect(resendHandler.metrics()).toMatchObject({
+        expect(await resendHandler.metrics.report()).toMatchObject({
             meanAge: expect.any(Number),
             numOfOngoingResends: 2
         })
 
         await Promise.all([p1, p2])
-        expect(resendHandler.metrics()).toEqual({
+        expect(await resendHandler.metrics.report()).toEqual({
             meanAge: 0,
             numOfOngoingResends: 0
         })
+    })
+
+    test('pausing and resuming all streams of node ', () => {
+        resendHandler = new ResendHandler([{
+            getResendResponseStream: () => {
+                return new Readable({
+                    objectMode: true,
+                    read() {
+                        if (!this.first) {
+                            this.first = true
+                            this.push('first')
+                        } else {
+                            this.push(null)
+                        }
+                    }
+                })
+            }
+        }], notifyError)
+
+        const rs1 = resendHandler.handleRequest(request, 'source')
+        const rs2 = resendHandler.handleRequest(request, 'source')
+        const rs3 = resendHandler.handleRequest(request, 'anotherSource')
+
+        resendHandler.pauseResendsOfNode('source')
+        expect(rs1.isPaused()).toEqual(true)
+        expect(rs2.isPaused()).toEqual(true)
+        expect(rs3.isPaused()).toEqual(false)
+
+        resendHandler.resumeResendsOfNode('source')
+        expect(rs1.isPaused()).toEqual(false)
+        expect(rs2.isPaused()).toEqual(false)
+        expect(rs3.isPaused()).toEqual(false)
+    })
+
+    test('pausing and resuming all streams of non-existing node does not throw error ', () => {
+        resendHandler = new ResendHandler([{
+            getResendResponseStream: () => {
+                return new Readable({
+                    objectMode: true,
+                    read() {
+                        if (!this.first) {
+                            this.first = true
+                            this.push('first')
+                        } else {
+                            this.push(null)
+                        }
+                    }
+                })
+            }
+        }], notifyError)
+
+        resendHandler.handleRequest(request, 'source')
+
+        expect(() => {
+            resendHandler.pauseResendsOfNode('non-existing-node')
+            resendHandler.resumeResendsOfNode('non-existing-node')
+        }).not.toThrowError()
     })
 })

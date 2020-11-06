@@ -5,7 +5,6 @@ const intoStream = require('into-stream')
 const { waitForEvent, wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startStorageNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
 const Node = require('../../src/logic/Node')
 /**
  * This test verifies that a node does not attempt to send a resend response to
@@ -57,36 +56,64 @@ describe('resend cancellation on disconnect', () => {
     let neighborThree
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 28650, 'tracker')
-        contactNode = await startNetworkNode(LOCALHOST, 28651, 'contactNode', [{
-            store: () => {},
-            requestLast: () => intoStream.object([]),
-            requestFrom: () => intoStream.object([]),
-            requestRange: () => intoStream.object([]),
-        }])
-        neighborOne = await startNetworkNode(LOCALHOST, 28652, 'neighborOne', [{
-            store: () => {},
-            requestLast: () => createSlowStream(),
-            requestFrom: () => intoStream.object([]),
-            requestRange: () => intoStream.object([]),
-        }])
-        neighborTwo = await startNetworkNode(LOCALHOST, 28653, 'neighborTwo', [])
-        neighborThree = await startStorageNode(LOCALHOST, 28654, 'neighborThree', [{
-            store: () => {},
-            requestLast: () => createSlowStream(),
-            requestFrom: () => intoStream.object([]),
-            requestRange: () => intoStream.object([]),
-        }])
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 28650,
+            id: 'tracker'
+        })
+        contactNode = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28651,
+            id: 'contactNode',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => intoStream.object([]),
+                requestFrom: () => intoStream.object([]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
+        neighborOne = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28652,
+            id: 'neighborOne',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => createSlowStream(),
+                requestFrom: () => intoStream.object([]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
+        neighborTwo = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28653,
+            id: 'neighborTwo',
+            trackers: [tracker.getAddress()],
+            storages: []
+        })
+        neighborThree = await startStorageNode({
+            host: '127.0.0.1',
+            port: 28654,
+            id: 'neighborThree',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => createSlowStream(),
+                requestFrom: () => intoStream.object([]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
 
         contactNode.subscribe('streamId', 0)
         neighborOne.subscribe('streamId', 0)
         neighborTwo.subscribe('streamId', 0)
         neighborThree.subscribe('streamId', 0)
 
-        contactNode.addBootstrapTracker(tracker.getAddress())
-        neighborOne.addBootstrapTracker(tracker.getAddress())
-        neighborTwo.addBootstrapTracker(tracker.getAddress())
-        neighborThree.addBootstrapTracker(tracker.getAddress())
+        contactNode.start()
+        neighborOne.start()
+        neighborTwo.start()
+        neighborThree.start()
 
         await Promise.all([
             waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),

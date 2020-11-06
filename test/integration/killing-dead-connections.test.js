@@ -1,19 +1,13 @@
 /* eslint-disable no-underscore-dangle */
-const allSettled = require('promise.allsettled')
 const { waitForEvent } = require('streamr-test-utils')
 
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
+const { startEndpoint, disconnectionReasons, disconnectionCodes } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { events } = require('../../src/connection/WsEndpoint')
-const { LOCALHOST } = require('../util')
-const { disconnectionReasons, disconnectionCodes } = require('../../src/messages/messageTypes')
 
 describe('check and kill dead connections', () => {
     let node1
-    const port1 = 43971
-
     let node2
-    const port2 = 43972
 
     const defaultLocation = {
         latitude: null,
@@ -22,15 +16,15 @@ describe('check and kill dead connections', () => {
         city: null
     }
     beforeEach(async () => {
-        node1 = await startEndpoint(LOCALHOST, port1, PeerInfo.newNode('node1'), null)
-        node2 = await startEndpoint(LOCALHOST, port2, PeerInfo.newNode('node2'), null)
+        node1 = await startEndpoint('127.0.0.1', 43971, PeerInfo.newNode('node1'), null)
+        node2 = await startEndpoint('127.0.0.1', 43972, PeerInfo.newNode('node2'), null)
 
-        node1.connect(`ws://${LOCALHOST}:${port2}`)
+        node1.connect('ws://127.0.0.1:43972')
         await waitForEvent(node1, events.PEER_CONNECTED)
     })
 
     afterEach(async () => {
-        allSettled([
+        Promise.allSettled([
             node1.stop(),
             node2.stop()
         ])
@@ -51,7 +45,7 @@ describe('check and kill dead connections', () => {
 
         // check connections
         jest.spyOn(connection, 'ping').mockImplementation(() => {
-            throw new Error()
+            throw new Error('test error')
         })
         node1._pingConnections()
 

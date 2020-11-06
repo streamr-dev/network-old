@@ -1,5 +1,7 @@
 const { Readable } = require('stream')
 
+const MetricsContext = require('../helpers/MetricsContext')
+
 class ResendBookkeeper {
     constructor() {
         this.resends = {} // nodeId => Set[Ctx]
@@ -12,13 +14,17 @@ class ResendBookkeeper {
         this.resends[node].add(ctx)
     }
 
-    popContexts(node) {
+    getContexts(node) {
         if (this.resends[node] == null) {
             return []
         }
-        const contexts = this.resends[node]
+        return [...this.resends[node]]
+    }
+
+    popContexts(node) {
+        const contexts = this.getContexts(node)
         delete this.resends[node]
-        return [...contexts]
+        return contexts
     }
 
     delete(node, ctx) {
@@ -47,7 +53,9 @@ class ResendBookkeeper {
 }
 
 class ResendHandler {
-    constructor(resendStrategies, notifyError, maxInactivityPeriodInMs = 5 * 60 * 1000) {
+    constructor(resendStrategies, notifyError,
+        metricsContext = new MetricsContext(null),
+        maxInactivityPeriodInMs = 5 * 60 * 1000) {
         if (resendStrategies == null) {
             throw new Error('resendStrategies not given')
         }
@@ -59,6 +67,9 @@ class ResendHandler {
         this.notifyError = notifyError
         this.maxInactivityPeriodInMs = maxInactivityPeriodInMs
         this.ongoingResends = new ResendBookkeeper()
+        this.metrics = metricsContext.create('resends')
+            .addQueriedMetric('numOfOngoingResends', () => this.ongoingResends.size())
+            .addQueriedMetric('meanAge', () => this.ongoingResends.meanAge())
     }
 
     handleRequest(request, source) {
@@ -68,6 +79,16 @@ class ResendHandler {
         })
         this._loopThruResendStrategies(request, source, requestStream)
         return requestStream
+    }
+
+    pauseResendsOfNode(node) {
+        const contexts = this.ongoingResends.getContexts(node)
+        contexts.forEach((ctx) => ctx.pause())
+    }
+
+    resumeResendsOfNode(node) {
+        const contexts = this.ongoingResends.getContexts(node)
+        contexts.forEach((ctx) => ctx.resume())
     }
 
     cancelResendsOfNode(node) {
@@ -87,19 +108,14 @@ class ResendHandler {
         })
     }
 
-    metrics() {
-        return {
-            numOfOngoingResends: this.ongoingResends.size(),
-            meanAge: this.ongoingResends.meanAge()
-        }
-    }
-
     async _loopThruResendStrategies(request, source, requestStream) {
         const ctx = {
             request,
             startTime: Date.now(),
             stop: false,
             responseStream: null,
+            pause: () => requestStream.pause(),
+            resume: () => requestStream.resume(),
             cancel: () => {
                 ctx.stop = true
                 if (ctx.responseStream != null) {
@@ -114,6 +130,16 @@ class ResendHandler {
             requestStream.on('close', () => {
                 if (requestStream.destroyed) {
                     ctx.cancel()
+                }
+            })
+            requestStream.on('pause', () => {
+                if (ctx.responseStream) {
+                    ctx.responseStream.pause()
+                }
+            })
+            requestStream.on('resume', () => {
+                if (ctx.responseStream) {
+                    ctx.responseStream.resume()
                 }
             })
 

@@ -3,10 +3,9 @@ const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
 const { waitForEvent, waitForStreamToEnd } = require('streamr-test-utils')
 
 const { startNetworkNode, startStorageNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
 const Node = require('../../src/logic/Node')
 
-const { UnicastMessage, ControlMessage } = ControlLayer
+const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 const typesOfStreamItems = async (stream) => {
@@ -31,57 +30,85 @@ describe('resend requests are fulfilled at L3', () => {
     let storageNode
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 28630, 'tracker')
-        contactNode = await startNetworkNode(LOCALHOST, 28631, 'contactNode', [{
-            store: () => {},
-            requestLast: () => intoStream.object([]),
-            requestFrom: () => intoStream.object([]),
-            requestRange: () => intoStream.object([]),
-        }])
-        neighborOne = await startNetworkNode(LOCALHOST, 28632, 'neighborOne', [{
-            store: () => {},
-            requestLast: () => intoStream.object([]),
-            requestFrom: () => intoStream.object([]),
-            requestRange: () => intoStream.object([]),
-        }])
-        neighborTwo = await startNetworkNode(LOCALHOST, 28633, 'neighborTwo', [])
-        storageNode = await startStorageNode(LOCALHOST, 28634, 'storageNode', [{
-            store: () => {},
-            requestLast: () => intoStream.object([
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
-                    prevMsgRef: new MessageRef(666, 50),
-                    content: {},
-                }),
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
-                    prevMsgRef: new MessageRef(756, 0),
-                    content: {},
-                }),
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 950, 0, 'publisherId', 'msgChainId'),
-                    prevMsgRef: new MessageRef(800, 0),
-                    content: {},
-                }),
-            ]),
-            requestFrom: () => intoStream.object([
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 666, 0, 'publisherId', 'msgChainId'),
-                    content: {},
-                }),
-            ]),
-            requestRange: () => intoStream.object([]),
-        }])
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 28630,
+            id: 'tracker'
+        })
+        contactNode = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28631,
+            id: 'contactNode',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => intoStream.object([]),
+                requestFrom: () => intoStream.object([]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
+        neighborOne = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28632,
+            id: 'neighborOne',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => intoStream.object([]),
+                requestFrom: () => intoStream.object([]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
+        neighborTwo = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28633,
+            id: 'neighborTwo',
+            trackers: [tracker.getAddress()],
+            storages: []
+        })
+        storageNode = await startStorageNode({
+            host: '127.0.0.1',
+            port: 28634,
+            id: 'storageNode',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => intoStream.object([
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
+                        prevMsgRef: new MessageRef(666, 50),
+                        content: {},
+                    }),
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
+                        prevMsgRef: new MessageRef(756, 0),
+                        content: {},
+                    }),
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 950, 0, 'publisherId', 'msgChainId'),
+                        prevMsgRef: new MessageRef(800, 0),
+                        content: {},
+                    }),
+                ]),
+                requestFrom: () => intoStream.object([
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 666, 0, 'publisherId', 'msgChainId'),
+                        content: {},
+                    }),
+                ]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
 
         neighborOne.subscribe('streamId', 0)
         neighborTwo.subscribe('streamId', 0)
         contactNode.subscribe('streamId', 0)
 
         // storageNode automatically assigned (subscribed) by tracker
-        storageNode.addBootstrapTracker(tracker.getAddress())
-        neighborOne.addBootstrapTracker(tracker.getAddress())
-        neighborTwo.addBootstrapTracker(tracker.getAddress())
-        contactNode.addBootstrapTracker(tracker.getAddress())
+        storageNode.start()
+        neighborOne.start()
+        neighborTwo.start()
+        contactNode.start()
 
         await Promise.all([
             waitForEvent(contactNode, Node.events.NODE_SUBSCRIBED),
@@ -89,12 +116,6 @@ describe('resend requests are fulfilled at L3', () => {
             waitForEvent(neighborTwo, Node.events.NODE_SUBSCRIBED),
             waitForEvent(storageNode, Node.events.NODE_SUBSCRIBED)
         ])
-
-        // Prevent contactNode from using L2. Otherwise L2 would be used to
-        // fulfill resend request (from storageNode), which will mean that
-        // L2 is skipped and we are just testing L2 again. TODO: find a better way
-        // eslint-disable-next-line no-underscore-dangle
-        contactNode.resendHandler.resendStrategies.splice(1, 1)
     })
 
     afterEach(async () => {

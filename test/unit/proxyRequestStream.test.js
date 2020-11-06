@@ -6,9 +6,9 @@ const {
     UnicastMessage,
     ResendLastRequest,
 } = require('streamr-client-protocol').ControlLayer
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
+const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
 
-const proxyRequestStream = require('../../src/logic/proxyRequestStream')
+const proxyRequestStream = require('../../src/resend/proxyRequestStream')
 
 describe('proxyRequestStream', () => {
     let sendFn

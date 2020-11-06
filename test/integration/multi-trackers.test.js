@@ -1,42 +1,73 @@
-const { waitForEvent } = require('streamr-test-utils')
+const { waitForEvent, eventsWithArgsToArray } = require('streamr-test-utils')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { LOCALHOST } = require('../util')
+const TrackerNode = require('../../src/protocol/TrackerNode')
 const Node = require('../../src/logic/Node')
-const encoder = require('../../src/helpers/MessageEncoder')
-const { StreamIdAndPartition } = require('../../src/identifiers')
+
+// TODO: maybe worth re-designing this in a way that isn't this arbitrary?
+const FIRST_STREAM = 'stream-1' // assigned to trackerOne (arbitrarily by hashing algo)
+const SECOND_STREAM = 'stream-8' // assigned to trackerTwo
+const THIRD_STREAM = 'stream-9' // assigned to trackerThree
+
+const FIRST_STREAM_2 = 'stream-12'
+const SECOND_STREAM_2 = 'stream-10'
+const THIRD_STREAM_2 = 'stream-11'
 
 describe('multi trackers', () => {
-    const ITERATIONS = 5
-
     let trackerOne
-    const trackerOnePort = 49000
-
     let trackerTwo
-    const trackerTwoPort = 49001
-
     let trackerThree
-    const trackerThreePort = 49002
-
     let nodeOne
-    const nodeOnePort = 49003
-
     let nodeTwo
-    const nodeTwoPort = 49004
 
-    beforeEach(async () => {
-        nodeOne = await startNetworkNode(LOCALHOST, nodeOnePort, 'nodeOne')
-        nodeTwo = await startNetworkNode(LOCALHOST, nodeTwoPort, 'nodeTwo')
+    beforeAll(async () => {
+        trackerOne = await startTracker({
+            host: '127.0.0.1',
+            port: 49000,
+            id: 'trackerOne'
+        })
+        trackerTwo = await startTracker({
+            host: '127.0.0.1',
+            port: 49001,
+            id: 'trackerTwo'
+        })
+        trackerThree = await startTracker({
+            host: '127.0.0.1',
+            port: 49002,
+            id: 'trackerThree'
+        })
+        const trackerAddresses = [trackerOne.getAddress(), trackerTwo.getAddress(), trackerThree.getAddress()]
+        nodeOne = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 49003,
+            id: 'nodeOne',
+            trackers: trackerAddresses
+        })
+        nodeTwo = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 49004,
+            id: 'nodeTwo',
+            trackers: trackerAddresses
+        })
 
-        trackerOne = await startTracker(LOCALHOST, trackerOnePort, 'trackerOne')
-        trackerTwo = await startTracker(LOCALHOST, trackerTwoPort, 'trackerTwo')
-        trackerThree = await startTracker(LOCALHOST, trackerThreePort, 'trackerThree')
+        nodeOne.start()
+        await Promise.all([
+            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        ])
+
+        nodeTwo.start()
+        await Promise.all([
+            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        ])
     })
 
-    afterEach(async () => {
-        jest.restoreAllMocks()
-
+    afterAll(async () => {
         await nodeOne.stop()
         await nodeTwo.stop()
 
@@ -45,157 +76,112 @@ describe('multi trackers', () => {
         await trackerThree.stop()
     })
 
-    test.each([...Array(ITERATIONS).keys()])('(run %i) node sends stream status to specific tracker', async () => {
-        nodeOne.addBootstrapTracker(trackerOne.getAddress())
-        nodeOne.addBootstrapTracker(trackerTwo.getAddress())
-        nodeOne.addBootstrapTracker(trackerThree.getAddress())
+    test('node sends stream status to specific tracker', async () => {
+        // first stream, first tracker
+        nodeOne.subscribe(FIRST_STREAM, 0)
 
-        await Promise.all([
+        await Promise.race([
             waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
             waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
         ])
 
-        const spyTrackerOne = jest.spyOn(trackerOne, 'processNodeStatus')
-        const spyTrackerTwo = jest.spyOn(trackerTwo, 'processNodeStatus')
-        const spyTrackerThree = jest.spyOn(trackerThree, 'processNodeStatus')
-
-        // first stream, first tracker
-        nodeOne.subscribe('stream-1', 0)
-
-        await waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-
-        expect(spyTrackerOne).toBeCalledTimes(1)
-        expect(spyTrackerTwo).not.toBeCalled()
-        expect(spyTrackerThree).not.toBeCalled()
-        jest.clearAllMocks()
+        expect(trackerOne.getStreams()).toContain(`${FIRST_STREAM}::0`)
+        expect(trackerTwo.getStreams()).not.toContain(`${FIRST_STREAM}::0`)
+        expect(trackerThree.getStreams()).not.toContain(`${FIRST_STREAM}::0`)
 
         // second stream, second tracker
-        nodeOne.subscribe('stream-10', 0)
+        nodeOne.subscribe(SECOND_STREAM, 0)
 
-        await waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await Promise.race([
+            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+        ])
 
-        expect(spyTrackerOne).not.toBeCalled()
-        expect(spyTrackerTwo).toBeCalledTimes(1)
-        expect(spyTrackerThree).not.toBeCalled()
-        jest.clearAllMocks()
+        expect(trackerOne.getStreams()).not.toContain(`${SECOND_STREAM}::0`)
+        expect(trackerTwo.getStreams()).toContain(`${SECOND_STREAM}::0`)
+        expect(trackerThree.getStreams()).not.toContain(`${SECOND_STREAM}::0`)
 
         // third stream, third tracker
-        nodeOne.subscribe('stream-20', 0)
+        nodeOne.subscribe(THIRD_STREAM, 0)
 
-        await waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await Promise.race([
+            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
+        ])
 
-        expect(spyTrackerOne).not.toBeCalled()
-        expect(spyTrackerTwo).not.toBeCalled()
-        expect(spyTrackerThree).toBeCalledTimes(1)
+        expect(trackerOne.getStreams()).not.toContain(`${THIRD_STREAM}::0`)
+        expect(trackerTwo.getStreams()).not.toContain(`${THIRD_STREAM}::0`)
+        expect(trackerThree.getStreams()).toContain(`${THIRD_STREAM}::0`)
     })
 
-    test.each([...Array(ITERATIONS).keys()])('(run %i) only one specific tracker sends instructions about stream', async () => {
-        nodeOne.addBootstrapTracker(trackerOne.getAddress())
-        nodeOne.addBootstrapTracker(trackerTwo.getAddress())
-        nodeOne.addBootstrapTracker(trackerThree.getAddress())
-
-        await Promise.all([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-        ])
-
-        nodeTwo.addBootstrapTracker(trackerOne.getAddress())
-        nodeTwo.addBootstrapTracker(trackerTwo.getAddress())
-        nodeTwo.addBootstrapTracker(trackerThree.getAddress())
-
-        await Promise.all([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-        ])
-
-        const spyNodeOne = jest.spyOn(nodeOne, 'onTrackerInstructionReceived')
-        const spyNodeTwo = jest.spyOn(nodeTwo, 'onTrackerInstructionReceived')
-
-        const spyTrackerOne = jest.spyOn(trackerOne.protocols.trackerServer, 'sendInstruction')
-        const spyTrackerTwo = jest.spyOn(trackerTwo.protocols.trackerServer, 'sendInstruction')
-        const spyTrackerThree = jest.spyOn(trackerThree.protocols.trackerServer, 'sendInstruction')
-
+    test('only one specific tracker sends instructions about stream', async () => {
         // first stream, first tracker
-        nodeOne.subscribe('stream-1', 0)
-        nodeTwo.subscribe('stream-1', 0)
+        nodeOne.subscribe(FIRST_STREAM_2, 0)
+        nodeTwo.subscribe(FIRST_STREAM_2, 0)
+
+        let nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, Object.values(TrackerNode.events))
+        let nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, Object.values(TrackerNode.events))
 
         await Promise.all([
             waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(1)
-        expect(spyNodeTwo).toBeCalledTimes(1)
-
-        expect(spyTrackerOne).toBeCalledTimes(2)
-        expect(spyTrackerTwo).toBeCalledTimes(0)
-        expect(spyTrackerThree).toBeCalledTimes(0)
-        jest.clearAllMocks()
+        expect(nodeOneEvents).toHaveLength(1)
+        expect(nodeTwoEvents).toHaveLength(1)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][2]).toEqual('trackerOne')
 
         // second stream, second tracker
-        nodeOne.subscribe('stream-10', 0)
-        nodeTwo.subscribe('stream-10', 0)
+        nodeOne.subscribe(SECOND_STREAM_2, 0)
+        nodeTwo.subscribe(SECOND_STREAM_2, 0)
+
+        nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, Object.values(TrackerNode.events))
+        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, Object.values(TrackerNode.events))
 
         await Promise.all([
             waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(1)
-        expect(spyNodeTwo).toBeCalledTimes(1)
-
-        expect(spyTrackerOne).toBeCalledTimes(0)
-        expect(spyTrackerTwo).toBeCalledTimes(2)
-        expect(spyTrackerThree).toBeCalledTimes(0)
-        jest.clearAllMocks()
+        expect(nodeOneEvents).toHaveLength(1)
+        expect(nodeTwoEvents).toHaveLength(1)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][2]).toEqual('trackerTwo')
 
         // third stream, third tracker
-        nodeOne.subscribe('stream-20', 0)
-        nodeTwo.subscribe('stream-20', 0)
+        nodeOne.subscribe(THIRD_STREAM_2, 0)
+        nodeTwo.subscribe(THIRD_STREAM_2, 0)
+
+        nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, Object.values(TrackerNode.events))
+        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, Object.values(TrackerNode.events))
 
         await Promise.all([
             waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
 
-        expect(spyNodeOne).toBeCalledTimes(1)
-        expect(spyNodeTwo).toBeCalledTimes(1)
-
-        expect(spyTrackerOne).toBeCalledTimes(0)
-        expect(spyTrackerTwo).toBeCalledTimes(0)
-        expect(spyTrackerThree).toBeCalledTimes(2)
-        jest.clearAllMocks()
+        expect(nodeOneEvents).toHaveLength(1)
+        expect(nodeTwoEvents).toHaveLength(1)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][2]).toEqual('trackerThree')
     })
 
     test('node ignores instructions from unexpected tracker', async () => {
-        nodeOne.addBootstrapTracker(trackerOne.getAddress())
-        nodeOne.addBootstrapTracker(trackerTwo.getAddress())
-        nodeOne.addBootstrapTracker(trackerThree.getAddress())
-
-        await Promise.all([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-        ])
-
-        nodeOne.subscribe('stream-1', 0)
-
-        await waitForEvent(trackerOne.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
-
-        const spyOnTrackerInstructionReceived = jest.spyOn(nodeOne, 'onTrackerInstructionReceived')
-        const subscribeToStreamIfHaveNotYet = jest.spyOn(nodeOne, 'subscribeToStreamIfHaveNotYet')
-
-        const trackerInstruction = encoder.instructionMessage(new StreamIdAndPartition('stream-1', 0), [
-            'node-address-1',
-            'node-address-2',
-        ])
-
-        await nodeOne.onTrackerInstructionReceived('trackerTwo', encoder.decode('trackerTwo', trackerInstruction))
-
-        expect(spyOnTrackerInstructionReceived).toBeCalledTimes(1)
-        expect(subscribeToStreamIfHaveNotYet).not.toBeCalled()
+        const unexpectedInstruction = new TrackerLayer.InstructionMessage({
+            requestId: 'requestId',
+            streamId: 'stream-2',
+            streamPartition: 0,
+            nodeIds: [
+                'node-address-1',
+                'node-address-2',
+            ],
+            counter: 0
+        })
+        await nodeOne.handleTrackerInstruction(unexpectedInstruction, 'trackerOne')
+        expect(nodeOne.getStreams()).not.toContain('stream-2::0')
     })
 })

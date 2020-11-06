@@ -1,13 +1,10 @@
 const { EventEmitter } = require('events')
 
 const intoStream = require('into-stream')
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
+const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
 const { waitForStreamToEnd } = require('streamr-test-utils')
 
-const { AskNeighborsResendStrategy,
-    StorageResendStrategy,
-    StorageNodeResendStrategy } = require('../../src/logic/resendStrategies')
-const StorageNodesMessage = require('../../src/messages/StorageNodesMessage')
+const { LocalResendStrategy, ForeignResendStrategy } = require('../../src/resend/resendStrategies')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const NodeToNode = require('../../src/protocol/NodeToNode')
 const TrackerNode = require('../../src/protocol/TrackerNode')
@@ -79,13 +76,13 @@ const createUnicastMessage = (timestamp = 0) => {
     })
 }
 
-describe('StorageResendStrategy#getResendResponseStream', () => {
+describe('LocalResendStrategy#getResendResponseStream', () => {
     let storage
     let resendStrategy
 
     beforeEach(async () => {
         storage = {}
-        resendStrategy = new StorageResendStrategy(storage)
+        resendStrategy = new LocalResendStrategy(storage)
     })
 
     test('on receiving ResendLastRequest, storage#requestLast is invoked', async () => {
@@ -153,188 +150,7 @@ describe('StorageResendStrategy#getResendResponseStream', () => {
     })
 })
 
-describe('AskNeighborsResendStrategy#getResendResponseStream', () => {
-    let nodeToNode
-    let getNeighbors
-    let resendStrategy
-    let request
-
-    beforeEach(async () => {
-        nodeToNode = new EventEmitter()
-        getNeighbors = jest.fn()
-        resendStrategy = new AskNeighborsResendStrategy(nodeToNode, getNeighbors, 2, TIMEOUT)
-        request = resendLastRequest
-    })
-
-    afterEach(() => {
-        resendStrategy.stop()
-    })
-
-    test('if given non-local request returns empty stream', async () => {
-        const responseStream = resendStrategy.getResendResponseStream(request, 'non-local')
-        const streamAsArray = await waitForStreamToEnd(responseStream)
-        expect(streamAsArray).toEqual([])
-    })
-
-    test('if no neighbors available returns empty stream', async () => {
-        getNeighbors.mockReturnValueOnce([])
-        const responseStream = resendStrategy.getResendResponseStream(request)
-        const streamAsArray = await waitForStreamToEnd(responseStream)
-        expect(streamAsArray).toEqual([])
-    })
-
-    describe('if neighbors available', () => {
-        beforeEach(() => {
-            getNeighbors.mockReturnValue(['neighbor-1', 'neighbor-2', 'neighbor-3'])
-        })
-
-        test('forwards request to first neighbor', async () => {
-            nodeToNode.send = jest.fn().mockReturnValueOnce(Promise.resolve())
-
-            resendStrategy.getResendResponseStream(request)
-
-            expect(nodeToNode.send).toBeCalledTimes(1)
-            expect(nodeToNode.send).toBeCalledWith('neighbor-1', request)
-        })
-
-        test('if forwarding request to first neighbor fails, forwards to 2nd', (done) => {
-            nodeToNode.send = jest.fn()
-                .mockReturnValueOnce(Promise.reject())
-                .mockReturnValueOnce(Promise.resolve())
-
-            resendStrategy.getResendResponseStream(request)
-
-            setImmediate(() => {
-                jest.runAllTimers()
-                expect(nodeToNode.send).toBeCalledTimes(2)
-                expect(nodeToNode.send).toBeCalledWith('neighbor-1', request)
-                expect(nodeToNode.send).toBeCalledWith('neighbor-2', request)
-                done()
-            })
-        })
-
-        test('if forwarding request to both neighbors fails (maxTries=2) returns empty stream', async () => {
-            nodeToNode.send = jest.fn()
-                .mockReturnValueOnce(Promise.reject())
-                .mockReturnValueOnce(Promise.reject())
-
-            const responseStream = resendStrategy.getResendResponseStream(request)
-            const streamAsArray = await waitForStreamToEnd(responseStream)
-
-            expect(streamAsArray).toEqual([])
-        })
-
-        test('avoids forwarding request to same neighbor again', async () => {
-            getNeighbors.mockClear()
-            getNeighbors.mockReturnValue(['neighbor-1', 'neighbor-1', 'neighbor-1'])
-            nodeToNode.send = jest.fn().mockReturnValue(Promise.reject())
-
-            await waitForStreamToEnd(resendStrategy.getResendResponseStream(request))
-
-            expect(nodeToNode.send).toBeCalledTimes(1)
-        })
-    })
-
-    describe('after successfully forwarding request to neighbor', () => {
-        let responseStream
-
-        beforeEach(() => {
-            getNeighbors.mockReturnValue(['neighbor-1', 'neighbor-2'])
-            nodeToNode.send = jest.fn().mockReturnValue(Promise.resolve())
-            responseStream = resendStrategy.getResendResponseStream(request)
-            expect(nodeToNode.send).toBeCalledTimes(1) // sanity check
-        })
-
-        test('if no response within timeout, move to next neighbor', () => {
-            jest.advanceTimersByTime(TIMEOUT)
-            expect(nodeToNode.send).toBeCalledTimes(2)
-        })
-
-        test('if neighbor disconnects, move to next neighbor', () => {
-            nodeToNode.emit(NodeToNode.events.NODE_DISCONNECTED, 'neighbor-1')
-            expect(nodeToNode.send).toBeCalledTimes(2)
-        })
-
-        test('if neighbor responds with ResendResponseResending, extend timeout', () => {
-            jest.advanceTimersByTime(TIMEOUT - 1)
-            nodeToNode.emit(
-                NodeToNode.events.RESEND_RESPONSE,
-                new ControlLayer.ResendResponseResending({
-                    streamId: 'streamId', streamPartition: 0, requestId: 'requestId'
-                }),
-                'neighbor-1'
-            )
-            jest.advanceTimersByTime(TIMEOUT - 1)
-
-            expect(nodeToNode.send).toBeCalledTimes(1)
-        })
-
-        test('if neighbor responds with UnicastMessage, extend timeout', () => {
-            jest.advanceTimersByTime(TIMEOUT - 1)
-            nodeToNode.emit(
-                NodeToNode.events.UNICAST_RECEIVED,
-                new ControlLayer.UnicastMessage({
-                    requestId: 'requestId', streamMessage: msg1
-                }),
-                'neighbor-1',
-            )
-            jest.advanceTimersByTime(TIMEOUT - 1)
-
-            expect(nodeToNode.send).toBeCalledTimes(1)
-        })
-
-        test('if neighbor responds with ResendResponseNoResend, move to next neighbor', () => {
-            nodeToNode.emit(
-                NodeToNode.events.RESEND_RESPONSE,
-                resendResponseNoResend,
-                'neighbor-1'
-            )
-            expect(nodeToNode.send).toBeCalledTimes(2)
-        })
-
-        test('if neighbor responds with ResendResponseResent, returned stream is closed', async () => {
-            nodeToNode.emit(
-                NodeToNode.events.RESEND_RESPONSE,
-                new ControlLayer.ResendResponseResent({
-                    streamId: 'streamId', streamPartition: 0, requestId: 'requestId'
-                }),
-                'neighbor-1'
-            )
-
-            // eslint-disable-next-line no-underscore-dangle
-            expect(responseStream._readableState.ended).toEqual(true)
-            expect(nodeToNode.send).toBeCalledTimes(1) // ensure next neighbor wasn't asked
-        })
-
-        test('all UnicastMessages received from neighbor are pushed to returned stream', async () => {
-            const u1 = createUnicastMessage(0)
-            const u2 = createUnicastMessage(1000)
-            const u3 = createUnicastMessage(11000)
-            const u4 = createUnicastMessage(21000)
-            const u5 = createUnicastMessage(22000)
-
-            nodeToNode.emit(NodeToNode.events.UNICAST_RECEIVED, u1, 'neighbor-1')
-            nodeToNode.emit(NodeToNode.events.UNICAST_RECEIVED, u2, 'neighbor-1')
-            jest.advanceTimersByTime(TIMEOUT / 10)
-            nodeToNode.emit(NodeToNode.events.UNICAST_RECEIVED, u3, 'neighbor-1')
-            jest.advanceTimersByTime(TIMEOUT / 10)
-            nodeToNode.emit(NodeToNode.events.UNICAST_RECEIVED, u4, 'neighbor-1')
-            nodeToNode.emit(NodeToNode.events.UNICAST_RECEIVED, u5, 'neighbor-1')
-            nodeToNode.emit(
-                NodeToNode.events.RESEND_RESPONSE,
-                new ControlLayer.ResendResponseResent({
-                    streamId: 'streamId', streamPartition: 0, requestId: 'requestId'
-                }),
-                'neighbor-1'
-            )
-
-            const streamAsArray = await waitForStreamToEnd(responseStream)
-            expect(streamAsArray).toEqual([u1, u2, u3, u4, u5])
-        })
-    })
-})
-
-describe('StorageNodeResendStrategy#getResendResponseStream', () => {
+describe('ForeignResendStrategy#getResendResponseStream', () => {
     let nodeToNode
     let trackerNode
     let getTracker
@@ -347,7 +163,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         trackerNode = new EventEmitter()
         getTracker = jest.fn()
         isSubscribedTo = jest.fn()
-        resendStrategy = new StorageNodeResendStrategy(trackerNode, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
+        resendStrategy = new ForeignResendStrategy(trackerNode, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
         request = resendLastRequest
     })
 
@@ -374,16 +190,16 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
         })
 
         test('attempts to find storage nodes via tracker', async () => {
-            trackerNode.findStorageNodes = jest.fn().mockReturnValueOnce(Promise.resolve())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValueOnce(Promise.resolve())
 
             resendStrategy.getResendResponseStream(request)
 
-            expect(trackerNode.findStorageNodes).toBeCalledTimes(1)
-            expect(trackerNode.findStorageNodes).toBeCalledWith('tracker', new StreamIdAndPartition('streamId', 0))
+            expect(trackerNode.sendStorageNodesRequest).toBeCalledTimes(1)
+            expect(trackerNode.sendStorageNodesRequest).toBeCalledWith('tracker', new StreamIdAndPartition('streamId', 0))
         })
 
         test('if communication with tracker fails, returns empty stream', async () => {
-            trackerNode.findStorageNodes = jest.fn().mockReturnValueOnce(Promise.reject())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValueOnce(Promise.reject())
 
             const responseStream = resendStrategy.getResendResponseStream(request)
             const streamAsArray = await waitForStreamToEnd(responseStream)
@@ -396,7 +212,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = jest.fn().mockReturnValue(Promise.resolve())
+            trackerNode.sendStorageNodesRequest = jest.fn().mockReturnValue(Promise.resolve())
             responseStream = resendStrategy.getResendResponseStream(request)
         })
 
@@ -408,8 +224,13 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         test('if tracker responds with zero storage nodes, returns empty stream', async () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [])
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new TrackerLayer.StorageNodesResponse({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeIds: []
+                })
             )
             const streamAsArray = await waitForStreamToEnd(responseStream)
             expect(streamAsArray).toEqual([])
@@ -425,13 +246,18 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
                 .mockReturnValueOnce(Promise.resolve())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [
-                    'storageNode-1',
-                    'storageNode-2',
-                    'storageNode-3',
-                    'storageNode-4'
-                ], 'tracker')
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new TrackerLayer.StorageNodesResponse({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: [
+                        'storageNode-1',
+                        'storageNode-2',
+                        'storageNode-3',
+                        'storageNode-4'
+                    ]
+                })
             )
             setImmediate(() => {
                 jest.runAllTimers()
@@ -448,11 +274,16 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
                 .mockReturnValue(Promise.reject())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), [
-                    'ws://storageNode-1',
-                    'ws://storageNode-2'
-                ])
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new TrackerLayer.StorageNodesResponse({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeAddresses: [
+                        'ws://storageNode-1',
+                        'ws://storageNode-2'
+                    ]
+                })
             )
 
             const streamAsArray = await waitForStreamToEnd(responseStream)
@@ -465,7 +296,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn()
             nodeToNode.disconnectFromNode = jest.fn()
@@ -475,8 +306,13 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         const emitTrackerResponse = () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RECEIVED,
-                new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                new TrackerLayer.StorageNodesResponse({
+                    requestId: 'requestId',
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    nodeIds: ['storageNode']
+                })
             )
             return new Promise((resolve) => setImmediate(resolve))
         }
@@ -517,17 +353,22 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach((done) => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn().mockResolvedValue(null)
             nodeToNode.disconnectFromNode = jest.fn()
 
             responseStream = resendStrategy.getResendResponseStream(request)
 
-            setImmediate(() => { // wait for this.trackerNode.findStorageNodes(...)
+            setImmediate(() => { // wait for this.trackerNode.sendStorageNodesRequest(...)
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    new TrackerLayer.StorageNodesResponse({
+                        requestId: 'requestId',
+                        streamId: 'streamId',
+                        streamPartition: 0,
+                        nodeIds: ['storageNode']
+                    })
                 )
                 done()
             })
@@ -598,7 +439,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.findStorageNodes = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = () => Promise.resolve()
             nodeToNode.disconnectFromNode = jest.fn()
@@ -607,8 +448,13 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
             setImmediate(() => {
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RECEIVED,
-                    new StorageNodesMessage(new StreamIdAndPartition('streamId', 0), ['ws://storageNode'])
+                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    new TrackerLayer.StorageNodesResponse({
+                        requestId: 'requestId',
+                        streamId: 'streamId',
+                        streamPartition: 0,
+                        nodeIds: ['storageNode']
+                    })
                 )
 
                 // Causes the stream to end. Other ways to end are a) failing to forward request and b) timeout. All of
@@ -621,7 +467,7 @@ describe('StorageNodeResendStrategy#getResendResponseStream', () => {
 
         test('if not (previously) subscribed to storage node, disconnect from storage node', async () => {
             isSubscribedTo.mockReturnValue(false)
-            const stream = await waitForStreamToEnd(responseStream)
+            await waitForStreamToEnd(responseStream)
             expect(nodeToNode.disconnectFromNode).toBeCalledTimes(1)
             expect(nodeToNode.disconnectFromNode).toBeCalledWith('storageNode')
         })

@@ -5,6 +5,7 @@ const { ControlLayer } = require('streamr-client-protocol')
 const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const { StreamIdAndPartition } = require('../identifiers')
+const logger = require('../helpers/logger')('streamr:resendStrategies')
 
 function toUnicastMessage(request) {
     return new Transform({
@@ -19,10 +20,9 @@ function toUnicastMessage(request) {
 }
 
 /**
- * Resend strategy that uses fetches streaming data from (local) storage.
- * Often used at L1.
+ * Resend strategy that uses fetches streaming data from local storage.
  */
-class StorageResendStrategy {
+class LocalResendStrategy {
     constructor(storage) {
         if (storage == null) {
             throw new Error('storage not given')
@@ -179,10 +179,11 @@ class ProxiedResend {
         this.nodeToNode.send(neighborId, this.request).then(() => {
             this.currentNeighbor = neighborId
             this._resetTimeout()
+            return true
         }, () => {
             this._askNextNeighbor()
         }).catch((e) => {
-            console.error(`Failed to _askNextNeighbor: ${neighborId}, error ${e}`)
+            logger.error(`Failed to _askNextNeighbor: ${neighborId}, error ${e}`)
         })
     }
 
@@ -196,51 +197,6 @@ class ProxiedResend {
     _resetTimeout() {
         clearTimeout(this.timeoutRef)
         this.timeoutRef = setTimeout(this._askNextNeighbor.bind(this), this.timeout)
-    }
-}
-
-/**
- * Resend strategy that forwards resend request to neighbor nodes and then acts
- * as a proxy in between.
- * Often used at L2.
- */
-class AskNeighborsResendStrategy {
-    constructor(nodeToNode, getNeighbors, maxTries = 3, timeout = 20 * 1000) {
-        this.nodeToNode = nodeToNode
-        this.getNeighbors = getNeighbors
-        this.maxTries = maxTries
-        this.timeout = timeout
-        this.pending = new Set()
-    }
-
-    getResendResponseStream(request, source = null) {
-        const responseStream = new Readable({
-            objectMode: true,
-            read() {}
-        })
-
-        // L2 only works on local requests
-        if (source === null) {
-            const proxiedResend = new ProxiedResend(
-                request,
-                responseStream,
-                this.nodeToNode,
-                this.getNeighbors,
-                this.maxTries,
-                this.timeout,
-                () => this.pending.delete(proxiedResend)
-            )
-            this.pending.add(proxiedResend)
-            proxiedResend.commence()
-        } else {
-            responseStream.push(null)
-        }
-
-        return responseStream
-    }
-
-    stop() {
-        this.pending.forEach((proxiedResend) => proxiedResend.cancel())
     }
 }
 
@@ -304,10 +260,9 @@ class PendingTrackerResponseBookkeeper {
 
 /**
  * Resend strategy that asks tracker for storage nodes, forwards resend request
- * to one of them, and then acts as a proxy in between.
- * Often used at L3.
+ * to (one of) them, and then acts as a proxy/relay in between.
  */
-class StorageNodeResendStrategy {
+class ForeignResendStrategy {
     constructor(trackerNode, nodeToNode, getTracker, isSubscribedTo, timeout = 20 * 1000) {
         this.trackerNode = trackerNode
         this.nodeToNode = nodeToNode
@@ -317,10 +272,10 @@ class StorageNodeResendStrategy {
         this.pendingTrackerResponse = new PendingTrackerResponseBookkeeper(timeout)
         this.pendingResends = {} // storageNode => [...proxiedResend]
 
-        this.trackerNode.on(TrackerNode.events.STORAGE_NODES_RECEIVED, async (storageNodesMessage) => {
-            const streamId = storageNodesMessage.getStreamId()
-            const storageNodeIds = storageNodesMessage.getNodeIds()
-            const tracker = storageNodesMessage.getSource()
+        // TODO: STORAGE_NODES_RESPONSE_RECEIVED tracker?
+        this.trackerNode.on(TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED, async (storageNodesResponse, tracker) => {
+            const streamId = new StreamIdAndPartition(storageNodesResponse.streamId, storageNodesResponse.streamPartition)
+            const storageNodeIds = storageNodesResponse.nodeIds
 
             const entries = this.pendingTrackerResponse.popEntries(streamId)
             if (entries.length === 0) {
@@ -390,11 +345,11 @@ class StorageNodeResendStrategy {
         if (tracker == null) {
             responseStream.push(null)
         } else {
-            this.trackerNode.findStorageNodes(tracker, streamIdAndPartition).then(
+            this.trackerNode.sendStorageNodesRequest(tracker, streamIdAndPartition).then(
                 () => this.pendingTrackerResponse.addEntry(request, responseStream),
                 () => responseStream.push(null)
             ).catch((e) => {
-                console.error(`Failed to _requestStorageNodes, error: ${e}`)
+                logger.error(`Failed to _requestStorageNodes, error: ${e}`)
             })
         }
     }
@@ -408,7 +363,6 @@ class StorageNodeResendStrategy {
 }
 
 module.exports = {
-    AskNeighborsResendStrategy,
-    StorageResendStrategy,
-    StorageNodeResendStrategy
+    LocalResendStrategy,
+    ForeignResendStrategy
 }

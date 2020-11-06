@@ -1,12 +1,10 @@
 const { waitForEvent } = require('streamr-test-utils')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const encoder = require('../../src/helpers/MessageEncoder')
-const { StreamIdAndPartition } = require('../../src/identifiers')
 const endpointEvents = require('../../src/connection/WsEndpoint').events
 
 /**
@@ -16,14 +14,27 @@ describe('Check tracker instructions to node', () => {
     let tracker
     let nodeOne
     let nodeTwo
-    // let otherNodes
     const streamId = 'stream-1'
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30950, 'tracker')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 30950,
+            id: 'tracker'
+        })
 
-        nodeOne = await startNetworkNode(LOCALHOST, 30952, 'node-1')
-        nodeTwo = await startNetworkNode(LOCALHOST, 30953, 'node-2')
+        nodeOne = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30952,
+            id: 'node-1',
+            trackers: [tracker.getAddress()]
+        })
+        nodeTwo = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30953,
+            id: 'node-2',
+            trackers: [tracker.getAddress()]
+        })
 
         // TODO: a better way of achieving this would be to pass via constructor, but currently not possible when using
         // startNetworkNode function
@@ -33,8 +44,8 @@ describe('Check tracker instructions to node', () => {
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
 
-        nodeOne.addBootstrapTracker(tracker.getAddress())
-        nodeTwo.addBootstrapTracker(tracker.getAddress())
+        nodeOne.start()
+        nodeTwo.start()
     })
 
     afterAll(async () => {
@@ -60,9 +71,15 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
         // send empty list
-        await tracker.protocols.trackerServer.endpoint.sendSync(
+        await tracker.protocols.trackerServer.endpoint.send(
             'node-1',
-            encoder.instructionMessage(new StreamIdAndPartition(streamId, 0), [])
+            new TrackerLayer.InstructionMessage({
+                requestId: 'requestId',
+                streamId,
+                streamPartition: 0,
+                nodeIds: [],
+                counter: 0
+            }).serialize()
         )
 
         await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)

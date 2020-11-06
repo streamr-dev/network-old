@@ -1,11 +1,10 @@
 const { waitForEvent } = require('streamr-test-utils')
+const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
-const { LOCALHOST } = require('../util')
 const { StreamIdAndPartition } = require('../../src/identifiers')
-const encoder = require('../../src/helpers/MessageEncoder')
 
 describe('check tracker, nodes and statuses from nodes', () => {
     let tracker
@@ -20,18 +19,32 @@ describe('check tracker, nodes and statuses from nodes', () => {
     const s1 = new StreamIdAndPartition('stream-1', 0)
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, trackerPort, 'tracker')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: trackerPort,
+            id: 'tracker'
+        })
         // disable trackers formAndSendInstructions function
         // eslint-disable-next-line no-underscore-dangle
         tracker._formAndSendInstructions = () => {}
-        node1 = await startNetworkNode(LOCALHOST, port1, 'node1')
-        node2 = await startNetworkNode(LOCALHOST, port2, 'node2')
+        node1 = await startNetworkNode({
+            host: '127.0.0.1',
+            port: port1,
+            id: 'node1',
+            trackers: [tracker.getAddress()]
+        })
+        node2 = await startNetworkNode({
+            host: '127.0.0.1',
+            port: port2,
+            id: 'node2',
+            trackers: [tracker.getAddress()]
+        })
 
         node1.subscribeToStreamIfHaveNotYet(s1)
         node2.subscribeToStreamIfHaveNotYet(s1)
 
-        node1.addBootstrapTracker(tracker.getAddress())
-        node2.addBootstrapTracker(tracker.getAddress())
+        node1.start()
+        node2.start()
 
         await Promise.all([
             waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
@@ -46,16 +59,25 @@ describe('check tracker, nodes and statuses from nodes', () => {
     })
 
     it('if failed to follow tracker instructions, inform tracker about current status', async () => {
-        const trackerInstruction1 = encoder.instructionMessage(s1, [
-            'node2', 'unknown'
-        ])
-        const trackerInstruction2 = encoder.instructionMessage(s1, [
-            'node1', 'unknown'
-        ])
+        const trackerInstruction1 = new TrackerLayer.InstructionMessage({
+            requestId: 'requestId',
+            streamId: s1.id,
+            streamPartition: s1.partition,
+            nodeIds: ['node2', 'unknown'],
+            counter: 0
+        })
+
+        const trackerInstruction2 = new TrackerLayer.InstructionMessage({
+            requestId: 'requestId',
+            streamId: s1.id,
+            streamPartition: s1.partition,
+            nodeIds: ['node1', 'unknown'],
+            counter: 0
+        })
 
         await Promise.race([
-            node1.onTrackerInstructionReceived('tracker', encoder.decode('tracker', trackerInstruction1)),
-            node2.onTrackerInstructionReceived('tracker', encoder.decode('tracker', trackerInstruction2))
+            node1.onTrackerInstructionReceived('tracker', trackerInstruction1),
+            node2.onTrackerInstructionReceived('tracker', trackerInstruction2)
         ]).catch((e) => {})
 
         await Promise.race([
@@ -74,5 +96,13 @@ describe('check tracker, nodes and statuses from nodes', () => {
                 node2: ['node1'],
             }
         })
+
+        // TODO: handle?
+        expect([...node1.protocols.nodeToNode.endpoint.getPeers().keys()]).toEqual([
+            `ws://127.0.0.1:${trackerPort}`, `ws://127.0.0.1:${port2}`
+        ])
+        expect([...node2.protocols.nodeToNode.endpoint.getPeers().keys()]).toEqual([
+            `ws://127.0.0.1:${trackerPort}`, `ws://127.0.0.1:${port1}`
+        ])
     })
 })

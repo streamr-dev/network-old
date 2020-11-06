@@ -1,3 +1,4 @@
+const { StreamIdAndPartition } = require('../identifiers')
 /**
  * InstructionThrottler makes sure that
  *  1. no more than one instruction is handled at a time
@@ -12,8 +13,11 @@ module.exports = class InstructionThrottler {
         this.queue = {} // streamId => instructionMessage
     }
 
-    add(instructionMessage) {
-        this.queue[instructionMessage.getStreamId()] = instructionMessage
+    add(instructionMessage, trackerId) {
+        this.queue[StreamIdAndPartition.fromMessage(instructionMessage)] = {
+            instructionMessage,
+            trackerId
+        }
         if (!this.handling) {
             this._invokeHandleFnWithLock()
         }
@@ -30,12 +34,12 @@ module.exports = class InstructionThrottler {
     async _invokeHandleFnWithLock() {
         const streamIds = Object.keys(this.queue)
         const streamId = streamIds[0]
-        const instructionMessage = this.queue[streamId]
+        const { instructionMessage, trackerId } = this.queue[streamId]
         delete this.queue[streamId]
 
         this.handling = true
         try {
-            await this.handleFn(instructionMessage)
+            await this.handleFn(instructionMessage, trackerId)
         } catch (err) {
             console.warn('InstructionMessage handling timed out')
         } finally {

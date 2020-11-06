@@ -3,7 +3,6 @@ const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
 const Node = require('../../src/logic/Node')
-const { LOCALHOST } = require('../util')
 
 describe('tracker assigns storage node to streams', () => {
     let tracker
@@ -12,17 +11,36 @@ describe('tracker assigns storage node to streams', () => {
     let storageNode
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 31950, 'tracker')
-        storageNode = await startStorageNode(LOCALHOST, 31954, 'storageNode')
-        subscriberOne = await startNetworkNode(LOCALHOST, 31952, 'subscriberOne')
-        subscriberTwo = await startNetworkNode(LOCALHOST, 31953, 'subscriberTwo')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 31950,
+            id: 'tracker',
+        })
+        storageNode = await startStorageNode({
+            host: '127.0.0.1',
+            port: 31951,
+            id: 'storageNode',
+            trackers: [tracker.getAddress()]
+        })
+        subscriberOne = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 31952,
+            id: 'subscriberOne',
+            trackers: [tracker.getAddress()]
+        })
+        subscriberTwo = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 31953,
+            id: 'subscriberTwo',
+            trackers: [tracker.getAddress()]
+        })
 
         subscriberOne.subscribe('stream-1', 0)
         subscriberTwo.subscribe('stream-2', 0)
 
-        subscriberOne.addBootstrapTracker(tracker.getAddress())
-        subscriberTwo.addBootstrapTracker(tracker.getAddress())
-        storageNode.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.start()
+        subscriberTwo.start()
+        storageNode.start()
     })
 
     afterAll(async () => {

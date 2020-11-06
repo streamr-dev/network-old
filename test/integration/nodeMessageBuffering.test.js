@@ -1,8 +1,6 @@
 const { MessageLayer } = require('streamr-client-protocol')
-const { wait } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { LOCALHOST } = require('../util')
 
 const { StreamMessage, MessageID } = MessageLayer
 
@@ -18,13 +16,27 @@ describe('message buffering of Node', () => {
     let destinationNode
 
     beforeAll(async () => {
-        tracker = await startTracker(LOCALHOST, 30320, 'tracker')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 30320,
+            id: 'tracker'
+        })
 
-        sourceNode = await startNetworkNode(LOCALHOST, 30321, 'source-node')
-        sourceNode.addBootstrapTracker(tracker.getAddress())
+        sourceNode = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30321,
+            id: 'source-node',
+            trackers: [tracker.getAddress()]
+        })
+        destinationNode = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 30322,
+            id: 'destination-node',
+            trackers: [tracker.getAddress()]
+        })
 
-        destinationNode = await startNetworkNode(LOCALHOST, 30322, 'destination-node')
-        destinationNode.addBootstrapTracker(tracker.getAddress())
+        sourceNode.start()
+        destinationNode.start()
     })
 
     afterAll(async () => {

@@ -1,61 +1,68 @@
-# Streamr network 
- ![Travis](https://travis-ci.com/streamr-dev/network.svg?token=qNNVCnYJo1fz18VTNpPZ&branch=master)
- 
-> Peer-to-peer publish-subscribe network for real-time data with support for long-term data persistence
+<p align="center">
+  <a href="https://streamr.network">
+    <img alt="Streamr" src="https://raw.githubusercontent.com/streamr-dev/streamr-client-javascript/master/readme-header-img.png" width="1320" />
+  </a>
+</p>
+<h1 align="left">
 
-This repository/package contains an extendable implementation of the
-[Streamr protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) written in Node.js.
-The code contains a tracker implementation and a minimal network node implementation.
-This package acts as a library for other Node.js packages, but also provides a few of its own executables as well.
+# streamr-network
+
+An extendable implementation of the server-side
+[Streamr Protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) logic written in Node.js.
+The package mostly acts as a library for other packages wishing to implement a broker node, but additionally
+provides a full tracker executable, and a stripped-down network node executable.
 
 
-The main executable for running a broker node in the Streamr Network resides in the
-[Broker](https://github.com/streamr-dev/broker) repository. Although this repository does contain a
-fully-operational minimal network node implementation, we recommend running the broker node because it includes
-useful client-facing features for interacting with the Streamr Network. 
+The primary executable for running a broker node in the Streamr Network resides in the
+[streamr-broker](https://github.com/streamr-dev/broker) package. Although _streamr-network_ contains a
+fully-operational minimal network node implementation, we recommend running the node executable found in
+_streamr-broker_ as it includes useful client-facing features for interacting with the Streamr Network.
 
-The [wiki](https://github.com/streamr-dev/network/wiki) of this project outlines the technical and architectural
-decisions made during development. It also provides explanations of some the more involved features. There is also a
-glossary for often used terms. We aim to keep the wiki updated regularly so it is an accurate reflection of the code
-base.
+The [wiki](https://github.com/streamr-dev/network/wiki) outlines the technical and architectural
+decisions of the project. It provides thorough explanations of some the more involved features.
+A glossary is also included.
 
 ## Table of Contents
-- [Installation](#installation)
-- [Architectural decisions](https://github.com/streamr-dev/network/wiki)
-- [Examples](#examples)
-- [Development](#development)
-- [Releasing](#releasing)
+- [Install](#install)
+- [Run](#run)
+- [Develop](#develop)
+- [Release](#release)
 
-## Installation
+## Install
 
-Prerequisites: [Node.js](https://nodejs.org/) `>=14.x`, npm version `>=6.14`
+Prerequisites are [Node.js](https://nodejs.org/) `14.x` and npm version `>=6.14`.
 
-You can install Streamr Network using npm:
+You can install streamr-network as a library in your project using npm:
 
+```bash
+npm install streamr-network --save
 ```
-$ npm install streamr-network --save
+
+To install streamr-network system-wide:
+```bash
+npm install streamr-network --global
 ```
 
-It is also possible to install Streamr Network globally (using `npm install streamr-network --global`)
+## Run
 
-## Examples
+Run an example network of 100 nodes (locally):
 
-Check the [examples folder](./examples) for examples of using the network node in different settings. Examples include:
-typical pub/sub setting, and publishing and subscribing using MQTT.
+    npm run network
 
-## Development
+### Examples
+
+Check the [examples folder](./examples) for more interesting examples of using
+the network node in different settings.
+
+## Develop
 
 Install dependencies:
 
     npm ci
-    
+
 Run the tests:
 
     npm run test
-
-Run an example network locally (10 nodes):
-
-    npm run network
 
 We use [eslint](https://github.com/eslint/eslint) for code formatting:
 
@@ -64,38 +71,43 @@ We use [eslint](https://github.com/eslint/eslint) for code formatting:
 Code coverage:
 
     npm run coverage
-    
-Debugging:
 
-To get all Streamr Network debug messages  
+### Debug
 
-    export DEBUG=streamr:*
-    
-Or adjust debugging to desired level 
+To get all debug messages:
 
-- connection layer `export DEBUG=streamr:connection:*`
-- logic layer `export DEBUG=streamr:logic:*`
-- protocol layer `export DEBUG=streamr:protocol:*`
+    LOG_LEVEL=debug
 
-Excluding level
+... or adjust debugging to desired level:
 
-    export DEBUG=streamr:*,-streamr:connection:*
-    
-    
-## Publishing
+    LOG_LEVEL=[debug|info|warn|error]
 
-Publishing to NPM is automated via Github Actions. Follow the steps below to publish `latest` or `beta`.
+To disable all logs
 
-### Publishing `latest`:
-1. Update version with either `npm version [patch|minor|major]`. Use semantic versioning
-https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created. 
-2. `git push --follow-tags`
-3. Wait for Github Actions to run tests
-4. If tests passed, Github Actions will publish the new version to NPM
+    NOLOG=true
 
-### Publishing `beta`:
+### Regenerate self-signed certificate fixture
+To regenerate self signed certificate in `./test/fixtures` run:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 36500 -nodes -subj "/CN=localhost"
+```
+
+## Release
+
+Publishing to NPM is automated via Github Actions. Follow the steps below to publish stable (`latest`) or `beta`.
+
+### Publishing stable (latest)
+1. `git checkout master && git pull`
+2. Update version with either `npm version [patch|minor|major]`. Use semantic versioning
+https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.
+3. `git push --follow-tags`
+4. Wait for Github Actions to run tests
+5. If tests passed, Github Actions will publish the new version to NPM
+
+### Publishing beta
 1. Update version with either `npm version [prepatch|preminor|premajor] --preid=beta`. Use semantic versioning
-https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created. 
+https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.
 2. `git push --follow-tags`
 3. Wait for Github Actions to run tests
 4. If tests passed, Github Actions will publish the new version to NPM

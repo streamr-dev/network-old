@@ -4,9 +4,8 @@ const { waitForEvent, waitForStreamToEnd } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { LOCALHOST } = require('../util')
 
-const { UnicastMessage, ControlMessage } = ControlLayer
+const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 const typesOfStreamItems = async (stream) => {
@@ -26,34 +25,44 @@ describe('resend requests are fulfilled at L1', () => {
     let contactNode
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 28600, 'tracker')
-        contactNode = await startNetworkNode(LOCALHOST, 28601, 'contactNode', [{
-            store: () => {},
-            requestLast: () => intoStream.object([
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 666, 50, 'publisherId', 'msgChainId'),
-                    content: {},
-                }),
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
-                    prevMsgRef: new MessageRef(666, 50),
-                    content: {},
-                }),
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
-                    prevMsgRef: new MessageRef(756, 0),
-                    content: {},
-                })
-            ]),
-            requestFrom: () => intoStream.object([
-                new StreamMessage({
-                    messageId: new MessageID('streamId', 0, 666, 50, 'publisherId', 'msgChainId'),
-                    content: {},
-                }),
-            ]),
-            requestRange: () => intoStream.object([]),
-        }])
-        contactNode.addBootstrapTracker(tracker.getAddress())
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 28600,
+            id: 'tracker'
+        })
+        contactNode = await startNetworkNode({
+            host: '127.0.0.1',
+            port: 28601,
+            id: 'contactNode',
+            trackers: [tracker.getAddress()],
+            storages: [{
+                store: () => {},
+                requestLast: () => intoStream.object([
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 666, 50, 'publisherId', 'msgChainId'),
+                        content: {},
+                    }),
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
+                        prevMsgRef: new MessageRef(666, 50),
+                        content: {},
+                    }),
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
+                        prevMsgRef: new MessageRef(756, 0),
+                        content: {},
+                    })
+                ]),
+                requestFrom: () => intoStream.object([
+                    new StreamMessage({
+                        messageId: new MessageID('streamId', 0, 666, 50, 'publisherId', 'msgChainId'),
+                        content: {},
+                    }),
+                ]),
+                requestRange: () => intoStream.object([]),
+            }]
+        })
+        contactNode.start()
         contactNode.subscribe('streamId', 0)
 
         await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
