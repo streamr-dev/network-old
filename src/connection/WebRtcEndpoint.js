@@ -72,6 +72,9 @@ class WebRtcEndpoint extends EventEmitter {
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
         this.newConnectionTimeouts = {}
+        this.peerPingTimeoutRefs = {}
+        this.peerPongTimeoutRefs = {}
+        this.pingIntervalInMs = pingIntervalInMs
         this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
@@ -189,6 +192,8 @@ class WebRtcEndpoint extends EventEmitter {
         const dataChannel = this.dataChannels[targetPeerId]
         const flushTimeOutRef = this.flushTimeOutRefs[targetPeerId]
         const newConnectionTimeout = this.newConnectionTimeouts[targetPeerId]
+        const peerPingTimeout = this.peerPingTimeoutRefs[targetPeerId]
+        const peerPongTimeout = this.peerPongTimeoutRefs[targetPeerId]
         if (dataChannel) {
             dataChannel.close()
         }
@@ -201,11 +206,19 @@ class WebRtcEndpoint extends EventEmitter {
         if (newConnectionTimeout) {
             clearTimeout(newConnectionTimeout)
         }
+        if (peerPingTimeout) {
+            clearTimeout(peerPingTimeout)
+        }
+        if (peerPongTimeout) {
+            clearTimeout(peerPongTimeout)
+        }
         delete this.connections[targetPeerId]
         delete this.dataChannels[targetPeerId]
         delete this.readyChannels[targetPeerId]
         delete this.messageQueue[targetPeerId]
         delete this.flushTimeOutRefs[targetPeerId]
+        delete this.peerPingTimeoutRefs[targetPeerId]
+        delete this.peerPongTimeoutRefs[targetPeerId]
     }
 
     getAddress() {
@@ -216,12 +229,14 @@ class WebRtcEndpoint extends EventEmitter {
         Object.keys(this.connections).forEach((peerId) => {
             this.close(peerId)
         })
-        clearTimeout(this._pingInterval)
+        clearTimeout(this.pingTimeoutRef)
         this.connections = {}
         this.dataChannels = {}
         this.readyChannels = {}
         this.messageQueue = {}
         this.flushTimeOutRefs = {}
+        this.peerPongTimeoutRefs = {}
+        this.peerPingTimeoutRefs = {}
 
         this.rtcSignaller.setOfferListener(() => {})
         this.rtcSignaller.setAnswerListener(() => {})
@@ -355,6 +370,7 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     ping(peerId, attempt = 0) {
+        clearTimeout(this.peerPingTimeoutRefs[peerId])
         const dc = this.readyChannels[peerId]
         try {
             if (dc.isOpen()) {
@@ -368,7 +384,7 @@ class WebRtcEndpoint extends EventEmitter {
         } catch (e) {
             if (attempt < 5 && (this.readyChannels[peerId])) {
                 console.error(`${this.id} Failed to ping connection: ${peerId}, error ${e}, reattempting`)
-                setTimeout(() => this.ping(peerId, attempt + 1), 2000)
+                this.peerPingTimeoutRefs[peerId] = setTimeout(() => this.ping(peerId, attempt + 1), 2000)
             } else {
                 console.error(`${this.id} Failed all ping reattempts to connection: ${peerId}, error ${e}, terminating connection`)
                 this.close(peerId)
@@ -377,6 +393,7 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     pong(peerId, attempt = 0) {
+        clearTimeout(this.peerPongTimeoutRefs[peerId])
         const dataChannel = this.readyChannels[peerId]
         try {
             if (dataChannel.isOpen()) {
@@ -385,7 +402,7 @@ class WebRtcEndpoint extends EventEmitter {
         } catch (e) {
             if (attempt < 5 && (this.readyChannels[peerId])) {
                 console.error(`${this.id} Failed to pong connection: ${peerId}, error ${e}, reattempting`)
-                setTimeout(() => this.pong(peerId, attempt + 1), 2000)
+                this.peerPongTimeoutRefs[peerId] = setTimeout(() => this.pong(peerId, attempt + 1), 2000)
             } else {
                 console.error(`${this.id} Failed all pong reattempts to connection: ${peerId}, error ${e}, terminating connection`)
                 this.close(peerId)
