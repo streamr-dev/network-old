@@ -57,13 +57,11 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller, pingIntervalInMs = 5 * 1000, maxRetries = 2, newConnectionTimeout = 10000) {
+    constructor(id, stunUrls, rtcSignaller, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 10000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
-        this.maxRetries = maxRetries
-        this.bufferLow = 2048
         this.newConnectionTimeout = newConnectionTimeout
         this.connections = {}
         this.dataChannels = {}
