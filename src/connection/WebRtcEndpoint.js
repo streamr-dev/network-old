@@ -387,7 +387,7 @@ class WebRtcEndpoint extends EventEmitter {
         } catch (e) {
             if (attempt < 5 && (this.readyChannels[peerId])) {
                 console.error(`${this.id} Failed to pong connection: ${peerId}, error ${e}, reattempting`)
-                setTimeout(() => this.ping(peerId, attempt + 1), 2000)
+                setTimeout(() => this.pong(peerId, attempt + 1), 2000)
             } else {
                 console.error(`${this.id} Failed all pong reattempts to connection: ${peerId}, error ${e}, terminating connection`)
                 this.close(peerId)
