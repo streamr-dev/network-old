@@ -63,7 +63,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
         this.newConnectionTimeout = newConnectionTimeout
-        this.bufferHighThreshold = Math.pow(2, 17)
+        this.bufferHighThreshold = 2**17
         this.connections = {}
         this.dataChannels = {}
         this.readyChannels = {}
@@ -311,7 +311,6 @@ class WebRtcEndpoint extends EventEmitter {
             if (dataChannel.paused === true) {
                 // eslint-disable-next-line no-param-reassign
                 dataChannel.paused = false
-                console.log('bufferedAmountLow:' + targetPeerId)
                 this.emit('bufferedAmountLow:' + targetPeerId)
                 this._attemptToFlushMessages(targetPeerId)
             }
