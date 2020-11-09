@@ -63,7 +63,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
         this.newConnectionTimeout = newConnectionTimeout
-        this.bufferHighThreshold = 2**17
+        this.bufferHighThreshold = 2 ** 17
         this.connections = {}
         this.dataChannels = {}
         this.readyChannels = {}
