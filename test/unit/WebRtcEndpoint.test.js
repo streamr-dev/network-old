@@ -2,12 +2,11 @@ const { waitForCondition, waitForEvent } = require('streamr-test-utils')
 
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
-const { startEndpoint, WsEndpoint } = require('../../src/connection/WsEndpoint')
+const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { WebRtcEndpoint, events } = require('../../src/connection/WebRtcEndpoint')
 const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { LOCALHOST } = require('../util')
 
 describe('WebRtcEndpoint', () => {
     let tracker
@@ -17,7 +16,11 @@ describe('WebRtcEndpoint', () => {
     let endpoint2
 
     beforeEach(async () => {
-        tracker = await startTracker(LOCALHOST, 28700, 'tracker')
+        tracker = await startTracker({
+            host: '127.0.0.1',
+            port: 28700,
+            id: 'tracker'
+        })
 
         const ep1 = await startEndpoint('127.0.0.1', 28701, PeerInfo.newNode('node-1'), null)
         const ep2 = await startEndpoint('127.0.0.1', 28702, PeerInfo.newNode('node-2'), null)

@@ -10,46 +10,43 @@ module.exports = class RtcSignaller {
         this.errorListener = null
         this.remoteCandidateListener = null
 
-        trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message) => {
+        trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message, source) => {
             this.offerListener({
-                routerId: message.getSource(),
-                originatorInfo: message.getOriginatorInfo(),
-                description: message.getDescription(),
-                type: message.getType(),
-                source: message.getSource()
+                routerId: source,
+                originatorInfo: message.originator,
+                description: message.data.description
             })
         })
-        trackerNode.on(TrackerNode.events.RTC_ANSWER_RECEIVED, (message) => {
+        trackerNode.on(TrackerNode.events.RTC_ANSWER_RECEIVED, (message, source) => {
             this.answerListener({
-                routerId: message.getSource(),
-                originatorInfo: message.getOriginatorInfo(),
-                description: message.getDescription(),
-                type: message.getType(),
-                source: message.getSource()
+                routerId: source,
+                originatorInfo: message.originator,
+                description: message.data.description,
             })
         })
 
-        trackerNode.on(TrackerNode.events.REMOTE_CANDIDATE_RECEIVED, (message) => {
+        trackerNode.on(TrackerNode.events.REMOTE_CANDIDATE_RECEIVED, (message, source) => {
             this.remoteCandidateListener({
-                originatorInfo: message.getOriginatorInfo(),
-                candidate: message.getCandidate(),
-                mid: message.getMid()
+                routerId: source,
+                originatorInfo: message.originator,
+                candidate: message.data.candidate,
+                mid: message.data.mid
             })
         })
 
-        trackerNode.on(TrackerNode.events.RTC_CONNECT_RECEIVED, (message) => {
+        trackerNode.on(TrackerNode.events.RTC_CONNECT_RECEIVED, (message, source) => {
             this.connectListener({
-                routerId: message.getSource(),
-                targetNode: message.getTargetNode(),
-                originatorInfo: message.getOriginatorInfo()
+                routerId: source,
+                targetNode: message.targetNode,
+                originatorInfo: message.originator
             })
         })
 
-        trackerNode.on(TrackerNode.events.RTC_ERROR_RECEIVED, (message) => {
+        trackerNode.on(TrackerNode.events.RTC_ERROR_RECEIVED, (message, source) => {
             this.errorListener({
-                routerId: message.getSource(),
-                targetNode: message.getTargetNode(),
-                errorCode: message.getErrorCode()
+                routerId: source,
+                targetNode: message.targetNode,
+                errorCode: message.errorCode
             })
         })
     }

@@ -1,3 +1,4 @@
+const logger = require('../helpers/logger')('streamr:rtcSignallingHandlers')
 const TrackerServer = require('../protocol/TrackerServer')
 const { NotFoundInPeerBookError } = require('../connection/PeerBook')
 
@@ -7,65 +8,55 @@ function attachRtcSignalling(trackerServer) {
     }
 
     trackerServer.on(TrackerServer.events.LOCAL_DESCRIPTION_RECEIVED, (localDescriptionMessage) => {
+        const { originator, targetNode, data } = localDescriptionMessage
         try {
-            const type = localDescriptionMessage.getType()
-            if (type === 'answer') {
+            if (data.type === 'answer') {
                 trackerServer.sendRtcAnswer(
-                    localDescriptionMessage.getTargetNode(),
-                    localDescriptionMessage.getOriginatorInfo(),
-                    type,
-                    localDescriptionMessage.getDescription()
+                    targetNode,
+                    originator,
+                    data.description
                 )
-            } else if (type === 'offer') {
+            } else if (data.type === 'offer') {
                 trackerServer.sendRtcOffer(
-                    localDescriptionMessage.getTargetNode(),
-                    localDescriptionMessage.getOriginatorInfo(),
-                    type,
-                    localDescriptionMessage.getDescription()
+                    targetNode,
+                    originator,
+                    data.description
                 )
+            } else {
+                logger.warn('Unrecognized localDescription message: %s', data.type)
             }
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(
-                    localDescriptionMessage.getOriginatorInfo().peerId,
-                    localDescriptionMessage.getTargetNode()
-                )
+                trackerServer.sendUnknownPeerRtcError(originator.peerId, targetNode)
             } else {
                 throw err
             }
         }
     })
     trackerServer.on(TrackerServer.events.LOCAL_CANDIDATE_RECEIVED, (localCandidateMessage) => {
+        const { originator, targetNode, data } = localCandidateMessage
         try {
             trackerServer.sendRemoteCandidate(
-                localCandidateMessage.getTargetNode(),
-                localCandidateMessage.getOriginatorInfo(),
-                localCandidateMessage.getCandidate(),
-                localCandidateMessage.getMid()
+                targetNode,
+                originator,
+                data.candidate,
+                data.mid
             )
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(
-                    localCandidateMessage.getOriginatorInfo().peerId,
-                    localCandidateMessage.getTargetNode()
-                )
+                trackerServer.sendUnknownPeerRtcError(originator.peerId, targetNode)
             } else {
                 throw err
             }
         }
     })
     trackerServer.on(TrackerServer.events.RTC_CONNECT_RECEIVED, (rtcConnectMessage) => {
+        const { originator, targetNode } = rtcConnectMessage
         try {
-            trackerServer.sendRtcConnect(
-                rtcConnectMessage.getTargetNode(),
-                rtcConnectMessage.getOriginatorInfo(),
-            )
+            trackerServer.sendRtcConnect(targetNode, originator)
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(
-                    rtcConnectMessage.getOriginatorInfo().peerId,
-                    rtcConnectMessage.getTargetNode()
-                )
+                trackerServer.sendUnknownPeerRtcError(originator.peerId, targetNode)
             } else {
                 throw err
             }

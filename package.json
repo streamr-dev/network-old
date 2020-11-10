@@ -38,7 +38,7 @@
     "pino": "^6.7.0",
     "pino-pretty": "^4.3.0",
     "speedometer": "^1.1.0",
-    "streamr-client-protocol": "^6.0.3",
+    "streamr-client-protocol": "6.1.2-0",
     "strip-ansi": "^6.0.0",
     "tmp": "^0.2.1",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v18.8.0",

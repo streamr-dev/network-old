@@ -76,21 +76,21 @@ class WebRtcEndpoint extends EventEmitter {
         this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
         this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
 
-        rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, type, description }) => {
+        rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description }) => {
             const { peerId } = originatorInfo
             const isOffering = this.id < peerId
             this._createConnectionAndDataChannelIfNeeded(peerId, routerId, isOffering)
             this.peerInfos[peerId] = originatorInfo
             const connection = this.connections[peerId]
-            await connection.setRemoteDescription(description, type)
+            await connection.setRemoteDescription(description, 'offer')
         })
 
-        rtcSignaller.setAnswerListener(async ({ routerId, originatorInfo, type, description }) => {
+        rtcSignaller.setAnswerListener(async ({ routerId, originatorInfo, description }) => {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
             if (connection) {
                 this.peerInfos[peerId] = originatorInfo
-                await connection.setRemoteDescription(description, type)
+                await connection.setRemoteDescription(description, 'answer')
             } else {
                 console.warn(`Unexpected RTC_ANSWER from ${originatorInfo} with contents: ${description}`)
             }
@@ -100,7 +100,7 @@ class WebRtcEndpoint extends EventEmitter {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
             if (connection) {
-                await connection.addRemoteCandidate(candidate, mid)
+                connection.addRemoteCandidate(candidate, mid)
             } else {
                 console.warn(`Unexpected REMOTE_CANDIDATE from ${originatorInfo} with contents: ${candidate}`)
             }

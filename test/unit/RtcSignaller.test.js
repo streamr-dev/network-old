@@ -1,12 +1,10 @@
 const { EventEmitter } = require('events')
 
+const { ErrorMessage, RelayMessage } = require('streamr-client-protocol').TrackerLayer
+
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const RtcOfferMessage = require('../../src/messages/RtcOfferMessage')
-const RtcAnswerMessage = require('../../src/messages/RtcAnswerMessage')
-const RemoteCandidateMessage = require('../../src/messages/RemoteCandidateMessage')
-const RtcErrorMessage = require('../../src/messages/RtcErrorMessage')
 
 describe('RtcSignaller', () => {
     let peerInfo
@@ -17,6 +15,12 @@ describe('RtcSignaller', () => {
         peerInfo = PeerInfo.newNode('node')
         trackerNodeMock = new EventEmitter()
         rtcSignaller = new RtcSignaller(peerInfo, trackerNodeMock)
+    })
+
+    it('invoking onConnectionNeeded delegates to sendRtcConnect on trackerNode', () => {
+        trackerNodeMock.sendRtcConnect = jest.fn()
+        rtcSignaller.onConnectionNeeded('router', 'targetNode')
+        expect(trackerNodeMock.sendRtcConnect).toHaveBeenCalledWith('router', 'targetNode', peerInfo)
     })
 
     it('invoking onLocalCandidate delegates to sendLocalCandidate on trackerNode', () => {
@@ -31,19 +35,47 @@ describe('RtcSignaller', () => {
         expect(trackerNodeMock.sendLocalDescription).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'type', 'description')
     })
 
+    it('connectListener invoked when trackerNode emits RTC_CONNECT_RECEIVED', () => {
+        const cbFn = jest.fn()
+        rtcSignaller.setConnectListener(cbFn)
+        trackerNodeMock.emit(
+            TrackerNode.events.RTC_CONNECT_RECEIVED,
+            new RelayMessage({
+                requestId: '',
+                originator: PeerInfo.newNode('originator'),
+                targetNode: 'node',
+                subType: 'rtcConnect',
+                data: {}
+            }),
+            'router'
+        )
+        expect(cbFn).toHaveBeenCalledWith({
+            routerId: 'router',
+            originatorInfo: PeerInfo.newNode('originator'),
+            targetNode: 'node'
+        })
+    })
+
     it('offerListener invoked when trackerNode emits RTC_OFFER_RECEIVED', () => {
         const cbFn = jest.fn()
         rtcSignaller.setOfferListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.RTC_OFFER_RECEIVED,
-            new RtcOfferMessage(PeerInfo.newNode('originator'), 'node', 'type', 'description', 'router')
+            new RelayMessage({
+                requestId: '',
+                originator: PeerInfo.newNode('originator'),
+                targetNode: 'node',
+                subType: 'offer',
+                data: {
+                    description: 'description'
+                }
+            }),
+            'router'
         )
         expect(cbFn).toHaveBeenCalledWith({
             routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
-            type: 'type',
             description: 'description',
-            source: 'router'
         })
     })
 
@@ -52,14 +84,21 @@ describe('RtcSignaller', () => {
         rtcSignaller.setAnswerListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.RTC_ANSWER_RECEIVED,
-            new RtcAnswerMessage(PeerInfo.newNode('originator'), 'node', 'type', 'description', 'router')
+            new RelayMessage({
+                requestId: '',
+                originator: PeerInfo.newNode('originator'),
+                targetNode: 'node',
+                subType: 'answer',
+                data: {
+                    description: 'description'
+                }
+            }),
+            'router'
         )
         expect(cbFn).toHaveBeenCalledWith({
             routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
-            type: 'type',
-            description: 'description',
-            source: 'router'
+            description: 'description'
         })
     })
 
@@ -68,9 +107,20 @@ describe('RtcSignaller', () => {
         rtcSignaller.setRemoteCandidateListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.REMOTE_CANDIDATE_RECEIVED,
-            new RemoteCandidateMessage(PeerInfo.newNode('originator'), 'node', 'candidate', 'mid', 'router')
+            new RelayMessage({
+                requestId: '',
+                originator: PeerInfo.newNode('originator'),
+                targetNode: 'node',
+                subType: 'remoteCandidate',
+                data: {
+                    candidate: 'candidate',
+                    mid: 'mid'
+                }
+            }),
+            'router'
         )
         expect(cbFn).toHaveBeenCalledWith({
+            routerId: 'router',
             originatorInfo: PeerInfo.newNode('originator'),
             candidate: 'candidate',
             mid: 'mid'
@@ -82,12 +132,17 @@ describe('RtcSignaller', () => {
         rtcSignaller.setErrorListener(cbFn)
         trackerNodeMock.emit(
             TrackerNode.events.RTC_ERROR_RECEIVED,
-            new RtcErrorMessage(RtcErrorMessage.errorCodes.UNKNOWN_PEER, 'unknownTargetNode', 'router')
+            new ErrorMessage({
+                requestId: '',
+                targetNode: 'unknownTargetNode',
+                errorCode: ErrorMessage.ERROR_CODES.RTC_UNKNOWN_PEER,
+            }),
+            'router'
         )
         expect(cbFn).toHaveBeenCalledWith({
             routerId: 'router',
             targetNode: 'unknownTargetNode',
-            errorCode: RtcErrorMessage.errorCodes.UNKNOWN_PEER
+            errorCode: ErrorMessage.ERROR_CODES.RTC_UNKNOWN_PEER
         })
     })
 })

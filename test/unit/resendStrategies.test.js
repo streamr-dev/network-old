@@ -251,13 +251,14 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
-                    nodeAddresses: [
+                    nodeIds: [
                         'storageNode-1',
                         'storageNode-2',
                         'storageNode-3',
                         'storageNode-4'
                     ]
-                })
+                }),
+                'tracker'
             )
             setImmediate(() => {
                 jest.runAllTimers()
@@ -279,9 +280,9 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
                     requestId: 'requestId',
                     streamId: 'streamId',
                     streamPartition: 0,
-                    nodeAddresses: [
-                        'ws://storageNode-1',
-                        'ws://storageNode-2'
+                    nodeIds: [
+                        'storageNode-1',
+                        'storageNode-2'
                     ]
                 })
             )

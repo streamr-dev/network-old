@@ -6,6 +6,8 @@ const { TrackerLayer } = require('streamr-client-protocol')
 const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
+const { TYPES } = TrackerLayer.TrackerMessage
+
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
     TRACKER_INSTRUCTION_RECEIVED: 'streamr:tracker-node:tracker-instruction-received',
@@ -18,10 +20,6 @@ const events = Object.freeze({
     LOCAL_DESCRIPTION_RECEIVED: 'streamr:tracker-node:local-description-received',
     LOCAL_CANDIDATE_RECEIVED: 'streamr:tracker-node:local-candidate-received',
 })
-
-const eventPerType = {}
-eventPerType[TrackerLayer.TrackerMessage.TYPES.InstructionMessage] = events.TRACKER_INSTRUCTION_RECEIVED
-eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesResponse] = events.STORAGE_NODES_RESPONSE_RECEIVED
 
 class TrackerNode extends EventEmitter {
     constructor(endpoint) {
@@ -47,19 +45,41 @@ class TrackerNode extends EventEmitter {
         }))
     }
 
-    // TODO: handle
+    // TODO: remove type?
     sendLocalDescription(trackerId, targetNode, originatorInfo, type, description) {
-        this.endpoint.sendSync(trackerId, encoder.localDescriptionMessage(originatorInfo, targetNode, type, description))
+        this.send(trackerId, new TrackerLayer.RelayMessage({
+            requestId: '', // TODO: requestId
+            originator: originatorInfo,
+            targetNode,
+            subType: 'localDescription',
+            data: {
+                type,
+                description
+            }
+        }))
     }
 
-    // TODO: handle
     sendLocalCandidate(trackerId, targetNode, originatorInfo, candidate, mid) {
-        this.endpoint.sendSync(trackerId, encoder.localCandidateMessage(originatorInfo, targetNode, candidate, mid))
+        this.send(trackerId, new TrackerLayer.RelayMessage({
+            requestId: '', // TODO: requestId
+            originator: originatorInfo,
+            targetNode,
+            subType: 'localCandidate',
+            data: {
+                candidate,
+                mid
+            }
+        }))
     }
 
-    // TODO: handle
     sendRtcConnect(trackerId, targetNode, originatorInfo) {
-        this.endpoint.sendSync(trackerId, encoder.rtcConnectMessage(originatorInfo, targetNode))
+        this.send(trackerId, new TrackerLayer.RelayMessage({
+            requestId: '', // TODO: requestId
+            originator: originatorInfo,
+            targetNode,
+            subType: 'rtcConnect',
+            data: {}
+        }))
     }
 
     send(receiverNodeId, message) {
@@ -71,37 +91,46 @@ class TrackerNode extends EventEmitter {
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        if (peerInfo.isTracker()) {
-            const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
-            if (message != null) {
-                this.emit(eventPerType[message.type], message, peerInfo.peerId)
-            } else {
-                console.warn(`TrackerNode: invalid message from ${peerInfo}: ${rawMessage}`)
-            }
+        const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
+        switch (message ? message.type : null) {
+            case TYPES.InstructionMessage:
+                this.emit(events.TRACKER_INSTRUCTION_RECEIVED, message, peerInfo.peerId)
+                break
+            case TYPES.StorageNodesResponse:
+                this.emit(events.STORAGE_NODES_RESPONSE_RECEIVED, message, peerInfo.peerId)
+                break
+            case TYPES.ErrorMessage:
+                this.emit(events.RTC_ERROR_RECEIVED, message, peerInfo.peerId)
+                break
+            case TYPES.RelayMessage:
+                switch (message.subType) {
+                    case 'rtcOffer':
+                        this.emit(events.RTC_OFFER_RECEIVED, message, peerInfo.peerId)
+                        break
+                    case 'rtcAnswer':
+                        this.emit(events.RTC_ANSWER_RECEIVED, message, peerInfo.peerId)
+                        break
+                    case 'rtcConnect':
+                        this.emit(events.RTC_CONNECT_RECEIVED, message, peerInfo.peerId)
+                        break
+                    case 'localDescription':
+                        this.emit(events.LOCAL_DESCRIPTION_RECEIVED, message, peerInfo.peerId)
+                        break
+                    case 'localCandidate':
+                        this.emit(events.LOCAL_CANDIDATE_RECEIVED, message, peerInfo.peerId)
+                        break
+                    case 'remoteCandidate':
+                        this.emit(events.REMOTE_CANDIDATE_RECEIVED, message, peerInfo.peerId)
+                        break
+                    default:
+                        console.warn(`TrackerServer: invalid RelayMessage from ${peerInfo}: ${JSON.stringify(message)}`)
+                        break
+                }
+                break
+            default:
+                console.warn(`TrackerServer: invalid message from ${peerInfo}: ${rawMessage}`)
+                break
         }
-        /* TODO: handle
-        case encoder.RTC_OFFER:
-                    this.emit(events.RTC_OFFER_RECEIVED, message)
-                    break
-                case encoder.RTC_ANSWER:
-                    this.emit(events.RTC_ANSWER_RECEIVED, message)
-                    break
-                case encoder.RTC_ERROR:
-                    this.emit(events.RTC_ERROR_RECEIVED, message)
-                    break
-                case encoder.RTC_CONNECT:
-                    this.emit(events.RTC_CONNECT_RECEIVED, message)
-                    break
-                case encoder.LOCAL_DESCRIPTION:
-                    this.emit(events.LOCAL_DESCRIPTION_RECEIVED, message)
-                    break
-                case encoder.LOCAL_CANDIDATE:
-                    this.emit(events.LOCAL_CANDIDATE_RECEIVED, message)
-                    break
-                case encoder.REMOTE_CANDIDATE:
-                    this.emit(events.REMOTE_CANDIDATE_RECEIVED, message)
-                    break
-         */
     }
 
     connectToTracker(trackerAddress) {
