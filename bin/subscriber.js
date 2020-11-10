@@ -32,7 +32,7 @@ startNetworkNode(program.ip, program.port, id, [], null, name).then((subscriber)
     let lastReported = 0
     subscriber.on(Node.events.UNSEEN_MESSAGE_RECEIVED, (streamMessage) => {
         messageNo += 1
-        console.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
+        // console.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
     })
 
     setInterval(() => {

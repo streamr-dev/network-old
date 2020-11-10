@@ -190,7 +190,7 @@ class Node extends EventEmitter {
         const subscribePromises = nodeIds.map(async (nodeId) => {
             this._subscribeToStreamOnNode(nodeId, streamId)
             try {
-                await promiseTimeout(2000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
+                await promiseTimeout(3000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
                 this._clearDisconnectionTimer(nodeId)
                 this.emit(events.NODE_SUBSCRIBED, {
                     streamId,
