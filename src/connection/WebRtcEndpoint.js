@@ -80,6 +80,7 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, type, description }) => {
             const { peerId } = originatorInfo
             const isOffering = this.id < peerId
+            console.log(this.id, peerId, 'onOffer', isOffering)
             this._createConnectionAndDataChannelIfNeeded(peerId, routerId, isOffering)
             this.peerInfos[peerId] = originatorInfo
             const connection = this.connections[peerId]
@@ -89,6 +90,7 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setAnswerListener(async ({ routerId, originatorInfo, type, description }) => {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
+            console.log(this.id, peerId, 'onAnswer')
             if (connection) {
                 this.peerInfos[peerId] = originatorInfo
                 await connection.setRemoteDescription(description, type)
@@ -100,6 +102,7 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setRemoteCandidateListener(async ({ originatorInfo, candidate, mid }) => {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
+            console.log(this.id, peerId, 'onRemoteCandidate')
             if (connection) {
                 await connection.addRemoteCandidate(candidate, mid)
             } else {
@@ -348,10 +351,12 @@ class WebRtcEndpoint extends EventEmitter {
         })
 
         connection.onLocalDescription((description, type) => {
+            console.log(this.id, targetPeerId, 'onLocalDescription', isOffering)
             this.rtcSignaller.onLocalDescription(routerId, targetPeerId, type, description)
         })
 
         connection.onLocalCandidate((candidate, mid) => {
+            console.log(this.id, targetPeerId, 'onLocalCandidate', isOffering)
             this.rtcSignaller.onLocalCandidate(routerId, targetPeerId, candidate, mid)
         })
 
