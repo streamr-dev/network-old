@@ -118,6 +118,7 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setErrorListener(({ targetNode, errorCode }) => {
             const error = new Error(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
             this.emit(`errored:${targetNode}`, error)
+            console.log(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
         })
 
         this.on(events.PEER_CONNECTED, (peerInfo) => {
@@ -350,6 +351,7 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onGatheringStateChange((state) => {
             connection.lastGatheringState = state
             this.debug('onGatheringStateChange', this.id, targetPeerId, state)
+            console.log('onGatheringStateChange', this.id, targetPeerId, state)
         })
 
         connection.onLocalDescription((description, type) => {
