@@ -27,7 +27,6 @@ const events = Object.freeze({
     NODE_UNSUBSCRIBED: 'streamr:node:node-unsubscribed',
     NODE_CONNECTED: 'streamr:node:node-connected',
     NODE_DISCONNECTED: 'streamr:node:node-disconnected',
-    SUBSCRIPTION_REQUEST: 'streamr:node:subscription-received',
     RESEND_REQUEST_RECEIVED: 'streamr:node:resend-request-received',
 })
 
@@ -44,6 +43,7 @@ class Node extends EventEmitter {
             bufferTimeoutInMs: 60 * 1000,
             bufferMaxSize: 10000,
             disconnectionWaitTime: 30 * 1000,
+            nodeConnectTimeout: 4000,
             protocols: [],
             resendStrategies: [],
             metricsContext: new MetricsContext(null)
@@ -82,6 +82,7 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.on(TrackerNode.events.CONNECTED_TO_TRACKER, (trackerId) => this.onConnectedToTracker(trackerId))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED, (streamMessage, trackerId) => this.onTrackerInstructionReceived(trackerId, streamMessage))
         this.protocols.trackerNode.on(TrackerNode.events.TRACKER_DISCONNECTED, (trackerId) => this.onTrackerDisconnected(trackerId))
+        this.protocols.nodeToNode.on(NodeToNode.events.NODE_CONNECTED, (nodeId) => this.emit(events.NODE_CONNECTED, nodeId))
         this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
         this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage, nodeId) => this.onSubscribeRequest(subscribeMessage, nodeId))
         this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage, nodeId) => this.onUnsubscribeRequest(unsubscribeMessage, nodeId))
@@ -202,17 +203,9 @@ class Node extends EventEmitter {
         const nodesToUnsubscribeFrom = currentNodes.filter((nodeId) => !nodeIds.includes(nodeId))
 
         const subscribePromises = nodeIds.map(async (nodeId) => {
+            await promiseTimeout(this.opts.nodeConnectTimeout, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
+            this._clearDisconnectionTimer(nodeId)
             this._subscribeToStreamOnNode(nodeId, streamId)
-            try {
-                await promiseTimeout(2000, this.protocols.nodeToNode.connectToNode(nodeId, trackerId))
-                this._clearDisconnectionTimer(nodeId)
-                this.emit(events.NODE_SUBSCRIBED, {
-                    streamId,
-                    nodeId
-                })
-            } catch (err) {
-                this._unsubscribeFromStreamOnNode(nodeId, streamId)
-            }
             return nodeId
         })
 
@@ -375,6 +368,11 @@ class Node extends EventEmitter {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
 
+        this.emit(events.NODE_SUBSCRIBED, {
+            streamId,
+            node
+        })
+
         return node
     }
 
@@ -384,9 +382,8 @@ class Node extends EventEmitter {
     }
 
     _unsubscribeFromStreamOnNode(node, streamId) {
-        this.metrics.inc('_unsubscribeFromStreamOnNode')
         this.streams.removeNodeFromStream(streamId, node)
-        this.debug('node %s unsubscribed from stream %s', node, streamId)
+        this.logger.debug('node %s unsubscribed from stream %s', node, streamId)
         this.emit(events.NODE_UNSUBSCRIBED, node, streamId)
 
         if (!this.streams.isNodePresent(node)) {
@@ -448,6 +445,10 @@ class Node extends EventEmitter {
 
     getStreams() {
         return this.streams.getStreamsAsKeys()
+    }
+
+    getNeighbors() {
+        return this.streams.getAllNodes()
     }
 }
 

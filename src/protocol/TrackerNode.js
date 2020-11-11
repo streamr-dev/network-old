@@ -47,7 +47,7 @@ class TrackerNode extends EventEmitter {
 
     // TODO: remove type?
     sendLocalDescription(trackerId, targetNode, originatorInfo, type, description) {
-        this.send(trackerId, new TrackerLayer.RelayMessage({
+        return this.send(trackerId, new TrackerLayer.RelayMessage({
             requestId: '', // TODO: requestId
             originator: originatorInfo,
             targetNode,
@@ -60,7 +60,7 @@ class TrackerNode extends EventEmitter {
     }
 
     sendLocalCandidate(trackerId, targetNode, originatorInfo, candidate, mid) {
-        this.send(trackerId, new TrackerLayer.RelayMessage({
+        return this.send(trackerId, new TrackerLayer.RelayMessage({
             requestId: '', // TODO: requestId
             originator: originatorInfo,
             targetNode,

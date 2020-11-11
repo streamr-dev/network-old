@@ -1,5 +1,6 @@
 const { waitForCondition, waitForEvent } = require('streamr-test-utils')
 
+const MetricsContext = require('../../src/helpers/MetricsContext')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
@@ -34,8 +35,10 @@ describe('WebRtcEndpoint', () => {
 
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
-        endpoint1 = new WebRtcEndpoint('node-1', ['stun:stun.l.google.com:19302'], new RtcSignaller(peerInfo1, trackerNode1))
-        endpoint2 = new WebRtcEndpoint('node-2', ['stun:stun.l.google.com:19302'], new RtcSignaller(peerInfo2, trackerNode2))
+        endpoint1 = new WebRtcEndpoint('node-1', ['stun:stun.l.google.com:19302'],
+            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(null))
+        endpoint2 = new WebRtcEndpoint('node-2', ['stun:stun.l.google.com:19302'],
+            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(null))
     })
 
     afterEach(async () => {

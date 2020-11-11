@@ -22,8 +22,8 @@ class PeerInfo {
         return new PeerInfo(peerId, peerTypes.UNKNOWN)
     }
 
-    static fromObject({ peerId, peerType }) {
-        return new PeerInfo(peerId, peerType)
+    static fromObject({ peerId, peerType, peerName, location }) {
+        return new PeerInfo(peerId, peerType, peerName, location)
     }
 
     constructor(peerId, peerType, peerName, location) {

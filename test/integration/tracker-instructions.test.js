@@ -97,12 +97,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
             }
         })
 
-        // TODO: handle?
-        expect([...node1.protocols.nodeToNode.endpoint.getPeers().keys()]).toEqual([
-            `ws://127.0.0.1:${trackerPort}`, `ws://127.0.0.1:${port2}`
-        ])
-        expect([...node2.protocols.nodeToNode.endpoint.getPeers().keys()]).toEqual([
-            `ws://127.0.0.1:${trackerPort}`, `ws://127.0.0.1:${port1}`
-        ])
+        expect(node1.getNeighbors()).toEqual(['node2'])
+        expect(node2.getNeighbors()).toEqual(['node1'])
     })
 })

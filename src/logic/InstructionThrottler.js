@@ -1,3 +1,4 @@
+const logger = require('../helpers/logger')('streamr:InstructionThrottler')
 const { StreamIdAndPartition } = require('../identifiers')
 /**
  * InstructionThrottler makes sure that
@@ -41,7 +42,8 @@ module.exports = class InstructionThrottler {
         try {
             await this.handleFn(instructionMessage, trackerId)
         } catch (err) {
-            console.warn('InstructionMessage handling timed out')
+            logger.warn('InstructionMessage handling threw error %s', err)
+            logger.warn(err)
         } finally {
             if (this._isQueueEmpty()) {
                 this.handling = false

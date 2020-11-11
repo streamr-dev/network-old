@@ -1,8 +1,9 @@
 const { EventEmitter } = require('events')
 
 const Heap = require('heap')
-const createDebug = require('debug')
 const nodeDataChannel = require('node-datachannel')
+
+const getLogger = require('../helpers/logger')
 
 const { PeerInfo } = require('./PeerInfo')
 
@@ -57,7 +58,7 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 10000) {
+    constructor(id, stunUrls, rtcSignaller, metricsContext, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 10000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
@@ -74,13 +75,13 @@ class WebRtcEndpoint extends EventEmitter {
         this.peerPongTimeoutRefs = {}
         this.pingIntervalInMs = pingIntervalInMs
         this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
-        this.debug = createDebug(`streamr:connection:WebRtcEndpoint:${this.id}`)
+        this.logger = getLogger(`streamr:WebRtcEndpoint:${id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description }) => {
             const { peerId } = originatorInfo
             const isOffering = this.id < peerId
             this._createConnectionAndDataChannelIfNeeded(peerId, routerId, isOffering)
-            this.peerInfos[peerId] = originatorInfo
+            this.peerInfos[peerId] = PeerInfo.fromObject(originatorInfo)
             const connection = this.connections[peerId]
             await connection.setRemoteDescription(description, 'offer')
         })
@@ -89,7 +90,7 @@ class WebRtcEndpoint extends EventEmitter {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
             if (connection) {
-                this.peerInfos[peerId] = originatorInfo
+                this.peerInfos[peerId] = PeerInfo.fromObject(originatorInfo)
                 await connection.setRemoteDescription(description, 'answer')
             } else {
                 console.warn(`Unexpected RTC_ANSWER from ${originatorInfo} with contents: ${description}`)
@@ -119,6 +120,26 @@ class WebRtcEndpoint extends EventEmitter {
         this.on(events.PEER_CONNECTED, (peerInfo) => {
             this._attemptToFlushMessages(peerInfo.peerId)
         })
+
+        this.metrics = metricsContext.create('WebRtcEndpoint')
+            .addRecordedMetric('inSpeed')
+            .addRecordedMetric('outSpeed')
+            .addRecordedMetric('msgSpeed')
+            .addRecordedMetric('msgInSpeed')
+            .addRecordedMetric('msgOutSpeed')
+            .addRecordedMetric('open')
+            .addRecordedMetric('close')
+            .addRecordedMetric('sendFailed')
+            .addQueriedMetric('connections', () => Object.keys(this.readyChannels).length)
+            .addQueriedMetric('pendingConnections', () => {
+                return Object.keys(this.connections).length - Object.keys(this.readyChannels).length
+            })
+            .addQueriedMetric('totalWebSocketBuffer', () => {
+                return Object.values(this.readyChannels).reduce((total, dc) => total + dc.getBufferedAmount(), 0)
+            })
+            .addQueriedMetric('messageQueueSize', () => {
+                return Object.values(this.messageQueue).reduce((total, queue) => total + queue.size(), 0)
+            })
     }
 
     // TODO: get rid of promise
@@ -155,10 +176,19 @@ class WebRtcEndpoint extends EventEmitter {
             } else {
                 try {
                     // TODO buffer handling
-                    this.readyChannels[targetPeerId].sendMessage(queueItem.getMessage())
-                    this.messageQueue[targetPeerId].pop()
-                    queueItem.delivered()
+                    if (this.readyChannels[targetPeerId].isOpen()) {
+                        this.readyChannels[targetPeerId].sendMessage(queueItem.getMessage())
+                        this.messageQueue[targetPeerId].pop()
+                        queueItem.delivered()
+
+                        this.metrics.record('outSpeed', queueItem.getMessage().length)
+                        this.metrics.record('msgSpeed', 1)
+                        this.metrics.record('msgOutSpeed', 1)
+                    } else {
+                        throw new Error(`Datachannel for ${targetPeerId} not open`)
+                    }
                 } catch (e) {
+                    this.metrics.record('sendFailed', 1)
                     queueItem.incrementTries({
                         error: e.toString(),
                         'connection.iceConnectionState': this.connections[targetPeerId].lastGatheringState,
@@ -217,6 +247,8 @@ class WebRtcEndpoint extends EventEmitter {
         delete this.flushTimeOutRefs[targetPeerId]
         delete this.peerPingTimeoutRefs[targetPeerId]
         delete this.peerPongTimeoutRefs[targetPeerId]
+
+        this.metrics.record('close', 1)
     }
 
     getAddress() {
@@ -248,7 +280,7 @@ class WebRtcEndpoint extends EventEmitter {
         const addresses = Object.keys(this.readyChannels)
         addresses.forEach((address) => {
             const { rtt } = this.readyChannels[address]
-            const nodeId = this.peerInfos[address]
+            const nodeId = this.peerInfos[address].peerId
             if (rtt !== undefined && rtt !== null) {
                 rtts[nodeId] = rtt
             }
@@ -258,17 +290,21 @@ class WebRtcEndpoint extends EventEmitter {
 
     dataChannelOnMessage(dataChannel, targetPeerId, msg) {
         if (msg === 'ping') {
-            this.debug('dataChannel.onmessage.ping', this.id, targetPeerId, msg)
+            this.logger.debug('dataChannel.onmessage.ping: %s, %s, %s', this.id, targetPeerId, msg)
             this.pong(targetPeerId)
         } else if (msg === 'pong') {
-            this.debug('dataChannel.onmessage.pong', this.id, targetPeerId, msg)
+            this.logger.debug('dataChannel.onmessage.pong: %s, %s, %s', this.id, targetPeerId, msg)
             // eslint-disable-next-line no-param-reassign
             dataChannel.respondedPong = true
             // eslint-disable-next-line no-param-reassign
             dataChannel.rtt = Date.now() - dataChannel.rttStart
         } else {
-            this.debug('dataChannel.onmessage', this.id, targetPeerId, msg)
+            this.logger.debug('dataChannel.onmessage: %s, %s, %s', this.id, targetPeerId, msg)
             this.emit(events.MESSAGE_RECEIVED, this.peerInfos[targetPeerId], msg)
+
+            this.metrics.record('inSpeed', msg.length)
+            this.metrics.record('msgSpeed', 1)
+            this.metrics.record('msgInSpeed', 1)
         }
     }
 
@@ -276,24 +312,24 @@ class WebRtcEndpoint extends EventEmitter {
         if (isOffering) {
             // eslint-disable-next-line no-param-reassign
             dataChannel.onOpen((event) => {
-                this.debug('dataChannel.onOpen', this.id, targetPeerId)
+                this.logger.debug('dataChannel.onOpen: %s, %s', this.id, targetPeerId)
                 clearInterval(this.newConnectionTimeouts[targetPeerId])
                 this.readyChannels[targetPeerId] = dataChannel
 
                 this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
                 this.emit(`connected:${targetPeerId}`, targetPeerId)
+                this.metrics.record('open', 1)
             })
         }
         // eslint-disable-next-line no-param-reassign
         dataChannel.onClosed(() => {
-            this.debug('dataChannel.onClosed', this.id, targetPeerId)
+            this.logger.debug('dataChannel.onClosed: %s, %s', this.id, targetPeerId)
             this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
             this.emit(`disconnected:${targetPeerId}`, targetPeerId)
         })
         // eslint-disable-next-line no-param-reassign
         dataChannel.onError((e) => {
-            console.error('dataChannel.onError', this.id, targetPeerId, e)
-            this.debug('dataChannel.onError', this.id, targetPeerId, e)
+            this.logger.error('dataChannel.onError: %s, %s, %s', this.id, targetPeerId, e)
             this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
             this.emit(`errored:${targetPeerId}`, e)
             console.error(e)
@@ -322,7 +358,7 @@ class WebRtcEndpoint extends EventEmitter {
 
         connection.onStateChange((state) => {
             connection.lastState = state
-            this.debug('onStateChange', this.id, targetPeerId, state)
+            this.logger.debug('onStateChange: %s, %s, %s', this.id, targetPeerId, state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close(targetPeerId)
                 this.emit(events.PEER_DISCONNECTED, this.peerInfos[targetPeerId])
@@ -331,7 +367,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
         connection.onGatheringStateChange((state) => {
             connection.lastGatheringState = state
-            this.debug('onGatheringStateChange', this.id, targetPeerId, state)
+            this.logger.debug('onGatheringStateChange: %s, %s, %s', this.id, targetPeerId, state)
         })
 
         connection.onLocalDescription((description, type) => {
@@ -354,6 +390,7 @@ class WebRtcEndpoint extends EventEmitter {
                 clearTimeout(this.newConnectionTimeouts[targetPeerId])
                 this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
                 this.emit(`connected:${targetPeerId}`, targetPeerId)
+                this.metrics.record('open', 1)
             })
         }
 
