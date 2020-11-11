@@ -80,7 +80,6 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, type, description }) => {
             const { peerId } = originatorInfo
             const isOffering = this.id < peerId
-            console.log(this.id, peerId, 'onOffer', isOffering)
             this._createConnectionAndDataChannelIfNeeded(peerId, routerId, isOffering)
             this.peerInfos[peerId] = originatorInfo
             const connection = this.connections[peerId]
@@ -90,7 +89,6 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setAnswerListener(async ({ routerId, originatorInfo, type, description }) => {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
-            console.log(this.id, peerId, 'onAnswer')
             if (connection) {
                 this.peerInfos[peerId] = originatorInfo
                 await connection.setRemoteDescription(description, type)
@@ -102,7 +100,6 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setRemoteCandidateListener(async ({ originatorInfo, candidate, mid }) => {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
-            console.log(this.id, peerId, 'onRemoteCandidate')
             if (connection) {
                 await connection.addRemoteCandidate(candidate, mid)
             } else {
@@ -118,7 +115,6 @@ class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setErrorListener(({ targetNode, errorCode }) => {
             const error = new Error(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
             this.emit(`errored:${targetNode}`, error)
-            console.log(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
         })
 
         this.on(events.PEER_CONNECTED, (peerInfo) => {
@@ -289,7 +285,6 @@ class WebRtcEndpoint extends EventEmitter {
         if (isOffering) {
             // eslint-disable-next-line no-param-reassign
             dataChannel.onOpen((event) => {
-                console.log(this.id, targetPeerId, 'datachannel established', isOffering)
                 this.debug('dataChannel.onOpen', this.id, targetPeerId)
                 clearInterval(this.newConnectionTimeouts[targetPeerId])
                 this.readyChannels[targetPeerId] = dataChannel
@@ -339,7 +334,6 @@ class WebRtcEndpoint extends EventEmitter {
 
         connection.onStateChange((state) => {
             connection.lastState = state
-            console.log('onStateChange', this.id, targetPeerId, state)
             this.debug('onStateChange', this.id, targetPeerId, state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close(targetPeerId)
@@ -350,16 +344,13 @@ class WebRtcEndpoint extends EventEmitter {
         connection.onGatheringStateChange((state) => {
             connection.lastGatheringState = state
             this.debug('onGatheringStateChange', this.id, targetPeerId, state)
-            console.log('onGatheringStateChange', this.id, targetPeerId, state)
         })
 
         connection.onLocalDescription((description, type) => {
-            console.log(this.id, targetPeerId, 'onLocalDescription', isOffering)
             this.rtcSignaller.onLocalDescription(routerId, targetPeerId, type, description)
         })
 
         connection.onLocalCandidate((candidate, mid) => {
-            console.log(this.id, targetPeerId, 'onLocalCandidate', isOffering)
             this.rtcSignaller.onLocalCandidate(routerId, targetPeerId, candidate, mid)
         })
 
@@ -373,7 +364,6 @@ class WebRtcEndpoint extends EventEmitter {
                 this.dataChannels[targetPeerId] = dataChannel
                 this.readyChannels[targetPeerId] = dataChannel
                 clearTimeout(this.newConnectionTimeouts[targetPeerId])
-                console.log(this.id, targetPeerId, 'datachannel established', isOffering)
                 this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
                 this.emit(`connected:${targetPeerId}`, targetPeerId)
             })
