@@ -98,7 +98,7 @@ describe('duplicate message detection and avoidance', () => {
         }))
 
         await waitForCondition(() => totalMessages > 9)
-    })
+    }, 6000)
 
     afterAll(async () => {
         await contactNode.stop()

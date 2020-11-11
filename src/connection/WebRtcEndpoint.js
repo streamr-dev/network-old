@@ -58,12 +58,13 @@ QueueItem.events = Object.freeze({
 })
 
 class WebRtcEndpoint extends EventEmitter {
-    constructor(id, stunUrls, rtcSignaller, metricsContext, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 10000) {
+    constructor(id, stunUrls, rtcSignaller, metricsContext, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 5000) {
         super()
         this.id = id
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
         this.newConnectionTimeout = newConnectionTimeout
+        this.bufferHighThreshold = 2 ** 17
         this.connections = {}
         this.dataChannels = {}
         this.readyChannels = {}
@@ -161,7 +162,9 @@ class WebRtcEndpoint extends EventEmitter {
     send(targetPeerId, message) {
         const queueItem = new QueueItem(message)
         this.messageQueue[targetPeerId].push(queueItem)
-        setImmediate(() => this._attemptToFlushMessages(targetPeerId))
+        if (this.readyChannels[targetPeerId]) {
+            setImmediate(() => this._attemptToFlushMessages(targetPeerId))
+        }
         return new Promise((resolve, reject) => {
             queueItem.once(QueueItem.events.SENT, resolve)
             queueItem.once(QueueItem.events.FAILED, reject)
@@ -175,8 +178,10 @@ class WebRtcEndpoint extends EventEmitter {
                 this.messageQueue[targetPeerId].pop()
             } else {
                 try {
-                    // TODO buffer handling
-                    if (this.readyChannels[targetPeerId].isOpen()) {
+                    if (!this.readyChannels[targetPeerId].isOpen()) {
+                        throw new Error(`Datachannel for ${targetPeerId} not open`)
+                    }
+                    if (this.readyChannels[targetPeerId].bufferedAmount() < this.bufferHighThreshold && this.readyChannels[targetPeerId].paused === false) {
                         this.readyChannels[targetPeerId].sendMessage(queueItem.getMessage())
                         this.messageQueue[targetPeerId].pop()
                         queueItem.delivered()
@@ -185,7 +190,9 @@ class WebRtcEndpoint extends EventEmitter {
                         this.metrics.record('msgSpeed', 1)
                         this.metrics.record('msgOutSpeed', 1)
                     } else {
-                        throw new Error(`Datachannel for ${targetPeerId} not open`)
+                        this.emit(`BufferHigh:${targetPeerId}`, targetPeerId)
+                        this.readyChannels[targetPeerId].paused = true
+                        break
                     }
                 } catch (e) {
                     this.metrics.record('sendFailed', 1)
@@ -193,7 +200,6 @@ class WebRtcEndpoint extends EventEmitter {
                         error: e.toString(),
                         'connection.iceConnectionState': this.connections[targetPeerId].lastGatheringState,
                         'connection.connectionState': this.connections[targetPeerId].lastState,
-                        // 'dataChannel.readyState': this.dataChannels[targetPeerId].isOpen(),
                         message: queueItem.getMessage()
                     })
                     if (queueItem.isFailed()) {
@@ -309,13 +315,14 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     setupDataChannel(dataChannel, targetPeerId, isOffering) {
+        // eslint-disable-next-line no-param-reassign
+        dataChannel.paused = false
         if (isOffering) {
             // eslint-disable-next-line no-param-reassign
             dataChannel.onOpen((event) => {
                 this.logger.debug('dataChannel.onOpen: %s, %s', this.id, targetPeerId)
                 clearInterval(this.newConnectionTimeouts[targetPeerId])
                 this.readyChannels[targetPeerId] = dataChannel
-
                 this.emit(events.PEER_CONNECTED, this.peerInfos[targetPeerId])
                 this.emit(`connected:${targetPeerId}`, targetPeerId)
                 this.metrics.record('open', 1)
@@ -336,7 +343,12 @@ class WebRtcEndpoint extends EventEmitter {
         })
         // eslint-disable-next-line no-param-reassign
         dataChannel.onBufferedAmountLow(() => {
-            this.emit('bufferedAmountLow:' + targetPeerId)
+            if (dataChannel.paused === true) {
+                // eslint-disable-next-line no-param-reassign
+                dataChannel.paused = false
+                this.emit('bufferedAmountLow:' + targetPeerId)
+                this._attemptToFlushMessages(targetPeerId)
+            }
         })
         // eslint-disable-next-line no-param-reassign
         dataChannel.onMessage((event) => this.dataChannelOnMessage(dataChannel, targetPeerId, event))
@@ -347,10 +359,9 @@ class WebRtcEndpoint extends EventEmitter {
             return
         }
         const configuration = {
-            iceServers: this.stunUrls.map((url) => ({
-                urls: url
-            }))
+            iceServers: this.stunUrls
         }
+
         const connection = new nodeDataChannel.PeerConnection(this.id, configuration)
         connection.isOffering = isOffering
         connection.lastState = null
