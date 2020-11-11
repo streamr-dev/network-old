@@ -329,10 +329,9 @@ class WebRtcEndpoint extends EventEmitter {
             return
         }
         const configuration = {
-            iceServers: this.stunUrls.map((url) => ({
-                urls: url
-            }))
+            iceServers: this.stunUrls
         }
+
         const connection = new nodeDataChannel.PeerConnection(this.id, configuration)
         connection.isOffering = isOffering
         connection.lastState = null
