@@ -59,6 +59,8 @@ module.exports = class Connection {
         stunUrls,
         bufferHighThreshold = 2 ** 17,
         newConnectionTimeout = 5000,
+        maxPingPongAttempts = 5,
+        pingPongTimeout = 2000,
         onLocalDescription,
         onLocalCandidate,
         onOpen,
@@ -73,6 +75,8 @@ module.exports = class Connection {
         this.stunUrls = stunUrls
         this.bufferHighThreshold = bufferHighThreshold
         this.newConnectionTimeout = newConnectionTimeout
+        this.maxPingPongAttempts = maxPingPongAttempts
+        this.pingPongTimeout = pingPongTimeout
 
         this.messageQueue = new Heap((a, b) => a.no - b.no)
         this.connection = null
@@ -207,9 +211,9 @@ module.exports = class Connection {
                 this.dataChannel.sendMessage('ping')
             }
         } catch (e) {
-            if (attempt < 5 && this.isOpen()) {
+            if (attempt < this.maxPingPongAttempts && this.isOpen()) {
                 this.logger.debug('failed to ping connection, error %s, re-attempting', e)
-                this.peerPingTimeoutRef = setTimeout(() => this.ping(attempt + 1), 2000)
+                this.peerPingTimeoutRef = setTimeout(() => this.ping(attempt + 1), this.pingPongTimeout)
             } else {
                 this.logger.warn('failed all ping re-attempts to connection, terminating connection', e)
                 this.close()
@@ -224,9 +228,9 @@ module.exports = class Connection {
                 this.dataChannel.sendMessage('pong')
             }
         } catch (e) {
-            if (attempt < 5 && this.dataChannel && this.isOpen()) {
+            if (attempt < this.maxPingPongAttempts && this.dataChannel && this.isOpen()) {
                 this.logger.debug('failed to pong connection, error %s, re-attempting', e)
-                this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), 2000)
+                this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), this.pingPongTimeout)
             } else {
                 this.logger.warn('failed all pong re-attempts to connection, terminating connection', e)
                 this.close()
@@ -251,7 +255,7 @@ module.exports = class Connection {
     }
 
     isOpen() {
-        return this.dataChannel && this.dataChannel.isOpen()
+        return (this.dataChannel || false) && this.dataChannel.isOpen()
     }
 
     _setupDataChannel(dataChannel) {

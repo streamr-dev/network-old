@@ -11,6 +11,15 @@ function onConnectPromise(functions) {
     })
 }
 
+function onClosePromise(functions) {
+    return new Promise((resolve, reject) => {
+        // eslint-disable-next-line no-param-reassign
+        functions.onClose = resolve
+        // eslint-disable-next-line no-param-reassign
+        functions.onError = reject
+    })
+}
+
 /**
  * Test that Connections can be established and message sent between them successfully. Tracker
  * is "abstracted away" by local functions.
@@ -179,5 +188,33 @@ describe('Connection', () => {
         expect(msgsReceivedByConnectionTwo).toEqual([
             'msg-1', 'msg-2', 'msg-3', 'msg-4', 'msg-5', 'msg-6', 'msg-7', 'msg-8', 'msg-9', 'msg-10'
         ])
+    })
+
+    it('connection timeouts if other end does not connect too', (done) => {
+        connectionOne.newConnectionTimeout = 200 // would be better to pass via constructor
+        connectionOne.connect()
+        oneFunctions.onError = (err) => {
+            expect(err).toEqual(new Error('timed out'))
+            expect(connectionOne.isOpen()).toEqual(false)
+            done()
+        }
+    })
+
+    it('connection gets closed if other end does not respond to pings', async () => {
+        connectionOne.connect()
+        connectionTwo.connect()
+
+        await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+
+        connectionTwo.pong = () => {} // hacky: prevent connectionTwo from responding
+        // eslint-disable-next-line require-atomic-updates
+        connectionOne.pingPongTimeout = 50 // would be better to pass via constructor
+        connectionOne.ping()
+        connectionOne.ping()
+
+        await Promise.all([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
+
+        expect(connectionOne.isOpen()).toEqual(false)
+        expect(connectionTwo.isOpen()).toEqual(false)
     })
 })
