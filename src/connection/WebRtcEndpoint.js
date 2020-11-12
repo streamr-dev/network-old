@@ -151,7 +151,10 @@ class WebRtcEndpoint extends EventEmitter {
 
     close(receiverNodeId, reason) {
         this.logger.debug('Close %s because %s', receiverNodeId, reason)
-        this.connections[receiverNodeId].close()
+        const connection = this.connections[receiverNodeId]
+        if (connection) {
+            connection.close()
+        }
     }
 
     getRtts() {
