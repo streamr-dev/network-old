@@ -141,11 +141,21 @@ module.exports = class Connection {
     }
 
     setRemoteDescription(description, type) {
-        this.connection.setRemoteDescription(description, type)
+        if (this.connection) {
+            this.connection.setRemoteDescription(description, type)
+        } else {
+            // Prevent node-datachannel crash
+            this.logger.warn('attempt to invoke setRemoteDescription, but connection is null')
+        }
     }
 
     addRemoteCandidate(candidate, mid) {
-        this.connection.addRemoteCandidate(candidate, mid)
+        if (this.connection) {
+            this.connection.addRemoteCandidate(candidate, mid)
+        } else {
+            // Prevent node-datachannel crash
+            this.logger.warn('attempt to invoke setRemoteDescription, but connection is null')
+        }
     }
 
     send(message) {
@@ -313,7 +323,6 @@ module.exports = class Connection {
                         this.logger.warn('Failed to send message after %d tries due to\n\t%s',
                             QueueItem.MAX_TRIES,
                             infoText)
-                        this.close() // TODO: close?
                     } else if (this.flushTimeoutRef === null) {
                         this.flushTimeoutRef = setTimeout(() => {
                             this.flushTimeoutRef = null
