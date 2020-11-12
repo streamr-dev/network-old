@@ -112,7 +112,7 @@ module.exports = class Connection {
             }
         })
         this.connection.onGatheringStateChange((state) => {
-            this.connection.lastGatheringState = state
+            this.lastGatheringState = state
             this.logger.debug('conn.onGatheringStateChange: %s', state)
         })
         this.connection.onLocalDescription((description, type) => {
@@ -215,11 +215,10 @@ module.exports = class Connection {
             }
         } catch (e) {
             if (attempt < 5 && this.dataChannel && this.isOpen()) {
-                this.logger.debug('%s Failed to pong connection: %s, error %s, re-attempting', this.selfId, this.getPeerId(), e)
+                this.logger.debug('failed to pong connection, error %s, re-attempting', e)
                 this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), 2000)
             } else {
-                this.logger.warn('%s Failed all pong reattempts to connection: %s, error %s, terminating connection',
-                    this.selfId, this.getPeerId(), e)
+                this.logger.warn('failed all pong re-attempts to connection, terminating connection', e)
                 this.close()
             }
         }
@@ -249,16 +248,16 @@ module.exports = class Connection {
         this.paused = false
         if (this.isOffering) {
             dataChannel.onOpen(() => {
-                this.logger.debug('dataChannel.onOpen: %s, %s', this.selfId, this.getPeerId())
+                this.logger.debug('dataChannel.onOpen')
                 this._openDataChannel(dataChannel)
             })
         }
         dataChannel.onClosed(() => {
-            this.logger.debug('dataChannel.onClosed: %s, %s', this.id, this.getPeerId())
+            this.logger.debug('dataChannel.onClosed')
             this.close()
         })
         dataChannel.onError((e) => {
-            this.logger.warn('dataChannel.onError: %s, %s, %s', this.id, this.getPeerId(), e)
+            this.logger.warn('dataChannel.onError: %s', e)
             this.onError(e)
         })
         dataChannel.onBufferedAmountLow(() => {
