@@ -6,6 +6,8 @@ const { TrackerLayer } = require('streamr-client-protocol')
 const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
+const { SUB_TYPES } = require('./RtcMessages')
+
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
     TRACKER_INSTRUCTION_RECEIVED: 'streamr:tracker-node:tracker-instruction-received',
@@ -51,7 +53,7 @@ class TrackerNode extends EventEmitter {
             requestId: '', // TODO: requestId
             originator: originatorInfo,
             targetNode,
-            subType: 'localDescription',
+            subType: SUB_TYPES.LOCAL_DESCRIPTION,
             data: {
                 type,
                 description
@@ -64,7 +66,7 @@ class TrackerNode extends EventEmitter {
             requestId: '', // TODO: requestId
             originator: originatorInfo,
             targetNode,
-            subType: 'localCandidate',
+            subType: SUB_TYPES.LOCAL_CANDIDATE,
             data: {
                 candidate,
                 mid
@@ -77,7 +79,7 @@ class TrackerNode extends EventEmitter {
             requestId: '', // TODO: requestId
             originator: originatorInfo,
             targetNode,
-            subType: 'rtcConnect',
+            subType: SUB_TYPES.RTC_CONNECT,
             data: {}
         }))
     }
