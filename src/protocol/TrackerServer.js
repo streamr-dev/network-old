@@ -51,9 +51,9 @@ class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcOffer(receiverNodeId, originatorInfo, description) {
+    sendRtcOffer(receiverNodeId, requestId, originatorInfo, description) {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
             subType: SUB_TYPES.RTC_OFFER,
@@ -63,9 +63,9 @@ class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcAnswer(receiverNodeId, originatorInfo, description) {
+    sendRtcAnswer(receiverNodeId, requestId, originatorInfo, description) {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
             subType: SUB_TYPES.RTC_ANSWER,
@@ -75,9 +75,9 @@ class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcConnect(receiverNodeId, originatorInfo) {
+    sendRtcConnect(receiverNodeId, requestId, originatorInfo) {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
             subType: SUB_TYPES.RTC_CONNECT,
@@ -85,9 +85,9 @@ class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRemoteCandidate(receiverNodeId, originatorInfo, candidate, mid) {
+    sendRemoteCandidate(receiverNodeId, requestId, originatorInfo, candidate, mid) {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
             subType: SUB_TYPES.REMOTE_CANDIDATE,
@@ -98,16 +98,16 @@ class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendUnknownPeerRtcError(receiverNodeId, targetNode) {
+    sendUnknownPeerRtcError(receiverNodeId, requestId, targetNode) {
         return this.send(receiverNodeId, new TrackerLayer.ErrorMessage({
-            requestId: '', // TODO: requestId
+            requestId,
             errorCode: TrackerLayer.ErrorMessage.ERROR_CODES.RTC_UNKNOWN_PEER,
             targetNode
         }))
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, message.serialize())
+        return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
     }
 
     getAddress() {

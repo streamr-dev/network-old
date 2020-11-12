@@ -46,7 +46,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
     })
 
     it('LocalDescription (offer) messages are delivered', async () => {
-        originatorTrackerNode.sendLocalDescription(
+        const sentMsg = await originatorTrackerNode.sendLocalDescription(
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
@@ -55,7 +55,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RELAY_MESSAGE_RECEIVED)
         expect(rtcOffer).toEqual(new RelayMessage({
-            requestId: '',
+            requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
             subType: SUB_TYPES.RTC_OFFER,
@@ -66,7 +66,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
     })
 
     it('LocalDescription (answer) messages are delivered', async () => {
-        originatorTrackerNode.sendLocalDescription(
+        const sentMsg = await originatorTrackerNode.sendLocalDescription(
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
@@ -75,7 +75,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RELAY_MESSAGE_RECEIVED)
         expect(rtcOffer).toEqual(new RelayMessage({
-            requestId: '',
+            requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
             subType: SUB_TYPES.RTC_ANSWER,
@@ -86,7 +86,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
     })
 
     it('LocalCandidate messages are delivered', async () => {
-        originatorTrackerNode.sendLocalCandidate(
+        const sentMsg = await originatorTrackerNode.sendLocalCandidate(
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
@@ -95,7 +95,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RELAY_MESSAGE_RECEIVED)
         expect(rtcOffer).toEqual(new RelayMessage({
-            requestId: '',
+            requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
             subType: SUB_TYPES.REMOTE_CANDIDATE,
@@ -107,10 +107,10 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
     })
 
     it('RtcConnect messages are delivered', async () => {
-        originatorTrackerNode.sendRtcConnect('tracker', 'target', PeerInfo.newNode('originator'))
+        const sentMsg = await originatorTrackerNode.sendRtcConnect('tracker', 'target', PeerInfo.newNode('originator'))
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNode.events.RELAY_MESSAGE_RECEIVED)
         expect(rtcOffer).toEqual(new RelayMessage({
-            requestId: '',
+            requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
             subType: SUB_TYPES.RTC_CONNECT,
@@ -120,10 +120,10 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
 
     it('RelayMessage with invalid target results in RTC_ERROR response sent back to originator', async () => {
         // Enough to test only sendRtcConnect here as we know all relay message share same error handling logic
-        originatorTrackerNode.sendRtcConnect('tracker', 'nonExistingNode', PeerInfo.newUnknown('originator'))
+        const sentMsg = await originatorTrackerNode.sendRtcConnect('tracker', 'nonExistingNode', PeerInfo.newUnknown('originator'))
         const [rtcError] = await waitForEvent(originatorTrackerNode, TrackerNode.events.RTC_ERROR_RECEIVED)
         expect(rtcError).toEqual(new ErrorMessage({
-            requestId: '',
+            requestId: sentMsg.requestId,
             errorCode: ErrorMessage.ERROR_CODES.RTC_UNKNOWN_PEER,
             targetNode: 'nonExistingNode'
         }))

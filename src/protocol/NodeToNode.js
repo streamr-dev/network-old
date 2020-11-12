@@ -71,12 +71,12 @@ class NodeToNode extends EventEmitter {
         }))
     }
 
-    disconnectFromNode(receiverNodeId, reason) {
-        this.endpoint.close(receiverNodeId, reason)
+    send(receiverNodeId, message) {
+        return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
     }
 
-    send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, message.serialize())
+    disconnectFromNode(receiverNodeId, reason) {
+        this.endpoint.close(receiverNodeId, reason)
     }
 
     getAddress() {

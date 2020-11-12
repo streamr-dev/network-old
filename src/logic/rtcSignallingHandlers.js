@@ -8,16 +8,18 @@ function attachRtcSignalling(trackerServer) {
         throw new Error('trackerServer not instance of TrackerServer')
     }
 
-    function handleLocalDescription(originator, targetNode, data) {
+    function handleLocalDescription(requestId, originator, targetNode, data) {
         if (data.type === 'answer') {
             trackerServer.sendRtcAnswer(
                 targetNode,
+                requestId,
                 originator,
                 data.description
             )
         } else if (data.type === 'offer') {
             trackerServer.sendRtcOffer(
                 targetNode,
+                requestId,
                 originator,
                 data.description
             )
@@ -26,35 +28,42 @@ function attachRtcSignalling(trackerServer) {
         }
     }
 
-    function handleLocalCandidate(originator, targetNode, data) {
+    function handleLocalCandidate(requestId, originator, targetNode, data) {
         trackerServer.sendRemoteCandidate(
             targetNode,
+            requestId,
             originator,
             data.candidate,
             data.mid
         )
     }
 
-    function handleRtcConnect(originator, targetNode) {
-        trackerServer.sendRtcConnect(targetNode, originator)
+    function handleRtcConnect(requestId, originator, targetNode) {
+        trackerServer.sendRtcConnect(targetNode, requestId, originator)
     }
 
     trackerServer.on(TrackerServer.events.RELAY_MESSAGE_RECEIVED, (relayMessage, source) => {
-        const { subType, originator, targetNode, data } = relayMessage
+        const {
+            subType,
+            requestId,
+            originator,
+            targetNode,
+            data
+        } = relayMessage
         // TODO: validate that source === originator
         try {
             if (subType === SUB_TYPES.LOCAL_DESCRIPTION) {
-                handleLocalDescription(originator, targetNode, data)
+                handleLocalDescription(requestId, originator, targetNode, data)
             } else if (subType === SUB_TYPES.LOCAL_CANDIDATE) {
-                handleLocalCandidate(originator, targetNode, data)
+                handleLocalCandidate(requestId, originator, targetNode, data)
             } else if (subType === SUB_TYPES.RTC_CONNECT) {
-                handleRtcConnect(originator, targetNode)
+                handleRtcConnect(requestId, originator, targetNode)
             } else {
                 logger.warn('Unrecognized RelayMessage subType %s with contents %o', subType, relayMessage)
             }
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
-                trackerServer.sendUnknownPeerRtcError(originator.peerId, targetNode)
+                trackerServer.sendUnknownPeerRtcError(originator.peerId, requestId, targetNode)
             } else {
                 throw err
             }

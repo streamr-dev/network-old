@@ -49,10 +49,9 @@ class TrackerNode extends EventEmitter {
         }))
     }
 
-    // TODO: remove type?
     sendLocalDescription(trackerId, targetNode, originatorInfo, type, description) {
         return this.send(trackerId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId: uuidv4(),
             originator: originatorInfo,
             targetNode,
             subType: SUB_TYPES.LOCAL_DESCRIPTION,
@@ -65,7 +64,7 @@ class TrackerNode extends EventEmitter {
 
     sendLocalCandidate(trackerId, targetNode, originatorInfo, candidate, mid) {
         return this.send(trackerId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+            requestId: uuidv4(),
             originator: originatorInfo,
             targetNode,
             subType: SUB_TYPES.LOCAL_CANDIDATE,
@@ -77,8 +76,8 @@ class TrackerNode extends EventEmitter {
     }
 
     sendRtcConnect(trackerId, targetNode, originatorInfo) {
-        this.send(trackerId, new TrackerLayer.RelayMessage({
-            requestId: '', // TODO: requestId
+        return this.send(trackerId, new TrackerLayer.RelayMessage({
+            requestId: uuidv4(),
             originator: originatorInfo,
             targetNode,
             subType: SUB_TYPES.RTC_CONNECT,
@@ -87,7 +86,7 @@ class TrackerNode extends EventEmitter {
     }
 
     send(receiverNodeId, message) {
-        return this.endpoint.send(receiverNodeId, message.serialize())
+        return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
     }
 
     stop() {
