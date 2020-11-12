@@ -1,7 +1,6 @@
 const logger = require('../helpers/logger')('streamr:rtcSignallingHandlers')
 const TrackerServer = require('../protocol/TrackerServer')
 const { NotFoundInPeerBookError } = require('../connection/PeerBook')
-
 const { SUB_TYPES } = require('../protocol/RtcMessages')
 
 function attachRtcSignalling(trackerServer) {
