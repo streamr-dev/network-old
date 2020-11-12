@@ -33,7 +33,7 @@
     "commander": "^6.2.0",
     "geoip-lite": "^1.4.2",
     "heap": "^0.2.6",
-    "node-datachannel": "0.0.9",
+    "node-datachannel": "0.0.11",
     "lru-cache": "^6.0.0",
     "pino": "^6.7.0",
     "pino-pretty": "^4.3.0",

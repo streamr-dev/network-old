@@ -78,7 +78,7 @@ describe('duplicate message detection and avoidance', () => {
         otherNodes[3].subscribe('stream-id', 0)
         otherNodes[4].subscribe('stream-id', 0)
 
-        await wait(1000)
+        await wait(2000)
 
         // Set up 1st test case
         let totalMessages = 0

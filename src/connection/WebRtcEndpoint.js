@@ -1,5 +1,7 @@
 const { EventEmitter } = require('events')
 
+const nodeDataChannel = require('node-datachannel')
+
 const getLogger = require('../helpers/logger')
 
 const { PeerInfo } = require('./PeerInfo')
@@ -181,6 +183,7 @@ class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller.setErrorListener(() => {})
         this.rtcSignaller.setRemoteCandidateListener(() => {})
         this.removeAllListeners()
+        nodeDataChannel.cleanup()
     }
 
     _pingConnections() {
