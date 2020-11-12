@@ -357,7 +357,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendLocalCandidate is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendLocalCandidate('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'candidate', 'mid')
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.LOCAL_CANDIDATE_RECEIVED)
+        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')
@@ -373,7 +373,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendLocalDescription is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendLocalDescription('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'offer', 'description')
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.LOCAL_DESCRIPTION_RECEIVED)
+        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')
@@ -389,7 +389,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRtcConnect is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendRtcConnect('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'))
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.RTC_CONNECT_RECEIVED)
+        const [msg, source] = await waitForEvent(trackerServer, TrackerServer.events.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')
