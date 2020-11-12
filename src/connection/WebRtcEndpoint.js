@@ -19,7 +19,6 @@ class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller = rtcSignaller
         this.connections = {}
         this.newConnectionTimeout = newConnectionTimeout
-        this.bufferHighThreshold = 2 ** 17
         this.pingIntervalInMs = pingIntervalInMs
         this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
         this.logger = getLogger(`streamr:WebRtcEndpoint:${id}`)
@@ -30,7 +29,7 @@ class WebRtcEndpoint extends EventEmitter {
             const connection = this.connections[peerId]
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
-                await connection.connection.setRemoteDescription(description, 'offer') // TODO: getter?
+                await connection.setRemoteDescription(description, 'offer')
             }
         })
 
@@ -39,7 +38,7 @@ class WebRtcEndpoint extends EventEmitter {
             const connection = this.connections[peerId]
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
-                await connection.connection.setRemoteDescription(description, 'answer') // TODO: getter?
+                await connection.setRemoteDescription(description, 'answer')
             } else {
                 this.logger.warn('Unexpected rtcAnswer from %s: %s', originatorInfo, description)
             }
@@ -49,7 +48,7 @@ class WebRtcEndpoint extends EventEmitter {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
             if (connection) {
-                await connection.connection.addRemoteCandidate(candidate, mid)
+                await connection.addRemoteCandidate(candidate, mid)
             } else {
                 this.logger.warn('Unexpected remoteCandidate from %s: [%s, %s]', originatorInfo, candidate, mid)
             }
@@ -96,7 +95,6 @@ class WebRtcEndpoint extends EventEmitter {
             routerId,
             isOffering,
             stunUrls: this.stunUrls,
-            bufferHighThreshold: this.bufferHighThreshold,
             newConnectionTimeout: this.newConnectionTimeout,
             onLocalDescription: (type, description) => {
                 this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)

@@ -57,8 +57,8 @@ module.exports = class Connection {
         routerId,
         isOffering,
         stunUrls,
-        bufferHighThreshold,
-        newConnectionTimeout,
+        bufferHighThreshold = 2 ** 17,
+        newConnectionTimeout = 5000,
         onLocalDescription,
         onLocalCandidate,
         onOpen,
@@ -138,6 +138,14 @@ module.exports = class Connection {
             this.logger.warn('connection timed out')
             this.onError(new Error('timed out'))
         }, this.newConnectionTimeout)
+    }
+
+    setRemoteDescription(description, type) {
+        this.connection.setRemoteDescription(description, type)
+    }
+
+    addRemoteCandidate(candidate, mid) {
+        this.connection.addRemoteCandidate(candidate, mid)
     }
 
     send(message) {
