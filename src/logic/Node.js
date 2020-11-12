@@ -317,12 +317,16 @@ class Node extends EventEmitter {
         this.logger.debug('stopping')
         this.resendHandler.stop()
 
+        if (this.connectToBoostrapTrackersInterval) {
+            clearInterval(this.connectToBoostrapTrackersInterval)
+            this.connectToBoostrapTrackersInterval = null
+        }
+
         const timeouts = [...this.sendStatusTimeout.values()]
         timeouts.forEach((timeout) => clearTimeout(timeout))
 
         Object.values(this.disconnectionTimers).forEach((timeout) => clearTimeout(timeout))
 
-        this._clearConnectToBootstrapTrackersInterval()
         this.messageBuffer.clear()
         return Promise.all([
             this.protocols.trackerNode.stop(),
@@ -427,13 +431,6 @@ class Node extends EventEmitter {
                     this.logger.error('Could not connect to tracker %s because %j', address, err.toString())
                 })
         })
-    }
-
-    _clearConnectToBootstrapTrackersInterval() {
-        if (this.connectToBoostrapTrackersInterval) {
-            clearInterval(this.connectToBoostrapTrackersInterval)
-            this.connectToBoostrapTrackersInterval = null
-        }
     }
 
     _clearDisconnectionTimer(nodeId) {
