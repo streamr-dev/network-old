@@ -6,20 +6,20 @@ const { TrackerLayer } = require('streamr-client-protocol')
 const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
-const { TYPES } = TrackerLayer.TrackerMessage
-
 const events = Object.freeze({
     CONNECTED_TO_TRACKER: 'streamr:tracker-node:send-status',
     TRACKER_INSTRUCTION_RECEIVED: 'streamr:tracker-node:tracker-instruction-received',
     TRACKER_DISCONNECTED: 'streamr:tracker-node:tracker-disconnected',
     STORAGE_NODES_RESPONSE_RECEIVED: 'streamr:tracker-node:storage-nodes-received',
-    RTC_OFFER_RECEIVED: 'streamr:tracker-node:rtc-offer-received',
-    RTC_ANSWER_RECEIVED: 'streamr:tracker-node:rtc-answer-received',
+    RELAY_MESSAGE_RECEIVED: 'streamr:tracker-node:relay-message-received',
     RTC_ERROR_RECEIVED: 'streamr:tracker-node:rtc-error-received',
-    REMOTE_CANDIDATE_RECEIVED: 'streamr:tracker-node:remote-candidate-received',
-    LOCAL_DESCRIPTION_RECEIVED: 'streamr:tracker-node:local-description-received',
-    LOCAL_CANDIDATE_RECEIVED: 'streamr:tracker-node:local-candidate-received',
 })
+
+const eventPerType = {}
+eventPerType[TrackerLayer.TrackerMessage.TYPES.InstructionMessage] = events.TRACKER_INSTRUCTION_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesResponse] = events.STORAGE_NODES_RESPONSE_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.RelayMessage] = events.RELAY_MESSAGE_RECEIVED
+eventPerType[TrackerLayer.TrackerMessage.TYPES.ErrorMessage] = events.RTC_ERROR_RECEIVED
 
 class TrackerNode extends EventEmitter {
     constructor(endpoint) {
@@ -91,45 +91,13 @@ class TrackerNode extends EventEmitter {
     }
 
     onMessageReceived(peerInfo, rawMessage) {
-        const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
-        switch (message ? message.type : null) {
-            case TYPES.InstructionMessage:
-                this.emit(events.TRACKER_INSTRUCTION_RECEIVED, message, peerInfo.peerId)
-                break
-            case TYPES.StorageNodesResponse:
-                this.emit(events.STORAGE_NODES_RESPONSE_RECEIVED, message, peerInfo.peerId)
-                break
-            case TYPES.ErrorMessage:
-                this.emit(events.RTC_ERROR_RECEIVED, message, peerInfo.peerId)
-                break
-            case TYPES.RelayMessage:
-                switch (message.subType) {
-                    case 'rtcOffer':
-                        this.emit(events.RTC_OFFER_RECEIVED, message, peerInfo.peerId)
-                        break
-                    case 'rtcAnswer':
-                        this.emit(events.RTC_ANSWER_RECEIVED, message, peerInfo.peerId)
-                        break
-                    case 'rtcConnect':
-                        this.emit(events.RTC_CONNECT_RECEIVED, message, peerInfo.peerId)
-                        break
-                    case 'localDescription':
-                        this.emit(events.LOCAL_DESCRIPTION_RECEIVED, message, peerInfo.peerId)
-                        break
-                    case 'localCandidate':
-                        this.emit(events.LOCAL_CANDIDATE_RECEIVED, message, peerInfo.peerId)
-                        break
-                    case 'remoteCandidate':
-                        this.emit(events.REMOTE_CANDIDATE_RECEIVED, message, peerInfo.peerId)
-                        break
-                    default:
-                        console.warn(`TrackerServer: invalid RelayMessage from ${peerInfo}: ${JSON.stringify(message)}`)
-                        break
-                }
-                break
-            default:
-                console.warn(`TrackerServer: invalid message from ${peerInfo}: ${rawMessage}`)
-                break
+        if (peerInfo.isTracker()) {
+            const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
+            if (message != null) {
+                this.emit(eventPerType[message.type], message, peerInfo.peerId)
+            } else {
+                this.logger.warn('TrackerNode: invalid message from %s: %s', peerInfo, rawMessage)
+            }
         }
     }
 

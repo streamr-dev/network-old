@@ -134,7 +134,7 @@ class TrackerServer extends EventEmitter {
             if (message != null) {
                 this.emit(eventPerType[message.type], message, peerInfo.peerId)
             } else {
-                this.logger.warn(`TrackerServer: invalid message from %s: %s`, peerInfo, rawMessage)
+                this.logger.warn('TrackerServer: invalid message from %s: %s', peerInfo, rawMessage)
             }
         }
     }

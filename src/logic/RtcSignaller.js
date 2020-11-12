@@ -1,5 +1,6 @@
 const TrackerNode = require('../protocol/TrackerNode')
 const getLogger = require('../helpers/logger')
+const { SUB_TYPES } = require('../protocol/RtcMessages')
 
 module.exports = class RtcSignaller {
     constructor(peerInfo, trackerNode) {
@@ -12,38 +13,37 @@ module.exports = class RtcSignaller {
         this.remoteCandidateListener = null
         this.logger = getLogger(`streamr:RtcSignaller:${peerInfo.peerId}`)
 
-        trackerNode.on(TrackerNode.events.RTC_OFFER_RECEIVED, (message, source) => {
-            this.offerListener({
-                routerId: source,
-                originatorInfo: message.originator,
-                description: message.data.description
-            })
+        trackerNode.on(TrackerNode.events.RELAY_MESSAGE_RECEIVED, (relayMessage, source) => {
+            const { originator, targetNode, subType, data } = relayMessage
+            if (subType === SUB_TYPES.RTC_OFFER) {
+                this.offerListener({
+                    routerId: source,
+                    originatorInfo: originator,
+                    description: data.description
+                })
+            } else if (subType === SUB_TYPES.RTC_ANSWER) {
+                this.answerListener({
+                    routerId: source,
+                    originatorInfo: originator,
+                    description: data.description,
+                })
+            } else if (subType === SUB_TYPES.REMOTE_CANDIDATE) {
+                this.remoteCandidateListener({
+                    routerId: source,
+                    originatorInfo: originator,
+                    candidate: data.candidate,
+                    mid: data.mid
+                })
+            } else if (subType === SUB_TYPES.RTC_CONNECT) {
+                this.connectListener({
+                    routerId: source,
+                    targetNode,
+                    originatorInfo: originator
+                })
+            } else {
+                this.logger.warn('Unrecognized subtype %s with contents %o', subType, relayMessage)
+            }
         })
-        trackerNode.on(TrackerNode.events.RTC_ANSWER_RECEIVED, (message, source) => {
-            this.answerListener({
-                routerId: source,
-                originatorInfo: message.originator,
-                description: message.data.description,
-            })
-        })
-
-        trackerNode.on(TrackerNode.events.REMOTE_CANDIDATE_RECEIVED, (message, source) => {
-            this.remoteCandidateListener({
-                routerId: source,
-                originatorInfo: message.originator,
-                candidate: message.data.candidate,
-                mid: message.data.mid
-            })
-        })
-
-        trackerNode.on(TrackerNode.events.RTC_CONNECT_RECEIVED, (message, source) => {
-            this.connectListener({
-                routerId: source,
-                targetNode: message.targetNode,
-                originatorInfo: message.originator
-            })
-        })
-
         trackerNode.on(TrackerNode.events.RTC_ERROR_RECEIVED, (message, source) => {
             this.errorListener({
                 routerId: source,
