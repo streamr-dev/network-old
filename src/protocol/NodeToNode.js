@@ -3,6 +3,7 @@ const { EventEmitter } = require('events')
 const { v4: uuidv4 } = require('uuid')
 const { ControlLayer } = require('streamr-client-protocol')
 
+const getLogger = require('../helpers/logger')
 const { decode } = require('../helpers/MessageEncoder')
 const endpointEvents = require('../connection/WsEndpoint').events
 
@@ -40,6 +41,7 @@ class NodeToNode extends EventEmitter {
         endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
         endpoint.on(endpointEvents.LOW_BACK_PRESSURE, (peerInfo) => this.onLowBackPressure(peerInfo))
         endpoint.on(endpointEvents.HIGH_BACK_PRESSURE, (peerInfo) => this.onHighBackPressure(peerInfo))
+        this.logger = getLogger(`streamr:NodeToNode:${endpoint.id}`)
     }
 
     connectToNode(receiverNodeId, trackerAddress, isOffering, trackerInstructed = true) {
@@ -103,7 +105,7 @@ class NodeToNode extends EventEmitter {
             if (message != null) {
                 this.emit(eventPerType[message.type], message, peerInfo.peerId)
             } else {
-                console.warn(`NodeToNode: invalid message from ${peerInfo}: ${rawMessage}`)
+                this.logger.warn('NodeToNode: invalid message from %s: %s', peerInfo, rawMessage)
             }
         }
     }

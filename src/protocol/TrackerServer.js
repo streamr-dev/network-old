@@ -26,10 +26,10 @@ class TrackerServer extends EventEmitter {
     constructor(endpoint) {
         super()
         this.endpoint = endpoint
-        this.logger = getLogger(`streamr:TrackerServer:${endpoint.peerInfo.peerId}`)
         endpoint.on(endpointEvents.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
         endpoint.on(endpointEvents.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
         endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
+        this.logger = getLogger(`streamr:TrackerServer:${endpoint.peerInfo.peerId}`)
     }
 
     sendInstruction(receiverNodeId, streamId, nodeIds, counter) {
