@@ -56,14 +56,14 @@ module.exports = class RtcSignaller {
     onLocalDescription(routerId, targetPeerId, type, description) {
         this.trackerNode.sendLocalDescription(routerId, targetPeerId, this.peerInfo, type, description)
             .catch((err) => {
-                this.logger.warn('Failed to sendLocalDescription via %s due to %s', routerId, err) // TODO: better?
+                this.logger.debug('Failed to sendLocalDescription via %s due to %s', routerId, err) // TODO: better?
             })
     }
 
     onLocalCandidate(routerId, targetPeerId, candidate, mid) {
         this.trackerNode.sendLocalCandidate(routerId, targetPeerId, this.peerInfo, candidate, mid)
             .catch((err) => {
-                this.logger.warn('Failed to sendLocalCandidate via %s due to %s', routerId, err) // TODO: better?
+                this.logger.debug('Failed to sendLocalCandidate via %s due to %s', routerId, err) // TODO: better?
             })
     }
 

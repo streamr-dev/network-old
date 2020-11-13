@@ -180,8 +180,9 @@ class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.rtcSignaller.setOfferListener(() => {})
         this.rtcSignaller.setAnswerListener(() => {})
-        this.rtcSignaller.setErrorListener(() => {})
         this.rtcSignaller.setRemoteCandidateListener(() => {})
+        this.rtcSignaller.setErrorListener(() => {})
+        this.rtcSignaller.setConnectListener(() => {})
         this.removeAllListeners()
         nodeDataChannel.cleanup()
     }
