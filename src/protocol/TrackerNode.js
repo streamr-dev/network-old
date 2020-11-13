@@ -90,7 +90,7 @@ class TrackerNode extends EventEmitter {
     }
 
     stop() {
-        this.endpoint.stop()
+        return this.endpoint.stop()
     }
 
     onMessageReceived(peerInfo, rawMessage) {

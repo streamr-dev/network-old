@@ -42,8 +42,8 @@ describe('WebRtcEndpoint', () => {
     })
 
     afterEach(async () => {
-        trackerNode1.stop()
-        trackerNode2.stop()
+        await trackerNode1.stop()
+        await trackerNode2.stop()
         await endpoint1.stop()
         await endpoint2.stop()
         await tracker.stop()
