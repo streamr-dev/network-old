@@ -57,7 +57,8 @@ module.exports = class Connection {
         routerId,
         isOffering,
         stunUrls,
-        bufferHighThreshold = 2 ** 17,
+        bufferHighThreshold = 2 ** 20,
+        bufferLowThreshold = 2 ** 17,
         newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
         pingPongTimeout = 2000,
@@ -74,6 +75,7 @@ module.exports = class Connection {
         this.isOffering = isOffering
         this.stunUrls = stunUrls
         this.bufferHighThreshold = bufferHighThreshold
+        this.bufferLowThreshold = bufferLowThreshold
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingPongTimeout = pingPongTimeout
@@ -260,6 +262,7 @@ module.exports = class Connection {
 
     _setupDataChannel(dataChannel) {
         this.paused = false
+        dataChannel.setBufferedAmountLowThreshold(this.bufferLowThreshold)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
                 this.logger.debug('dataChannel.onOpen')
