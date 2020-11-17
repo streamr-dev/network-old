@@ -112,9 +112,9 @@ describe('message propagation in network', () => {
             }))
         }
 
-        await waitForCondition(() => n1Messages.length === 5)
-        await waitForCondition(() => n2Messages.length === 5)
-        await waitForCondition(() => n3Messages.length === 5)
+        await waitForCondition(() => n1Messages.length === 5, 8000)
+        await waitForCondition(() => n2Messages.length === 5, 8000)
+        await waitForCondition(() => n3Messages.length === 5, 8000)
 
         expect(n1Messages).toEqual([
             {
