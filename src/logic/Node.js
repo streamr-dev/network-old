@@ -316,6 +316,7 @@ class Node extends EventEmitter {
     stop() {
         this.logger.debug('stopping')
         this.resendHandler.stop()
+        this.instructionThrottler.reset()
 
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)

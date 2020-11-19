@@ -197,10 +197,6 @@ module.exports = class Connection {
         this.peerPingTimeoutRef = null
         this.peerPongTimeoutRef = null
 
-        this.onLocalDescription = () => {}
-        this.onLocalCandidate = () => {}
-        this.onMessage = () => {}
-
         if (err) {
             this.onError(err)
         }
