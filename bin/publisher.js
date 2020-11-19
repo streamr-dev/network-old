@@ -42,7 +42,9 @@ function generateString(length) {
     return result
 }
 
-startNetworkNode({ host: program.ip, port: program.port, name: publisherId, id: publisherId, trackers: program.trackers, storage: [] })
+startNetworkNode({
+    host: program.ip, port: program.port, name: publisherId, id: publisherId, trackers: program.trackers, storage: []
+})
     .then((publisher) => {
         logger.info('started publisher id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, intervalInMs: %d, metrics: %s',
             publisherId, name, program.port, program.ip, program.trackers.join(', '), program.streamId, program.intervalInMs, program.metrics)

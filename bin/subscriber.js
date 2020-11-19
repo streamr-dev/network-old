@@ -22,7 +22,9 @@ program
 const id = program.id || `subscriber-${program.port}`
 const name = program.nodeName || id
 
-startNetworkNode({ host: program.ip, port: program.port, name: id, id: id, trackers: program.trackers, storage: [] }).then((subscriber) => {
+startNetworkNode({
+    host: program.ip, port: program.port, name: id, id, trackers: program.trackers, storage: []
+}).then((subscriber) => {
     logger.info('started subscriber id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, metrics: %s',
         id, name, program.port, program.ip, program.trackers.join(', '), program.streamId, program.metrics)
     subscriber.start()
