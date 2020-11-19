@@ -13,6 +13,14 @@ const events = Object.freeze({
     MESSAGE_RECEIVED: 'streamr:message-received'
 })
 
+class WebRtcError extends Error {
+    constructor(msg) {
+        super(msg)
+        // exclude this constructor from stack trace
+        Error.captureStackTrace(this, WebRtcError)
+    }
+}
+
 class WebRtcEndpoint extends EventEmitter {
     constructor(id, stunUrls, rtcSignaller, metricsContext, pingIntervalInMs = 5 * 1000, newConnectionTimeout = 5000) {
         super()
@@ -62,7 +70,7 @@ class WebRtcEndpoint extends EventEmitter {
         })
 
         rtcSignaller.setErrorListener(({ targetNode, errorCode }) => {
-            const error = new Error(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
+            const error = new WebRtcError(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
             this.emit(`errored:${targetNode}`, error)
         })
 
@@ -138,6 +146,9 @@ class WebRtcEndpoint extends EventEmitter {
     }
 
     send(targetPeerId, message) {
+        if (!this.connections[targetPeerId]) {
+            throw new WebRtcError(`Not connected to ${targetPeerId}.`)
+        }
         return this.connections[targetPeerId].send(message).then(
             () => {
                 this.metrics.record('outSpeed', message.length)
