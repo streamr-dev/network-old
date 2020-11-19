@@ -212,7 +212,7 @@ describe('Connection', () => {
         connectionOne.ping()
         connectionOne.ping()
 
-        await Promise.all([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
+        await Promise.allSettled([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
 
         expect(connectionOne.isOpen()).toEqual(false)
         expect(connectionTwo.isOpen()).toEqual(false)

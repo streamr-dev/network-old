@@ -140,9 +140,8 @@ module.exports = class Connection {
         }
 
         this.connectionTimeoutRef = setTimeout(() => {
-            this.close()
             this.logger.warn('connection timed out')
-            this.onError(new Error('timed out'))
+            this.close(new Error('timed out'))
         }, this.newConnectionTimeout)
     }
 
@@ -172,7 +171,7 @@ module.exports = class Connection {
         })
     }
 
-    close() {
+    close(err = null) {
         if (this.dataChannel) {
             this.dataChannel.close()
         }
@@ -198,6 +197,13 @@ module.exports = class Connection {
         this.peerPingTimeoutRef = null
         this.peerPongTimeoutRef = null
 
+        this.onLocalDescription = () => {}
+        this.onLocalCandidate = () => {}
+        this.onMessage = () => {}
+
+        if (err) {
+            this.onError(err)
+        }
         this.onClose()
     }
 
@@ -218,7 +224,7 @@ module.exports = class Connection {
                 this.peerPingTimeoutRef = setTimeout(() => this.ping(attempt + 1), this.pingPongTimeout)
             } else {
                 this.logger.warn('failed all ping re-attempts to connection, terminating connection', e)
-                this.close()
+                this.close(new Error('ping attempts failed'))
             }
         }
     }
@@ -235,7 +241,7 @@ module.exports = class Connection {
                 this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), this.pingPongTimeout)
             } else {
                 this.logger.warn('failed all pong re-attempts to connection, terminating connection', e)
-                this.close()
+                this.close(new Error('pong attempts failed'))
             }
         }
     }
