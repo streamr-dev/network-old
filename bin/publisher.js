@@ -42,12 +42,12 @@ function generateString(length) {
     return result
 }
 
-startNetworkNode(program.ip, program.port, publisherId, [], null, name)
+startNetworkNode({ host: program.ip, port: program.port, name: publisherId, id: publisherId, trackers: program.trackers, storage: [] })
     .then((publisher) => {
         logger.info('started publisher id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, intervalInMs: %d, metrics: %s',
             publisherId, name, program.port, program.ip, program.trackers.join(', '), program.streamId, program.intervalInMs, program.metrics)
 
-        program.trackers.map((trackerAddress) => publisher.addBootstrapTracker(trackerAddress))
+        publisher.start()
 
         let lastTimestamp = null
         let sequenceNumber = 0
