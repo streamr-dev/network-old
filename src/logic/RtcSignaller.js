@@ -69,6 +69,9 @@ module.exports = class RtcSignaller {
 
     onConnectionNeeded(routerId, targetPeerId) {
         this.trackerNode.sendRtcConnect(routerId, targetPeerId, this.peerInfo)
+            .catch((err) => {
+                this.logger.debug('Failed to sendRtcConnect via %s due to %s', routerId, err) // TODO: better?
+            })
     }
 
     setOfferListener(fn) {

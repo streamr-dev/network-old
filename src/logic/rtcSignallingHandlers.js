@@ -15,14 +15,18 @@ function attachRtcSignalling(trackerServer) {
                 requestId,
                 originator,
                 data.description
-            )
+            ).catch((err) => {
+                logger.debug('Failed to sendRtcAnswer to %s due to %s', targetNode, err) // TODO: better?
+            })
         } else if (data.type === 'offer') {
             trackerServer.sendRtcOffer(
                 targetNode,
                 requestId,
                 originator,
                 data.description
-            )
+            ).catch((err) => {
+                logger.debug('Failed to sendRtcOffer to %s due to %s', targetNode, err) // TODO: better?
+            })
         } else {
             logger.warn('Unrecognized localDescription message: %s', data.type)
         }
@@ -35,11 +39,15 @@ function attachRtcSignalling(trackerServer) {
             originator,
             data.candidate,
             data.mid
-        )
+        ).catch((err) => {
+            logger.debug('Failed to sendRmoteCandidate to %s due to %s', targetNode, err) // TODO: better?
+        })
     }
 
     function handleRtcConnect(requestId, originator, targetNode) {
-        trackerServer.sendRtcConnect(targetNode, requestId, originator)
+        trackerServer.sendRtcConnect(targetNode, requestId, originator).catch((err) => {
+            logger.debug('Failed to sendRtcConnect to %s due to %s', targetNode, err) // TODO: better?
+        })
     }
 
     trackerServer.on(TrackerServer.events.RELAY_MESSAGE_RECEIVED, (relayMessage, source) => {
