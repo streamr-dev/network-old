@@ -227,6 +227,7 @@ class Node extends EventEmitter {
             if (res.status === 'fulfilled') {
                 subscribeNodeIds.push(res.value)
             } else {
+                this._sendStreamStatus(streamId)
                 this.logger.debug(`failed to subscribe (or connect) to node ${res.reason}`)
             }
         })
