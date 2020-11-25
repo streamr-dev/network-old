@@ -1,3 +1,5 @@
+const speedometer = require('speedometer')
+
 module.exports = class PerStreamMetrics {
     constructor() {
         this.streams = {}
@@ -43,35 +45,73 @@ module.exports = class PerStreamMetrics {
         propagateMessage.rate(1)
     }
 
+    recordSubscribeRequest(streamId) {
+        this._setUpIfNeeded(streamId)
+        const { onSubscribeRequest } = this.streams[streamId]
+        onSubscribeRequest.total += 1
+        onSubscribeRequest.last += 1
+        onSubscribeRequest.rate(1)
+    }
+
+    recordUnsubscribeRequest(streamId) {
+        this._setUpIfNeeded(streamId)
+        const { onUnsubscribeRequest } = this.streams[streamId]
+        onUnsubscribeRequest.total += 1
+        onUnsubscribeRequest.last += 1
+        onUnsubscribeRequest.rate(1)
+    }
+
     report() {
-        return this.streams
+        const result = {}
+        Object.entries(this.streams).forEach(([streamId, metrics]) => {
+            const innerResult = {}
+            Object.entries(metrics).forEach(([key, { rate, last, total }]) => {
+                innerResult[key] = {
+                    rate: rate(),
+                    last,
+                    total
+                }
+            })
+            result[streamId] = innerResult
+        })
+        return result
     }
 
     _setUpIfNeeded(streamId) {
         if (!this.streams[streamId]) {
             this.streams[streamId] = {
                 resends: {
-                    rate: 0,
+                    rate: speedometer(),
                     last: 0,
                     total: 0,
                 },
                 trackerInstructions: {
-                    rate: 0,
+                    rate: speedometer(),
                     last: 0,
                     total: 0
                 },
                 onDataReceived: {
-                    rate: 0,
+                    rate: speedometer(),
                     last: 0,
                     total: 0
                 },
                 'onDataReceived:ignoredDuplicate': {
-                    rate: 0,
+                    rate: speedometer(),
                     last: 0,
                     total: 0
                 },
                 propagateMessage: {
-                    rate: 0,
+                    rate: speedometer(),
+                    last: 0,
+                    total: 0
+                },
+                onSubscribeRequest: {
+                    rate: speedometer(),
+                    last: 0,
+                    total: 0
+                },
+                onUnsubscribeRequest: {
+                    rate: speedometer(),
                     last: 0,
                     total: 0
                 }

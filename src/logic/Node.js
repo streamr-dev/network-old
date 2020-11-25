@@ -329,6 +329,7 @@ class Node extends EventEmitter {
 
     onSubscribeRequest(subscribeMessage, source) {
         this.metrics.record('onSubscribeRequest', 1)
+        this.perStreamMetrics.recordSubscribeRequest(subscribeMessage.streamId)
         const streamId = new StreamIdAndPartition(subscribeMessage.streamId, subscribeMessage.streamPartition)
         this.emit(events.SUBSCRIPTION_REQUEST, {
             streamId,
@@ -352,6 +353,7 @@ class Node extends EventEmitter {
 
         if (this.streams.isSetUp(streamIdAndPartition)) {
             this.metrics.record('onUnsubscribeRequest', 1)
+            this.perStreamMetrics.recordUnsubscribeRequest(unsubscribeMessage.streamId)
             this.streams.removeNodeFromStream(streamIdAndPartition, source)
             this.logger.debug('node %s unsubscribed from stream %s', source, streamIdAndPartition)
             this.emit(events.NODE_UNSUBSCRIBED, source, streamIdAndPartition)
