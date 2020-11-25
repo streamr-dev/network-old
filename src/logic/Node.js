@@ -233,9 +233,9 @@ class Node extends EventEmitter {
         })
         results[1].value.forEach((res) => {
             if (res.status === 'fulfilled') {
-                this._sendStreamStatus(streamId)
                 unsubscribeNodeIds.push(res.value)
             } else {
+                this._sendStreamStatus(streamId)
                 this.logger.debug(`failed to unsubscribe to node ${res.reason}`)
             }
         })
