@@ -14,6 +14,7 @@ const proxyRequestStream = require('../resend/proxyRequestStream')
 const MetricsContext = require('../helpers/MetricsContext')
 const { promiseTimeout } = require('../helpers/PromiseTools')
 
+const PerStreamMetrics = require('./PerStreamMetrics')
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
 const InstructionThrottler = require('./InstructionThrottler')
@@ -100,9 +101,11 @@ class Node extends EventEmitter {
             this.resendHandler.pauseResendsOfNode(nodeId)
         })
 
+        this.perStreamMetrics = new PerStreamMetrics()
         this.metrics = this.opts.metricsContext.create('node')
             .addQueriedMetric('messageBufferSize', () => this.messageBuffer.size())
             .addQueriedMetric('seenButNotPropagatedSetSize', () => this.seenButNotPropagatedSet.size())
+            .addQueriedMetric('perStream', () => this.perStreamMetrics.report())
             .addRecordedMetric('resendRequests')
             .addRecordedMetric('unexpectedTrackerInstructions')
             .addRecordedMetric('trackerInstructions')
@@ -148,6 +151,7 @@ class Node extends EventEmitter {
 
     requestResend(request, source) {
         this.metrics.record('resendRequests', 1)
+        this.perStreamMetrics.recordResend(request.streamId)
         this.logger.debug('received %s resend request %s with requestId %s',
             source === null ? 'local' : `from ${source}`,
             request.constructor.name,
@@ -196,6 +200,7 @@ class Node extends EventEmitter {
         }
 
         this.metrics.record('trackerInstructions', 1)
+        this.perStreamMetrics.recordTrackerInstruction(instructionMessage.streamId)
         this.logger.debug('received instructions for %s, nodes to connect %o', streamId, nodeIds)
 
         this.subscribeToStreamIfHaveNotYet(streamId)
@@ -251,6 +256,7 @@ class Node extends EventEmitter {
 
     onDataReceived(streamMessage, source = null) {
         this.metrics.record('onDataReceived', 1)
+        this.perStreamMetrics.recordDataReceived(streamMessage.getStreamId())
         const streamIdAndPartition = new StreamIdAndPartition(streamMessage.getStreamId(), streamMessage.getStreamPartition())
 
         this.emit(events.MESSAGE_RECEIVED, streamMessage, source)
@@ -288,11 +294,13 @@ class Node extends EventEmitter {
         } else {
             this.logger.debug('ignoring duplicate data %j (from %s)', streamMessage.messageId, source)
             this.metrics.record('onDataReceived:ignoredDuplicate', 1)
+            this.perStreamMetrics.recordIgnoredDuplicate(streamMessage.getStreamId())
         }
     }
 
     _propagateMessage(streamMessage, source) {
         this.metrics.record('propagateMessage', 1)
+        this.perStreamMetrics.recordPropagateMessage(streamMessage.getStreamId())
         const streamIdAndPartition = new StreamIdAndPartition(streamMessage.getStreamId(), streamMessage.getStreamPartition())
 
         const subscribers = this.streams.getOutboundNodesForStream(streamIdAndPartition).filter((n) => n !== source)
