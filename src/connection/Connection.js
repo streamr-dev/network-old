@@ -308,7 +308,6 @@ module.exports = class Connection {
     _attemptToFlushMessages() {
         while (this.isOpen() && !this.messageQueue.empty()) {
             const queueItem = this.messageQueue.peek()
-            console.log(queueItem.getMessage().length, this.dataChannel.maxMessageSize())
             if (queueItem.getMessage().length > this.dataChannel.maxMessageSize()) {
                 this.messageQueue.pop()
                 console.error(this.selfId, 'Dropping message due to message size', queueItem.getMessage().length, 'exceeding the limit of ', this.dataChannel.maxMessageSize())

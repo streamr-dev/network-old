@@ -43,7 +43,7 @@ class Node extends EventEmitter {
             bufferTimeoutInMs: 60 * 1000,
             bufferMaxSize: 10000,
             disconnectionWaitTime: 30 * 1000,
-            nodeConnectTimeout: 4000,
+            nodeConnectTimeout: 2000,
             protocols: [],
             resendStrategies: [],
             metricsContext: new MetricsContext(null)
