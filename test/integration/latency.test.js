@@ -47,7 +47,7 @@ describe('latency metrics', () => {
             messageId: new MessageID(
                 'stream-1',
                 0,
-                new Date().getTime(),
+                new Date().getTime() - 1,
                 0,
                 'publisherId',
                 'msgChainId'
