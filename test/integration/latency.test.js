@@ -2,15 +2,12 @@ const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protoco
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 
-describe('TestLatency', () => {
+describe('latency metrics', () => {
     let tracker
     const trackerPort = 32907
 
     let node1
     const port1 = 33978
-
-    let node2
-    const port2 = 33979
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -18,9 +15,7 @@ describe('TestLatency', () => {
             port: trackerPort,
             id: 'tracker'
         })
-        // disable trackers formAndSendInstructions function
-        // eslint-disable-next-line no-underscore-dangle
-        tracker._formAndSendInstructions = () => {}
+
         node1 = await startNetworkNode({
             host: '127.0.0.1',
             port: port1,
@@ -28,16 +23,7 @@ describe('TestLatency', () => {
             trackers: [tracker.getAddress()]
         })
 
-        node2 = await startNetworkNode({
-            host: '127.0.0.1',
-            port: port2,
-            id: 'node2',
-            trackers: [tracker.getAddress()]
-        })
-
         node1.start()
-
-        node2.start()
     })
 
     afterEach(async () => {
@@ -45,12 +31,12 @@ describe('TestLatency', () => {
         await tracker.stop()
     })
 
-    it('TestLatency should fetch empty metrics', async () => {
+    it('should fetch empty metrics', async () => {
         const metrics = await node1.metrics.report()
         expect(metrics.latency.last).toEqual(0)
     })
 
-    it('Should send a single message to Node1 and collect latency', (done) => {
+    it('should send a single message to Node1 and collect latency', (done) => {
         node1.addMessageListener(async () => {
             const metrics = await node1.metrics.report()
             expect(metrics.latency.last).toBeGreaterThan(0)
@@ -73,7 +59,7 @@ describe('TestLatency', () => {
         }))
     })
 
-    it('Should send a bunch of messages to Node1 and collect latency', async (done) => {
+    it('should send a bunch of messages to Node1 and collect latency', async (done) => {
         let receivedMessages = 0
 
         node1.addMessageListener(async () => {
