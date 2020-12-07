@@ -342,7 +342,13 @@ module.exports = class Connection {
                 try {
                     if (queueItem.getMessage().length > this.dataChannel.maxMessageSize()) {
                         this.messageQueue.pop()
-                        console.error(this.selfId, 'Dropping message due to message size', queueItem.getMessage().length, 'exceeding the limit of ', this.dataChannel.maxMessageSize())
+                        console.error(
+                            this.selfId,
+                            'Dropping message due to message size',
+                            queueItem.getMessage().length,
+                            'exceeding the limit of ',
+                            this.dataChannel.maxMessageSize()
+                        )
                     } else if (this.dataChannel.bufferedAmount() < this.bufferHighThreshold && !this.paused) {
                         this.dataChannel.sendMessage(queueItem.getMessage())
                         this.messageQueue.pop()
