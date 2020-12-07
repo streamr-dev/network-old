@@ -220,12 +220,14 @@ module.exports = class Connection {
     ping(attempt = 0) {
         clearTimeout(this.peerPingTimeoutRef)
         try {
-            if (this.respondedPong === false) {
-                throw new Error('dataChannel is not active')
+            if (this.isOpen()) {
+                if (this.respondedPong === false) {
+                    throw new Error('dataChannel is not active')
+                }
+                this.respondedPong = false
+                this.rttStart = Date.now()
+                this.dataChannel.sendMessage('ping')
             }
-            this.respondedPong = false
-            this.rttStart = Date.now()
-            this.dataChannel.sendMessage('ping')
         } catch (e) {
             if (attempt < this.maxPingPongAttempts && this.isOpen()) {
                 this.logger.debug('failed to ping connection, error %s, re-attempting', e)
