@@ -1,38 +1,45 @@
-const LRU = require('lru-cache')
+import LRUCache from "lru-cache";
 
 const MAX_ELEMENTS = 50000
 const MAX_AGE = 60 * 1000
 
+interface MessageId {
+    streamId: string
+    streamPartition: number
+    timestamp: number
+    sequenceNumber: number
+    publisherId: string
+    msgChainId: string
+}
+
 /**
  * Keeps track of message identifiers that have been seen but not yet propagated to other nodes.
  */
-module.exports = class SeenButNotPropagatedSet {
-    constructor() {
-        this.cache = new LRU({
-            max: MAX_ELEMENTS,
-            maxAge: MAX_AGE
-        })
-    }
+export class SeenButNotPropagatedSet {
+    private readonly cache: LRUCache<string, void> = new LRUCache({
+        max: MAX_ELEMENTS,
+        maxAge: MAX_AGE
+    })
 
-    add(streamMessage) {
+    add(streamMessage: { messageId: MessageId }): void {
         this.cache.set(SeenButNotPropagatedSet.messageIdToStr(streamMessage.messageId))
     }
 
-    delete(streamMessage) {
+    delete(streamMessage: { messageId: MessageId }): void {
         this.cache.del(SeenButNotPropagatedSet.messageIdToStr(streamMessage.messageId))
     }
 
-    has(streamMessage) {
+    has(streamMessage: { messageId: MessageId }): boolean {
         return this.cache.has(SeenButNotPropagatedSet.messageIdToStr(streamMessage.messageId))
     }
 
-    size() {
+    size(): number {
         return this.cache.length
     }
 
     static messageIdToStr({
         streamId, streamPartition, timestamp, sequenceNumber, publisherId, msgChainId
-    }) {
+    }: MessageId): string {
         return `${streamId}-${streamPartition}-${timestamp}-${sequenceNumber}-${publisherId}-${msgChainId}`
     }
 }
