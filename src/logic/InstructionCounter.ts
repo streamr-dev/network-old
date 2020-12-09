@@ -1,16 +1,34 @@
-module.exports = class InstructionCounter {
-    constructor() {
-        this.counters = {} // nodeId => streamKey => integer
+interface Counters {
+    [key: string]: {
+        [key: string]: number
     }
+}
 
-    setOrIncrement(nodeId, streamKey) {
+interface Status<E> {
+    streams: {
+        [key: string]: E & {
+            counter: number
+        }
+    }
+}
+
+interface FilteredStreams<E> {
+    [key: string]: E
+}
+
+export class InstructionCounter {
+    private readonly counters: Counters = {}
+
+    constructor() {}
+
+    setOrIncrement(nodeId: string, streamKey: string): number {
         this._getAndSetIfNecessary(nodeId, streamKey)
         this.counters[nodeId][streamKey] += 1
         return this.counters[nodeId][streamKey]
     }
 
-    filterStatus(status, source) {
-        const filteredStreams = {}
+    filterStatus<E>(status: Status<E>, source: string): FilteredStreams<E> {
+        const filteredStreams: FilteredStreams<E> = {}
         Object.entries(status.streams).forEach(([streamKey, entry]) => {
             const currentCounter = this._getAndSetIfNecessary(source, streamKey)
             if (entry.counter >= currentCounter) {
@@ -20,17 +38,17 @@ module.exports = class InstructionCounter {
         return filteredStreams
     }
 
-    removeNode(nodeId) {
+    removeNode(nodeId: string): void {
         delete this.counters[nodeId]
     }
 
-    removeStream(streamKey) {
+    removeStream(streamKey: string): void {
         Object.keys(this.counters).forEach((nodeId) => {
             delete this.counters[nodeId][streamKey]
         })
     }
 
-    _getAndSetIfNecessary(nodeId, streamKey) {
+    _getAndSetIfNecessary(nodeId: string, streamKey: string): number {
         if (this.counters[nodeId] === undefined) {
             this.counters[nodeId] = {}
         }

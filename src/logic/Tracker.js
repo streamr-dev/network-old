@@ -6,7 +6,7 @@ const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 
 const { attachRtcSignalling } = require('./rtcSignallingHandlers')
-const InstructionCounter = require('./InstructionCounter')
+const { InstructionCounter } = require('./InstructionCounter')
 const LocationManager = require('./LocationManager')
 const OverlayTopology = require('./OverlayTopology')
 
