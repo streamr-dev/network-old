@@ -1,13 +1,25 @@
-module.exports = class MessageBuffer {
-    constructor(timeoutInMs, maxSize = 10000, onTimeout = () => {}) {
-        this.buffer = {}
-        this.timeoutRefs = {}
+interface Buffer<T> {
+    [key: string]: Array<T>
+}
+
+interface Timeouts {
+    [key: string]: Array<NodeJS.Timeout>
+}
+
+export class MessageBuffer<M> {
+    private readonly buffer: Buffer<M> = {}
+    private readonly timeoutRefs: Timeouts = {}
+    private readonly timeoutInMs: number
+    private readonly maxSize: number
+    private readonly onTimeout: (id: string) => void
+
+    constructor(timeoutInMs: number, maxSize = 10000, onTimeout = () => {}) {
         this.timeoutInMs = timeoutInMs
         this.maxSize = maxSize
         this.onTimeout = onTimeout
     }
 
-    put(id, message) {
+    put(id: string, message: M): void {
         if (!this.buffer[id]) {
             this.buffer[id] = []
             this.timeoutRefs[id] = []
@@ -24,10 +36,10 @@ module.exports = class MessageBuffer {
         }, this.timeoutInMs))
     }
 
-    pop(id) {
+    pop(id: string): M | null {
         if (this.buffer[id]) {
-            const message = this.buffer[id].shift()
-            const ref = this.timeoutRefs[id].shift()
+            const message = this.buffer[id].shift() as M
+            const ref = this.timeoutRefs[id].shift() as NodeJS.Timeout
             clearTimeout(ref)
 
             if (!this.buffer[id].length) {
@@ -39,7 +51,7 @@ module.exports = class MessageBuffer {
         return null
     }
 
-    popAll(id) {
+    popAll(id: string): Array<M> {
         if (this.buffer[id]) {
             const messages = this.buffer[id]
             this.timeoutRefs[id].forEach((ref) => clearTimeout(ref))
@@ -50,11 +62,11 @@ module.exports = class MessageBuffer {
         return []
     }
 
-    clear() {
+    clear(): void {
         Object.keys(this.buffer).forEach((id) => this.popAll(id))
     }
 
-    size() {
+    size(): number {
         let total = 0
         Object.values(this.buffer).forEach((messages) => {
             total += messages.length
