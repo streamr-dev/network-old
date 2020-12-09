@@ -3,25 +3,28 @@
  * follows. First compare first numbers. Compare second numbers if first are
  * equal.
  */
-class NumberPair {
-    constructor(a, b) {
-        this.a = a
-        this.b = b
+export class NumberPair {
+    private readonly a
+    private readonly b
+
+    constructor(a: number, b: number) {
+        this.a = a;
+        this.b = b;
     }
 
-    greaterThanOrEqual(otherPair) {
+    greaterThanOrEqual(otherPair: NumberPair): boolean {
         return this.greaterThan(otherPair) || this.equalTo(otherPair)
     }
 
-    greaterThan(otherPair) {
+    greaterThan(otherPair: NumberPair): boolean {
         return this._compareTo(otherPair) === 1
     }
 
-    equalTo(otherPair) {
+    equalTo(otherPair: NumberPair): boolean {
         return this._compareTo(otherPair) === 0
     }
 
-    _compareTo(otherPair) {
+    _compareTo(otherPair: NumberPair): number {
         if (this.a > otherPair.a) {
             return 1
         }
@@ -37,12 +40,12 @@ class NumberPair {
         return 0
     }
 
-    toString() {
+    toString(): string {
         return `${this.a}|${this.b}`
     }
 }
 
-class InvalidNumberingError extends Error {
+export class InvalidNumberingError extends Error {
     constructor() {
         super('pre-condition: previousNumber < number')
         // exclude this constructor from stack trace
@@ -50,8 +53,8 @@ class InvalidNumberingError extends Error {
     }
 }
 
-class GapMisMatchError extends Error {
-    constructor(state, previousNumber, number) {
+export class GapMisMatchError extends Error {
+    constructor(state: string, previousNumber: NumberPair, number: NumberPair) {
         super('pre-condition: gap overlap in given numbers:'
             + ` previousNumber=${previousNumber}, number=${number}, state=${state}`)
         Error.captureStackTrace(this, GapMisMatchError) // exclude this constructor from stack trace
@@ -81,7 +84,10 @@ class GapMisMatchError extends Error {
  * intervals when storage limits are hit.
  *
  */
-class DuplicateMessageDetector {
+export class DuplicateMessageDetector {
+    private readonly maxNumberOfGaps: number
+    private readonly gaps: Array<[NumberPair, NumberPair]>
+
     constructor(maxNumberOfGaps = 10000) {
         this.maxNumberOfGaps = maxNumberOfGaps
         this.gaps = [] // ascending order of half-closed intervals (x,y] representing gaps that contain unseen message(s)
@@ -90,7 +96,7 @@ class DuplicateMessageDetector {
     /**
      * returns true if number has not yet been seen (i.e. is not a duplicate)
      */
-    markAndCheck(previousNumber, number) {
+    markAndCheck(previousNumber: NumberPair, number: NumberPair): boolean | never {
         if (previousNumber && previousNumber.greaterThanOrEqual(number)) {
             throw new InvalidNumberingError()
         }
@@ -151,21 +157,14 @@ class DuplicateMessageDetector {
         return false
     }
 
-    _dropLowestGapIfOverMaxNumberOfGaps() {
+    _dropLowestGapIfOverMaxNumberOfGaps(): void {
         // invariant: this.gaps.length <= this.maxNumberOfGaps + 1
         if (this.gaps.length > this.maxNumberOfGaps) {
             this.gaps.shift()
         }
     }
 
-    toString() {
+    toString(): string {
         return this.gaps.map(([lower, upper]) => `(${lower}, ${upper}]`).join(', ')
     }
-}
-
-module.exports = {
-    NumberPair,
-    GapMisMatchError,
-    InvalidNumberingError,
-    DuplicateMessageDetector
 }
