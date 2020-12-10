@@ -1,19 +1,47 @@
-const speedometer = require('speedometer')
+import speedometer from 'speedometer';
+
+interface IndividualReport {
+    [key: string]: number | {
+        rate: number
+        total: number
+        last: number
+    }
+}
+
+interface Report {
+    peerId: string
+    startTime: number
+    currentTime: number
+    metrics: {
+        [key: string]: IndividualReport
+    }
+}
 
 class Metrics {
-    constructor(name) {
+    private readonly name: string
+    private readonly queriedMetrics: {
+        [key: string]: () => Promise<Object>
+    }
+    private readonly recordedMetrics: {
+        [key: string]: {
+            rate: (delta?: number) => number,
+            last: number,
+            total: number
+        }
+    }
+    constructor(name: string) {
         this.name = name
         this.queriedMetrics = {}
         this.recordedMetrics = {}
     }
 
-    addQueriedMetric(name, queryFn) {
+    addQueriedMetric(name: string, queryFn: () => Promise<Object>): Metrics {
         this._verifyUniqueness(name)
         this.queriedMetrics[name] = queryFn
         return this
     }
 
-    addRecordedMetric(name, windowSizeInSeconds = 5) {
+    addRecordedMetric(name: string, windowSizeInSeconds = 5): Metrics {
         this._verifyUniqueness(name)
         this.recordedMetrics[name] = {
             rate: speedometer(windowSizeInSeconds),
@@ -23,7 +51,7 @@ class Metrics {
         return this
     }
 
-    record(name, value) {
+    record(name: string, value: number): Metrics {
         if (!this.recordedMetrics[name]) {
             throw new Error(`Not a recorded metric "${this.name}.${name}".`)
         }
@@ -33,7 +61,7 @@ class Metrics {
         return this
     }
 
-    async report() {
+    async report(): Promise<IndividualReport> {
         const queryResults = await Promise.all(
             Object.entries(this.queriedMetrics)
                 .map(async ([name, queryFn]) => [name, await queryFn()])
@@ -47,28 +75,34 @@ class Metrics {
         return Object.fromEntries(queryResults.concat(recordedResults))
     }
 
-    clearLast() {
+    clearLast(): void {
         Object.values(this.recordedMetrics).forEach((record) => {
             // eslint-disable-next-line no-param-reassign
             record.last = 0
         })
     }
 
-    _verifyUniqueness(name) {
+    _verifyUniqueness(name: string): void | never {
         if (this.queriedMetrics[name] || this.recordedMetrics[name]) {
             throw new Error(`Metric "${this.name}.${name}" already registered.`)
         }
     }
 }
 
-class MetricsContext {
-    constructor(peerId) {
+export class MetricsContext {
+    private readonly peerId: string
+    private readonly startTime: number
+    private readonly metrics: {
+        [key: string]: Metrics
+    }
+
+    constructor(peerId: string) {
         this.peerId = peerId
         this.startTime = Date.now()
         this.metrics = {}
     }
 
-    create(name) {
+    create(name: string): Metrics {
         if (this.metrics[name]) {
             throw new Error(`Metrics "${name}" already created.`)
         }
@@ -76,7 +110,7 @@ class MetricsContext {
         return this.metrics[name]
     }
 
-    async report(clearLast = false) {
+    async report(clearLast = false): Promise<Report> {
         const entries = await Promise.all(
             Object.entries(this.metrics)
                 .map(async ([name, metrics]) => [name, await metrics.report()])
@@ -92,5 +126,3 @@ class MetricsContext {
         }
     }
 }
-
-module.exports = MetricsContext

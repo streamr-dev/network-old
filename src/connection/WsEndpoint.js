@@ -4,7 +4,7 @@ const WebSocket = require('ws')
 const uWS = require('uWebSockets.js')
 
 const getLogger = require('../helpers/logger')
-const MetricsContext = require('../helpers/MetricsContext')
+const { MetricsContext } = require('../helpers/MetricsContext')
 const extraLogger = require('../helpers/logger')('streamr:ws-endpoint')
 
 const { PeerBook } = require('./PeerBook')

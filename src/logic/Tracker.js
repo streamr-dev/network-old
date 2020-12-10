@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 
 const getLogger = require('../helpers/logger')
-const MetricsContext = require('../helpers/MetricsContext')
+const { MetricsContext } = require('../helpers/MetricsContext')
 const TrackerServer = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 

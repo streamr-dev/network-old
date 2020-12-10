@@ -11,7 +11,7 @@ const { disconnectionReasons } = require('../connection/WsEndpoint')
 const { StreamIdAndPartition } = require('../identifiers')
 const ResendHandler = require('../resend/ResendHandler')
 const proxyRequestStream = require('../resend/proxyRequestStream')
-const MetricsContext = require('../helpers/MetricsContext')
+const { MetricsContext } = require('../helpers/MetricsContext')
 const { promiseTimeout } = require('../helpers/PromiseTools')
 
 const PerStreamMetrics = require('./PerStreamMetrics')

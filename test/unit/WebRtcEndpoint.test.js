@@ -1,6 +1,6 @@
 const { waitForCondition, waitForEvent } = require('streamr-test-utils')
 
-const MetricsContext = require('../../src/helpers/MetricsContext')
+const { MetricsContext } = require('../../src/helpers/MetricsContext')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const RtcSignaller = require('../../src/logic/RtcSignaller')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')

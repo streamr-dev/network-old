@@ -1,6 +1,6 @@
 const { Readable } = require('stream')
 
-const MetricsContext = require('../helpers/MetricsContext')
+const { MetricsContext } = require('../helpers/MetricsContext')
 
 class ResendBookkeeper {
     constructor() {
