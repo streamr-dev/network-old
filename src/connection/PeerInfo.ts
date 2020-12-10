@@ -40,10 +40,10 @@ export class PeerInfo {
         return new PeerInfo(peerId, peerType, peerName, location)
     }
 
-    private readonly peerId: string
-    private readonly peerType: PeerType
-    private readonly peerName: string
-    private readonly location: Location
+    readonly peerId: string
+    readonly peerType: PeerType
+    readonly peerName: string
+    readonly location: Location
 
     constructor(
         peerId: string,
