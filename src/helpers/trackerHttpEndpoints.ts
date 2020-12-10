@@ -1,12 +1,15 @@
+import {HttpRequest, HttpResponse, TemplatedApp} from "uWebSockets.js";
+import { MetricsContext } from "./MetricsContext";
+
 const extraLogger = require('./logger')('streamr:tracker:http-endpoints')
 
-const writeCorsHeaders = (res, req) => {
+const writeCorsHeaders = (res: HttpResponse, req: HttpRequest): void => {
     const origin = req.getHeader('origin')
     res.writeHeader('Access-Control-Allow-Origin', origin)
     res.writeHeader('Access-Control-Allow-Credentials', 'true')
 }
 
-const respondWithError = (res, req, errorMessage) => {
+const respondWithError = (res: HttpResponse, req: HttpRequest, errorMessage: string): void => {
     res.writeStatus('422 Unprocessable Entity')
     writeCorsHeaders(res, req)
     res.end(JSON.stringify({
@@ -14,7 +17,8 @@ const respondWithError = (res, req, errorMessage) => {
     }))
 }
 
-const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
+// TODO: type for tracker
+export function trackerHttpEndpoints(wss: TemplatedApp, tracker: any, metricsContext: MetricsContext): void {
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)
@@ -73,9 +77,4 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
             res.end(JSON.stringify(metrics))
         }
     })
-}
-
-module.exports = {
-    writeCorsHeaders,
-    trackerHttpEndpoints
 }
