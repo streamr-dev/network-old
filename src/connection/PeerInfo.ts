@@ -5,13 +5,6 @@ export enum PeerType {
     Unknown = 'unknown'
 }
 
-interface Location {
-    latitude: number | null,
-    longitude: number | null,
-    country: string | null,
-    city: string | null
-}
-
 interface ObjectRepresentation {
     peerId: string
     peerType: PeerType

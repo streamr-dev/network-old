@@ -1,38 +1,38 @@
-const geoiplite = require('geoip-lite')
+import { lookup, Lookup } from "geoip-lite"
+import getLogger from "../helpers/logger"
 
-const getLogger = require('../helpers/logger')
-
-function getGeoIp(ip) {
-    return geoiplite.lookup(ip)
-}
-
-function isValidNodeLocation(location) {
+function isValidNodeLocation(location: Location) {
     return location && (location.country || location.city || location.latitude || location.longitude)
 }
 
 module.exports = class LocationManager {
+    private readonly nodeLocations: {
+        [key: string]: Location // nodeId => Location
+    }
+    private readonly logger: any // TODO: type
+
     constructor() {
-        this.nodeLocations = {} // nodeId => location
+        this.nodeLocations = {}
         this.logger = getLogger('streamr:logic:tracker:LocationManager')
     }
 
-    getAllNodeLocations() {
+    getAllNodeLocations(): Readonly<{[key: string]: Location}> {
         return this.nodeLocations
     }
 
-    getNodeLocation(nodeId) {
+    getNodeLocation(nodeId: string): Location {
         return this.nodeLocations[nodeId]
     }
 
-    updateLocation({ nodeId, location, address }) {
+    updateLocation({ nodeId, location, address }: { nodeId: string, location: Location, address: string }): void {
         if (isValidNodeLocation(location)) {
             this.nodeLocations[nodeId] = location
         } else if (!isValidNodeLocation(this.nodeLocations[nodeId])) {
-            let geoIpRecord
+            let geoIpRecord: null | Lookup = null
             if (address) {
                 try {
                     const ip = address.split(':')[1].replace('//', '')
-                    geoIpRecord = getGeoIp(ip)
+                    geoIpRecord = lookup(ip)
                 } catch (e) {
                     this.logger.error('Could not parse IP from address', nodeId, address)
                 }
@@ -48,7 +48,7 @@ module.exports = class LocationManager {
         }
     }
 
-    removeNode(nodeId) {
+    removeNode(nodeId: string): void {
         delete this.nodeLocations[nodeId]
     }
 }

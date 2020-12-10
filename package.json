@@ -47,6 +47,7 @@
     "ws": "^7.4.0"
   },
   "devDependencies": {
+    "@types/geoip-lite": "^1.4.0",
     "@types/jest": "^26.0.18",
     "@types/lru-cache": "^5.1.0",
     "@types/node": "^14.14.11",
