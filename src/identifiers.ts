@@ -1,8 +1,11 @@
 /**
  * Uniquely identifies a stream
  */
-class StreamIdAndPartition {
-    constructor(id, partition) {
+export class StreamIdAndPartition {
+    private readonly id: string
+    private readonly partition: number
+
+    constructor(id: string, partition: number) {
         if (typeof id !== 'string') {
             throw new Error(`invalid id: ${id}`)
         }
@@ -13,25 +16,20 @@ class StreamIdAndPartition {
         this.partition = partition
     }
 
-    key() {
+    key(): string {
         return this.toString()
     }
 
-    toString() {
+    toString(): string {
         return `${this.id}::${this.partition}`
     }
 
-    static fromMessage(message) {
-        // streamr-client-protocol-js convention
+    static fromMessage(message: { streamId: string, streamPartition: number }): StreamIdAndPartition {
         return new StreamIdAndPartition(message.streamId, message.streamPartition)
     }
 
-    static fromKey(key) {
+    static fromKey(key: string): StreamIdAndPartition {
         const [id, partition] = key.split('::')
         return new StreamIdAndPartition(id, Number.parseInt(partition, 10))
     }
-}
-
-module.exports = {
-    StreamIdAndPartition,
 }

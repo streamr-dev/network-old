@@ -1,7 +1,21 @@
-const { cancelable } = require('cancelable-promise')
+import { cancelable, CancelablePromiseType } from "cancelable-promise"
+import { StreamIdAndPartition } from "../identifiers"
+import getLogger from "../helpers/logger"
 
-const logger = require('../helpers/logger')('streamr:InstructionThrottler')
-const { StreamIdAndPartition } = require('../identifiers')
+const logger = getLogger('streamr:InstructionThrottler')
+
+interface InstructionMessage {
+    streamId: string
+    streamPartition: number
+}
+
+interface Queue {
+    [key: string]: {
+        instructionMessage: InstructionMessage
+        trackerId: string
+    }
+}
+
 /**
  * InstructionThrottler makes sure that
  *  1. no more than one instruction is handled at a time
@@ -9,16 +23,18 @@ const { StreamIdAndPartition } = require('../identifiers')
  *     way where only the most latest instruction per streamId is kept in queue.
  */
 
-module.exports = class InstructionThrottler {
-    constructor(handleFn) {
-        this.handling = false
+export class InstructionThrottler {
+    private readonly handleFn: (instructionMessage: InstructionMessage, trackerId: string) => PromiseLike<void>
+    private queue: Queue = {}
+    private handling: boolean = false
+    private ongoingPromise: CancelablePromiseType<void> | null = null
+
+    constructor(handleFn: (instructionMessage: InstructionMessage, trackerId: string) => PromiseLike<void>) {
         this.handleFn = handleFn
-        this.queue = {} // streamId => instructionMessage
-        this.ongoingPromise = null
     }
 
-    add(instructionMessage, trackerId) {
-        this.queue[StreamIdAndPartition.fromMessage(instructionMessage)] = {
+    add(instructionMessage: InstructionMessage, trackerId: string): void {
+        this.queue[StreamIdAndPartition.fromMessage(instructionMessage).toString()] = {
             instructionMessage,
             trackerId
         }
@@ -27,22 +43,22 @@ module.exports = class InstructionThrottler {
         }
     }
 
-    removeStreamId(streamId) {
+    removeStreamId(streamId: string): void {
         delete this.queue[streamId]
     }
 
-    isIdle() {
+    isIdle(): boolean {
         return !this.handling
     }
 
-    reset() {
+    reset(): void {
         this.queue = {}
         if (this.ongoingPromise) {
             this.ongoingPromise.cancel()
         }
     }
 
-    async _invokeHandleFnWithLock() {
+    async _invokeHandleFnWithLock(): Promise<void> {
         const streamIds = Object.keys(this.queue)
         const streamId = streamIds[0]
         const { instructionMessage, trackerId } = this.queue[streamId]
@@ -65,7 +81,7 @@ module.exports = class InstructionThrottler {
         }
     }
 
-    _isQueueEmpty() {
+    _isQueueEmpty(): boolean {
         return Object.keys(this.queue).length === 0
     }
 }
