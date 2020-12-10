@@ -1,27 +1,38 @@
 // From: https://gist.github.com/guilhermepontes/17ae0cc71fa2b13ea8c20c94c5c35dc4
-const shuffleArray = (arr) => arr
-    .map((a) => [Math.random(), a])
-    .sort((a, b) => a[0] - b[0])
-    .map((a) => a[1])
+const shuffleArray = <T>(arr: Array<T>): Array<T> => arr
+    .map((a: T) => [Math.random(), a] as [number, T])
+    .sort((a: [number, T], b: [number, T]) => a[0] - b[0])
+    .map((a: [number, T]) => a[1])
 
-const pickRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)]
+const pickRandomElement = <T>(arr: Array<T>): T => arr[Math.floor(Math.random() * arr.length)]
 
-class OverlayTopology {
-    constructor(maxNeighborsPerNode, shuffleArrayFunction, pickRandomElementFunction) {
+export class OverlayTopology {
+    private readonly maxNeighborsPerNode: number
+    private readonly shuffleArray: (arr: Array<string>) => Array<string>
+    private readonly pickRandomElement: (arr: Array<string>) => string
+    private readonly nodes: {
+        [key: string]: Set<string>
+    }
+
+    constructor(
+        maxNeighborsPerNode: number,
+        shuffleArrayFunction = shuffleArray,
+        pickRandomElementFunction = pickRandomElement
+    ) {
         if (!Number.isInteger(maxNeighborsPerNode)) {
             throw new Error('maxNeighborsPerNode is not an integer')
         }
         this.maxNeighborsPerNode = maxNeighborsPerNode
+        this.shuffleArray = shuffleArrayFunction
+        this.pickRandomElement = pickRandomElementFunction
         this.nodes = {}
-        this.shuffleArray = shuffleArrayFunction || shuffleArray
-        this.pickRandomElement = pickRandomElementFunction || pickRandomElement
     }
 
-    hasNode(nodeId) {
+    hasNode(nodeId: string): boolean {
         return nodeId in this.nodes
     }
 
-    update(nodeId, neighbors) {
+    update(nodeId: string, neighbors: string[]): void {
         const knownNeighbors = [...neighbors]
             .filter((n) => n in this.nodes)
             .filter((n) => n !== nodeId) // in case nodeId is reporting itself as neighbor
@@ -33,10 +44,9 @@ class OverlayTopology {
             .forEach((n) => {
                 this.nodes[n].delete(nodeId)
             })
-        //
     }
 
-    leave(nodeId) {
+    leave(nodeId: string): string[] {
         if (this.nodes[nodeId] != null) {
             const neighbors = [...this.nodes[nodeId]]
             this.nodes[nodeId].forEach((neighbor) => {
@@ -48,20 +58,21 @@ class OverlayTopology {
         return []
     }
 
-    isEmpty() {
+    isEmpty(): boolean {
         return Object.entries(this.nodes).length === 0
     }
 
-    state() {
-        return !this.isEmpty() ? Object.assign(...Object.entries(this.nodes).map(([nodeId, neighbors]) => {
+    state(): { [key: string]: Array<string> } {
+        const objects = Object.entries(this.nodes).map(([nodeId, neighbors]) => {
             return {
                 [nodeId]: [...neighbors].sort()
             }
-        })) : {}
+        })
+        return Object.assign({}, ...objects)
     }
 
-    formInstructions(nodeId, forceGenerate = false) {
-        const updatedNodes = new Set()
+    formInstructions(nodeId: string, forceGenerate = false) {
+        const updatedNodes: Set<string> = new Set()
 
         const excessNeighbors = -this._numOfMissingNeighbors(nodeId)
         if (excessNeighbors > 0) {
@@ -100,7 +111,7 @@ class OverlayTopology {
 
             let disconnectionTargets = this.shuffleArray(candidates).reverse()
             while (this._numOfMissingNeighbors(nodeId) > 1 && disconnectionTargets.length > 0) {
-                const n1 = disconnectionTargets.pop()
+                const n1 = disconnectionTargets.pop() as string
                 const n2candidates = [...this.nodes[n1]].filter((n) => !this.nodes[n].has(nodeId))
 
                 if (n2candidates.length > 0) {
@@ -136,19 +147,14 @@ class OverlayTopology {
             }
         })
 
-        return updatedNodes.size === 0 ? {} : Object.assign(...[...updatedNodes].map((n) => {
+        return Object.assign({}, ...[...updatedNodes].map((n) => {
             return {
                 [n]: [...this.nodes[n]]
             }
         }))
     }
 
-    _numOfMissingNeighbors(nodeId) {
+    _numOfMissingNeighbors(nodeId: string): number {
         return this.maxNeighborsPerNode - this.nodes[nodeId].size
     }
-}
-
-// Enable importing into browser
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = OverlayTopology
 }
