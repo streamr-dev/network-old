@@ -16,7 +16,7 @@ const { promiseTimeout } = require('../helpers/PromiseTools')
 
 const { PerStreamMetrics } = require('./PerStreamMetrics')
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
-const StreamManager = require('./StreamManager')
+const { StreamManager } = require('./StreamManager')
 const { InstructionThrottler } = require('./InstructionThrottler')
 
 const events = Object.freeze({
