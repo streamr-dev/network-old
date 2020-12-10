@@ -1,4 +1,4 @@
-const promiseTimeout = (ms, givenPromise) => {
+export function promiseTimeout<T>(ms: number, givenPromise: Promise<T>): Promise<T> {
     const timeoutPromise = new Promise((resolve, reject) => {
         const timeoutRef = setTimeout(() => {
             reject(new Error('timed out in ' + ms + 'ms.'))
@@ -13,9 +13,5 @@ const promiseTimeout = (ms, givenPromise) => {
     return Promise.race([
         givenPromise,
         timeoutPromise
-    ])
-}
-
-module.exports = {
-    promiseTimeout
+    ]) as Promise<T>
 }
