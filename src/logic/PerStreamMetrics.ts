@@ -1,11 +1,29 @@
-const speedometer = require('speedometer')
+import speedometer from "speedometer"
 
-module.exports = class PerStreamMetrics {
-    constructor() {
-        this.streams = {}
-    }
+interface AllMetrics<M> {
+    resends: M
+    trackerInstructions: M
+    onDataReceived: M
+    "onDataReceived:ignoredDuplicate": M
+    propagateMessage: M
+}
 
-    recordResend(streamId) {
+interface Metric {
+    total: number
+    last: number
+    rate: (delta?: number) => number
+}
+
+interface ReportedMetric {
+    total: number
+    last: number
+    rate: number
+}
+
+export class PerStreamMetrics {
+    private readonly streams: { [key: string]: AllMetrics<Metric> } = {}
+
+    recordResend(streamId: string): void {
         this._setUpIfNeeded(streamId)
         const { resends } = this.streams[streamId]
         resends.total += 1
@@ -13,7 +31,7 @@ module.exports = class PerStreamMetrics {
         resends.rate(1)
     }
 
-    recordTrackerInstruction(streamId) {
+    recordTrackerInstruction(streamId: string): void {
         this._setUpIfNeeded(streamId)
         const { trackerInstructions } = this.streams[streamId]
         trackerInstructions.total += 1
@@ -21,7 +39,7 @@ module.exports = class PerStreamMetrics {
         trackerInstructions.rate(1)
     }
 
-    recordDataReceived(streamId) {
+    recordDataReceived(streamId: string): void {
         this._setUpIfNeeded(streamId)
         const { onDataReceived } = this.streams[streamId]
         onDataReceived.total += 1
@@ -29,7 +47,7 @@ module.exports = class PerStreamMetrics {
         onDataReceived.rate(1)
     }
 
-    recordIgnoredDuplicate(streamId) {
+    recordIgnoredDuplicate(streamId: string): void {
         this._setUpIfNeeded(streamId)
         const ignoredDuplicate = this.streams[streamId]['onDataReceived:ignoredDuplicate']
         ignoredDuplicate.total += 1
@@ -37,7 +55,7 @@ module.exports = class PerStreamMetrics {
         ignoredDuplicate.rate(1)
     }
 
-    recordPropagateMessage(streamId) {
+    recordPropagateMessage(streamId: string): void {
         this._setUpIfNeeded(streamId)
         const { propagateMessage } = this.streams[streamId]
         propagateMessage.total += 1
@@ -45,26 +63,10 @@ module.exports = class PerStreamMetrics {
         propagateMessage.rate(1)
     }
 
-    recordSubscribeRequest(streamId) {
-        this._setUpIfNeeded(streamId)
-        const { onSubscribeRequest } = this.streams[streamId]
-        onSubscribeRequest.total += 1
-        onSubscribeRequest.last += 1
-        onSubscribeRequest.rate(1)
-    }
-
-    recordUnsubscribeRequest(streamId) {
-        this._setUpIfNeeded(streamId)
-        const { onUnsubscribeRequest } = this.streams[streamId]
-        onUnsubscribeRequest.total += 1
-        onUnsubscribeRequest.last += 1
-        onUnsubscribeRequest.rate(1)
-    }
-
-    report() {
-        const result = {}
+    report(): { [key: string]: AllMetrics<ReportedMetric> } {
+        const result: { [key: string]: AllMetrics<ReportedMetric> } = {}
         Object.entries(this.streams).forEach(([streamId, metrics]) => {
-            const innerResult = {}
+            const innerResult: { [key: string]: ReportedMetric } = {}
             Object.entries(metrics).forEach(([key, { rate, last, total }]) => {
                 innerResult[key] = {
                     rate: rate(),
@@ -72,12 +74,12 @@ module.exports = class PerStreamMetrics {
                     total
                 }
             })
-            result[streamId] = innerResult
+            result[streamId] = innerResult as unknown as AllMetrics<ReportedMetric> // TODO: add type
         })
         return result
     }
 
-    _setUpIfNeeded(streamId) {
+    _setUpIfNeeded(streamId: string): void {
         if (!this.streams[streamId]) {
             this.streams[streamId] = {
                 resends: {
@@ -101,16 +103,6 @@ module.exports = class PerStreamMetrics {
                     total: 0
                 },
                 propagateMessage: {
-                    rate: speedometer(),
-                    last: 0,
-                    total: 0
-                },
-                onSubscribeRequest: {
-                    rate: speedometer(),
-                    last: 0,
-                    total: 0
-                },
-                onUnsubscribeRequest: {
                     rate: speedometer(),
                     last: 0,
                     total: 0

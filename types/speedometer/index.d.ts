@@ -1,3 +1,3 @@
 declare module 'speedometer' {
-    export default function speedometer(seconds: number): (delta?: number) => number
+    export default function speedometer(seconds?: number): (delta?: number) => number
 }

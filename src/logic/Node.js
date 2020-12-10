@@ -14,7 +14,7 @@ const proxyRequestStream = require('../resend/proxyRequestStream')
 const { MetricsContext } = require('../helpers/MetricsContext')
 const { promiseTimeout } = require('../helpers/PromiseTools')
 
-const PerStreamMetrics = require('./PerStreamMetrics')
+const { PerStreamMetrics } = require('./PerStreamMetrics')
 const { GapMisMatchError, InvalidNumberingError } = require('./DuplicateMessageDetector')
 const StreamManager = require('./StreamManager')
 const { InstructionThrottler } = require('./InstructionThrottler')
