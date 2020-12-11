@@ -2,6 +2,9 @@ import { MetricsContext, Metrics } from "../helpers/MetricsContext"
 import { Readable } from "stream"
 
 export interface Request {
+    streamId: string
+    streamPartition: number
+    requestId: string
 }
 
 export interface Strategy {

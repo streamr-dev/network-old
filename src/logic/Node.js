@@ -10,7 +10,7 @@ const { SeenButNotPropagatedSet } = require('../helpers/SeenButNotPropagatedSet'
 const { DisconnectionReason } = require('../connection/WsEndpoint')
 const { StreamIdAndPartition } = require('../identifiers')
 const { ResendHandler } = require('../resend/ResendHandler')
-const proxyRequestStream = require('../resend/proxyRequestStream')
+const { proxyRequestStream } = require('../resend/proxyRequestStream')
 const { MetricsContext } = require('../helpers/MetricsContext')
 const { promiseTimeout } = require('../helpers/PromiseTools')
 

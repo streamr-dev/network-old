@@ -118,6 +118,42 @@ declare module 'streamr-client-protocol' {
                 streamMessage: MessageLayer.StreamMessage
             })
         }
+
+        class ResendResponseResending extends ControlMessage {
+            requestId: string
+            streamId: string
+            streamPartition: number
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+            })
+        }
+
+        class ResendResponseResent extends ControlMessage {
+            requestId: string
+            streamId: string
+            streamPartition: number
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+            })
+        }
+
+        class ResendResponseNoResend extends ControlMessage {
+            requestId: string
+            streamId: string
+            streamPartition: number
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+            })
+        }
     }
 
     module MessageLayer {
