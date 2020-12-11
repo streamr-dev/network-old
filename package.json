@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/geoip-lite": "^1.4.0",
+    "@types/heap": "^0.2.28",
     "@types/jest": "^26.0.18",
     "@types/lru-cache": "^5.1.0",
     "@types/node": "^14.14.11",

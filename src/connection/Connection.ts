@@ -1,38 +1,47 @@
-const Heap = require('heap')
-const nodeDataChannel = require('node-datachannel')
+import Heap from 'heap'
+import nodeDataChannel, {DataChannel, DescriptionType, PeerConnection} from 'node-datachannel'
+import getLogger from '../helpers/logger'
+import { PeerInfo } from './PeerInfo'
 
-const getLogger = require('../helpers/logger')
+type Info = Object
 
-const { PeerInfo } = require('./PeerInfo')
+class QueueItem<M> {
+    private static nextNumber = 0
+    public static readonly MAX_TRIES = 10
 
-class QueueItem {
-    constructor(message, onSuccess, onError) {
+    private readonly message: M
+    private readonly onSuccess: () => void
+    private readonly onError: (err: Error) => void
+    private readonly infos: Info[]
+    public readonly no: number
+    private tries: number
+
+    constructor(message: M, onSuccess: () => void, onError: (err: Error) => void) {
         this.message = message
         this.onSuccess = onSuccess
         this.onError = onError
-        this.tries = 0
         this.infos = []
-        this.no = QueueItem.nextNumber
-        QueueItem.nextNumber += 1
+        this.no = QueueItem.nextNumber++
+        this.tries = 0
     }
 
-    getMessage() {
+    getMessage(): M {
         return this.message
     }
 
-    getInfos() {
+    getInfos(): ReadonlyArray<Info> {
         return this.infos
     }
 
-    isFailed() {
+    isFailed(): boolean {
         return this.tries >= QueueItem.MAX_TRIES
     }
 
-    delivered() {
+    delivered(): void {
         this.onSuccess()
     }
 
-    incrementTries(info) {
+    incrementTries(info: Info): void | never {
         this.tries += 1
         this.infos.push(info)
         if (this.isFailed()) {
@@ -41,16 +50,58 @@ class QueueItem {
     }
 }
 
-QueueItem.nextNumber = 0
+export interface ConstructorOptions {
+    selfId: string
+    targetPeerId: string
+    routerId: string
+    isOffering: boolean
+    stunUrls: string[]
+    bufferHighThreshold?: number
+    bufferLowThreshold?: number
+    newConnectionTimeout?: number
+    maxPingPongAttempts?: number
+    pingPongTimeout?: number
+    onLocalDescription: (type: string, description: string) => void
+    onLocalCandidate: (candidate: string, mid: string) => void
+    onOpen: () => void
+    onMessage: (msg: string)  => void
+    onClose: (err?: Error) => void
+    onError: (err: Error) => void
+}
 
-QueueItem.MAX_TRIES = 10
+export class Connection {
+    private readonly selfId: string
+    private peerInfo: PeerInfo
+    private readonly routerId: string
+    private readonly isOffering: boolean
+    private readonly stunUrls: string[]
+    private readonly bufferHighThreshold: number
+    private readonly bufferLowThreshold: number
+    private readonly newConnectionTimeout: number
+    private readonly maxPingPongAttempts: number
+    private readonly pingPongTimeout: number
+    private readonly onLocalDescription: (type: string, description: string) => void
+    private readonly onLocalCandidate: (candidate: string, mid: string) => void
+    private readonly onOpen: () => void
+    private readonly onMessage: (msg: string)  => void
+    private readonly onClose: (err?: Error) => void
+    private readonly onError: (err: Error) => void
 
-QueueItem.events = Object.freeze({
-    SENT: 'sent',
-    FAILED: 'failed'
-})
+    private readonly messageQueue: Heap<QueueItem<string>>
+    private connection: PeerConnection | null
+    private dataChannel: DataChannel | null
+    private paused: boolean
+    private lastState: string | null
+    private lastGatheringState: string | null
+    private flushTimeoutRef: NodeJS.Timeout | null
+    private connectionTimeoutRef: NodeJS.Timeout | null
+    private peerPingTimeoutRef: NodeJS.Timeout | null
+    private peerPongTimeoutRef: NodeJS.Timeout | null
+    private rtt: Object | null
+    private respondedPong: boolean
+    private rttStart: number | null
+    private readonly logger: any // TODO: types
 
-module.exports = class Connection {
     constructor({
         selfId,
         targetPeerId,
@@ -68,7 +119,7 @@ module.exports = class Connection {
         onMessage,
         onClose,
         onError
-    }) {
+    }: ConstructorOptions) {
         this.selfId = selfId
         this.peerInfo = PeerInfo.newUnknown(targetPeerId)
         this.routerId = routerId
@@ -106,7 +157,7 @@ module.exports = class Connection {
         this.logger = getLogger(`streamr:WebRtc:Connection(${this.selfId}-->${this.getPeerId()})`)
     }
 
-    connect() {
+    connect(): void {
         this.connection = new nodeDataChannel.PeerConnection(this.selfId, {
             iceServers: this.stunUrls
         })
@@ -145,7 +196,7 @@ module.exports = class Connection {
         }, this.newConnectionTimeout)
     }
 
-    setRemoteDescription(description, type) {
+    setRemoteDescription(description: string, type: DescriptionType): void {
         if (this.connection) {
             try {
                 this.connection.setRemoteDescription(description, type)
@@ -157,7 +208,7 @@ module.exports = class Connection {
         }
     }
 
-    addRemoteCandidate(candidate, mid) {
+    addRemoteCandidate(candidate: string, mid: string): void {
         if (this.connection) {
             try {
                 this.connection.addRemoteCandidate(candidate, mid)
@@ -169,15 +220,15 @@ module.exports = class Connection {
         }
     }
 
-    send(message) {
-        return new Promise((resolve, reject) => {
+    send(message: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             const queueItem = new QueueItem(message, resolve, reject)
             this.messageQueue.push(queueItem)
             setImmediate(() => this._attemptToFlushMessages())
         })
     }
 
-    close(err = null) {
+    close(err?: Error) {
         if (this.dataChannel) {
             try {
                 this.dataChannel.close()
@@ -217,16 +268,18 @@ module.exports = class Connection {
         this.onClose()
     }
 
-    ping(attempt = 0) {
-        clearTimeout(this.peerPingTimeoutRef)
+    ping(attempt = 0): void | never {
+        if (this.peerPingTimeoutRef !== null) {
+            clearTimeout(this.peerPingTimeoutRef)
+        }
         try {
             if (this.isOpen()) {
-                if (this.respondedPong === false) {
+                if (!this.respondedPong) {
                     throw new Error('dataChannel is not active')
                 }
                 this.respondedPong = false
                 this.rttStart = Date.now()
-                this.dataChannel.sendMessage('ping')
+                this.dataChannel!.sendMessage('ping')
             }
         } catch (e) {
             if (attempt < this.maxPingPongAttempts && this.isOpen()) {
@@ -239,10 +292,12 @@ module.exports = class Connection {
         }
     }
 
-    pong(attempt = 0) {
-        clearTimeout(this.peerPongTimeoutRef)
+    pong(attempt = 0): void {
+        if (this.peerPongTimeoutRef !== null) {
+            clearTimeout(this.peerPongTimeoutRef)
+        }
         try {
-            this.dataChannel.sendMessage('pong')
+            this.dataChannel!.sendMessage('pong')
         } catch (e) {
             if (attempt < this.maxPingPongAttempts && this.dataChannel && this.isOpen()) {
                 this.logger.debug('failed to pong connection, error %s, re-attempting', e)
@@ -254,43 +309,43 @@ module.exports = class Connection {
         }
     }
 
-    setPeerInfo(peerInfo) {
+    setPeerInfo(peerInfo: PeerInfo): void {
         this.peerInfo = peerInfo
     }
 
-    getPeerInfo() {
+    getPeerInfo(): PeerInfo {
         return this.peerInfo
     }
 
-    getPeerId() {
+    getPeerId(): string {
         return this.peerInfo.peerId
     }
 
-    getRtt() {
+    getRtt(): Object | null {
         return this.rtt
     }
 
-    getBufferedAmount() {
+    getBufferedAmount(): Number {
         try {
-            return this.dataChannel.bufferedAmount()
+            return this.dataChannel!.bufferedAmount()
         } catch (err) {
             return 0
         }
     }
 
-    getQueueSize() {
+    getQueueSize(): number {
         return this.messageQueue.size()
     }
 
-    isOpen() {
+    isOpen(): boolean {
         try {
-            return this.dataChannel.isOpen()
+            return this.dataChannel!.isOpen()
         } catch (err) {
             return false
         }
     }
 
-    _setupDataChannel(dataChannel) {
+    _setupDataChannel(dataChannel: DataChannel): void {
         this.paused = false
         dataChannel.setBufferedAmountLowThreshold(this.bufferLowThreshold)
         if (this.isOffering) {
@@ -305,10 +360,10 @@ module.exports = class Connection {
         })
         dataChannel.onError((e) => {
             this.logger.warn('dataChannel.onError: %s', e)
-            this.onError(e)
+            this.onError(new Error(e))
         })
         dataChannel.onBufferedAmountLow(() => {
-            if (this.paused === true) {
+            if (this.paused) {
                 this.paused = false
                 this._attemptToFlushMessages()
             }
@@ -319,38 +374,42 @@ module.exports = class Connection {
                 this.pong()
             } else if (msg === 'pong') {
                 this.respondedPong = true
-                this.rtt = Date.now() - this.rttStart
+                this.rtt = Date.now() - this.rttStart!
             } else {
                 this.onMessage(msg)
             }
         })
     }
 
-    _openDataChannel(dataChannel) {
-        clearInterval(this.connectionTimeoutRef)
+    _openDataChannel(dataChannel: DataChannel): void {
+        if (this.connectionTimeoutRef !== null) {
+            clearInterval(this.connectionTimeoutRef)
+        }
         this.dataChannel = dataChannel
         setImmediate(() => this._attemptToFlushMessages())
         this.onOpen()
     }
 
-    _attemptToFlushMessages() {
+    _attemptToFlushMessages(): void {
         while (this.isOpen() && !this.messageQueue.empty()) {
             const queueItem = this.messageQueue.peek()
             if (queueItem.isFailed()) {
                 this.messageQueue.pop()
             } else {
                 try {
-                    if (queueItem.getMessage().length > this.dataChannel.maxMessageSize()) {
+                    if (queueItem.getMessage().length > this.dataChannel!.maxMessageSize()) {
                         this.messageQueue.pop()
+                        // TODO: replace with logger
+                        // TODO: Promise attached with message should reject!
                         console.error(
                             this.selfId,
                             'Dropping message due to message size',
                             queueItem.getMessage().length,
                             'exceeding the limit of ',
-                            this.dataChannel.maxMessageSize()
+                            this.dataChannel!.maxMessageSize()
                         )
-                    } else if (this.dataChannel.bufferedAmount() < this.bufferHighThreshold && !this.paused) {
-                        this.dataChannel.sendMessage(queueItem.getMessage())
+                    } else if (this.dataChannel!.bufferedAmount() < this.bufferHighThreshold && !this.paused) {
+                        this.dataChannel!.sendMessage(queueItem.getMessage())
                         this.messageQueue.pop()
                         queueItem.delivered()
                     } else {

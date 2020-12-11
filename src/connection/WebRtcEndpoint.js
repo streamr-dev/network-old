@@ -5,7 +5,7 @@ const nodeDataChannel = require('node-datachannel')
 const getLogger = require('../helpers/logger')
 
 const { PeerInfo } = require('./PeerInfo')
-const Connection = require('./Connection')
+const { Connection } = require('./Connection')
 
 const events = Object.freeze({
     PEER_CONNECTED: 'streamr:peer:connect',
