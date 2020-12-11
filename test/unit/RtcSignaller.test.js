@@ -3,7 +3,7 @@ const { EventEmitter } = require('events')
 const { ErrorMessage, RelayMessage } = require('streamr-client-protocol').TrackerLayer
 
 const { PeerInfo } = require('../../src/connection/PeerInfo')
-const RtcSignaller = require('../../src/logic/RtcSignaller')
+const { RtcSignaller } = require('../../src/logic/RtcSignaller')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 
 describe('RtcSignaller', () => {

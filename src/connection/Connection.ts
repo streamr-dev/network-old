@@ -97,7 +97,7 @@ export class Connection {
     private connectionTimeoutRef: NodeJS.Timeout | null
     private peerPingTimeoutRef: NodeJS.Timeout | null
     private peerPongTimeoutRef: NodeJS.Timeout | null
-    private rtt: Object | null
+    private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
     private readonly logger: any // TODO: types
@@ -321,13 +321,13 @@ export class Connection {
         return this.peerInfo.peerId
     }
 
-    getRtt(): Object | null {
+    getRtt(): number | null {
         return this.rtt
     }
 
-    getBufferedAmount(): Number {
+    getBufferedAmount(): number {
         try {
-            return this.dataChannel!.bufferedAmount()
+            return this.dataChannel!.bufferedAmount() as number // TODO: type Number => number?
         } catch (err) {
             return 0
         }

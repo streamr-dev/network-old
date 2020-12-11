@@ -7,8 +7,6 @@ const getLogger = require('../helpers/logger')
 const { decode } = require('../helpers/MessageEncoder')
 const WsEndpoint = require('../connection/WsEndpoint')
 
-const { SUB_TYPES } = require('./RtcMessages')
-
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:tracker:send-peers',
     NODE_STATUS_RECEIVED: 'streamr:tracker:peer-status',
@@ -56,7 +54,7 @@ class TrackerServer extends EventEmitter {
             requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
-            subType: SUB_TYPES.RTC_OFFER,
+            subType: 'rtcOffer', // TODO: types
             data: {
                 description
             }
@@ -68,7 +66,7 @@ class TrackerServer extends EventEmitter {
             requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
-            subType: SUB_TYPES.RTC_ANSWER,
+            subType: 'rtcAnswer', // TODO: types
             data: {
                 description
             }
@@ -80,7 +78,7 @@ class TrackerServer extends EventEmitter {
             requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
-            subType: SUB_TYPES.RTC_CONNECT,
+            subType: 'rtcConnect', // TODO: connect
             data: {}
         }))
     }
@@ -90,7 +88,7 @@ class TrackerServer extends EventEmitter {
             requestId,
             originator: originatorInfo,
             targetNode: receiverNodeId,
-            subType: SUB_TYPES.REMOTE_CANDIDATE,
+            subType: 'remoteCandidate', // TODO: connect
             data: {
                 candidate,
                 mid

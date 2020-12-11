@@ -1,7 +1,6 @@
 const logger = require('../helpers/logger')('streamr:rtcSignallingHandlers')
 const TrackerServer = require('../protocol/TrackerServer')
 const { NotFoundInPeerBookError } = require('../connection/PeerBook')
-const { SUB_TYPES } = require('../protocol/RtcMessages')
 
 function attachRtcSignalling(trackerServer) {
     if (!(trackerServer instanceof TrackerServer)) {
@@ -60,11 +59,11 @@ function attachRtcSignalling(trackerServer) {
         } = relayMessage
         // TODO: validate that source === originator
         try {
-            if (subType === SUB_TYPES.LOCAL_DESCRIPTION) {
+            if (subType === 'localDescription') { // TODO: Type
                 handleLocalDescription(requestId, originator, targetNode, data)
-            } else if (subType === SUB_TYPES.LOCAL_CANDIDATE) {
+            } else if (subType === 'localCandidate') { // TODO: Type
                 handleLocalCandidate(requestId, originator, targetNode, data)
-            } else if (subType === SUB_TYPES.RTC_CONNECT) {
+            } else if (subType === 'rtcConnect') { // TODO: Type
                 handleRtcConnect(requestId, originator, targetNode)
             } else {
                 logger.warn('Unrecognized RelayMessage subType %s with contents %o', subType, relayMessage)

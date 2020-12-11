@@ -1,11 +1,12 @@
+
 const { waitForEvent } = require('streamr-test-utils')
 const { RelayMessage, ErrorMessage } = require('streamr-client-protocol').TrackerLayer
 
+const { RtcSubTypes } = require('../../src/logic/RtcMessage')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const TrackerServer = require('../../src/protocol/TrackerServer')
-const { SUB_TYPES } = require('../../src/protocol/RtcMessages')
 const { startTracker } = require('../../src/composition')
 
 /**
@@ -58,7 +59,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
-            subType: SUB_TYPES.RTC_OFFER,
+            subType: RtcSubTypes.RTC_OFFER,
             data: {
                 description: 'description'
             }
@@ -78,7 +79,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
-            subType: SUB_TYPES.RTC_ANSWER,
+            subType: RtcSubTypes.RTC_ANSWER,
             data: {
                 description: 'description'
             }
@@ -98,7 +99,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
-            subType: SUB_TYPES.REMOTE_CANDIDATE,
+            subType: RtcSubTypes.REMOTE_CANDIDATE,
             data: {
                 candidate: 'candidate',
                 mid: 'mid'
@@ -113,7 +114,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             requestId: sentMsg.requestId,
             originator: PeerInfo.newNode('originator'),
             targetNode: 'target',
-            subType: SUB_TYPES.RTC_CONNECT,
+            subType: RtcSubTypes.RTC_CONNECT,
             data: {}
         }))
     })
