@@ -4,7 +4,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 const WsEndpoint = require('../../src/connection/WsEndpoint')
 
 /**
@@ -82,7 +82,7 @@ describe('Check tracker instructions to node', () => {
             }).serialize()
         )
 
-        await waitForEvent(nodeOne.protocols.trackerNode, TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(nodeOne.protocols.trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
         await waitForEvent(nodeOne, Node.events.NODE_DISCONNECTED)
 
         expect(nodeOne.protocols.trackerNode.endpoint.getPeers().size).toBe(1)

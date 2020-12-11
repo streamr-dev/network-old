@@ -7,7 +7,7 @@ const { waitForStreamToEnd } = require('streamr-test-utils')
 const { LocalResendStrategy, ForeignResendStrategy } = require('../../src/resend/resendStrategies')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 const NodeToNode = require('../../src/protocol/NodeToNode')
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 const { ResendLastRequest, ResendFromRequest, ResendRangeRequest } = ControlLayer
@@ -224,7 +224,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
 
         test('if tracker responds with zero storage nodes, returns empty stream', async () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                 new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
@@ -246,7 +246,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
                 .mockReturnValueOnce(Promise.resolve())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                 new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
@@ -275,7 +275,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
                 .mockReturnValue(Promise.reject())
 
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                 new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
@@ -307,7 +307,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
 
         const emitTrackerResponse = () => {
             trackerNode.emit(
-                TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                 new TrackerLayer.StorageNodesResponse({
                     requestId: 'requestId',
                     streamId: 'streamId',
@@ -363,7 +363,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
 
             setImmediate(() => { // wait for this.trackerNode.sendStorageNodesRequest(...)
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                     new TrackerLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',
@@ -449,7 +449,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
 
             setImmediate(() => {
                 trackerNode.emit(
-                    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED,
+                    TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED,
                     new TrackerLayer.StorageNodesResponse({
                         requestId: 'requestId',
                         streamId: 'streamId',

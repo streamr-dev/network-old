@@ -6,8 +6,7 @@ import { RtcSubTypes } from "./RtcMessage"
 
 const logger = getLogger('streamr:rtcSignallingHandlers')
 
-// TODO: type
-export function attachRtcSignalling(trackerServer: any) {
+export function attachRtcSignalling(trackerServer: TrackerServer) {
     if (!(trackerServer instanceof TrackerServer)) {
         throw new Error('trackerServer not instance of TrackerServer')
     }
@@ -75,6 +74,7 @@ export function attachRtcSignalling(trackerServer: any) {
         } catch (err) {
             if (err instanceof NotFoundInPeerBookError) {
                 trackerServer.sendUnknownPeerRtcError(originator.peerId, requestId, targetNode)
+                    .catch((e) => logger.error(e))
             } else {
                 throw err
             }

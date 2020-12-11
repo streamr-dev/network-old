@@ -6,7 +6,7 @@ const { RtcSignaller } = require('../../src/logic/RtcSignaller')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { WebRtcEndpoint, Event } = require('../../src/connection/WebRtcEndpoint')
 const { startTracker } = require('../../src/composition')
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const { TrackerNode } = require('../../src/protocol/TrackerNode')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 
 describe('WebRtcEndpoint', () => {

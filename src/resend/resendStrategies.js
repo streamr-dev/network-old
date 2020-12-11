@@ -3,7 +3,7 @@ const { Readable, Transform } = require('stream')
 const { ControlLayer } = require('streamr-client-protocol')
 
 const NodeToNode = require('../protocol/NodeToNode')
-const TrackerNode = require('../protocol/TrackerNode')
+const { Event: TrackerNodeEvent } = require('../protocol/TrackerNode')
 const { StreamIdAndPartition } = require('../identifiers')
 const logger = require('../helpers/logger')('streamr:resendStrategies')
 
@@ -273,7 +273,7 @@ class ForeignResendStrategy {
         this.pendingResends = {} // storageNode => [...proxiedResend]
 
         // TODO: STORAGE_NODES_RESPONSE_RECEIVED tracker?
-        this.trackerNode.on(TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED, async (storageNodesResponse, tracker) => {
+        this.trackerNode.on(TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED, async (storageNodesResponse, tracker) => {
             const streamId = new StreamIdAndPartition(storageNodesResponse.streamId, storageNodesResponse.streamPartition)
             const storageNodeIds = storageNodesResponse.nodeIds
 

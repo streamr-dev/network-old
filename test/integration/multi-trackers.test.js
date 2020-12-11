@@ -3,7 +3,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const TrackerNode = require('../../src/protocol/TrackerNode')
+const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 const Node = require('../../src/logic/Node')
 
 // TODO: maybe worth re-designing this in a way that isn't this arbitrary?
@@ -17,10 +17,10 @@ const THIRD_STREAM_2 = 'stream-11'
 
 // Leave out WebRTC related events
 const TRACKER_NODE_EVENTS_OF_INTEREST = [
-    TrackerNode.events.CONNECTED_TO_TRACKER,
-    TrackerNode.events.TRACKER_DISCONNECTED,
-    TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED,
-    TrackerNode.events.STORAGE_NODES_RESPONSE_RECEIVED
+    TrackerNodeEvent.CONNECTED_TO_TRACKER,
+    TrackerNodeEvent.TRACKER_DISCONNECTED,
+    TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED,
+    TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED
 ]
 
 describe('multi trackers', () => {
@@ -140,7 +140,7 @@ describe('multi trackers', () => {
 
         expect(nodeOneEvents).toHaveLength(1)
         expect(nodeTwoEvents).toHaveLength(1)
-        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
         expect(nodeTwoEvents[0][2]).toEqual('trackerOne')
 
         // second stream, second tracker
@@ -157,7 +157,7 @@ describe('multi trackers', () => {
 
         expect(nodeOneEvents).toHaveLength(1)
         expect(nodeTwoEvents).toHaveLength(1)
-        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
         expect(nodeTwoEvents[0][2]).toEqual('trackerTwo')
 
         // third stream, third tracker
@@ -174,7 +174,7 @@ describe('multi trackers', () => {
 
         expect(nodeOneEvents).toHaveLength(1)
         expect(nodeTwoEvents).toHaveLength(1)
-        expect(nodeTwoEvents[0][0]).toEqual(TrackerNode.events.TRACKER_INSTRUCTION_RECEIVED)
+        expect(nodeTwoEvents[0][0]).toEqual(TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
         expect(nodeTwoEvents[0][2]).toEqual('trackerThree')
     })
 

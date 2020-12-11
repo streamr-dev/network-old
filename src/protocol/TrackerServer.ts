@@ -4,9 +4,9 @@ import { TrackerLayer } from "streamr-client-protocol"
 import getLogger from "../helpers/logger"
 import { decode } from '../helpers/MessageEncoder'
 import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
-import {StreamIdAndPartition} from "../identifiers";
-import {PeerInfo} from "../connection/PeerInfo";
-import {RtcSubTypes} from "../logic/RtcMessage";
+import { StreamIdAndPartition } from "../identifiers"
+import { PeerInfo } from "../connection/PeerInfo"
+import { RtcSubTypes } from "../logic/RtcMessage"
 
 export enum Event {
     NODE_CONNECTED = 'streamr:tracker:send-peers',
@@ -140,7 +140,7 @@ export class TrackerServer extends EventEmitter {
 
     onMessageReceived(peerInfo: PeerInfo, rawMessage: string): void {
         if (peerInfo.isNode()) {
-            const message = decode(rawMessage, TrackerLayer.TrackerMessage.deserialize)
+            const message = decode<string, TrackerLayer.TrackerMessage>(rawMessage, TrackerLayer.TrackerMessage.deserialize)
             if (message != null) {
                 this.emit(eventPerType[message.type], message, peerInfo.peerId)
             } else {

@@ -62,7 +62,6 @@ declare module 'streamr-client-protocol' {
         }
 
         class ErrorMessage extends TrackerMessage {
-
             static ERROR_CODES: { [key: string]: string }
 
             requestId: string
@@ -73,6 +72,28 @@ declare module 'streamr-client-protocol' {
                 requestId: string
                 errorCode: string
                 targetNode: string
+            })
+        }
+
+        class StatusMessage extends TrackerMessage {
+            requestId: string
+            status: Object
+
+            constructor(args: {
+                requestId: string
+                status: Object
+            })
+        }
+
+        class StorageNodesRequest extends TrackerMessage {
+            requestId: string
+            streamId: string
+            streamPartition: number
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
             })
         }
     }

@@ -1,4 +1,4 @@
-import TrackerNode from '../protocol/TrackerNode'
+import { TrackerNode, Event as TrackerNodeEvent } from '../protocol/TrackerNode'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "./RtcMessage";
@@ -37,7 +37,7 @@ export interface ErrorOptions {
 
 export class RtcSignaller {
     private readonly peerInfo: PeerInfo
-    private readonly trackerNode: any // TODO: type
+    private readonly trackerNode: TrackerNode
     private offerListener: null | ((opts: OfferOptions) => void)
     private answerListener: null | ((opts: AnswerOptions) => void)
     private remoteCandidateListener: null | ((opts: RemoteCandidateOptions) => void)
@@ -45,7 +45,7 @@ export class RtcSignaller {
     private errorListener: null | ((opts: ErrorOptions) => void)
     private readonly logger: any // TODO: type
 
-    constructor(peerInfo: PeerInfo, trackerNode: any) {
+    constructor(peerInfo: PeerInfo, trackerNode: TrackerNode) {
         this.peerInfo = peerInfo
         this.trackerNode = trackerNode
         this.offerListener = null
@@ -55,7 +55,7 @@ export class RtcSignaller {
         this.errorListener = null
         this.logger = getLogger(`streamr:RtcSignaller:${peerInfo.peerId}`)
 
-        trackerNode.on(TrackerNode.events.RELAY_MESSAGE_RECEIVED, (relayMessage: RelayMessage, source: string) => {
+        trackerNode.on(TrackerNodeEvent.RELAY_MESSAGE_RECEIVED, (relayMessage: RelayMessage, source: string) => {
             const { originator, targetNode, subType } = relayMessage
             if (relayMessage.subType === RtcSubTypes.RTC_OFFER) {
                 this.offerListener!({
@@ -86,7 +86,7 @@ export class RtcSignaller {
                 this.logger.warn('Unrecognized subtype %s with contents %o', subType, relayMessage)
             }
         })
-        trackerNode.on(TrackerNode.events.RTC_ERROR_RECEIVED, (message: RtcErrorMessage, source: string) => {
+        trackerNode.on(TrackerNodeEvent.RTC_ERROR_RECEIVED, (message: RtcErrorMessage, source: string) => {
             this.errorListener!({
                 routerId: source,
                 targetNode: message.targetNode,
@@ -95,7 +95,7 @@ export class RtcSignaller {
         })
     }
 
-    onLocalDescription(routerId: string, targetPeerId: string, type: string, description: string): void {
+    onLocalDescription(routerId: string, targetPeerId: string, type: "offer" | "answer", description: string): void {
         this.trackerNode.sendLocalDescription(routerId, targetPeerId, this.peerInfo, type, description)
             .catch((err: Error) => {
                 this.logger.debug('Failed to sendLocalDescription via %s due to %s', routerId, err) // TODO: better?
