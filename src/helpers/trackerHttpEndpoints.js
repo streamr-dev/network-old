@@ -15,6 +15,17 @@ const respondWithError = (res, req, errorMessage) => {
 }
 
 const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
+    wss.cachedJsonGet = (endpoint, maxAge, jsonFactory) => {
+        let cache = undefined
+        return wss.get(endpoint, (res, req) => {
+            extraLogger.debug('request to ' + endpoint)
+            writeCorsHeaders(res, req)
+            if ((cache === undefined) || (Date.now() > (cache.timestamp + maxAge))) {
+                cache = { json: jsonFactory(), timestamp: Date.now() }
+            }
+            res.end(JSON.stringify(cache.json))
+        })
+    };
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)
@@ -48,12 +59,9 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
         extraLogger.debug(`request to /topology/${streamId}/${askedPartition}/`)
         writeCorsHeaders(res, req)
         res.end(JSON.stringify(tracker.getTopology(streamId, askedPartition)))
-    }).get('/topology-union/', (res, req) => {
-        extraLogger.debug('request to /topology-union/')
-        writeCorsHeaders(res, req)
+    }).cachedJsonGet('/topology-union/', 15 * 1000, () => {
         const topologyUnion = tracker.getTopologyUnion()
-        const json = Object.fromEntries(new Map(Array.from(topologyUnion, ([key, value]) => [key, Array.from(value)])))
-        res.end(JSON.stringify(json))
+        return Object.fromEntries(new Map(Array.from(topologyUnion, ([key, value]) => [key, Array.from(value)])))
     }).get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
         writeCorsHeaders(res, req)
