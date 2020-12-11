@@ -39,7 +39,31 @@ declare type RtcConnectMessage = {
     }
 }
 
-declare type RelayMessage = (OfferMessage | AnswerMessage | RemoteCandidateMessage | RtcConnectMessage) & {
+declare type LocalDescriptionMessage = {
+    subType: RtcSubTypes.LOCAL_DESCRIPTION
+    data: {
+        type: "answer" | "offer"
+        description: string
+    }
+}
+
+declare type LocalCandidateMessage = {
+    subType: RtcSubTypes.LOCAL_CANDIDATE
+    data: {
+        candidate: string
+        mid: string
+    }
+}
+
+declare type RelayMessage = (
+    OfferMessage
+    | AnswerMessage
+    | RemoteCandidateMessage
+    | RtcConnectMessage
+    | LocalDescriptionMessage
+    | LocalCandidateMessage
+    ) & {
+    requestId: string
     targetNode: string
     originator: PeerInfo
 }
