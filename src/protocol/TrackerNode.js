@@ -5,7 +5,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 
 const getLogger = require('../helpers/logger')
 const { decode } = require('../helpers/MessageEncoder')
-const endpointEvents = require('../connection/WsEndpoint').events
+const WsEndpoint = require('../connection/WsEndpoint')
 
 const { SUB_TYPES } = require('./RtcMessages')
 
@@ -28,9 +28,9 @@ class TrackerNode extends EventEmitter {
     constructor(endpoint) {
         super()
         this.endpoint = endpoint
-        this.endpoint.on(endpointEvents.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
-        this.endpoint.on(endpointEvents.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
-        this.endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
+        this.endpoint.on(WsEndpoint.Event.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
+        this.endpoint.on(WsEndpoint.Event.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
+        this.endpoint.on(WsEndpoint.Event.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
         this.logger = getLogger(`streamr:TrackerNode:${endpoint.peerInfo.peerId}`)
     }
 

@@ -5,7 +5,7 @@ const { startNetworkNode, startTracker } = require('../../src/composition')
 const TrackerServer = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const endpointEvents = require('../../src/connection/WsEndpoint').events
+const WsEndpoint = require('../../src/connection/WsEndpoint')
 
 /**
  * This test verifies that tracker can send instructions to node and node will connect and disconnect based on the instructions
@@ -89,7 +89,7 @@ describe('Check tracker instructions to node', () => {
 
         nodeOne.unsubscribe(streamId, 0)
 
-        await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, endpointEvents.PEER_DISCONNECTED)
+        await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, WsEndpoint.Event.PEER_DISCONNECTED)
         expect(nodeTwo.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
     })
 })

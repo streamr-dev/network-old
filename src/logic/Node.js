@@ -7,7 +7,7 @@ const NodeToNode = require('../protocol/NodeToNode')
 const TrackerNode = require('../protocol/TrackerNode')
 const { MessageBuffer } = require('../helpers/MessageBuffer')
 const { SeenButNotPropagatedSet } = require('../helpers/SeenButNotPropagatedSet')
-const { disconnectionReasons } = require('../connection/WsEndpoint')
+const { DisconnectionReason } = require('../connection/WsEndpoint')
 const { StreamIdAndPartition } = require('../identifiers')
 const ResendHandler = require('../resend/ResendHandler')
 const proxyRequestStream = require('../resend/proxyRequestStream')
@@ -424,7 +424,7 @@ class Node extends EventEmitter {
                 delete this.disconnectionTimers[node]
                 if (!this.streams.isNodePresent(node)) {
                     this.logger.debug('no shared streams with node %s, disconnecting', node)
-                    this.protocols.nodeToNode.disconnectFromNode(node, disconnectionReasons.NO_SHARED_STREAMS)
+                    this.protocols.nodeToNode.disconnectFromNode(node, DisconnectionReason.NO_SHARED_STREAMS)
                 }
             }, this.opts.disconnectionWaitTime)
         }

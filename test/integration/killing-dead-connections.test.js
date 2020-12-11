@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 const { waitForEvent } = require('streamr-test-utils')
 
-const { startEndpoint, disconnectionReasons, disconnectionCodes } = require('../../src/connection/WsEndpoint')
+const { startEndpoint, Event, DisconnectionReason, DisconnectionCode } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { events } = require('../../src/connection/WsEndpoint')
 
@@ -20,7 +20,7 @@ describe('check and kill dead connections', () => {
         node2 = await startEndpoint('127.0.0.1', 43972, PeerInfo.newNode('node2'), null)
 
         node1.connect('ws://127.0.0.1:43972')
-        await waitForEvent(node1, events.PEER_CONNECTED)
+        await waitForEvent(node1, Event.PEER_CONNECTED)
     })
 
     afterEach(async () => {
@@ -51,12 +51,12 @@ describe('check and kill dead connections', () => {
         expect(node1._onClose).toBeCalledTimes(1)
         expect(node1._onClose).toBeCalledWith('ws://127.0.0.1:43972', {
             peerId: 'node2', peerName: 'node2', peerType: 'node', location: defaultLocation
-        }, disconnectionCodes.DEAD_CONNECTION, disconnectionReasons.DEAD_CONNECTION)
+        }, DisconnectionCode.DEAD_CONNECTION, DisconnectionReason.DEAD_CONNECTION)
 
         node1._onClose.mockRestore()
         node1._pingConnections()
 
-        const [peerInfo] = await waitForEvent(node1, events.PEER_DISCONNECTED)
+        const [peerInfo] = await waitForEvent(node1, Event.PEER_DISCONNECTED)
         expect(peerInfo).toEqual(new PeerInfo('node2', 'node', 'node2', defaultLocation))
     })
 })

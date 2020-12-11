@@ -5,7 +5,7 @@ const { ControlLayer } = require('streamr-client-protocol')
 
 const getLogger = require('../helpers/logger')
 const { decode } = require('../helpers/MessageEncoder')
-const endpointEvents = require('../connection/WsEndpoint').events
+const WsEndpoint = require('../connection/WsEndpoint')
 
 const events = Object.freeze({
     NODE_CONNECTED: 'streamr:node-node:node-connected',
@@ -36,11 +36,11 @@ class NodeToNode extends EventEmitter {
     constructor(endpoint) {
         super()
         this.endpoint = endpoint
-        endpoint.on(endpointEvents.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
-        endpoint.on(endpointEvents.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
-        endpoint.on(endpointEvents.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
-        endpoint.on(endpointEvents.LOW_BACK_PRESSURE, (peerInfo) => this.onLowBackPressure(peerInfo))
-        endpoint.on(endpointEvents.HIGH_BACK_PRESSURE, (peerInfo) => this.onHighBackPressure(peerInfo))
+        endpoint.on(WsEndpoint.Event.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
+        endpoint.on(WsEndpoint.Event.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
+        endpoint.on(WsEndpoint.Event.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
+        endpoint.on(WsEndpoint.Event.LOW_BACK_PRESSURE, (peerInfo) => this.onLowBackPressure(peerInfo))
+        endpoint.on(WsEndpoint.Event.HIGH_BACK_PRESSURE, (peerInfo) => this.onHighBackPressure(peerInfo))
         this.logger = getLogger(`streamr:NodeToNode:${endpoint.id}`)
     }
 

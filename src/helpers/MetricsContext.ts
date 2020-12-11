@@ -1,7 +1,9 @@
 import speedometer from 'speedometer';
 
+type QueryFn = () => (Promise<number> | number | Promise<Object> | Object)
+
 interface IndividualReport {
-    [key: string]: number | {
+    [key: string]: number | Object | {
         rate: number
         total: number
         last: number
@@ -17,10 +19,10 @@ interface Report {
     }
 }
 
-class Metrics {
+export class Metrics {
     private readonly name: string
     private readonly queriedMetrics: {
-        [key: string]: () => Promise<Object>
+        [key: string]: QueryFn
     }
     private readonly recordedMetrics: {
         [key: string]: {
@@ -35,7 +37,7 @@ class Metrics {
         this.recordedMetrics = {}
     }
 
-    addQueriedMetric(name: string, queryFn: () => Promise<Object>): Metrics {
+    addQueriedMetric(name: string, queryFn: QueryFn): Metrics {
         this._verifyUniqueness(name)
         this.queriedMetrics[name] = queryFn
         return this
@@ -72,7 +74,7 @@ class Metrics {
                 total,
                 last
             }])
-        return Object.fromEntries(queryResults.concat(recordedResults))
+        return Object.fromEntries([...queryResults, ...recordedResults])
     }
 
     clearLast(): void {
