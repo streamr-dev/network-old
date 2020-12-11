@@ -2,7 +2,7 @@ const { Readable, Transform } = require('stream')
 
 const { ControlLayer } = require('streamr-client-protocol')
 
-const NodeToNode = require('../protocol/NodeToNode')
+const { Event: NodeToNodeEvent } = require('../protocol/NodeToNode')
 const { Event: TrackerNodeEvent } = require('../protocol/TrackerNode')
 const { StreamIdAndPartition } = require('../identifiers')
 const logger = require('../helpers/logger')('streamr:resendStrategies')
@@ -116,15 +116,15 @@ class ProxiedResend {
     }
 
     _attachEventHandlers() {
-        this.nodeToNode.on(NodeToNode.events.UNICAST_RECEIVED, this._onUnicast)
-        this.nodeToNode.on(NodeToNode.events.RESEND_RESPONSE, this._onResendResponse)
-        this.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, this._onNodeDisconnect)
+        this.nodeToNode.on(NodeToNodeEvent.UNICAST_RECEIVED, this._onUnicast)
+        this.nodeToNode.on(NodeToNodeEvent.RESEND_RESPONSE, this._onResendResponse)
+        this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, this._onNodeDisconnect)
     }
 
     _detachEventHandlers() {
-        this.nodeToNode.removeListener(NodeToNode.events.UNICAST_RECEIVED, this._onUnicast)
-        this.nodeToNode.removeListener(NodeToNode.events.RESEND_RESPONSE, this._onResendResponse)
-        this.nodeToNode.removeListener(NodeToNode.events.NODE_DISCONNECTED, this._onNodeDisconnect)
+        this.nodeToNode.removeListener(NodeToNodeEvent.UNICAST_RECEIVED, this._onUnicast)
+        this.nodeToNode.removeListener(NodeToNodeEvent.RESEND_RESPONSE, this._onResendResponse)
+        this.nodeToNode.removeListener(NodeToNodeEvent.NODE_DISCONNECTED, this._onNodeDisconnect)
     }
 
     _onUnicast(unicastMessage, source) {

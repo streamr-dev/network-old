@@ -3,7 +3,7 @@ const Protocol = require('streamr-client-protocol')
 
 const { TrackerServer } = require('./protocol/TrackerServer')
 const { TrackerNode } = require('./protocol/TrackerNode')
-const NodeToNode = require('./protocol/NodeToNode')
+const { NodeToNode } = require('./protocol/NodeToNode')
 const { PeerInfo } = require('./connection/PeerInfo')
 const Tracker = require('./logic/Tracker')
 const { RtcSignaller } = require('./logic/RtcSignaller')

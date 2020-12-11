@@ -3,7 +3,7 @@ const { EventEmitter } = require('events')
 const { Utils } = require('streamr-client-protocol')
 
 const getLogger = require('../helpers/logger')
-const NodeToNode = require('../protocol/NodeToNode')
+const { NodeToNode, Event: NodeToNodeEvent } = require('../protocol/NodeToNode')
 const { TrackerNode, Event: TrackerNodeEvent } = require('../protocol/TrackerNode')
 const { MessageBuffer } = require('../helpers/MessageBuffer')
 const { SeenButNotPropagatedSet } = require('../helpers/SeenButNotPropagatedSet')
@@ -83,21 +83,21 @@ class Node extends EventEmitter {
         this.protocols.trackerNode.on(TrackerNodeEvent.CONNECTED_TO_TRACKER, (trackerId) => this.onConnectedToTracker(trackerId))
         this.protocols.trackerNode.on(TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED, (streamMessage, trackerId) => this.onTrackerInstructionReceived(trackerId, streamMessage))
         this.protocols.trackerNode.on(TrackerNodeEvent.TRACKER_DISCONNECTED, (trackerId) => this.onTrackerDisconnected(trackerId))
-        this.protocols.nodeToNode.on(NodeToNode.events.NODE_CONNECTED, (nodeId) => this.emit(events.NODE_CONNECTED, nodeId))
-        this.protocols.nodeToNode.on(NodeToNode.events.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
-        this.protocols.nodeToNode.on(NodeToNode.events.SUBSCRIBE_REQUEST, (subscribeMessage, nodeId) => this.onSubscribeRequest(subscribeMessage, nodeId))
-        this.protocols.nodeToNode.on(NodeToNode.events.UNSUBSCRIBE_REQUEST, (unsubscribeMessage, nodeId) => this.onUnsubscribeRequest(unsubscribeMessage, nodeId))
-        this.protocols.nodeToNode.on(NodeToNode.events.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
-        this.protocols.nodeToNode.on(NodeToNode.events.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.NODE_CONNECTED, (nodeId) => this.emit(events.NODE_CONNECTED, nodeId))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.SUBSCRIBE_REQUEST, (subscribeMessage, nodeId) => this.onSubscribeRequest(subscribeMessage, nodeId))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.UNSUBSCRIBE_REQUEST, (unsubscribeMessage, nodeId) => this.onUnsubscribeRequest(unsubscribeMessage, nodeId))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
+        this.protocols.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(events.NODE_SUBSCRIBED, ({ streamId }) => {
             this._handleBufferedMessages(streamId)
             this._sendStreamStatus(streamId)
         })
-        this.protocols.nodeToNode.on(NodeToNode.events.LOW_BACK_PRESSURE, (nodeId) => {
+        this.protocols.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.resumeResendsOfNode(nodeId)
         })
 
-        this.protocols.nodeToNode.on(NodeToNode.events.HIGH_BACK_PRESSURE, (nodeId) => {
+        this.protocols.nodeToNode.on(NodeToNodeEvent.HIGH_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.pauseResendsOfNode(nodeId)
         })
 

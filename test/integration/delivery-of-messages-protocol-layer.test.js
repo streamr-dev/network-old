@@ -3,7 +3,7 @@ const { waitForEvent } = require('streamr-test-utils')
 
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { StreamIdAndPartition } = require('../../src/identifiers')
-const NodeToNode = require('../../src/protocol/NodeToNode')
+const { NodeToNode, Event: NodeToNodeEvent } = require('../../src/protocol/NodeToNode')
 const { TrackerNode, Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 const { TrackerServer, Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
@@ -31,7 +31,7 @@ describe('delivery of messages in protocol layer', () => {
 
         // Connect nodeToNode1 <-> nodeToNode2
         nodeToNode1.connectToNode(nodeToNode2.getAddress())
-        await waitForEvent(nodeToNode2, NodeToNode.events.NODE_CONNECTED)
+        await waitForEvent(nodeToNode2, NodeToNodeEvent.NODE_CONNECTED)
 
         // Connect trackerNode <-> trackerServer
         trackerNode.connectToTracker(trackerServer.getAddress())
@@ -59,7 +59,7 @@ describe('delivery of messages in protocol layer', () => {
             signature: 'signature',
         })
         nodeToNode2.sendData('nodeToNode1', streamMessage)
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.DATA_RECEIVED)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.DATA_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.BroadcastMessage)
         expect(source).toEqual('nodeToNode2')
@@ -89,7 +89,7 @@ describe('delivery of messages in protocol layer', () => {
             streamMessage,
         })
         nodeToNode2.send('nodeToNode1', unicastMessage)
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.UNICAST_RECEIVED)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.UNICAST_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.UnicastMessage)
         expect(source).toEqual('nodeToNode2')
@@ -124,7 +124,7 @@ describe('delivery of messages in protocol layer', () => {
             streamPartition: 10,
             numberLast: 100,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendLastRequest)
         expect(source).toEqual('nodeToNode2')
@@ -143,7 +143,7 @@ describe('delivery of messages in protocol layer', () => {
             fromMsgRef: new MessageRef(1, 1),
             publisherId: 'publisherId',
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendFromRequest)
         expect(source).toEqual('nodeToNode2')
@@ -165,7 +165,7 @@ describe('delivery of messages in protocol layer', () => {
             publisherId: 'publisherId',
             msgChainId: 'msgChainId',
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_REQUEST)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendRangeRequest)
         expect(source).toEqual('nodeToNode2')
@@ -185,7 +185,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResending)
         expect(source).toEqual('nodeToNode2')
@@ -201,7 +201,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResent)
         expect(source).toEqual('nodeToNode2')
@@ -217,7 +217,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.RESEND_RESPONSE)
+        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseNoResend)
         expect(source).toEqual('nodeToNode2')
@@ -239,28 +239,6 @@ describe('delivery of messages in protocol layer', () => {
         expect(msg.status).toEqual({
             status: 'status'
         })
-    })
-
-    test('sendSubscribe is delivered', async () => {
-        nodeToNode2.sendSubscribe('nodeToNode1', new StreamIdAndPartition('stream', 10))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.SUBSCRIBE_REQUEST)
-
-        expect(msg).toBeInstanceOf(ControlLayer.SubscribeRequest)
-        expect(source).toEqual('nodeToNode2')
-        expect(msg.requestId).toMatch(UUID_REGEX)
-        expect(msg.streamId).toEqual('stream')
-        expect(msg.streamPartition).toEqual(10)
-    })
-
-    test('sendUnsubscribe is delivered', async () => {
-        nodeToNode2.sendUnsubscribe('nodeToNode1', new StreamIdAndPartition('stream', 10))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNode.events.UNSUBSCRIBE_REQUEST)
-
-        expect(msg).toBeInstanceOf(ControlLayer.UnsubscribeRequest)
-        expect(source).toEqual('nodeToNode2')
-        expect(msg.requestId).toMatch(UUID_REGEX)
-        expect(msg.streamId).toEqual('stream')
-        expect(msg.streamPartition).toEqual(10)
     })
 
     test('sendStorageNodesRequest is delivered', async () => {

@@ -9,7 +9,9 @@ import {AnswerOptions, ConnectOptions, ErrorOptions, OfferOptions, RemoteCandida
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
     PEER_DISCONNECTED = 'streamr:peer:disconnect',
-    MESSAGE_RECEIVED = 'streamr:message-received'
+    MESSAGE_RECEIVED = 'streamr:message-received',
+    HIGH_BACK_PRESSURE = 'streamr:high-back-pressure',
+    LOW_BACK_PRESSURE = 'streamr:low-back-pressure'
 }
 
 class WebRtcError extends Error {
@@ -20,7 +22,7 @@ class WebRtcError extends Error {
     }
 }
 
-interface Rtts {
+export interface Rtts {
     [key: string]: number
 }
 

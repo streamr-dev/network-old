@@ -97,4 +97,32 @@ declare module 'streamr-client-protocol' {
             })
         }
     }
+
+    module ControlLayer {
+        class ControlMessage {
+            public readonly type: number
+
+            static TYPES: { [key: string]: number }
+
+            static deserialize: (msg: string | string[], ...args: any) => ControlMessage
+
+            serialize(version?: number, ...args: any): string
+        }
+
+        class BroadcastMessage extends ControlMessage {
+            requestId: string
+            streamMessage: MessageLayer.StreamMessage
+
+            constructor(args: {
+                requestId: string
+                streamMessage: MessageLayer.StreamMessage
+            })
+        }
+    }
+
+    module MessageLayer {
+        class StreamMessage {
+
+        }
+    }
 }

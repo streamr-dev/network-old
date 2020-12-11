@@ -409,10 +409,12 @@ export class Connection {
                             this.dataChannel!.maxMessageSize()
                         )
                     } else if (this.dataChannel!.bufferedAmount() < this.bufferHighThreshold && !this.paused) {
+                        // TODO: emit LOW_BUFFER_THRESHOLD if paused true (or somewhere else?)
                         this.dataChannel!.sendMessage(queueItem.getMessage())
                         this.messageQueue.pop()
                         queueItem.delivered()
                     } else {
+                        // TODO: emit HIGH_BUFFER_THRESHOLD if paused not true
                         this.paused = true
                         return
                     }
