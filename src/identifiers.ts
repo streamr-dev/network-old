@@ -2,8 +2,8 @@
  * Uniquely identifies a stream
  */
 export class StreamIdAndPartition {
-    private readonly id: string
-    private readonly partition: number
+    public readonly id: string
+    public readonly partition: number
 
     constructor(id: string, partition: number) {
         if (typeof id !== 'string') {

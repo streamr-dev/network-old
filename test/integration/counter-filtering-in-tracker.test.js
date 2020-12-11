@@ -3,7 +3,7 @@ const { wait, waitForEvent } = require('streamr-test-utils')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 
 const WAIT_TIME = 200
@@ -98,14 +98,14 @@ describe('tracker: counter filtering', () => {
     test('NET-36: tracker receiving status with old counter should not affect topology', async () => {
         const topologyBefore = tracker.getTopology()
         trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(tracker.getTopology()).toEqual(topologyBefore)
     })
 
     test('NET-36: tracker receiving status with partial old counter should not affect topology', async () => {
         const topologyBefore = tracker.getTopology()
         trackerNode1.sendStatus('tracker', formStatus(1, 0, [], []))
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(tracker.getTopology()).toEqual(topologyBefore)
     })
 })

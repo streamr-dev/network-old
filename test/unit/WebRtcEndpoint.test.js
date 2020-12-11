@@ -7,7 +7,7 @@ const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { WebRtcEndpoint, Event } = require('../../src/connection/WebRtcEndpoint')
 const { startTracker } = require('../../src/composition')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 
 describe('WebRtcEndpoint', () => {
     let tracker
@@ -29,9 +29,9 @@ describe('WebRtcEndpoint', () => {
         trackerNode2 = new TrackerNode(ep2)
 
         trackerNode1.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED)
         trackerNode2.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED)
+        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED)
 
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')

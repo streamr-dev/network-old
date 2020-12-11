@@ -482,6 +482,10 @@ export class WsEndpoint extends EventEmitter {
         return `ws://${this.serverHost}:${this.serverPort}`
     }
 
+    getPeerInfo(): Readonly<PeerInfo> {
+        return this.peerInfo
+    }
+
     getPeers(): ReadonlyMap<string, any> {
         return this.connections
     }

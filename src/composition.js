@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid')
 const Protocol = require('streamr-client-protocol')
 
-const TrackerServer = require('./protocol/TrackerServer')
+const { TrackerServer } = require('./protocol/TrackerServer')
 const TrackerNode = require('./protocol/TrackerNode')
 const NodeToNode = require('./protocol/NodeToNode')
 const { PeerInfo } = require('./connection/PeerInfo')

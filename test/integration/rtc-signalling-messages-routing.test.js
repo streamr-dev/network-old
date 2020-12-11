@@ -6,7 +6,7 @@ const { RtcSubTypes } = require('../../src/logic/RtcMessage')
 const { startEndpoint } = require('../../src/connection/WsEndpoint')
 const { PeerInfo } = require('../../src/connection/PeerInfo')
 const TrackerNode = require('../../src/protocol/TrackerNode')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { startTracker } = require('../../src/composition')
 
 /**
@@ -33,8 +33,8 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         targetTrackerNode.connectToTracker(tracker.getAddress())
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_CONNECTED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED),
             waitForEvent(targetTrackerNode, TrackerNode.events.CONNECTED_TO_TRACKER),
             waitForEvent(originatorTrackerNode, TrackerNode.events.CONNECTED_TO_TRACKER)
         ])

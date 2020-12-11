@@ -2,7 +2,7 @@ const { waitForEvent } = require('streamr-test-utils')
 const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const TrackerNode = require('../../src/protocol/TrackerNode')
 const WsEndpoint = require('../../src/connection/WsEndpoint')
@@ -56,7 +56,7 @@ describe('Check tracker instructions to node', () => {
 
     it('tracker should receive statuses from both nodes', (done) => {
         let receivedTotal = 0
-        tracker.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, () => {
+        tracker.protocols.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, () => {
             receivedTotal += 1
 
             if (receivedTotal === 2) {

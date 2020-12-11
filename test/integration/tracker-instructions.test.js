@@ -2,7 +2,7 @@ const { waitForEvent } = require('streamr-test-utils')
 const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const Node = require('../../src/logic/Node')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
@@ -47,8 +47,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
         node2.start()
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })
 
@@ -86,8 +86,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
         ])
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServer.events.NODE_STATUS_RECEIVED)
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
 
         expect(tracker.getTopology()).toEqual({

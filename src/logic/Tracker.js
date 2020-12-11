@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 
 const getLogger = require('../helpers/logger')
 const { MetricsContext } = require('../helpers/MetricsContext')
-const TrackerServer = require('../protocol/TrackerServer')
+const { TrackerServer, Event: TrackerServerEvent } = require('../protocol/TrackerServer')
 const { StreamIdAndPartition } = require('../identifiers')
 
 const { attachRtcSignalling } = require('./rtcSignallingHandlers')
@@ -37,16 +37,16 @@ module.exports = class Tracker extends EventEmitter {
         this.protocols = opts.protocols
         this.peerInfo = opts.peerInfo
 
-        this.protocols.trackerServer.on(TrackerServer.events.NODE_CONNECTED, (nodeId, isStorage) => {
+        this.protocols.trackerServer.on(TrackerServerEvent.NODE_CONNECTED, (nodeId, isStorage) => {
             this.onNodeConnected(nodeId, isStorage)
         })
-        this.protocols.trackerServer.on(TrackerServer.events.NODE_DISCONNECTED, (nodeId) => {
+        this.protocols.trackerServer.on(TrackerServerEvent.NODE_DISCONNECTED, (nodeId) => {
             this.onNodeDisconnected(nodeId)
         })
-        this.protocols.trackerServer.on(TrackerServer.events.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
+        this.protocols.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
             this.processNodeStatus(statusMessage, nodeId)
         })
-        this.protocols.trackerServer.on(TrackerServer.events.STORAGE_NODES_REQUEST, (message, nodeId) => {
+        this.protocols.trackerServer.on(TrackerServerEvent.STORAGE_NODES_REQUEST, (message, nodeId) => {
             this.findStorageNodes(message, nodeId)
         })
         attachRtcSignalling(this.protocols.trackerServer)
