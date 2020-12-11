@@ -48,6 +48,12 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
         extraLogger.debug(`request to /topology/${streamId}/${askedPartition}/`)
         writeCorsHeaders(res, req)
         res.end(JSON.stringify(tracker.getTopology(streamId, askedPartition)))
+    }).get('/topology-union/', (res, req) => {
+        extraLogger.debug('request to /topology-union/')
+        writeCorsHeaders(res, req)
+        const topologyUnion = tracker.getTopologyUnion()
+        const json = Object.fromEntries(new Map(Array.from(topologyUnion, ([key, value]) => [key, Array.from(value)])))
+        res.end(JSON.stringify(json))
     }).get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
         writeCorsHeaders(res, req)
