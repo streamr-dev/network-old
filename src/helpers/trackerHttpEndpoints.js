@@ -15,17 +15,20 @@ const respondWithError = (res, req, errorMessage) => {
 }
 
 const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
-    wss.cachedJsonGet = (endpoint, maxAge, jsonFactory) => {
-        let cache = undefined
+    wss.cachedJsonGet = (endpoint, maxAge, jsonFactory) => { // eslint-disable-line no-param-reassign
+        let cache
         return wss.get(endpoint, (res, req) => {
             extraLogger.debug('request to ' + endpoint)
             writeCorsHeaders(res, req)
             if ((cache === undefined) || (Date.now() > (cache.timestamp + maxAge))) {
-                cache = { json: jsonFactory(), timestamp: Date.now() }
+                cache = {
+                    json: jsonFactory(),
+                    timestamp: Date.now()
+                }
             }
             res.end(JSON.stringify(cache.json))
         })
-    };
+    }
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)
