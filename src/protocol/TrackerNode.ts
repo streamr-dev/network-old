@@ -7,6 +7,7 @@ import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
 import { Status, StreamIdAndPartition } from "../identifiers"
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "../logic/RtcMessage"
+import pino from "pino"
 
 export enum Event {
     CONNECTED_TO_TRACKER = 'streamr:tracker-node:send-status',
@@ -25,7 +26,7 @@ eventPerType[TrackerLayer.TrackerMessage.TYPES.ErrorMessage] = Event.RTC_ERROR_R
 
 export class TrackerNode extends EventEmitter {
     private readonly endpoint: WsEndpoint
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
 
     constructor(endpoint: WsEndpoint) {
         super()

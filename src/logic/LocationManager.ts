@@ -1,6 +1,7 @@
 import { lookup, Lookup } from "geoip-lite"
 import getLogger from "../helpers/logger"
 import { Location } from "../identifiers"
+import pino from "pino"
 
 function isValidNodeLocation(location: Location) {
     return location && (location.country || location.city || location.latitude || location.longitude)
@@ -10,7 +11,7 @@ export class LocationManager {
     private readonly nodeLocations: {
         [key: string]: Location // nodeId => Location
     }
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
 
     constructor() {
         this.nodeLocations = {}

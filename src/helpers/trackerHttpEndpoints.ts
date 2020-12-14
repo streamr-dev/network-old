@@ -1,7 +1,8 @@
-import {HttpRequest, HttpResponse, TemplatedApp} from "uWebSockets.js";
-import { MetricsContext } from "./MetricsContext";
+import { HttpRequest, HttpResponse, TemplatedApp } from "uWebSockets.js"
+import { MetricsContext } from "./MetricsContext"
+import getLogger from "./logger"
 
-const extraLogger = require('./logger')('streamr:tracker:http-endpoints')
+const extraLogger = getLogger('streamr:tracker:http-endpoints')
 
 const writeCorsHeaders = (res: HttpResponse, req: HttpRequest): void => {
     const origin = req.getHeader('origin')

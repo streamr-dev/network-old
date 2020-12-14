@@ -17,6 +17,7 @@ import { GapMisMatchError, InvalidNumberingError } from "./DuplicateMessageDetec
 import getLogger from '../helpers/logger'
 import { PeerInfo } from "../connection/PeerInfo"
 import { Readable } from "stream"
+import pino from "pino"
 
 export enum Event {
     MESSAGE_RECEIVED = 'streamr:node:message-received',
@@ -61,7 +62,7 @@ export class Node extends EventEmitter {
     private readonly nodeConnectTimeout: number
     private readonly started: string
 
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
     private readonly sendStatusTimeout: Map<string, NodeJS.Timeout>
     private readonly disconnectionTimers: { [key: string]: NodeJS.Timeout }
     private readonly streams: StreamManager

@@ -5,6 +5,7 @@ import { PeerBook } from "./PeerBook"
 import {PeerInfo, PeerType} from "./PeerInfo"
 import { Metrics, MetricsContext } from "../helpers/MetricsContext"
 import getLogger from "../helpers/logger"
+import pino from "pino"
 
 const extraLogger = getLogger('streamr:ws-endpoint')
 
@@ -61,12 +62,11 @@ function isWSLibrarySocket(ws: WsConnection | UWSConnection): ws is WsConnection
     return (ws as WsConnection).terminate !== undefined
 }
 
-// TODO: type
 function closeWs(
     ws: WsConnection | UWSConnection,
     code: DisconnectionCode,
     reason: DisconnectionReason,
-    logger: any
+    logger: pino.Logger
 ): void {
     try {
         if (isWSLibrarySocket(ws)) {
@@ -83,8 +83,7 @@ function getBufferedAmount(ws: WsConnection | UWSConnection): number {
     return isWSLibrarySocket(ws) ? ws.bufferedAmount : ws.getBufferedAmount()
 }
 
-// TODO: type
-function terminateWs(ws: WsConnection | UWSConnection, logger: any): void {
+function terminateWs(ws: WsConnection | UWSConnection, logger: pino.Logger): void {
     try {
         if (isWSLibrarySocket(ws)) {
             ws.terminate()
@@ -111,7 +110,7 @@ export class WsEndpoint extends EventEmitter {
     private readonly peerInfo: PeerInfo
     private readonly advertisedWsUrl: string | null
 
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
     private readonly connections: Map<string, WsConnection | UWSConnection>
     private readonly pendingConnections: Map<string, Promise<string>>
     private readonly peerBook: PeerBook

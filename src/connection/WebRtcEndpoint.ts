@@ -6,6 +6,7 @@ import {Connection} from './Connection'
 import {Metrics, MetricsContext} from "../helpers/MetricsContext";
 import { AnswerOptions, ConnectOptions, ErrorOptions, OfferOptions, RemoteCandidateOptions } from "../logic/RtcSignaller"
 import { Rtts } from "../identifiers"
+import pino from "pino"
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
@@ -31,7 +32,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private readonly newConnectionTimeout: number
     private readonly pingIntervalInMs: number
     private pingTimeoutRef: NodeJS.Timeout
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
     private readonly metrics: Metrics
 
     constructor(

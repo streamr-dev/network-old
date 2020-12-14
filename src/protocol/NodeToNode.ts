@@ -5,6 +5,7 @@ import { decode } from '../helpers/MessageEncoder'
 import { WebRtcEndpoint, Event as WsEndpointEvent } from '../connection/WebRtcEndpoint'
 import { PeerInfo } from "../connection/PeerInfo"
 import { Rtts } from "../identifiers"
+import pino from "pino"
 
 export enum Event {
     NODE_CONNECTED= 'streamr:node-node:node-connected',
@@ -29,7 +30,7 @@ eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseNoResend] = Event.R
 
 export class NodeToNode extends EventEmitter {
     private readonly endpoint: WebRtcEndpoint
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
 
     constructor(endpoint: WebRtcEndpoint) {
         super()

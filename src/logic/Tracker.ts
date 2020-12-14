@@ -9,6 +9,7 @@ import { attachRtcSignalling } from "./rtcSignallingHandlers"
 import { PeerInfo } from "../connection/PeerInfo"
 import { Location, Status, StatusStreams, StreamIdAndPartition } from "../identifiers"
 import { TrackerLayer } from "streamr-client-protocol"
+import pino from "pino"
 
 type NodeId = string
 type StreamId = string
@@ -37,7 +38,7 @@ export class Tracker extends EventEmitter {
     private readonly locationManager: LocationManager
     private readonly instructionCounter: InstructionCounter
     private readonly storageNodes: Set<NodeId>
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
     private readonly metrics: Metrics
 
     constructor(opts: TrackerOptions) {

@@ -8,7 +8,7 @@ const { PeerInfo } = require('./connection/PeerInfo')
 const { Tracker } = require('./logic/Tracker')
 const { RtcSignaller } = require('./logic/RtcSignaller')
 const NetworkNode = require('./NetworkNode')
-const logger = require('./helpers/logger')('streamr:bin:composition')
+//const logger = require('./helpers/logger')('streamr:bin:composition')
 const { MetricsContext } = require('./helpers/MetricsContext')
 const { trackerHttpEndpoints } = require('./helpers/trackerHttpEndpoints')
 const { startEndpoint } = require('./connection/WsEndpoint')
@@ -43,7 +43,7 @@ function startTracker({
             })
 
             if (attachHttpEndpoints) {
-                logger.debug('attaching HTTP endpoints to the tracker on port %s', port)
+                //logger.debug('attaching HTTP endpoints to the tracker on port %s', port)
                 trackerHttpEndpoints(endpoint.wss, tracker, metricsContext)
             }
 

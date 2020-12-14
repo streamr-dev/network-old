@@ -2,6 +2,7 @@ import Heap from 'heap'
 import nodeDataChannel, {DataChannel, DescriptionType, PeerConnection} from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
+import pino from "pino"
 
 type Info = Object
 
@@ -100,7 +101,7 @@ export class Connection {
     private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
-    private readonly logger: any // TODO: types
+    private readonly logger: pino.Logger
 
     constructor({
         selfId,

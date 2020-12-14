@@ -3,6 +3,7 @@ import getLogger from '../helpers/logger'
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "./RtcMessage";
 import { RelayMessage, RtcErrorMessage } from "../../types/global"
+import pino from "pino"
 
 export interface OfferOptions {
     routerId: string,
@@ -43,7 +44,7 @@ export class RtcSignaller {
     private remoteCandidateListener: null | ((opts: RemoteCandidateOptions) => void)
     private connectListener: null | ((opts: ConnectOptions) => void)
     private errorListener: null | ((opts: ErrorOptions) => void)
-    private readonly logger: any // TODO: type
+    private readonly logger: pino.Logger
 
     constructor(peerInfo: PeerInfo, trackerNode: TrackerNode) {
         this.peerInfo = peerInfo
