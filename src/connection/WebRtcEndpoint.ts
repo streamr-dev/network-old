@@ -4,7 +4,8 @@ import getLogger from '../helpers/logger'
 import {PeerInfo} from './PeerInfo'
 import {Connection} from './Connection'
 import {Metrics, MetricsContext} from "../helpers/MetricsContext";
-import {AnswerOptions, ConnectOptions, ErrorOptions, OfferOptions, RemoteCandidateOptions} from "../logic/RtcSignaller";
+import { AnswerOptions, ConnectOptions, ErrorOptions, OfferOptions, RemoteCandidateOptions } from "../logic/RtcSignaller"
+import { Rtts } from "../identifiers"
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
@@ -20,10 +21,6 @@ class WebRtcError extends Error {
         // exclude this constructor from stack trace
         Error.captureStackTrace(this, WebRtcError)
     }
-}
-
-export interface Rtts {
-    [key: string]: number
 }
 
 export class WebRtcEndpoint extends EventEmitter {

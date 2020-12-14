@@ -47,8 +47,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
         node2.start()
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })
 
@@ -86,8 +86,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
         ])
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
 
         expect(tracker.getTopology()).toEqual({

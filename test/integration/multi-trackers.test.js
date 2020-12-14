@@ -62,16 +62,16 @@ describe('multi trackers', () => {
 
         nodeOne.start()
         await Promise.all([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+            waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
 
         nodeTwo.start()
         await Promise.all([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+            waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })
 
@@ -89,9 +89,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(FIRST_STREAM, 0)
 
         await Promise.race([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
         expect(trackerOne.getStreams()).toContain(`${FIRST_STREAM}::0`)
@@ -102,9 +102,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(SECOND_STREAM, 0)
 
         await Promise.race([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
         expect(trackerOne.getStreams()).not.toContain(`${SECOND_STREAM}::0`)
@@ -115,9 +115,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(THIRD_STREAM, 0)
 
         await Promise.race([
-            waitForEvent(trackerOne.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerTwo.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            waitForEvent(trackerThree.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
         expect(trackerOne.getStreams()).not.toContain(`${THIRD_STREAM}::0`)

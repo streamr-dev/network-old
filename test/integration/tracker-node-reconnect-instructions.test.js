@@ -56,7 +56,7 @@ describe('Check tracker instructions to node', () => {
 
     it('tracker should receive statuses from both nodes', (done) => {
         let receivedTotal = 0
-        tracker.protocols.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, () => {
+        tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, () => {
             receivedTotal += 1
 
             if (receivedTotal === 2) {
@@ -71,7 +71,7 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
         ])
         // send empty list
-        await tracker.protocols.trackerServer.endpoint.send(
+        await tracker.trackerServer.endpoint.send(
             'node-1',
             new TrackerLayer.InstructionMessage({
                 requestId: 'requestId',

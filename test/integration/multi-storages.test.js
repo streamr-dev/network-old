@@ -93,7 +93,7 @@ describe('multiple storage nodes', () => {
         storageThree.start()
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
             waitForEvent(storageThree, Node.events.NODE_SUBSCRIBED)
         ])
 

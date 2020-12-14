@@ -1,11 +1,12 @@
 import { lookup, Lookup } from "geoip-lite"
 import getLogger from "../helpers/logger"
+import { Location } from "../identifiers"
 
 function isValidNodeLocation(location: Location) {
     return location && (location.country || location.city || location.latitude || location.longitude)
 }
 
-module.exports = class LocationManager {
+export class LocationManager {
     private readonly nodeLocations: {
         [key: string]: Location // nodeId => Location
     }

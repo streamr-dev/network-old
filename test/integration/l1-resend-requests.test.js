@@ -65,7 +65,7 @@ describe('resend requests are fulfilled at L1', () => {
         contactNode.start()
         contactNode.subscribe('streamId', 0)
 
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+        await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
     })
 
     afterEach(async () => {

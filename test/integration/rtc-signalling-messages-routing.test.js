@@ -33,8 +33,8 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         targetTrackerNode.connectToTracker(tracker.getAddress())
 
         await Promise.all([
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED),
-            waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED),
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED),
+            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED),
             waitForEvent(targetTrackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
             waitForEvent(originatorTrackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
         ])

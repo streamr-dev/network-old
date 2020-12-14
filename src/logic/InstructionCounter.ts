@@ -1,19 +1,9 @@
+import { Status, StatusStreams } from "../identifiers"
+
 interface Counters {
     [key: string]: {
         [key: string]: number
     }
-}
-
-interface Status<E> {
-    streams: {
-        [key: string]: E & {
-            counter: number
-        }
-    }
-}
-
-interface FilteredStreams<E> {
-    [key: string]: E
 }
 
 export class InstructionCounter {
@@ -27,8 +17,8 @@ export class InstructionCounter {
         return this.counters[nodeId][streamKey]
     }
 
-    filterStatus<E>(status: Status<E>, source: string): FilteredStreams<E> {
-        const filteredStreams: FilteredStreams<E> = {}
+    filterStatus(status: Status, source: string): StatusStreams {
+        const filteredStreams: StatusStreams = {}
         Object.entries(status.streams).forEach(([streamKey, entry]) => {
             const currentCounter = this._getAndSetIfNecessary(source, streamKey)
             if (entry.counter >= currentCounter) {

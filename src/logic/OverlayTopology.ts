@@ -6,6 +6,14 @@ const shuffleArray = <T>(arr: Array<T>): Array<T> => arr
 
 const pickRandomElement = <T>(arr: Array<T>): T => arr[Math.floor(Math.random() * arr.length)]
 
+export interface TopologyState {
+    [key: string]: Array<string>
+}
+
+export interface Instructions {
+    [key: string]: string[]
+}
+
 export class OverlayTopology {
     private readonly maxNeighborsPerNode: number
     private readonly shuffleArray: (arr: Array<string>) => Array<string>
@@ -62,7 +70,7 @@ export class OverlayTopology {
         return Object.entries(this.nodes).length === 0
     }
 
-    state(): { [key: string]: Array<string> } {
+    state(): TopologyState {
         const objects = Object.entries(this.nodes).map(([nodeId, neighbors]) => {
             return {
                 [nodeId]: [...neighbors].sort()
@@ -71,7 +79,7 @@ export class OverlayTopology {
         return Object.assign({}, ...objects)
     }
 
-    formInstructions(nodeId: string, forceGenerate = false) {
+    formInstructions(nodeId: string, forceGenerate = false): Instructions {
         const updatedNodes: Set<string> = new Set()
 
         const excessNeighbors = -this._numOfMissingNeighbors(nodeId)

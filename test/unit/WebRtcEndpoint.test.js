@@ -29,9 +29,9 @@ describe('WebRtcEndpoint', () => {
         trackerNode2 = new TrackerNode(ep2)
 
         trackerNode1.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED)
+        await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED)
         trackerNode2.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker.protocols.trackerServer, TrackerServerEvent.NODE_CONNECTED)
+        await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED)
 
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')

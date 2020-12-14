@@ -1,14 +1,7 @@
 import { PeerInfo } from "../src/connection/PeerInfo"
 import { RtcSubTypes } from "../src/logic/RtcMessage"
 import { Readable } from "stream"
-import { ControlLayer } from "streamr-client-protocol"
 
-declare interface Location {
-    latitude: number | null
-    longitude: number | null
-    country: string | null
-    city: string | null
-}
 
 // TODO: move to composition
 declare interface Storage {

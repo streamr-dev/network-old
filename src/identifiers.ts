@@ -36,6 +36,31 @@ export class StreamIdAndPartition {
     }
 }
 
+export interface Rtts {
+    [key: string]: number
+}
+
+export interface Location {
+    latitude: number | null
+    longitude: number | null
+    country: string | null
+    city: string | null
+}
+
+export interface StatusStreams {
+    [key: string]: {
+        inboundNodes: string[]
+        outboundNodes: string[]
+        counter: number
+    }
+}
+
+export interface Status {
+    streams: StatusStreams
+    rtts: Rtts
+    location: Location
+}
+
 export type ResendRequest = ControlLayer.ResendLastRequest
     | ControlLayer.ResendFromRequest
     | ControlLayer.ResendRangeRequest
