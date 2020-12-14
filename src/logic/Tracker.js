@@ -219,12 +219,12 @@ module.exports = class Tracker extends EventEmitter {
 
     getTopologyUnion() {
         const mergeSetMapInto = (target, source) => { // merges each source value (a Set object) into the target value with the same key
-            for (let key in source) {
+            Object.keys(source).forEach((key) => {
                 const sourceSet = source[key]
                 const targetSet = target[key]
                 const mergedSet = (targetSet !== undefined) ? new Set([...targetSet, ...sourceSet]) : sourceSet
-                target[key] = mergedSet
-            }
+                target[key] = mergedSet // eslint-disable-line no-param-reassign
+            })
             return target
         }
         const nodeMaps = Object.values(this.overlayPerStream).map((topology) => topology.getNodes())

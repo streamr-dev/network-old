@@ -1,5 +1,6 @@
+const _ = require('lodash')
+
 const extraLogger = require('./logger')('streamr:tracker:http-endpoints')
-const _ = require('lodash');
 
 const writeCorsHeaders = (res, req) => {
     const origin = req.getHeader('origin')
