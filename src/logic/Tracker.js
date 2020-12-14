@@ -226,7 +226,7 @@ module.exports = class Tracker extends EventEmitter {
             })
             return target
         }
-        const nodeMaps = Object.values(this.overlayPerStream).map((topology) => new Map(Object.entries(topology.nodes)))
+        const nodeMaps = Object.values(this.overlayPerStream).map((topology) => new Map(Object.entries(topology.getNodes())))
         return nodeMaps.reduce((accumulator, current) => mergeSetMapInto(accumulator, current))
     }
 
