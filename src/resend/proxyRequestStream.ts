@@ -1,10 +1,10 @@
 import { ControlLayer } from 'streamr-client-protocol'
 import { Readable } from "stream"
-import { Request } from "./ResendHandler"
+import { ResendRequest } from "../identifiers"
 
 export function proxyRequestStream(
     sendFn: (msg: ControlLayer.ControlMessage) => void,
-    request: Request,
+    request: ResendRequest,
     requestStream: Readable
 ): void {
     const { streamId, streamPartition, requestId } = request
@@ -18,7 +18,7 @@ export function proxyRequestStream(
             }))
             fulfilled = true
         })
-        .on('data', (unicastMessage) => {
+        .on('data', (unicastMessage: ControlLayer.UnicastMessage) => {
             sendFn(unicastMessage)
         })
         .on('end', () => {

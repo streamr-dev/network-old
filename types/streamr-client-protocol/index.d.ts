@@ -101,8 +101,24 @@ declare module 'streamr-client-protocol' {
     module ControlLayer {
         class ControlMessage {
             public readonly type: number
+            public readonly requestId: string
 
-            static TYPES: { [key: string]: number }
+            static TYPES: {
+                BroadcastMessage: 0,
+                UnicastMessage: 1,
+                SubscribeResponse: 2,
+                UnsubscribeResponse: 3,
+                ResendResponseResending: 4,
+                ResendResponseResent: 5,
+                ResendResponseNoResend: 6,
+                ErrorResponse: 7,
+                PublishRequest: 8,
+                SubscribeRequest: 9,
+                UnsubscribeRequest: 10,
+                ResendLastRequest: 11,
+                ResendFromRequest: 12,
+                ResendRangeRequest: 13
+            }
 
             static deserialize: (msg: string | string[], ...args: any) => ControlMessage
 
@@ -110,6 +126,16 @@ declare module 'streamr-client-protocol' {
         }
 
         class BroadcastMessage extends ControlMessage {
+            requestId: string
+            streamMessage: MessageLayer.StreamMessage
+
+            constructor(args: {
+                requestId: string
+                streamMessage: MessageLayer.StreamMessage
+            })
+        }
+
+        class UnicastMessage extends ControlMessage {
             requestId: string
             streamMessage: MessageLayer.StreamMessage
 
@@ -154,11 +180,76 @@ declare module 'streamr-client-protocol' {
                 streamPartition: number
             })
         }
+
+        class ResendLastRequest extends ControlMessage {
+            type: 11
+            requestId: string
+            streamId: string
+            streamPartition: number
+            numberLast: number
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+                numberLast: number
+            })
+        }
+
+        class ResendFromRequest extends ControlMessage {
+            type: 12
+            requestId: string
+            streamId: string
+            streamPartition: number
+            fromMsgRef: MessageLayer.MessageRef
+            publisherId: string
+            msgChainId: string
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+                fromMsgRef: MessageLayer.MessageRef
+                publisherId: string
+                msgChainId: string
+            })
+        }
+
+        class ResendRangeRequest extends ControlMessage {
+            type: 13
+            requestId: string
+            streamId: string
+            streamPartition: number
+            fromMsgRef: MessageLayer.MessageRef
+            toMsgRef: MessageLayer.MessageRef
+            publisherId: string
+            msgChainId: string
+
+            constructor(args: {
+                requestId: string
+                streamId: string
+                streamPartition: number
+                fromMsgRef: MessageLayer.MessageRef
+                toMsgRef: MessageLayer.MessageRef
+                publisherId: string
+                msgChainId: string
+            })
+        }
     }
 
     module MessageLayer {
         class StreamMessage {
 
+        }
+
+        class MessageRef {
+            timestamp: number
+            sequenceNumber: number
+
+            constructor(args: {
+                timestamp: number
+                sequenceNumber: number
+            })
         }
     }
 }

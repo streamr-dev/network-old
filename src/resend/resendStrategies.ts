@@ -1,13 +1,16 @@
-const { Readable, Transform } = require('stream')
+import { Transform, Readable } from "stream"
+import { ControlLayer } from "streamr-client-protocol"
+import { Storage } from "../../types/global"
+import { NodeToNode } from "../protocol/NodeToNode"
+import { StreamIdAndPartition, ResendRequest } from "../identifiers"
+import { TrackerNode } from "../protocol/TrackerNode"
+import { Event as NodeToNodeEvent } from "../protocol/NodeToNode"
+import { Event as TrackerNodeEvent } from "../protocol/TrackerNode"
+import getLogger from "../helpers/logger"
 
-const { ControlLayer } = require('streamr-client-protocol')
+const logger = getLogger('streamr:resendStrategies')
 
-const { Event: NodeToNodeEvent } = require('../protocol/NodeToNode')
-const { Event: TrackerNodeEvent } = require('../protocol/TrackerNode')
-const { StreamIdAndPartition } = require('../identifiers')
-const logger = require('../helpers/logger')('streamr:resendStrategies')
-
-function toUnicastMessage(request) {
+function toUnicastMessage(request: ResendRequest): Transform {
     return new Transform({
         objectMode: true,
         transform: (streamMessage, _, done) => {
@@ -22,16 +25,18 @@ function toUnicastMessage(request) {
 /**
  * Resend strategy that uses fetches streaming data from local storage.
  */
-class LocalResendStrategy {
-    constructor(storage) {
+export class LocalResendStrategy {
+    private readonly storage: Storage
+
+    constructor(storage: Storage) {
         if (storage == null) {
             throw new Error('storage not given')
         }
         this.storage = storage
     }
 
-    getResendResponseStream(request) {
-        let sourceStream
+    getResendResponseStream(request: ResendRequest): Readable {
+        let sourceStream: Readable
         if (request.type === ControlLayer.ControlMessage.TYPES.ResendLastRequest) {
             sourceStream = this.storage.requestLast(
                 request.streamId,
@@ -88,7 +93,26 @@ class LocalResendStrategy {
  *  neighbor doesn't respond in a timely manner.
  */
 class ProxiedResend {
-    constructor(request, responseStream, nodeToNode, getNeighbors, maxTries, timeout, onDoneCb) {
+    private readonly request: ResendRequest
+    private readonly responseStream: Readable
+    private readonly nodeToNode: NodeToNode
+    private readonly getNeighbors: (streamId: StreamIdAndPartition) => Array<string>
+    private readonly maxTries: number
+    private readonly timeout: number
+    private readonly onDoneCb: () => void
+    private readonly neighborsAsked: Set<string>
+    private currentNeighbor: string | null
+    private timeoutRef: NodeJS.Timeout | null
+
+    constructor(
+        request: ResendRequest,
+        responseStream: Readable,
+        nodeToNode: NodeToNode,
+        getNeighbors: (streamId: StreamIdAndPartition) => Array<string>,
+        maxTries: number,
+        timeout: number,
+        onDoneCb: () => void
+    ) {
         this.request = request
         this.responseStream = responseStream
         this.nodeToNode = nodeToNode
@@ -101,67 +125,69 @@ class ProxiedResend {
         this.timeoutRef = null
 
         // Below are important for function identity in _detachEventHandlers
-        this._onUnicast = this._onUnicast.bind(this)
-        this._onResendResponse = this._onResendResponse.bind(this)
-        this._onNodeDisconnect = this._onNodeDisconnect.bind(this)
+        this.onUnicast = this.onUnicast.bind(this)
+        this.onResendResponse = this.onResendResponse.bind(this)
+        this.onNodeDisconnect = this.onNodeDisconnect.bind(this)
     }
 
-    commence() {
-        this._attachEventHandlers()
-        this._askNextNeighbor()
+    commence(): void {
+        this.attachEventHandlers()
+        this.askNextNeighbor()
     }
 
-    cancel() {
-        this._endStream()
+    cancel(): void {
+        this.endStream()
     }
 
-    _attachEventHandlers() {
-        this.nodeToNode.on(NodeToNodeEvent.UNICAST_RECEIVED, this._onUnicast)
-        this.nodeToNode.on(NodeToNodeEvent.RESEND_RESPONSE, this._onResendResponse)
-        this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, this._onNodeDisconnect)
+    private attachEventHandlers(): void {
+        this.nodeToNode.on(NodeToNodeEvent.UNICAST_RECEIVED, this.onUnicast)
+        this.nodeToNode.on(NodeToNodeEvent.RESEND_RESPONSE, this.onResendResponse)
+        this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, this.onNodeDisconnect)
     }
 
-    _detachEventHandlers() {
-        this.nodeToNode.removeListener(NodeToNodeEvent.UNICAST_RECEIVED, this._onUnicast)
-        this.nodeToNode.removeListener(NodeToNodeEvent.RESEND_RESPONSE, this._onResendResponse)
-        this.nodeToNode.removeListener(NodeToNodeEvent.NODE_DISCONNECTED, this._onNodeDisconnect)
+    private detachEventHandlers(): void {
+        this.nodeToNode.removeListener(NodeToNodeEvent.UNICAST_RECEIVED, this.onUnicast)
+        this.nodeToNode.removeListener(NodeToNodeEvent.RESEND_RESPONSE, this.onResendResponse)
+        this.nodeToNode.removeListener(NodeToNodeEvent.NODE_DISCONNECTED, this.onNodeDisconnect)
     }
 
-    _onUnicast(unicastMessage, source) {
+    private onUnicast(unicastMessage: ControlLayer.UnicastMessage, source: string): void {
         const { requestId } = unicastMessage
         if (this.request.requestId === requestId && this.currentNeighbor === source) {
             this.responseStream.push(unicastMessage)
-            this._resetTimeout()
+            this.resetTimeout()
         }
     }
 
-    _onResendResponse(response, source) {
+    private onResendResponse(response: ControlLayer.ControlMessage, source: string): void {
         const { requestId } = response
 
         if (this.request.requestId === requestId && this.currentNeighbor === source) {
             if (response.type === ControlLayer.ControlMessage.TYPES.ResendResponseResent) {
-                this._endStream()
+                this.endStream()
             } else if (response.type === ControlLayer.ControlMessage.TYPES.ResendResponseNoResend) {
-                this._askNextNeighbor()
+                this.askNextNeighbor()
             } else if (response.type === ControlLayer.ControlMessage.TYPES.ResendResponseResending) {
-                this._resetTimeout()
+                this.resetTimeout()
             } else {
                 throw new Error(`unexpected response type ${response}`)
             }
         }
     }
 
-    _onNodeDisconnect(nodeId) {
+    private onNodeDisconnect(nodeId: string): void {
         if (this.currentNeighbor === nodeId) {
-            this._askNextNeighbor()
+            this.askNextNeighbor()
         }
     }
 
-    _askNextNeighbor() {
-        clearTimeout(this.timeoutRef)
+    private askNextNeighbor(): void {
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef)
+        }
 
         if (this.neighborsAsked.size >= this.maxTries) {
-            this._endStream()
+            this.endStream()
             return
         }
 
@@ -169,7 +195,7 @@ class ProxiedResend {
             new StreamIdAndPartition(this.request.streamId, this.request.streamPartition)
         ).filter((x) => !this.neighborsAsked.has(x))
         if (candidates.length === 0) {
-            this._endStream()
+            this.endStream()
             return
         }
 
@@ -178,25 +204,29 @@ class ProxiedResend {
 
         this.nodeToNode.send(neighborId, this.request).then(() => {
             this.currentNeighbor = neighborId
-            this._resetTimeout()
+            this.resetTimeout()
             return true
         }, () => {
-            this._askNextNeighbor()
+            this.askNextNeighbor()
         }).catch((e) => {
             logger.error(`Failed to _askNextNeighbor: ${neighborId}, error ${e}`)
         })
     }
 
-    _endStream() {
-        clearTimeout(this.timeoutRef)
+    private endStream(): void {
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef)
+        }
         this.responseStream.push(null)
-        this._detachEventHandlers()
+        this.detachEventHandlers()
         this.onDoneCb()
     }
 
-    _resetTimeout() {
-        clearTimeout(this.timeoutRef)
-        this.timeoutRef = setTimeout(this._askNextNeighbor.bind(this), this.timeout)
+    private resetTimeout(): void {
+        if (this.timeoutRef) {
+            clearTimeout(this.timeoutRef)
+        }
+        this.timeoutRef = setTimeout(this.askNextNeighbor.bind(this), this.timeout)
     }
 }
 
@@ -206,35 +236,44 @@ class ProxiedResend {
  * Also handles timeouts if tracker response not received in a timely manner.
  */
 class PendingTrackerResponseBookkeeper {
-    constructor(timeout) {
+    private readonly timeout: number
+    private pending: {
+        [key: string]: Set<{
+            request: ResendRequest
+            responseStream: Readable
+            timeoutRef: NodeJS.Timeout
+        }>
+    }
+    constructor(timeout: number) {
         this.timeout = timeout
-        this.pending = {} // streamId =>=> [{ request, responseStream, timeoutRef }]
+        this.pending = {} // streamId => [{ request, responseStream, timeoutRef }]
     }
 
-    addEntry(request, responseStream) {
+    addEntry(request: ResendRequest, responseStream: Readable): void {
         const streamIdAndPartition = new StreamIdAndPartition(request.streamId, request.streamPartition)
 
-        if (!this.pending[streamIdAndPartition]) {
-            this.pending[streamIdAndPartition] = new Set()
+        if (!this.pending[streamIdAndPartition.key()]) {
+            this.pending[streamIdAndPartition.key()] = new Set()
         }
         const entry = {
             responseStream,
             request,
             timeoutRef: setTimeout(() => {
-                this.pending[streamIdAndPartition].delete(entry)
-                if (this.pending[streamIdAndPartition].size === 0) {
-                    delete this.pending[streamIdAndPartition]
+                this.pending[streamIdAndPartition.key()].delete(entry)
+                if (this.pending[streamIdAndPartition.key()].size === 0) {
+                    delete this.pending[streamIdAndPartition.key()]
                 }
                 responseStream.push(null)
             }, this.timeout)
         }
-        this.pending[streamIdAndPartition].add(entry)
+        this.pending[streamIdAndPartition.key()].add(entry)
     }
 
-    popEntries(streamIdAndPartition) {
-        if (this._hasEntries(streamIdAndPartition)) {
-            const entries = [...this.pending[streamIdAndPartition]]
-            delete this.pending[streamIdAndPartition]
+    popEntries(streamIdAndPartition: StreamIdAndPartition):
+        ReadonlyArray<{ request: ResendRequest, responseStream: Readable}> {
+        if (this.hasEntries(streamIdAndPartition)) {
+            const entries = [...this.pending[streamIdAndPartition.key()]]
+            delete this.pending[streamIdAndPartition.key()]
             return entries.map(({ timeoutRef, ...rest }) => {
                 clearTimeout(timeoutRef)
                 return rest
@@ -243,7 +282,7 @@ class PendingTrackerResponseBookkeeper {
         return []
     }
 
-    clearAll() {
+    clearAll(): void {
         Object.values(this.pending).forEach((entries) => {
             entries.forEach(({ responseStream, timeoutRef }) => {
                 clearTimeout(timeoutRef)
@@ -253,8 +292,8 @@ class PendingTrackerResponseBookkeeper {
         this.pending = {}
     }
 
-    _hasEntries(streamIdAndPartition) {
-        return streamIdAndPartition in this.pending
+    private hasEntries(streamIdAndPartition: StreamIdAndPartition): boolean {
+        return streamIdAndPartition.key() in this.pending
     }
 }
 
@@ -262,8 +301,24 @@ class PendingTrackerResponseBookkeeper {
  * Resend strategy that asks tracker for storage nodes, forwards resend request
  * to (one of) them, and then acts as a proxy/relay in between.
  */
-class ForeignResendStrategy {
-    constructor(trackerNode, nodeToNode, getTracker, isSubscribedTo, timeout = 20 * 1000) {
+export class ForeignResendStrategy {
+    private readonly trackerNode: TrackerNode
+    private readonly nodeToNode: NodeToNode
+    private readonly getTracker: (streamId: string) => string
+    private readonly isSubscribedTo: (streamId: string) => boolean
+    private readonly timeout: number
+    private readonly pendingTrackerResponse: PendingTrackerResponseBookkeeper
+    private readonly pendingResends: {
+        [key: string]: Set<ProxiedResend>
+    }
+
+    constructor(
+        trackerNode: TrackerNode,
+        nodeToNode: NodeToNode,
+        getTracker: (streamId: string) => string,
+        isSubscribedTo: (streamId: string) => boolean,
+        timeout = 20 * 1000
+    ) {
         this.trackerNode = trackerNode
         this.nodeToNode = nodeToNode
         this.getTracker = getTracker
@@ -282,11 +337,10 @@ class ForeignResendStrategy {
                 return
             }
 
-            let storageNode = null
+            let storageNode: string | null = null
             while (storageNode === null && storageNodeIds.length > 0) {
                 const nodeId = storageNodeIds.shift()
                 try {
-                    // eslint-disable-next-line require-atomic-updates,no-await-in-loop
                     storageNode = await this.nodeToNode.connectToNode(nodeId, tracker, true, false)
                 } catch (e) {
                     // nop
@@ -306,24 +360,24 @@ class ForeignResendStrategy {
                     request,
                     responseStream,
                     this.nodeToNode,
-                    () => [storageNode],
+                    () => [storageNode!],
                     1,
                     this.timeout,
                     () => {
-                        this.pendingResends[storageNode].delete(proxiedResend)
-                        if (this.pendingResends[storageNode].size === 0 && !this.isSubscribedTo(storageNode)) {
-                            this.nodeToNode.disconnectFromNode(storageNode)
-                            delete this.pendingResends[storageNode]
+                        this.pendingResends[storageNode!].delete(proxiedResend)
+                        if (this.pendingResends[storageNode!].size === 0 && !this.isSubscribedTo(storageNode!)) {
+                            this.nodeToNode.disconnectFromNode(storageNode!, 'resend done')
+                            delete this.pendingResends[storageNode!]
                         }
                     }
                 )
-                this.pendingResends[storageNode].add(proxiedResend)
+                this.pendingResends[storageNode!].add(proxiedResend)
                 proxiedResend.commence()
             })
         })
     }
 
-    getResendResponseStream(request, source = null) {
+    getResendResponseStream(request: ResendRequest, source: string | null = null): Readable {
         const responseStream = new Readable({
             objectMode: true,
             read() {}
@@ -331,7 +385,7 @@ class ForeignResendStrategy {
 
         // L3 only works on local requests
         if (source === null) {
-            this._requestStorageNodes(request, responseStream)
+            this.requestStorageNodes(request, responseStream)
         } else {
             responseStream.push(null)
         }
@@ -339,7 +393,7 @@ class ForeignResendStrategy {
         return responseStream
     }
 
-    _requestStorageNodes(request, responseStream) {
+    private requestStorageNodes(request: ResendRequest, responseStream: Readable): void {
         const streamIdAndPartition = new StreamIdAndPartition(request.streamId, request.streamPartition)
         const tracker = this.getTracker(streamIdAndPartition.key())
         if (tracker == null) {
@@ -354,15 +408,10 @@ class ForeignResendStrategy {
         }
     }
 
-    stop() {
+    stop(): void {
         Object.values(this.pendingResends).forEach((proxiedResends) => {
             proxiedResends.forEach((proxiedResend) => proxiedResend.cancel())
         })
         this.pendingTrackerResponse.clearAll()
     }
-}
-
-module.exports = {
-    LocalResendStrategy,
-    ForeignResendStrategy
 }

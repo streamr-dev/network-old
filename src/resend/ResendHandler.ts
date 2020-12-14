@@ -1,20 +1,15 @@
 import { MetricsContext, Metrics } from "../helpers/MetricsContext"
 import { Readable } from "stream"
-
-export interface Request {
-    streamId: string
-    streamPartition: number
-    requestId: string
-}
+import { ResendRequest } from "../identifiers"
 
 export interface Strategy {
-    getResendResponseStream: (request: Request, source: string) => Readable
+    getResendResponseStream: (request: ResendRequest, source: string) => Readable
     stop?: () => void
 }
 
 interface Context {
     startTime: number
-    request: Request
+    request: ResendRequest
     stop: boolean
     responseStream: Readable | null
     pause: () => void
@@ -72,14 +67,14 @@ class ResendBookkeeper {
 
 export class ResendHandler {
     private readonly resendStrategies: Strategy[]
-    private readonly notifyError: (opts: { request: Request, error: Error }) => void
+    private readonly notifyError: (opts: { request: ResendRequest, error: Error }) => void
     private readonly maxInactivityPeriodInMs: number
     private readonly ongoingResends: ResendBookkeeper
     private readonly metrics: Metrics
 
     constructor(
         resendStrategies: Strategy[],
-        notifyError: (opts: { request: Request, error: Error }) => void,
+        notifyError: (opts: { request: ResendRequest, error: Error }) => void,
         metricsContext = new MetricsContext(''),
         maxInactivityPeriodInMs = 5 * 60 * 1000
     ) {
@@ -100,7 +95,7 @@ export class ResendHandler {
     }
 
     // TODO: type request
-    handleRequest(request: Request, source: string): Readable {
+    handleRequest(request: ResendRequest, source: string): Readable {
         const requestStream = new Readable({
             objectMode: true,
             read() {}
@@ -119,7 +114,7 @@ export class ResendHandler {
         contexts.forEach((ctx) => ctx.resume())
     }
 
-    cancelResendsOfNode(node: string): ReadonlyArray<Request> {
+    cancelResendsOfNode(node: string): ReadonlyArray<ResendRequest> {
         const contexts = this.ongoingResends.popContexts(node)
         contexts.forEach((ctx) => ctx.cancel())
         return contexts.map((ctx) => ctx.request)
@@ -136,7 +131,11 @@ export class ResendHandler {
         })
     }
 
-    async _loopThruResendStrategies(request: Request, source: string, requestStream: Readable): Promise<void> {
+    async _loopThruResendStrategies(
+        request: ResendRequest,
+        source: string,
+        requestStream: Readable
+    ): Promise<void> {
         const ctx: Context = {
             request,
             startTime: Date.now(),
@@ -186,7 +185,7 @@ export class ResendHandler {
         }
     }
 
-    _readStreamUntilEndOrError(responseStream: Readable, request: Request) {
+    _readStreamUntilEndOrError(responseStream: Readable, request: ResendRequest) {
         let numOfMessages = 0
         return new Promise((resolve) => {
             // Provide additional safety against hanging promises by emitting

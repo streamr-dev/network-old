@@ -470,7 +470,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
             isSubscribedTo.mockReturnValue(false)
             await waitForStreamToEnd(responseStream)
             expect(nodeToNode.disconnectFromNode).toBeCalledTimes(1)
-            expect(nodeToNode.disconnectFromNode).toBeCalledWith('storageNode')
+            expect(nodeToNode.disconnectFromNode).toBeCalledWith('storageNode', 'resend done')
         })
 
         test('if (previously) subscribed to storage node, do not disconnect from storage node', async () => {

@@ -1,3 +1,5 @@
+import { ControlLayer } from "streamr-client-protocol"
+
 /**
  * Uniquely identifies a stream
  */
@@ -33,3 +35,7 @@ export class StreamIdAndPartition {
         return new StreamIdAndPartition(id, Number.parseInt(partition, 10))
     }
 }
+
+export type ResendRequest = ControlLayer.ResendLastRequest
+    | ControlLayer.ResendFromRequest
+    | ControlLayer.ResendRangeRequest
