@@ -1,7 +1,7 @@
 const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
 
 const { LocalResendStrategy, ForeignResendStrategy } = require('./resend/resendStrategies')
-const Node = require('./logic/Node')
+const { Node, Event: NodeEvent } = require('./logic/Node')
 const { StreamIdAndPartition } = require('./identifiers')
 
 /*
@@ -16,14 +16,14 @@ class NetworkNode extends Node {
                 new ForeignResendStrategy(
                     opts.protocols.trackerNode,
                     opts.protocols.nodeToNode,
-                    (streamKey) => this._getTrackerId(streamKey),
+                    (streamKey) => this.getTrackerId(streamKey),
                     (node) => this.streams.isNodePresent(node)
                 )
             ]
         }
 
         super(networkOpts)
-        this.opts.storages.forEach((storage) => this.addMessageListener(storage.store.bind(storage)))
+        opts.storages.forEach((storage) => this.addMessageListener(storage.store.bind(storage)))
     }
 
     publish(streamMessage) {
@@ -31,7 +31,7 @@ class NetworkNode extends Node {
     }
 
     addMessageListener(cb) {
-        this.on(Node.events.UNSEEN_MESSAGE_RECEIVED, cb)
+        this.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, cb)
     }
 
     subscribe(streamId, streamPartition) {

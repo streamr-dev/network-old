@@ -4,7 +4,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const Node = require('../../src/logic/Node')
+const { Node, Event: NodeEvent } = require('../../src/logic/Node')
 
 // TODO: maybe worth re-designing this in a way that isn't this arbitrary?
 const FIRST_STREAM = 'stream-1' // assigned to trackerOne (arbitrarily by hashing algo)
@@ -130,12 +130,12 @@ describe('multi trackers', () => {
         nodeOne.subscribe(FIRST_STREAM_2, 0)
         nodeTwo.subscribe(FIRST_STREAM_2, 0)
 
-        let nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
-        let nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        let nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        let nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([
-            waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
 
         expect(nodeOneEvents).toHaveLength(1)
@@ -147,12 +147,12 @@ describe('multi trackers', () => {
         nodeOne.subscribe(SECOND_STREAM_2, 0)
         nodeTwo.subscribe(SECOND_STREAM_2, 0)
 
-        nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
-        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([
-            waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
 
         expect(nodeOneEvents).toHaveLength(1)
@@ -164,12 +164,12 @@ describe('multi trackers', () => {
         nodeOne.subscribe(THIRD_STREAM_2, 0)
         nodeTwo.subscribe(THIRD_STREAM_2, 0)
 
-        nodeOneEvents = eventsWithArgsToArray(nodeOne.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
-        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.protocols.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([
-            waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
 
         expect(nodeOneEvents).toHaveLength(1)

@@ -2,6 +2,7 @@ import { MetricsContext, Metrics } from "../helpers/MetricsContext"
 import { Readable } from "stream"
 import { ResendRequest } from "../identifiers"
 
+// TODO: move to composition.js
 export interface Strategy {
     getResendResponseStream: (request: ResendRequest, source: string) => Readable
     stop?: () => void

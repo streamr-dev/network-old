@@ -2,13 +2,12 @@ import { EventEmitter } from "events"
 import { ControlLayer, MessageLayer } from "streamr-client-protocol"
 import getLogger from "../helpers/logger"
 import { decode } from '../helpers/MessageEncoder'
-import { WebRtcEndpoint, Event as WsEndpointEvent, Rtts } from '../connection/WebRtcEndpoint'
+import { WebRtcEndpoint, Event as WsEndpointEvent } from '../connection/WebRtcEndpoint'
 import { PeerInfo } from "../connection/PeerInfo"
+import { Rtts } from "../identifiers"
 
 export enum Event {
     NODE_CONNECTED= 'streamr:node-node:node-connected',
-    SUBSCRIBE_REQUEST = 'streamr:node-node:subscribe-request',
-    UNSUBSCRIBE_REQUEST = 'streamr:node-node:unsubscribe-request',
     DATA_RECEIVED = 'streamr:node-node:stream-data',
     NODE_DISCONNECTED = 'streamr:node-node:node-disconnected',
     RESEND_REQUEST = 'streamr:node-node:resend-request',
@@ -21,8 +20,6 @@ export enum Event {
 const eventPerType: { [key: number]: string } = {}
 eventPerType[ControlLayer.ControlMessage.TYPES.BroadcastMessage] = Event.DATA_RECEIVED
 eventPerType[ControlLayer.ControlMessage.TYPES.UnicastMessage] = Event.UNICAST_RECEIVED
-eventPerType[ControlLayer.ControlMessage.TYPES.SubscribeRequest] = Event.SUBSCRIBE_REQUEST
-eventPerType[ControlLayer.ControlMessage.TYPES.UnsubscribeRequest] = Event.UNSUBSCRIBE_REQUEST
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendLastRequest] = Event.RESEND_REQUEST
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendFromRequest] = Event.RESEND_REQUEST
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendRangeRequest] = Event.RESEND_REQUEST
@@ -48,7 +45,7 @@ export class NodeToNode extends EventEmitter {
     connectToNode(
         receiverNodeId: string,
         trackerAddress: string,
-        isOffering: boolean,
+        isOffering?: boolean,
         trackerInstructed = true
     ): Promise<string> {
         return this.endpoint.connect(receiverNodeId, trackerAddress, isOffering, trackerInstructed)

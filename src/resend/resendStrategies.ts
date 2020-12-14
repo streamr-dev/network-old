@@ -7,6 +7,7 @@ import { TrackerNode } from "../protocol/TrackerNode"
 import { Event as NodeToNodeEvent } from "../protocol/NodeToNode"
 import { Event as TrackerNodeEvent } from "../protocol/TrackerNode"
 import getLogger from "../helpers/logger"
+import { Strategy } from "./ResendHandler"
 
 const logger = getLogger('streamr:resendStrategies')
 
@@ -25,7 +26,7 @@ function toUnicastMessage(request: ResendRequest): Transform {
 /**
  * Resend strategy that uses fetches streaming data from local storage.
  */
-export class LocalResendStrategy {
+export class LocalResendStrategy implements Strategy {
     private readonly storage: Storage
 
     constructor(storage: Storage) {
@@ -301,7 +302,7 @@ class PendingTrackerResponseBookkeeper {
  * Resend strategy that asks tracker for storage nodes, forwards resend request
  * to (one of) them, and then acts as a proxy/relay in between.
  */
-export class ForeignResendStrategy {
+export class ForeignResendStrategy implements Strategy {
     private readonly trackerNode: TrackerNode
     private readonly nodeToNode: NodeToNode
     private readonly getTracker: (streamId: string) => string

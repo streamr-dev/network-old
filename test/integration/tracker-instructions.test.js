@@ -3,7 +3,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
+const { Event: NodeEvent } = require('../../src/logic/Node')
 const { StreamIdAndPartition } = require('../../src/identifiers')
 
 describe('check tracker, nodes and statuses from nodes', () => {
@@ -81,8 +81,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
         ]).catch((e) => {})
 
         await Promise.race([
-            waitForEvent(node1, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(node2, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(node1, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(node2, NodeEvent.NODE_SUBSCRIBED)
         ])
 
         await Promise.all([

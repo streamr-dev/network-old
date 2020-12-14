@@ -59,6 +59,7 @@ export interface Status {
     streams: StatusStreams
     rtts: Rtts
     location: Location
+    started: string
 }
 
 export type ResendRequest = ControlLayer.ResendLastRequest

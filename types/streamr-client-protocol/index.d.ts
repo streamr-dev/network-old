@@ -239,7 +239,20 @@ declare module 'streamr-client-protocol' {
 
     module MessageLayer {
         class StreamMessage {
+            messageId: MessageID
+            prevMsgRef: MessageRef
 
+            getStreamId(): string
+            getStreamPartition(): number
+        }
+
+        class MessageID {
+            streamId: string
+            streamPartition: number
+            timestamp: number
+            sequenceNumber: number
+            publisherId: string
+            msgChainId: string
         }
 
         class MessageRef {
@@ -250,6 +263,15 @@ declare module 'streamr-client-protocol' {
                 timestamp: number
                 sequenceNumber: number
             })
+        }
+    }
+
+    module Utils {
+        function createTrackerRegistry<R>(servers: R[]): TrackerRegistry<R>
+
+        class TrackerRegistry<R> {
+            getTracker(streamId: string, partition: number): R
+            getAllTrackers(): ReadonlyArray<R>
         }
     }
 }

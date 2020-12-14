@@ -3,7 +3,7 @@ const { TrackerLayer } = require('streamr-client-protocol')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
+const { Event: NodeEvent } = require('../../src/logic/Node')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 const WsEndpoint = require('../../src/connection/WsEndpoint')
 
@@ -27,19 +27,16 @@ describe('Check tracker instructions to node', () => {
             host: '127.0.0.1',
             port: 30952,
             id: 'node-1',
-            trackers: [tracker.getAddress()]
+            trackers: [tracker.getAddress()],
+            disconnectionWaitTime: 200
         })
         nodeTwo = await startNetworkNode({
             host: '127.0.0.1',
             port: 30953,
             id: 'node-2',
-            trackers: [tracker.getAddress()]
+            trackers: [tracker.getAddress()],
+            disconnectionWaitTime: 200
         })
-
-        // TODO: a better way of achieving this would be to pass via constructor, but currently not possible when using
-        // startNetworkNode function
-        nodeOne.opts.disconnectionWaitTime = 200
-        nodeTwo.opts.disconnectionWaitTime = 200
 
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
@@ -67,8 +64,8 @@ describe('Check tracker instructions to node', () => {
 
     it('if tracker sends empty list of nodes, node one will disconnect from node two', async () => {
         await Promise.all([
-            waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED)
+            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
         // send empty list
         await tracker.trackerServer.endpoint.send(
@@ -82,14 +79,14 @@ describe('Check tracker instructions to node', () => {
             }).serialize()
         )
 
-        await waitForEvent(nodeOne.protocols.trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
-        await waitForEvent(nodeOne, Node.events.NODE_DISCONNECTED)
+        await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
+        await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
 
-        expect(nodeOne.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
+        expect(nodeOne.trackerNode.endpoint.getPeers().size).toBe(1)
 
         nodeOne.unsubscribe(streamId, 0)
 
-        await waitForEvent(nodeTwo.protocols.nodeToNode.endpoint, WsEndpoint.Event.PEER_DISCONNECTED)
-        expect(nodeTwo.protocols.trackerNode.endpoint.getPeers().size).toBe(1)
+        await waitForEvent(nodeTwo.nodeToNode.endpoint, WsEndpoint.Event.PEER_DISCONNECTED)
+        expect(nodeTwo.trackerNode.endpoint.getPeers().size).toBe(1)
     })
 })

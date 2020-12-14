@@ -4,7 +4,7 @@ import { TrackerLayer } from "streamr-client-protocol"
 import getLogger from "../helpers/logger"
 import { decode } from '../helpers/MessageEncoder'
 import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
-import { StreamIdAndPartition } from "../identifiers"
+import { Status, StreamIdAndPartition } from "../identifiers"
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "../logic/RtcMessage"
 
@@ -36,7 +36,7 @@ export class TrackerNode extends EventEmitter {
         this.logger = getLogger(`streamr:TrackerNode:${endpoint.getPeerInfo().peerId}`)
     }
 
-    sendStatus(trackerId: string, status: string): Promise<TrackerLayer.StatusMessage> {
+    sendStatus(trackerId: string, status: Status): Promise<TrackerLayer.StatusMessage> {
         return this.send(trackerId, new TrackerLayer.StatusMessage({
             requestId: uuidv4(),
             status
@@ -89,6 +89,10 @@ export class TrackerNode extends EventEmitter {
 
     send<T>(receiverNodeId: string, message: T & TrackerLayer.TrackerMessage): Promise<T> {
         return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
+    }
+
+    resolveAddress(trackerId: string): string {
+        return this.endpoint.resolveAddress(trackerId)
     }
 
     stop(): Promise<void> {

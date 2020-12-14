@@ -61,7 +61,7 @@ describe('duplicate message detection and avoidance', () => {
         ])
 
         const allNodesConnnectedToTrackerPromise = Promise.all(otherNodes.map((node) => {
-            return waitForEvent(node.protocols.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
+            return waitForEvent(node.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
         }))
         // eslint-disable-next-line no-restricted-syntax
         for (const node of otherNodes) {

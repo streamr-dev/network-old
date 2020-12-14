@@ -1,19 +1,6 @@
 import { StreamIdAndPartition } from "../identifiers"
 import { DuplicateMessageDetector, NumberPair } from "./DuplicateMessageDetector"
-
-interface MessageID {
-    streamId: string
-    streamPartition: number
-    timestamp: number
-    sequenceNumber: number
-    publisherId: string
-    msgChainId: string
-}
-
-interface MessageRef {
-    timestamp: number
-    sequenceNumber: number
-}
+import { MessageLayer } from "streamr-client-protocol"
 
 interface StreamStateRepresentation {
     inboundNodes: Array<string>
@@ -28,7 +15,7 @@ interface StreamState {
     counter: number
 }
 
-function keyForDetector({ publisherId, msgChainId }: MessageID) {
+function keyForDetector({ publisherId, msgChainId }: MessageLayer.MessageID) {
     return `${publisherId}-${msgChainId}`
 }
 
@@ -51,8 +38,8 @@ export class StreamManager {
     }
 
     markNumbersAndCheckThatIsNotDuplicate(
-        messageId: MessageID,
-        previousMessageReference: MessageRef | null
+        messageId: MessageLayer.MessageID,
+        previousMessageReference: MessageLayer.MessageRef | null
     ): boolean | never {
         const streamIdAndPartition = new StreamIdAndPartition(messageId.streamId, messageId.streamPartition)
         this._verifyThatIsSetUp(streamIdAndPartition)

@@ -1,17 +1,13 @@
 import { cancelable, CancelablePromiseType } from "cancelable-promise"
 import { StreamIdAndPartition } from "../identifiers"
 import getLogger from "../helpers/logger"
+import { TrackerLayer } from "streamr-client-protocol"
 
 const logger = getLogger('streamr:InstructionThrottler')
 
-interface InstructionMessage {
-    streamId: string
-    streamPartition: number
-}
-
 interface Queue {
     [key: string]: {
-        instructionMessage: InstructionMessage
+        instructionMessage: TrackerLayer.InstructionMessage
         trackerId: string
     }
 }
@@ -24,16 +20,16 @@ interface Queue {
  */
 
 export class InstructionThrottler {
-    private readonly handleFn: (instructionMessage: InstructionMessage, trackerId: string) => PromiseLike<void>
+    private readonly handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>
     private queue: Queue = {}
     private handling: boolean = false
     private ongoingPromise: CancelablePromiseType<void> | null = null
 
-    constructor(handleFn: (instructionMessage: InstructionMessage, trackerId: string) => PromiseLike<void>) {
+    constructor(handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>) {
         this.handleFn = handleFn
     }
 
-    add(instructionMessage: InstructionMessage, trackerId: string): void {
+    add(instructionMessage: TrackerLayer.InstructionMessage, trackerId: string): void {
         this.queue[StreamIdAndPartition.fromMessage(instructionMessage).toString()] = {
             instructionMessage,
             trackerId

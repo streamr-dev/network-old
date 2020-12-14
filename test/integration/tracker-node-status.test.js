@@ -2,7 +2,7 @@ const { wait, waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const Node = require('../../src/logic/Node')
+const { Event: NodeEvent } = require('../../src/logic/Node')
 
 /**
  * This test verifies that tracker receives status messages from nodes with list of inBound and outBound connections
@@ -54,7 +54,7 @@ describe('check status message flow between tracker and two nodes', () => {
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-1')
             // eslint-disable-next-line no-underscore-dangle
-            expect(statusMessage.status).toEqual(nodeOne._getStatus())
+            expect(statusMessage.status).toEqual(nodeOne.getStatus())
             done()
         })
 
@@ -65,7 +65,7 @@ describe('check status message flow between tracker and two nodes', () => {
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-2')
             // eslint-disable-next-line no-underscore-dangle
-            expect(statusMessage.status).toEqual(nodeTwo._getStatus())
+            expect(statusMessage.status).toEqual(nodeTwo.getStatus())
             done()
         })
         nodeTwo.start()
@@ -79,13 +79,13 @@ describe('check status message flow between tracker and two nodes', () => {
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
             if (nodeId === 'node-1') {
                 // eslint-disable-next-line no-underscore-dangle
-                expect(statusMessage.status).toEqual(nodeOne._getStatus())
+                expect(statusMessage.status).toEqual(nodeOne.getStatus())
                 receivedTotal += 1
             }
 
             if (nodeId === 'node-2') {
                 // eslint-disable-next-line no-underscore-dangle
-                expect(statusMessage.status).toEqual(nodeTwo._getStatus())
+                expect(statusMessage.status).toEqual(nodeTwo.getStatus())
                 receivedTotal += 1
             }
 
@@ -110,8 +110,8 @@ describe('check status message flow between tracker and two nodes', () => {
         nodeTwo.subscribe(streamId, 0)
 
         await Promise.all([
-            waitForEvent(nodeOne, Node.events.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, Node.events.NODE_SUBSCRIBED),
+            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED),
             wait(2000)
         ])
 
@@ -146,16 +146,14 @@ describe('check status message flow between tracker and two nodes', () => {
         nodeTwo.subscribe(streamId, 0)
 
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
-            if (nodeId === nodeOne.opts.id) {
-                // eslint-disable-next-line no-underscore-dangle
-                expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
-                expect(tracker.nodeLocations['node-1']).toBeNull()
+            if (nodeId === nodeOne.peerInfo.peerId) {
+                expect(Object.keys(statusMessage.status.location).length).toEqual(4)
+                expect(tracker.locationManager.nodeLocations['node-1']).toBeUndefined()
             }
 
-            if (nodeId === nodeTwo.opts.id) {
-                // eslint-disable-next-line no-underscore-dangle
-                expect(Object.keys(statusMessage.getStatus().location).length).toEqual(4)
-                expect(tracker.nodeLocations['node-2'].country).toBe('FI')
+            if (nodeId === nodeTwo.peerInfo.peerId) {
+                expect(Object.keys(statusMessage.status.location).length).toEqual(4)
+                expect(tracker.locationManager.nodeLocations['node-2'].country).toBe('FI')
             }
             receivedTotal += 1
             if (receivedTotal === 2) {
