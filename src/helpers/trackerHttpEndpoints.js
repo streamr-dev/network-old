@@ -1,4 +1,5 @@
 const extraLogger = require('./logger')('streamr:tracker:http-endpoints')
+const _ = require('lodash');
 
 const writeCorsHeaders = (res, req) => {
     const origin = req.getHeader('origin')
@@ -64,7 +65,7 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
         res.end(JSON.stringify(tracker.getTopology(streamId, askedPartition)))
     }).cachedJsonGet('/topology-union/', 15 * 1000, () => {
         const topologyUnion = tracker.getTopologyUnion()
-        return Object.fromEntries(new Map(Array.from(topologyUnion, ([key, value]) => [key, Array.from(value)])))
+        return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
     }).get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
         writeCorsHeaders(res, req)
