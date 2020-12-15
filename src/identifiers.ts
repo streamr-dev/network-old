@@ -1,4 +1,6 @@
-import { ControlLayer, MessageLayer } from "streamr-client-protocol"
+import { ControlLayer } from "streamr-client-protocol"
+import { RtcSubTypes } from "./logic/RtcMessage"
+import { PeerInfo } from "./connection/PeerInfo"
 
 /**
  * Uniquely identifies a stream
@@ -66,36 +68,66 @@ export type ResendRequest = ControlLayer.ResendLastRequest
     | ControlLayer.ResendFromRequest
     | ControlLayer.ResendRangeRequest
 
-import { Readable } from "stream"
+export type OfferMessage = {
+    subType: RtcSubTypes.RTC_OFFER
+    data: {
+        description: string
+    }
+}
 
+export type AnswerMessage = {
+    subType: RtcSubTypes.RTC_ANSWER
+    data: {
+        description: string
+    }
+}
 
-// TODO: move to composition
-export interface Storage {
-    requestLast(
-        streamId: string,
-        streamPartition: number,
-        numberLast: number
-    ): Readable
+export type RemoteCandidateMessage = {
+    subType: RtcSubTypes.REMOTE_CANDIDATE
+    data: {
+        candidate: string
+        mid: string
+    }
+}
 
-    requestFrom(
-        streamId: string,
-        streamPartition: number,
-        fromTimestamp: number,
-        fromSequenceNumber: number,
-        publisherId: string,
-        msgChainId: string
-    ): Readable
+export type RtcConnectMessage = {
+    subType: RtcSubTypes.RTC_CONNECT
+    data: {
+        candidate: string
+        mid: string
+    }
+}
 
-    requestRange(
-        streamId: string,
-        streamPartition: number,
-        fromTimestamp: number,
-        fromSequenceNumber: number,
-        toTimestamp: number,
-        toSequenceNumber: number,
-        publisherId: string,
-        msgChainId: string
-    ): Readable
+export type LocalDescriptionMessage = {
+    subType: RtcSubTypes.LOCAL_DESCRIPTION
+    data: {
+        type: "answer" | "offer"
+        description: string
+    }
+}
 
-    store(msg: MessageLayer.StreamMessage): void
+export type LocalCandidateMessage = {
+    subType: RtcSubTypes.LOCAL_CANDIDATE
+    data: {
+        candidate: string
+        mid: string
+    }
+}
+
+export type RelayMessage = (
+    OfferMessage
+    | AnswerMessage
+    | RemoteCandidateMessage
+    | RtcConnectMessage
+    | LocalDescriptionMessage
+    | LocalCandidateMessage
+    ) & {
+    requestId: string
+    targetNode: string
+    originator: PeerInfo
+}
+
+export interface RtcErrorMessage {
+    targetNode: string
+    errorCode: string
 }

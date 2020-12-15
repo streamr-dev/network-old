@@ -8,6 +8,7 @@ import { Status, StreamIdAndPartition } from "../identifiers"
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "../logic/RtcMessage"
 import pino from "pino"
+import { DescriptionType } from "node-datachannel"
 
 export enum Event {
     CONNECTED_TO_TRACKER = 'streamr:tracker-node:send-status',
@@ -52,7 +53,7 @@ export class TrackerNode extends EventEmitter {
         }))
     }
 
-    sendLocalDescription(trackerId: string, targetNode: string, originatorInfo: PeerInfo, type: "offer" | "answer", description: string): Promise<TrackerLayer.RelayMessage> {
+    sendLocalDescription(trackerId: string, targetNode: string, originatorInfo: PeerInfo, type: DescriptionType, description: string): Promise<TrackerLayer.RelayMessage> {
         return this.send(trackerId, new TrackerLayer.RelayMessage({
             requestId: uuidv4(),
             originator: originatorInfo,

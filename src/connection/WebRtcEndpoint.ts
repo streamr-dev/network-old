@@ -4,7 +4,14 @@ import getLogger from '../helpers/logger'
 import {PeerInfo} from './PeerInfo'
 import {Connection} from './Connection'
 import {Metrics, MetricsContext} from "../helpers/MetricsContext";
-import { AnswerOptions, ConnectOptions, ErrorOptions, OfferOptions, RemoteCandidateOptions } from "../logic/RtcSignaller"
+import {
+    AnswerOptions,
+    ConnectOptions,
+    ErrorOptions,
+    OfferOptions,
+    RemoteCandidateOptions,
+    RtcSignaller
+} from "../logic/RtcSignaller"
 import { Rtts } from "../identifiers"
 import pino from "pino"
 
@@ -27,7 +34,7 @@ class WebRtcError extends Error {
 export class WebRtcEndpoint extends EventEmitter {
     private readonly id: string
     private readonly stunUrls: string[]
-    private readonly rtcSignaller: any // TODO: type
+    private readonly rtcSignaller: RtcSignaller
     private connections: { [key: string]: Connection }
     private readonly newConnectionTimeout: number
     private readonly pingIntervalInMs: number
@@ -38,7 +45,7 @@ export class WebRtcEndpoint extends EventEmitter {
     constructor(
         id: string,
         stunUrls: string[],
-        rtcSignaller: any, // TODO: type
+        rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
         pingIntervalInMs = 5 * 1000,
         newConnectionTimeout = 5000

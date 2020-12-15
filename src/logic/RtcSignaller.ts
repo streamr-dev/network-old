@@ -2,8 +2,9 @@ import { TrackerNode, Event as TrackerNodeEvent } from '../protocol/TrackerNode'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "./RtcMessage";
-import { RelayMessage, RtcErrorMessage } from "../../types/global"
+import { RelayMessage, RtcErrorMessage } from "../identifiers"
 import pino from "pino"
+import { DescriptionType } from "node-datachannel"
 
 export interface OfferOptions {
     routerId: string,
@@ -96,7 +97,7 @@ export class RtcSignaller {
         })
     }
 
-    onLocalDescription(routerId: string, targetPeerId: string, type: "offer" | "answer", description: string): void {
+    onLocalDescription(routerId: string, targetPeerId: string, type: DescriptionType, description: string): void {
         this.trackerNode.sendLocalDescription(routerId, targetPeerId, this.peerInfo, type, description)
             .catch((err: Error) => {
                 this.logger.debug('Failed to sendLocalDescription via %s due to %s', routerId, err) // TODO: better?

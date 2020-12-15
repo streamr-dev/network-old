@@ -1,6 +1,7 @@
 import { HttpRequest, HttpResponse, TemplatedApp } from "uWebSockets.js"
 import { MetricsContext } from "./MetricsContext"
 import getLogger from "./logger"
+import { Tracker } from "../logic/Tracker"
 
 const extraLogger = getLogger('streamr:tracker:http-endpoints')
 
@@ -19,7 +20,7 @@ const respondWithError = (res: HttpResponse, req: HttpRequest, errorMessage: str
 }
 
 // TODO: type for tracker
-export function trackerHttpEndpoints(wss: TemplatedApp, tracker: any, metricsContext: MetricsContext): void {
+export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metricsContext: MetricsContext): void {
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)

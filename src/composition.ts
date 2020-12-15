@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import Protocol from "streamr-client-protocol"
 import { MetricsContext } from "./helpers/MetricsContext"
-import { Location, Storage } from "./identifiers"
+import { Location } from "./identifiers"
 import { PeerInfo } from "./connection/PeerInfo"
 import { startEndpoint } from "./connection/WsEndpoint"
 import { Tracker } from "./logic/Tracker"
@@ -13,10 +13,41 @@ import { RtcSignaller } from "./logic/RtcSignaller"
 import { WebRtcEndpoint } from "./connection/WebRtcEndpoint"
 import { NodeToNode } from "./protocol/NodeToNode"
 import { NetworkNode } from "./NetworkNode"
+import { Readable } from "stream"
 
 const STUN_URLS = ['stun:stun.l.google.com:19302'] // TODO: make configurable
 
 const logger = getLogger("streamr:bin:composition")
+
+export interface Storage {
+    requestLast(
+        streamId: string,
+        streamPartition: number,
+        numberLast: number
+    ): Readable
+
+    requestFrom(
+        streamId: string,
+        streamPartition: number,
+        fromTimestamp: number,
+        fromSequenceNumber: number,
+        publisherId: string | null,
+        msgChainId: string | null
+    ): Readable
+
+    requestRange(
+        streamId: string,
+        streamPartition: number,
+        fromTimestamp: number,
+        fromSequenceNumber: number,
+        toTimestamp: number,
+        toSequenceNumber: number,
+        publisherId: string | null,
+        msgChainId: string | null
+    ): Readable
+
+    store(msg: Protocol.MessageLayer.StreamMessage): void
+}
 
 export interface TrackerOptions {
     host: string

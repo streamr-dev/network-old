@@ -62,7 +62,7 @@ export interface ConstructorOptions {
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
     pingPongTimeout?: number
-    onLocalDescription: (type: string, description: string) => void
+    onLocalDescription: (type: DescriptionType, description: string) => void
     onLocalCandidate: (candidate: string, mid: string) => void
     onOpen: () => void
     onMessage: (msg: string)  => void
@@ -81,7 +81,7 @@ export class Connection {
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
     private readonly pingPongTimeout: number
-    private readonly onLocalDescription: (type: string, description: string) => void
+    private readonly onLocalDescription: (type: DescriptionType, description: string) => void
     private readonly onLocalCandidate: (candidate: string, mid: string) => void
     private readonly onOpen: () => void
     private readonly onMessage: (msg: string)  => void
@@ -173,7 +173,7 @@ export class Connection {
             this.lastGatheringState = state
             this.logger.debug('conn.onGatheringStateChange: %s', state)
         })
-        this.connection.onLocalDescription((description, type) => {
+        this.connection.onLocalDescription((description, type: DescriptionType) => {
             this.onLocalDescription(type, description)
         })
         this.connection.onLocalCandidate((candidate, mid) => {

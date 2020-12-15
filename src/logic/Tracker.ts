@@ -221,7 +221,7 @@ export class Tracker extends EventEmitter {
         }
     }
 
-    getTopology(streamId: StreamId | null = null, partition: string | null = null): { [key: string]: TopologyState } {
+    getTopology(streamId: StreamId | null = null, partition: number | null = null): { [key: string]: TopologyState } {
         const topology: { [key: string]: TopologyState } = {}
 
         let streamKeys = []
@@ -230,8 +230,8 @@ export class Tracker extends EventEmitter {
             streamKeys = Object.keys(this.overlayPerStream).filter((streamKey) => streamKey.includes(streamId))
         } else {
             let askedStreamKey: StreamIdAndPartition | null = null
-            if (streamId && partition != null && Number.isSafeInteger(partition)) {
-                askedStreamKey = new StreamIdAndPartition(streamId, Number.parseInt(partition, 10))
+            if (streamId && partition != null && Number.isSafeInteger(partition) && partition >= 0) {
+                askedStreamKey = new StreamIdAndPartition(streamId, partition)
             }
 
             streamKeys = askedStreamKey

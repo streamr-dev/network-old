@@ -6,6 +6,7 @@ import {PeerInfo, PeerType} from "./PeerInfo"
 import { Metrics, MetricsContext } from "../helpers/MetricsContext"
 import getLogger from "../helpers/logger"
 import pino from "pino"
+import { Rtts } from "../identifiers"
 
 const extraLogger = getLogger('streamr:ws-endpoint')
 
@@ -284,8 +285,8 @@ export class WsEndpoint extends EventEmitter {
         message: string,
         recipientId: string,
         recipientAddress: string,
-        successCallback: (peerId: string) => any,
-        errorCallback: (err: Error) => any
+        successCallback: (peerId: string) => void,
+        errorCallback: (err: Error) => void
     ): void {
         const onSuccess = (address: string, peerId: string, msg: string): void => {
             this.logger.debug('sent to %s [%s] message "%s"', recipientId, address, msg)
@@ -460,9 +461,9 @@ export class WsEndpoint extends EventEmitter {
         return this.connections.has(address)
     }
 
-    getRtts(): { [key: string]: any } {
+    getRtts(): Rtts {
         const connections = [...this.connections.keys()]
-        const rtts: { [key: string]: any } = {}
+        const rtts: Rtts = {}
         connections.forEach((address) => {
             const { rtt } = this.connections.get(address)!
             const nodeId = this.peerBook.getPeerId(address)
@@ -489,7 +490,7 @@ export class WsEndpoint extends EventEmitter {
         return this.peerInfo
     }
 
-    getPeers(): ReadonlyMap<string, any> {
+    getPeers(): ReadonlyMap<string, WsConnection | UWSConnection> {
         return this.connections
     }
 
