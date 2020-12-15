@@ -1,4 +1,4 @@
-import { ControlLayer } from "streamr-client-protocol"
+import { ControlLayer, MessageLayer } from "streamr-client-protocol"
 
 /**
  * Uniquely identifies a stream
@@ -65,3 +65,37 @@ export interface Status {
 export type ResendRequest = ControlLayer.ResendLastRequest
     | ControlLayer.ResendFromRequest
     | ControlLayer.ResendRangeRequest
+
+import { Readable } from "stream"
+
+
+// TODO: move to composition
+export interface Storage {
+    requestLast(
+        streamId: string,
+        streamPartition: number,
+        numberLast: number
+    ): Readable
+
+    requestFrom(
+        streamId: string,
+        streamPartition: number,
+        fromTimestamp: number,
+        fromSequenceNumber: number,
+        publisherId: string,
+        msgChainId: string
+    ): Readable
+
+    requestRange(
+        streamId: string,
+        streamPartition: number,
+        fromTimestamp: number,
+        fromSequenceNumber: number,
+        toTimestamp: number,
+        toSequenceNumber: number,
+        publisherId: string,
+        msgChainId: string
+    ): Readable
+
+    store(msg: MessageLayer.StreamMessage): void
+}

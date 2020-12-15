@@ -1,36 +1,5 @@
 import { PeerInfo } from "../src/connection/PeerInfo"
 import { RtcSubTypes } from "../src/logic/RtcMessage"
-import { Readable } from "stream"
-
-
-// TODO: move to composition
-declare interface Storage {
-    requestLast(
-        streamId: string,
-        streamPartition: number,
-        numberLast: number
-    ): Readable
-
-    requestFrom(
-        streamId: string,
-        streamPartition: number,
-        fromTimestamp: number,
-        fromSequenceNumber: number,
-        publisherId: string,
-        msgChainId: string
-    ): Readable
-
-    requestRange(
-        streamId: string,
-        streamPartition: number,
-        fromTimestamp: number,
-        fromSequenceNumber: number,
-        toTimestamp: number,
-        toSequenceNumber: number,
-        publisherId: string,
-        msgChainId: string
-    ): Readable
-}
 
 // TODO: replace with streamr-client-protocol-js eventually...
 declare type OfferMessage = {

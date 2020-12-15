@@ -4,7 +4,7 @@ import { ResendRequest } from "../identifiers"
 
 // TODO: move to composition.js
 export interface Strategy {
-    getResendResponseStream: (request: ResendRequest, source: string) => Readable
+    getResendResponseStream: (request: ResendRequest, source: string | null) => Readable
     stop?: () => void
 }
 
@@ -21,31 +21,31 @@ interface Context {
 class ResendBookkeeper {
     private readonly resends: { [key: string]: Set<Context> } = {} // nodeId => Set[Ctx]
 
-    add(node: string, ctx: Context): void {
-        if (this.resends[node] == null) {
-            this.resends[node] = new Set()
+    add(node: string | null, ctx: Context): void {
+        if (this.resends[node || 'null'] == null) {
+            this.resends[node || 'null'] = new Set()
         }
-        this.resends[node].add(ctx)
+        this.resends[node || 'null'].add(ctx)
     }
 
-    getContexts(node: string): ReadonlyArray<Context> {
-        if (this.resends[node] == null) {
+    getContexts(node: string | null): ReadonlyArray<Context> {
+        if (this.resends[node || 'null'] == null) {
             return []
         }
-        return [...this.resends[node]]
+        return [...this.resends[node || 'null']]
     }
 
-    popContexts(node: string): ReadonlyArray<Context> {
+    popContexts(node: string | null): ReadonlyArray<Context> {
         const contexts = this.getContexts(node)
-        delete this.resends[node]
+        delete this.resends[node || 'null']
         return contexts
     }
 
-    delete(node: string, ctx: Context): void {
-        if (this.resends[node] != null) {
-            this.resends[node].delete(ctx)
-            if (this.resends[node].size === 0) {
-                delete this.resends[node]
+    delete(node: string | null, ctx: Context): void {
+        if (this.resends[node || 'null'] != null) {
+            this.resends[node || 'null'].delete(ctx)
+            if (this.resends[node || 'null'].size === 0) {
+                delete this.resends[node || 'null']
             }
         }
     }
@@ -95,8 +95,7 @@ export class ResendHandler {
             .addQueriedMetric('meanAge', () => this.ongoingResends.meanAge())
     }
 
-    // TODO: type request
-    handleRequest(request: ResendRequest, source: string): Readable {
+    handleRequest(request: ResendRequest, source: string | null): Readable {
         const requestStream = new Readable({
             objectMode: true,
             read() {}
@@ -134,7 +133,7 @@ export class ResendHandler {
 
     async _loopThruResendStrategies(
         request: ResendRequest,
-        source: string,
+        source: string | null,
         requestStream: Readable
     ): Promise<void> {
         const ctx: Context = {

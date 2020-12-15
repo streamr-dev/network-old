@@ -1,8 +1,7 @@
 import { Transform, Readable } from "stream"
 import { ControlLayer } from "streamr-client-protocol"
-import { Storage } from "../../types/global"
 import { NodeToNode } from "../protocol/NodeToNode"
-import { StreamIdAndPartition, ResendRequest } from "../identifiers"
+import { StreamIdAndPartition, ResendRequest, Storage } from "../identifiers"
 import { TrackerNode } from "../protocol/TrackerNode"
 import { Event as NodeToNodeEvent } from "../protocol/NodeToNode"
 import { Event as TrackerNodeEvent } from "../protocol/TrackerNode"
@@ -305,7 +304,7 @@ class PendingTrackerResponseBookkeeper {
 export class ForeignResendStrategy implements Strategy {
     private readonly trackerNode: TrackerNode
     private readonly nodeToNode: NodeToNode
-    private readonly getTracker: (streamId: string) => string
+    private readonly getTracker: (streamId: string) => string | null
     private readonly isSubscribedTo: (streamId: string) => boolean
     private readonly timeout: number
     private readonly pendingTrackerResponse: PendingTrackerResponseBookkeeper
@@ -316,7 +315,7 @@ export class ForeignResendStrategy implements Strategy {
     constructor(
         trackerNode: TrackerNode,
         nodeToNode: NodeToNode,
-        getTracker: (streamId: string) => string,
+        getTracker: (streamId: string) => string | null,
         isSubscribedTo: (streamId: string) => boolean,
         timeout = 20 * 1000
     ) {

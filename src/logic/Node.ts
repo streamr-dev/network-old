@@ -200,7 +200,7 @@ export class Node extends EventEmitter {
         this.sendStreamStatus(streamId)
     }
 
-    requestResend(request: ResendRequest, source: string): Readable {
+    requestResend(request: ResendRequest, source: string | null): Readable {
         this.metrics.record('resendRequests', 1)
         this.perStreamMetrics.recordResend(request.streamId)
         this.logger.debug('received %s resend request %s with requestId %s',
@@ -440,9 +440,13 @@ export class Node extends EventEmitter {
         return node
     }
 
-    private getTrackerId(streamKey: string): string | null {
+    protected getTrackerId(streamKey: string): string | null {
         const address = this.trackerRegistry.getTracker(streamKey, 0) // TODO: fix soon
         return this.trackerBook[address] || null
+    }
+
+    protected isNodePresent(nodeId: string): boolean {
+        return this.streams.isNodePresent(nodeId)
     }
 
     private unsubscribeFromStreamOnNode(node: string, streamId: StreamIdAndPartition): void {

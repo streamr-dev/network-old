@@ -1,14 +1,18 @@
-const { ControlLayer, MessageLayer } = require('streamr-client-protocol')
+import { Node, Event as NodeEvent, NodeOptions } from "./logic/Node"
+import { ForeignResendStrategy, LocalResendStrategy } from "./resend/resendStrategies"
+import { Storage, StreamIdAndPartition } from "./identifiers"
+import { ControlLayer, MessageLayer } from "streamr-client-protocol"
+import ReadableStream = NodeJS.ReadableStream
 
-const { LocalResendStrategy, ForeignResendStrategy } = require('./resend/resendStrategies')
-const { Node, Event: NodeEvent } = require('./logic/Node')
-const { StreamIdAndPartition } = require('./identifiers')
+export interface NetworkNodeOptions extends NodeOptions {
+    storages: Array<Storage>
+}
 
 /*
 Convenience wrapper for building client-facing functionality. Used by broker.
  */
-class NetworkNode extends Node {
-    constructor(opts) {
+export class NetworkNode extends Node {
+    constructor(opts: NetworkNodeOptions) {
         const networkOpts = {
             ...opts,
             resendStrategies: [
@@ -17,39 +21,53 @@ class NetworkNode extends Node {
                     opts.protocols.trackerNode,
                     opts.protocols.nodeToNode,
                     (streamKey) => this.getTrackerId(streamKey),
-                    (node) => this.streams.isNodePresent(node)
+                    (node) => this.isNodePresent(node)
                 )
             ]
         }
-
         super(networkOpts)
-        opts.storages.forEach((storage) => this.addMessageListener(storage.store.bind(storage)))
+        opts.storages.forEach((storage) => {
+            this.addMessageListener((msg: MessageLayer.StreamMessage) => storage.store(msg))
+        })
     }
 
-    publish(streamMessage) {
+    publish(streamMessage: MessageLayer.StreamMessage): void {
         this.onDataReceived(streamMessage)
     }
 
-    addMessageListener(cb) {
+    addMessageListener(cb: (msg: MessageLayer.StreamMessage) => void) {
         this.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, cb)
     }
 
-    subscribe(streamId, streamPartition) {
+    subscribe(streamId: string, streamPartition: number): void {
         this.subscribeToStreamIfHaveNotYet(new StreamIdAndPartition(streamId, streamPartition))
     }
 
-    unsubscribe(streamId, streamPartition) {
+    unsubscribe(streamId: string, streamPartition: number): void {
         this.unsubscribeFromStream(new StreamIdAndPartition(streamId, streamPartition))
     }
 
-    requestResendLast(streamId, streamPartition, requestId, numberLast) {
+    requestResendLast(
+        streamId: string,
+        streamPartition: number,
+        requestId: string,
+        numberLast: number
+    ): ReadableStream {
         const request = new ControlLayer.ResendLastRequest({
             requestId, streamId, streamPartition, numberLast
         })
         return this.requestResend(request, null)
     }
 
-    requestResendFrom(streamId, streamPartition, requestId, fromTimestamp, fromSequenceNo, publisherId, msgChainId) {
+    requestResendFrom(
+        streamId: string,
+        streamPartition: number,
+        requestId: string,
+        fromTimestamp: number,
+        fromSequenceNo: number,
+        publisherId: string | null,
+        msgChainId: string | null
+    ): ReadableStream {
         const request = new ControlLayer.ResendFromRequest({
             requestId,
             streamId,
@@ -61,15 +79,16 @@ class NetworkNode extends Node {
         return this.requestResend(request, null)
     }
 
-    requestResendRange(streamId,
-        streamPartition,
-        requestId,
-        fromTimestamp,
-        fromSequenceNo,
-        toTimestamp,
-        toSequenceNo,
-        publisherId,
-        msgChainId) {
+    requestResendRange(streamId: string,
+        streamPartition: number,
+        requestId: string,
+        fromTimestamp: number,
+        fromSequenceNo: number,
+        toTimestamp: number,
+        toSequenceNo: number,
+        publisherId: string | null,
+        msgChainId: string | null
+    ): ReadableStream {
         const request = new ControlLayer.ResendRangeRequest({
             requestId,
             streamId,
@@ -81,10 +100,4 @@ class NetworkNode extends Node {
         })
         return this.requestResend(request, null)
     }
-
-    getStreams() {
-        return this.streams.getStreamsAsKeys()
-    }
 }
-
-module.exports = NetworkNode

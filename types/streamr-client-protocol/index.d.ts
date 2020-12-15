@@ -202,16 +202,16 @@ declare module 'streamr-client-protocol' {
             streamId: string
             streamPartition: number
             fromMsgRef: MessageLayer.MessageRef
-            publisherId: string
-            msgChainId: string
+            publisherId: string | null
+            msgChainId: string | null
 
             constructor(args: {
                 requestId: string
                 streamId: string
                 streamPartition: number
                 fromMsgRef: MessageLayer.MessageRef
-                publisherId: string
-                msgChainId: string
+                publisherId: string | null
+                msgChainId: string | null
             })
         }
 
@@ -222,8 +222,8 @@ declare module 'streamr-client-protocol' {
             streamPartition: number
             fromMsgRef: MessageLayer.MessageRef
             toMsgRef: MessageLayer.MessageRef
-            publisherId: string
-            msgChainId: string
+            publisherId: string | null
+            msgChainId: string | null
 
             constructor(args: {
                 requestId: string
@@ -231,8 +231,8 @@ declare module 'streamr-client-protocol' {
                 streamPartition: number
                 fromMsgRef: MessageLayer.MessageRef
                 toMsgRef: MessageLayer.MessageRef
-                publisherId: string
-                msgChainId: string
+                publisherId: string | null
+                msgChainId: string | null
             })
         }
     }
@@ -259,10 +259,7 @@ declare module 'streamr-client-protocol' {
             timestamp: number
             sequenceNumber: number
 
-            constructor(args: {
-                timestamp: number
-                sequenceNumber: number
-            })
+            constructor(timestamp: number, sequenceNumber: number)
         }
     }
 
