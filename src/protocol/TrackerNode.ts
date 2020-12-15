@@ -4,7 +4,7 @@ import { TrackerLayer } from "streamr-client-protocol"
 import getLogger from "../helpers/logger"
 import { decode } from '../helpers/MessageEncoder'
 import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
-import { Status, StreamIdAndPartition } from "../identifiers"
+import { RelayMessage, Status, StreamIdAndPartition } from "../identifiers"
 import { PeerInfo } from "../connection/PeerInfo"
 import { RtcSubTypes } from "../logic/RtcMessage"
 import pino from "pino"
@@ -30,7 +30,7 @@ export declare interface TrackerNode {
     on(event: Event.TRACKER_DISCONNECTED, listener: (trackerId: string) => void): this
     on(event: Event.TRACKER_INSTRUCTION_RECEIVED, listener: (msg: TrackerLayer.InstructionMessage, trackerId: string) => void): this
     on(event: Event.STORAGE_NODES_RESPONSE_RECEIVED, listener: (msg: TrackerLayer.StorageNodesResponse, trackerId: string) => void): this
-    on(event: Event.RELAY_MESSAGE_RECEIVED, listener: (msg: TrackerLayer.RelayMessage, trackerId: string) => void): this
+    on(event: Event.RELAY_MESSAGE_RECEIVED, listener: (msg: RelayMessage, trackerId: string) => void): this
     on(event: Event.RTC_ERROR_RECEIVED, listener: (msg: TrackerLayer.ErrorMessage, trackerId: string) => void): this
 }
 

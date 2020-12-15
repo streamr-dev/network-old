@@ -12,11 +12,13 @@ interface MessageId {
     msgChainId: string
 }
 
+type InternalMessageId = string
+
 /**
  * Keeps track of message identifiers that have been seen but not yet propagated to other nodes.
  */
 export class SeenButNotPropagatedSet {
-    private readonly cache: LRUCache<string, void> = new LRUCache({
+    private readonly cache: LRUCache<InternalMessageId, void> = new LRUCache({
         max: MAX_ELEMENTS,
         maxAge: MAX_AGE
     })
@@ -39,7 +41,7 @@ export class SeenButNotPropagatedSet {
 
     static messageIdToStr({
         streamId, streamPartition, timestamp, sequenceNumber, publisherId, msgChainId
-    }: MessageId): string {
+    }: MessageId): InternalMessageId {
         return `${streamId}-${streamPartition}-${timestamp}-${sequenceNumber}-${publisherId}-${msgChainId}`
     }
 }

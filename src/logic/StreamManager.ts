@@ -1,4 +1,4 @@
-import { StreamIdAndPartition } from "../identifiers"
+import { StreamIdAndPartition, StreamKey } from "../identifiers"
 import { DuplicateMessageDetector, NumberPair } from "./DuplicateMessageDetector"
 import { MessageLayer } from "streamr-client-protocol"
 
@@ -123,7 +123,7 @@ export class StreamManager {
         return result
     }
 
-    getStreamsAsKeys(): ReadonlyArray<string> {
+    getStreamsAsKeys(): ReadonlyArray<StreamKey> {
         return [...this.streams.keys()].sort()
     }
 

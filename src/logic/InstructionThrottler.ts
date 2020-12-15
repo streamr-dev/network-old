@@ -1,5 +1,5 @@
 import { cancelable, CancelablePromiseType } from "cancelable-promise"
-import { StreamIdAndPartition } from "../identifiers"
+import { StreamIdAndPartition, StreamKey } from "../identifiers"
 import getLogger from "../helpers/logger"
 import { TrackerLayer } from "streamr-client-protocol"
 
@@ -30,7 +30,7 @@ export class InstructionThrottler {
     }
 
     add(instructionMessage: TrackerLayer.InstructionMessage, trackerId: string): void {
-        this.queue[StreamIdAndPartition.fromMessage(instructionMessage).toString()] = {
+        this.queue[StreamIdAndPartition.fromMessage(instructionMessage).key()] = {
             instructionMessage,
             trackerId
         }
@@ -39,7 +39,7 @@ export class InstructionThrottler {
         }
     }
 
-    removeStreamId(streamId: string): void {
+    removeStreamId(streamId: StreamKey): void {
         delete this.queue[streamId]
     }
 
@@ -56,7 +56,7 @@ export class InstructionThrottler {
 
     private async invokeHandleFnWithLock(): Promise<void> {
         const streamIds = Object.keys(this.queue)
-        const streamId = streamIds[0]
+        const streamId: StreamKey = streamIds[0]
         const { instructionMessage, trackerId } = this.queue[streamId]
         delete this.queue[streamId]
 

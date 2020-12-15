@@ -7,7 +7,7 @@ import { InstructionCounter } from "./InstructionCounter"
 import { LocationManager } from "./LocationManager"
 import { attachRtcSignalling } from "./rtcSignallingHandlers"
 import { PeerInfo } from "../connection/PeerInfo"
-import { Location, Status, StatusStreams, StreamIdAndPartition } from "../identifiers"
+import { Location, Status, StatusStreams, StreamIdAndPartition, StreamKey } from "../identifiers"
 import { TrackerLayer } from "streamr-client-protocol"
 import pino from "pino"
 
@@ -170,7 +170,7 @@ export class Tracker extends EventEmitter {
         })
 
         // Remove
-        const currentStreamKeys = new Set(Object.keys(allStreams))
+        const currentStreamKeys: Set<StreamKey> = new Set(Object.keys(allStreams))
         Object.entries(this.overlayPerStream)
             .filter(([streamKey, _]) => !currentStreamKeys.has(streamKey))
             .forEach(([streamKey, overlayTopology]) => {
@@ -180,7 +180,7 @@ export class Tracker extends EventEmitter {
         this.logger.debug('update node %s for streams %j', node, Object.keys(allStreams))
     }
 
-    private formAndSendInstructions(node: NodeId, streamKeys: Array<StreamId>, forceGenerate = false): void {
+    private formAndSendInstructions(node: NodeId, streamKeys: Array<StreamKey>, forceGenerate = false): void {
         streamKeys.forEach((streamKey) => {
             const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
             Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
@@ -207,7 +207,7 @@ export class Tracker extends EventEmitter {
             })
     }
 
-    private leaveAndCheckEmptyOverlay(streamKey: StreamId, overlayTopology: OverlayTopology, node: NodeId) {
+    private leaveAndCheckEmptyOverlay(streamKey: StreamKey, overlayTopology: OverlayTopology, node: NodeId) {
         const neighbors = overlayTopology.leave(node)
         this.instructionCounter.removeNode(node)
 

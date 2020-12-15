@@ -62,7 +62,7 @@ export class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcOffer(receiverNodeId: string, requestId: string, originatorInfo: PeerInfo, description: string): Promise<TrackerLayer.RelayMessage> {
+    sendRtcOffer(receiverNodeId: string, requestId: string, originatorInfo: TrackerLayer.Originator, description: string): Promise<TrackerLayer.RelayMessage> {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
             requestId,
             originator: originatorInfo,
@@ -74,7 +74,7 @@ export class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcAnswer(receiverNodeId: string, requestId: string, originatorInfo: PeerInfo, description: string): Promise<TrackerLayer.RelayMessage> {
+    sendRtcAnswer(receiverNodeId: string, requestId: string, originatorInfo: TrackerLayer.Originator, description: string): Promise<TrackerLayer.RelayMessage> {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
             requestId,
             originator: originatorInfo,
@@ -86,7 +86,7 @@ export class TrackerServer extends EventEmitter {
         }))
     }
 
-    sendRtcConnect(receiverNodeId: string, requestId: string, originatorInfo: PeerInfo): Promise<TrackerLayer.RelayMessage> {
+    sendRtcConnect(receiverNodeId: string, requestId: string, originatorInfo: TrackerLayer.Originator): Promise<TrackerLayer.RelayMessage> {
         return this.send(receiverNodeId, new TrackerLayer.RelayMessage({
             requestId,
             originator: originatorInfo,
@@ -99,7 +99,7 @@ export class TrackerServer extends EventEmitter {
     sendRemoteCandidate(
         receiverNodeId: string,
         requestId: string,
-        originatorInfo: PeerInfo,
+        originatorInfo: TrackerLayer.Originator,
         candidate: string,
         mid: string
     ): Promise<TrackerLayer.RelayMessage> {

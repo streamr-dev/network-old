@@ -1,4 +1,4 @@
-import { ControlLayer } from "streamr-client-protocol"
+import { ControlLayer, TrackerLayer } from "streamr-client-protocol"
 import { RtcSubTypes } from "./logic/RtcMessage"
 import { PeerInfo } from "./connection/PeerInfo"
 
@@ -20,7 +20,7 @@ export class StreamIdAndPartition {
         this.partition = partition
     }
 
-    key(): string {
+    key(): StreamKey {
         return this.toString()
     }
 
@@ -37,6 +37,8 @@ export class StreamIdAndPartition {
         return new StreamIdAndPartition(id, Number.parseInt(partition, 10))
     }
 }
+
+export type StreamKey = string // Represents format streamId::streamPartition
 
 export interface Rtts {
     [key: string]: number
@@ -125,11 +127,7 @@ export type RelayMessage = (
         | RtcConnectMessage
         | LocalDescriptionMessage
         | LocalCandidateMessage
-    ) & {
-        requestId: string
-        targetNode: string
-        originator: PeerInfo
-    }
+    ) & TrackerLayer.RelayMessage
 
 export interface RtcErrorMessage {
     targetNode: string

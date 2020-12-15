@@ -9,9 +9,9 @@ export enum PeerType {
 
 interface ObjectRepresentation {
     peerId: string
-    peerType: PeerType
-    peerName: string | null | undefined
-    location: Location | null | undefined
+    peerType: string
+    peerName?: string | null | undefined
+    location?: Location | null | undefined
 }
 
 export class PeerInfo {
@@ -32,7 +32,7 @@ export class PeerInfo {
     }
 
     static fromObject({ peerId, peerType, peerName, location }: ObjectRepresentation) {
-        return new PeerInfo(peerId, peerType, peerName, location)
+        return new PeerInfo(peerId, peerType as PeerType, peerName, location)
     }
 
     readonly peerId: string

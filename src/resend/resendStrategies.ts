@@ -340,7 +340,7 @@ export class ForeignResendStrategy implements Strategy {
 
             let storageNode: string | null = null
             while (storageNode === null && storageNodeIds.length > 0) {
-                const nodeId = storageNodeIds.shift()
+                const nodeId = storageNodeIds.shift()!
                 try {
                     storageNode = await this.nodeToNode.connectToNode(nodeId, tracker, true, false)
                 } catch (e) {

@@ -1,6 +1,6 @@
 declare module 'streamr-client-protocol' {
     module TrackerLayer {
-        interface Originator {
+        export interface Originator {
             peerId: string
             peerType: string
         }
@@ -47,14 +47,14 @@ declare module 'streamr-client-protocol' {
 
         class RelayMessage extends TrackerMessage {
             requestId: string
-            originator: Originator
-            targetNode: number
+            originator: TrackerLayer.Originator
+            targetNode: string
             subType: string
             data: Object
 
             constructor(args: {
                 requestId: string
-                originator: Originator
+                originator: TrackerLayer.Originator
                 targetNode: string
                 subType: string
                 data: Object

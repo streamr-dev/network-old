@@ -1,4 +1,4 @@
-import { Status, StatusStreams } from "../identifiers"
+import { Status, StatusStreams, StreamKey } from "../identifiers"
 
 interface Counters {
     [key: string]: {
@@ -11,7 +11,7 @@ export class InstructionCounter {
 
     constructor() {}
 
-    setOrIncrement(nodeId: string, streamKey: string): number {
+    setOrIncrement(nodeId: string, streamKey: StreamKey): number {
         this.getAndSetIfNecessary(nodeId, streamKey)
         this.counters[nodeId][streamKey] += 1
         return this.counters[nodeId][streamKey]
@@ -32,13 +32,13 @@ export class InstructionCounter {
         delete this.counters[nodeId]
     }
 
-    removeStream(streamKey: string): void {
+    removeStream(streamKey: StreamKey): void {
         Object.keys(this.counters).forEach((nodeId) => {
             delete this.counters[nodeId][streamKey]
         })
     }
 
-    private getAndSetIfNecessary(nodeId: string, streamKey: string): number {
+    private getAndSetIfNecessary(nodeId: string, streamKey: StreamKey): number {
         if (this.counters[nodeId] === undefined) {
             this.counters[nodeId] = {}
         }

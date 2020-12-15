@@ -5,30 +5,31 @@ import { RtcSubTypes } from "./RtcMessage";
 import { RelayMessage, RtcErrorMessage } from "../identifiers"
 import pino from "pino"
 import { DescriptionType } from "node-datachannel"
+import { TrackerLayer } from "streamr-client-protocol"
 
 export interface OfferOptions {
     routerId: string,
-    originatorInfo: PeerInfo,
+    originatorInfo: TrackerLayer.Originator,
     description: string
 }
 
 export interface AnswerOptions {
     routerId: string,
-    originatorInfo: PeerInfo,
+    originatorInfo: TrackerLayer.Originator,
     description: string
 }
 
 export interface RemoteCandidateOptions {
     routerId: string,
-    originatorInfo: PeerInfo
+    originatorInfo: TrackerLayer.Originator
     candidate: string,
     mid: string
 }
 
 export interface ConnectOptions {
     routerId: string
-    originatorInfo: PeerInfo
     targetNode: string
+    originatorInfo: TrackerLayer.Originator
 }
 
 export interface ErrorOptions {
