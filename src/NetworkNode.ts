@@ -4,7 +4,7 @@ import { Storage, StreamIdAndPartition } from "./identifiers"
 import { ControlLayer, MessageLayer } from "streamr-client-protocol"
 import ReadableStream = NodeJS.ReadableStream
 
-export interface NetworkNodeOptions extends NodeOptions {
+export interface NetworkNodeOptions extends Omit<NodeOptions, "resendStrategies"> {
     storages: Array<Storage>
 }
 

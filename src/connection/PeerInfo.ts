@@ -1,3 +1,5 @@
+import { Location } from "../identifiers"
+
 export enum PeerType {
     Tracker = 'tracker',
     Node = 'node',

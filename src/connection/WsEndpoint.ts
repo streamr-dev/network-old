@@ -481,6 +481,10 @@ export class WsEndpoint extends EventEmitter {
         return `ws://${this.serverHost}:${this.serverPort}`
     }
 
+    getWss(): uWS.TemplatedApp {
+        return this.wss
+    }
+
     getPeerInfo(): Readonly<PeerInfo> {
         return this.peerInfo
     }
