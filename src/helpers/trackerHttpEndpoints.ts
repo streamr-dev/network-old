@@ -19,7 +19,6 @@ const respondWithError = (res: HttpResponse, req: HttpRequest, errorMessage: str
     }))
 }
 
-// TODO: type for tracker
 export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metricsContext: MetricsContext): void {
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
