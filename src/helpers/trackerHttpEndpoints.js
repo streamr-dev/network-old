@@ -1,5 +1,7 @@
 const _ = require('lodash')
 
+const { getTopology, getTopologyUnion } = require('../logic/TopologyFactory')
+
 const extraLogger = require('./logger')('streamr:tracker:http-endpoints')
 
 const writeCorsHeaders = (res, req) => {
@@ -34,7 +36,7 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology()))
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream())))
     }).get('/topology/:streamId/', (res, req) => {
         const streamId = decodeURIComponent(req.getParameter(0)).trim()
         if (streamId.length === 0) {
@@ -45,7 +47,7 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
 
         extraLogger.debug(`request to /topology/${streamId}/`)
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology(streamId, null)))
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream(), streamId, null)))
     }).get('/topology/:streamId/:partition/', (res, req) => {
         const streamId = decodeURIComponent(req.getParameter(0)).trim()
         if (streamId.length === 0) {
@@ -63,9 +65,9 @@ const trackerHttpEndpoints = (wss, tracker, metricsContext) => {
 
         extraLogger.debug(`request to /topology/${streamId}/${askedPartition}/`)
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology(streamId, askedPartition)))
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream(), streamId, askedPartition)))
     }).cachedJsonGet('/topology-union/', 15 * 1000, () => {
-        const topologyUnion = tracker.getTopologyUnion()
+        const topologyUnion = getTopologyUnion(tracker.getOverlayPerStream())
         return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
     }).get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
