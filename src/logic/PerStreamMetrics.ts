@@ -66,15 +66,33 @@ export class PerStreamMetrics {
     report(): { [key: string]: AllMetrics<ReportedMetric> } {
         const result: { [key: string]: AllMetrics<ReportedMetric> } = {}
         Object.entries(this.streams).forEach(([streamId, metrics]) => {
-            const innerResult: { [key: string]: ReportedMetric } = {}
-            Object.entries(metrics).forEach(([key, { rate, last, total }]) => {
-                innerResult[key] = {
-                    rate: rate(),
-                    last,
-                    total
+            result[streamId] = {
+                resends: {
+                    rate: metrics.resends.rate(),
+                    total: metrics.resends.total,
+                    last: metrics.resends.last
+                },
+                trackerInstructions: {
+                    rate: metrics.trackerInstructions.rate(),
+                    total: metrics.trackerInstructions.total,
+                    last: metrics.trackerInstructions.last
+                },
+                onDataReceived: {
+                    rate: metrics.onDataReceived.rate(),
+                    total: metrics.onDataReceived.total,
+                    last: metrics.onDataReceived.last
+                },
+                "onDataReceived:ignoredDuplicate": {
+                    rate: metrics["onDataReceived:ignoredDuplicate"].rate(),
+                    total: metrics["onDataReceived:ignoredDuplicate"].total,
+                    last: metrics["onDataReceived:ignoredDuplicate"].last
+                },
+                propagateMessage: {
+                    rate: metrics.propagateMessage.rate(),
+                    total: metrics.propagateMessage.total,
+                    last: metrics.propagateMessage.last
                 }
-            })
-            result[streamId] = innerResult as unknown as AllMetrics<ReportedMetric> // TODO: add type
+            }
         })
         return result
     }

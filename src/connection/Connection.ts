@@ -328,7 +328,7 @@ export class Connection {
 
     getBufferedAmount(): number {
         try {
-            return this.dataChannel!.bufferedAmount() as number // TODO: type Number => number?
+            return this.dataChannel!.bufferedAmount().valueOf()
         } catch (err) {
             return 0
         }

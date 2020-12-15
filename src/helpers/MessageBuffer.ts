@@ -38,8 +38,8 @@ export class MessageBuffer<M> {
 
     pop(id: string): M | null {
         if (this.buffer[id]) {
-            const message = this.buffer[id].shift() as M
-            const ref = this.timeoutRefs[id].shift() as NodeJS.Timeout
+            const message = this.buffer[id].shift()!
+            const ref = this.timeoutRefs[id].shift()!
             clearTimeout(ref)
 
             if (!this.buffer[id].length) {

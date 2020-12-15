@@ -101,7 +101,7 @@ export class Tracker extends EventEmitter {
 
     processNodeStatus(statusMessage: TrackerLayer.StatusMessage, source: NodeId): void {
         this.metrics.record('processNodeStatus', 1)
-        const status= statusMessage.status as Status
+        const status = statusMessage.status as Status
         const { streams, rtts, location } = status
         const filteredStreams = this.instructionCounter.filterStatus(status, source)
 
