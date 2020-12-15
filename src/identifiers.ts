@@ -68,6 +68,10 @@ export type ResendRequest = ControlLayer.ResendLastRequest
     | ControlLayer.ResendFromRequest
     | ControlLayer.ResendRangeRequest
 
+export type ResendResponse = ControlLayer.ResendResponseNoResend
+    | ControlLayer.ResendResponseResending
+    | ControlLayer.ResendResponseResent
+
 export type OfferMessage = {
     subType: RtcSubTypes.RTC_OFFER
     data: {
@@ -116,16 +120,16 @@ export type LocalCandidateMessage = {
 
 export type RelayMessage = (
     OfferMessage
-    | AnswerMessage
-    | RemoteCandidateMessage
-    | RtcConnectMessage
-    | LocalDescriptionMessage
-    | LocalCandidateMessage
+        | AnswerMessage
+        | RemoteCandidateMessage
+        | RtcConnectMessage
+        | LocalDescriptionMessage
+        | LocalCandidateMessage
     ) & {
-    requestId: string
-    targetNode: string
-    originator: PeerInfo
-}
+        requestId: string
+        targetNode: string
+        originator: PeerInfo
+    }
 
 export interface RtcErrorMessage {
     targetNode: string

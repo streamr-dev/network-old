@@ -4,13 +4,13 @@ import getLogger from "../helpers/logger"
 import { decode } from '../helpers/MessageEncoder'
 import { WebRtcEndpoint, Event as WsEndpointEvent } from '../connection/WebRtcEndpoint'
 import { PeerInfo } from "../connection/PeerInfo"
-import { Rtts } from "../identifiers"
+import { ResendRequest, ResendResponse, Rtts } from "../identifiers"
 import pino from "pino"
 
 export enum Event {
-    NODE_CONNECTED= 'streamr:node-node:node-connected',
-    DATA_RECEIVED = 'streamr:node-node:stream-data',
+    NODE_CONNECTED = 'streamr:node-node:node-connected',
     NODE_DISCONNECTED = 'streamr:node-node:node-disconnected',
+    DATA_RECEIVED = 'streamr:node-node:stream-data',
     RESEND_REQUEST = 'streamr:node-node:resend-request',
     RESEND_RESPONSE = 'streamr:node-node:resend-response',
     UNICAST_RECEIVED = 'streamr:node-node:unicast-received',
@@ -27,6 +27,17 @@ eventPerType[ControlLayer.ControlMessage.TYPES.ResendRangeRequest] = Event.RESEN
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseResending] = Event.RESEND_RESPONSE
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseResent] = Event.RESEND_RESPONSE
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseNoResend] = Event.RESEND_RESPONSE
+
+export declare interface NodeToNode {
+    on(event: Event.NODE_CONNECTED, listener: (nodeId: string) => void): this
+    on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string) => void): this
+    on(event: Event.DATA_RECEIVED, listener: (message: ControlLayer.BroadcastMessage, nodeId: string) => void): this
+    on(event: Event.RESEND_REQUEST, listener: (message: ResendRequest, nodeId: string) => void): this
+    on(event: Event.RESEND_RESPONSE, listener: (message: ResendResponse, nodeId: string) => void): this
+    on(event: Event.UNICAST_RECEIVED, listener: (message: ControlLayer.UnicastMessage, nodeId: string) => void): this
+    on(event: Event.LOW_BACK_PRESSURE, listener: (nodeId: string) => void): this
+    on(event: Event.HIGH_BACK_PRESSURE, listener: (nodeId: string) => void): this
+}
 
 export class NodeToNode extends EventEmitter {
     private readonly endpoint: WebRtcEndpoint

@@ -103,6 +103,15 @@ function toHeaders(peerInfo: PeerInfo): { [key: string]: string } {
     }
 }
 
+// Declare event handlers
+export declare interface WsEndpoint {
+    on(event: Event.PEER_CONNECTED, listener: (peerInfo: PeerInfo) => void): this
+    on(event: Event.PEER_DISCONNECTED, listener: (peerInfo: PeerInfo, reason: string) => void): this
+    on(event: Event.MESSAGE_RECEIVED, listener: (peerInfo: PeerInfo, message: string) => void): this
+    on(event: Event.HIGH_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
+    on(event: Event.LOW_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
+}
+
 export class WsEndpoint extends EventEmitter {
     private readonly serverHost: string
     private readonly serverPort: number

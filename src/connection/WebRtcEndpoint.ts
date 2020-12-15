@@ -1,9 +1,9 @@
-import {EventEmitter} from 'events'
+import { EventEmitter } from 'events'
 import nodeDataChannel, { DescriptionType } from 'node-datachannel'
 import getLogger from '../helpers/logger'
-import {PeerInfo} from './PeerInfo'
-import {Connection} from './Connection'
-import {Metrics, MetricsContext} from "../helpers/MetricsContext";
+import { PeerInfo } from './PeerInfo'
+import { Connection } from './Connection'
+import { Metrics, MetricsContext } from "../helpers/MetricsContext";
 import {
     AnswerOptions,
     ConnectOptions,
@@ -29,6 +29,15 @@ class WebRtcError extends Error {
         // exclude this constructor from stack trace
         Error.captureStackTrace(this, WebRtcError)
     }
+}
+
+// Declare event handlers
+export declare interface WebRtcEndpoint {
+    on(event: Event.PEER_CONNECTED, listener: (peerInfo: PeerInfo) => void): this
+    on(event: Event.PEER_DISCONNECTED, listener: (peerInfo: PeerInfo) => void): this
+    on(event: Event.MESSAGE_RECEIVED, listener: (peerInfo: PeerInfo, message: string) => void): this
+    on(event: Event.HIGH_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
+    on(event: Event.LOW_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
 }
 
 export class WebRtcEndpoint extends EventEmitter {

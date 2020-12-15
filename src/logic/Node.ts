@@ -20,14 +20,14 @@ import { Readable } from "stream"
 import pino from "pino"
 
 export enum Event {
+    NODE_CONNECTED = 'streamr:node:node-connected',
+    NODE_DISCONNECTED = 'streamr:node:node-disconnected',
     MESSAGE_RECEIVED = 'streamr:node:message-received',
     UNSEEN_MESSAGE_RECEIVED = 'streamr:node:unseen-message-received',
     MESSAGE_PROPAGATED = 'streamr:node:message-propagated',
     MESSAGE_PROPAGATION_FAILED = 'streamr:node:message-propagation-failed',
     NODE_SUBSCRIBED = 'streamr:node:subscribed-successfully',
     NODE_UNSUBSCRIBED = 'streamr:node:node-unsubscribed',
-    NODE_CONNECTED = 'streamr:node:node-connected',
-    NODE_DISCONNECTED = 'streamr:node:node-disconnected',
     RESEND_REQUEST_RECEIVED = 'streamr:node:resend-request-received',
 }
 
@@ -49,6 +49,18 @@ export interface NodeOptions {
 }
 
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
+
+export declare interface Node {
+    on(event: Event.NODE_CONNECTED, listener: (nodeId: string) => void): this
+    on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string) => void): this
+    on(event: Event.MESSAGE_RECEIVED, listener: (msg: MessageLayer.StreamMessage, nodeId: string) => void): this
+    on(event: Event.UNSEEN_MESSAGE_RECEIVED, listener: (msg: MessageLayer.StreamMessage, nodeId: string) => void): this
+    on(event: Event.MESSAGE_PROPAGATED, listener: (msg: MessageLayer.StreamMessage) => void): this
+    on(event: Event.MESSAGE_PROPAGATION_FAILED, listener: (msg: MessageLayer.StreamMessage, nodeId: string, error: Error) => void): this
+    on(event: Event.NODE_SUBSCRIBED, listener: (nodeId: string, streamId: StreamIdAndPartition) => void): this
+    on(event: Event.NODE_UNSUBSCRIBED, listener: (nodeId: string, streamId: StreamIdAndPartition) => void): this
+    on(event: Event.RESEND_REQUEST_RECEIVED, listener: (request: ResendRequest, source: string | null) => void): this
+}
 
 export class Node extends EventEmitter {
     private readonly nodeToNode: NodeToNode
@@ -124,7 +136,7 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
         this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
         this.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
-        this.on(Event.NODE_SUBSCRIBED, ({ streamId }) => {
+        this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId) => {
             this.handleBufferedMessages(streamId)
             this.sendStreamStatus(streamId)
         })
@@ -431,12 +443,7 @@ export class Node extends EventEmitter {
     private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition): string {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-
-        this.emit(Event.NODE_SUBSCRIBED, {
-            streamId,
-            node
-        })
-
+        this.emit(Event.NODE_SUBSCRIBED, node, streamId)
         return node
     }
 

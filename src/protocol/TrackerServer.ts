@@ -11,8 +11,8 @@ import pino from "pino"
 
 export enum Event {
     NODE_CONNECTED = 'streamr:tracker:send-peers',
-    NODE_STATUS_RECEIVED = 'streamr:tracker:peer-status',
     NODE_DISCONNECTED = 'streamr:tracker:node-disconnected',
+    NODE_STATUS_RECEIVED = 'streamr:tracker:peer-status',
     STORAGE_NODES_REQUEST = 'streamr:tracker:find-storage-nodes-request',
     RELAY_MESSAGE_RECEIVED = 'streamr:tracker:relay-message-received'
 }
@@ -21,6 +21,14 @@ const eventPerType: { [key: number]: string } = {}
 eventPerType[TrackerLayer.TrackerMessage.TYPES.StatusMessage] = Event.NODE_STATUS_RECEIVED
 eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesRequest] = Event.STORAGE_NODES_REQUEST
 eventPerType[TrackerLayer.TrackerMessage.TYPES.RelayMessage] = Event.RELAY_MESSAGE_RECEIVED
+
+export declare interface TrackerNode {
+    on(event: Event.NODE_CONNECTED, listener: (nodeId: string, isStorage: boolean) => void): this
+    on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string, isStorage: boolean) => void): this
+    on(event: Event.NODE_STATUS_RECEIVED, listener: (msg: TrackerLayer.StatusMessage, nodeId: string) => void): this
+    on(event: Event.STORAGE_NODES_REQUEST, listener: (msg: TrackerLayer.StorageNodesRequest, nodeId: string) => void): this
+    on(event: Event.RELAY_MESSAGE_RECEIVED, listener: (msg: TrackerLayer.RelayMessage, nodeId: string) => void): this
+}
 
 export class TrackerServer extends EventEmitter {
     private readonly endpoint: WsEndpoint

@@ -12,8 +12,8 @@ import { DescriptionType } from "node-datachannel"
 
 export enum Event {
     CONNECTED_TO_TRACKER = 'streamr:tracker-node:send-status',
-    TRACKER_INSTRUCTION_RECEIVED = 'streamr:tracker-node:tracker-instruction-received',
     TRACKER_DISCONNECTED = 'streamr:tracker-node:tracker-disconnected',
+    TRACKER_INSTRUCTION_RECEIVED = 'streamr:tracker-node:tracker-instruction-received',
     STORAGE_NODES_RESPONSE_RECEIVED = 'streamr:tracker-node:storage-nodes-received',
     RELAY_MESSAGE_RECEIVED = 'streamr:tracker-node:relay-message-received',
     RTC_ERROR_RECEIVED = 'streamr:tracker-node:rtc-error-received',
@@ -24,6 +24,15 @@ eventPerType[TrackerLayer.TrackerMessage.TYPES.InstructionMessage] = Event.TRACK
 eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesResponse] = Event.STORAGE_NODES_RESPONSE_RECEIVED
 eventPerType[TrackerLayer.TrackerMessage.TYPES.RelayMessage] = Event.RELAY_MESSAGE_RECEIVED
 eventPerType[TrackerLayer.TrackerMessage.TYPES.ErrorMessage] = Event.RTC_ERROR_RECEIVED
+
+export declare interface TrackerNode {
+    on(event: Event.CONNECTED_TO_TRACKER, listener: (trackerId: string) => void): this
+    on(event: Event.TRACKER_DISCONNECTED, listener: (trackerId: string) => void): this
+    on(event: Event.TRACKER_INSTRUCTION_RECEIVED, listener: (msg: TrackerLayer.InstructionMessage, trackerId: string) => void): this
+    on(event: Event.STORAGE_NODES_RESPONSE_RECEIVED, listener: (msg: TrackerLayer.StorageNodesResponse, trackerId: string) => void): this
+    on(event: Event.RELAY_MESSAGE_RECEIVED, listener: (msg: TrackerLayer.RelayMessage, trackerId: string) => void): this
+    on(event: Event.RTC_ERROR_RECEIVED, listener: (msg: TrackerLayer.ErrorMessage, trackerId: string) => void): this
+}
 
 export class TrackerNode extends EventEmitter {
     private readonly endpoint: WsEndpoint
