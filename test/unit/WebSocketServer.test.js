@@ -86,7 +86,7 @@ describe('test starting startWebSocketServer', () => {
      * UPDATE: Apparently turning WsEndpoint from JavaScript to TypeScript magically solved this problem.
      * It no longer occurs. Weird indeed.
      */
-    /*test('messages over encrypted connections arrive as binary', async (done) => {
+    /* test('messages over encrypted connections arrive as binary', async (done) => {
         const [wss, listenSocket] = await startWebSocketServer(
             '127.0.0.1',
             wssPort,
@@ -117,7 +117,7 @@ describe('test starting startWebSocketServer', () => {
         ws.on('open', () => {
             endpoint.send('clientId', 'Hello, World!')
         })
-    })*/
+    }) */
 
     /**
      * Related to above test: check that messages indeed arrive as string from non-SSL uWS server.

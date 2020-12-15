@@ -1,4 +1,3 @@
-
 const { waitForEvent } = require('streamr-test-utils')
 const { RelayMessage, ErrorMessage } = require('streamr-client-protocol').TrackerLayer
 
