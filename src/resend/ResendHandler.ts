@@ -99,7 +99,7 @@ export class ResendHandler {
             objectMode: true,
             read() {}
         })
-        this._loopThruResendStrategies(request, source, requestStream)
+        this.loopThruResendStrategies(request, source, requestStream)
         return requestStream
     }
 
@@ -130,7 +130,7 @@ export class ResendHandler {
         })
     }
 
-    async _loopThruResendStrategies(
+    private async loopThruResendStrategies(
         request: ResendRequest,
         source: string | null,
         requestStream: Readable
@@ -173,7 +173,7 @@ export class ResendHandler {
                 ctx.responseStream = this.resendStrategies[i].getResendResponseStream(request, source)
                     .on('data', requestStream.push.bind(requestStream))
 
-                if (await this._readStreamUntilEndOrError(ctx.responseStream, request)) {
+                if (await this.readStreamUntilEndOrError(ctx.responseStream, request)) {
                     ctx.stop = true
                 }
             }
@@ -184,7 +184,7 @@ export class ResendHandler {
         }
     }
 
-    _readStreamUntilEndOrError(responseStream: Readable, request: ResendRequest) {
+    private readStreamUntilEndOrError(responseStream: Readable, request: ResendRequest): Promise<boolean> {
         let numOfMessages = 0
         return new Promise((resolve) => {
             // Provide additional safety against hanging promises by emitting

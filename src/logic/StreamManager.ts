@@ -42,7 +42,7 @@ export class StreamManager {
         previousMessageReference: MessageLayer.MessageRef | null
     ): boolean | never {
         const streamIdAndPartition = new StreamIdAndPartition(messageId.streamId, messageId.streamPartition)
-        this._verifyThatIsSetUp(streamIdAndPartition)
+        this.verifyThatIsSetUp(streamIdAndPartition)
 
         const detectorKey = keyForDetector(messageId)
         const { detectors } = this.streams.get(streamIdAndPartition.key())!
@@ -63,19 +63,19 @@ export class StreamManager {
     }
 
     addInboundNode(streamId: StreamIdAndPartition, node: string): void {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         const { inboundNodes } = this.streams.get(streamId.key())!
         inboundNodes.add(node)
     }
 
     addOutboundNode(streamId: StreamIdAndPartition, node: string): void {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         const { outboundNodes } = this.streams.get(streamId.key())!
         outboundNodes.add(node)
     }
 
     removeNodeFromStream(streamId: StreamIdAndPartition, node: string): void {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         const { inboundNodes, outboundNodes } = this.streams.get(streamId.key())!
         inboundNodes.delete(node)
         outboundNodes.delete(node)
@@ -89,7 +89,7 @@ export class StreamManager {
     }
 
     removeStream(streamId: StreamIdAndPartition): ReadonlyArray<string> {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         const { inboundNodes, outboundNodes } = this.streams.get(streamId.key())!
         this.streams.delete(streamId.key())
         return [...new Set([...inboundNodes, ...outboundNodes])]
@@ -128,12 +128,12 @@ export class StreamManager {
     }
 
     getOutboundNodesForStream(streamId: StreamIdAndPartition): ReadonlyArray<string> {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         return [...this.streams.get(streamId.key())!.outboundNodes]
     }
 
     getInboundNodesForStream(streamId: StreamIdAndPartition): ReadonlyArray<string> {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         return [...this.streams.get(streamId.key())!.inboundNodes]
     }
 
@@ -153,16 +153,16 @@ export class StreamManager {
     }
 
     hasOutboundNode(streamId: StreamIdAndPartition, node: string): boolean {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         return this.streams.get(streamId.key())!.outboundNodes.has(node)
     }
 
     hasInboundNode(streamId: StreamIdAndPartition, node: string): boolean {
-        this._verifyThatIsSetUp(streamId)
+        this.verifyThatIsSetUp(streamId)
         return this.streams.get(streamId.key())!.inboundNodes.has(node)
     }
 
-    _verifyThatIsSetUp(streamId: StreamIdAndPartition): void | never {
+    private verifyThatIsSetUp(streamId: StreamIdAndPartition): void | never {
         if (!this.isSetUp(streamId)) {
             throw new Error(`Stream ${streamId} is not set up`)
         }

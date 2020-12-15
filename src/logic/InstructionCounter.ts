@@ -12,7 +12,7 @@ export class InstructionCounter {
     constructor() {}
 
     setOrIncrement(nodeId: string, streamKey: string): number {
-        this._getAndSetIfNecessary(nodeId, streamKey)
+        this.getAndSetIfNecessary(nodeId, streamKey)
         this.counters[nodeId][streamKey] += 1
         return this.counters[nodeId][streamKey]
     }
@@ -20,7 +20,7 @@ export class InstructionCounter {
     filterStatus(status: Status, source: string): StatusStreams {
         const filteredStreams: StatusStreams = {}
         Object.entries(status.streams).forEach(([streamKey, entry]) => {
-            const currentCounter = this._getAndSetIfNecessary(source, streamKey)
+            const currentCounter = this.getAndSetIfNecessary(source, streamKey)
             if (entry.counter >= currentCounter) {
                 filteredStreams[streamKey] = entry
             }
@@ -38,7 +38,7 @@ export class InstructionCounter {
         })
     }
 
-    _getAndSetIfNecessary(nodeId: string, streamKey: string): number {
+    private getAndSetIfNecessary(nodeId: string, streamKey: string): number {
         if (this.counters[nodeId] === undefined) {
             this.counters[nodeId] = {}
         }

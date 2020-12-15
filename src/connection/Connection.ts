@@ -182,12 +182,12 @@ export class Connection {
 
         if (this.isOffering) {
             const dataChannel = this.connection.createDataChannel('streamrDataChannel')
-            this._setupDataChannel(dataChannel)
+            this.setupDataChannel(dataChannel)
         } else {
             this.connection.onDataChannel((dataChannel) => {
-                this._setupDataChannel(dataChannel)
+                this.setupDataChannel(dataChannel)
                 this.logger.debug('connection.onDataChannel')
-                this._openDataChannel(dataChannel)
+                this.openDataChannel(dataChannel)
             })
         }
 
@@ -225,7 +225,7 @@ export class Connection {
         return new Promise<void>((resolve, reject) => {
             const queueItem = new QueueItem(message, resolve, reject)
             this.messageQueue.push(queueItem)
-            setImmediate(() => this._attemptToFlushMessages())
+            setImmediate(() => this.attemptToFlushMessages())
         })
     }
 
@@ -346,13 +346,13 @@ export class Connection {
         }
     }
 
-    _setupDataChannel(dataChannel: DataChannel): void {
+    private setupDataChannel(dataChannel: DataChannel): void {
         this.paused = false
         dataChannel.setBufferedAmountLowThreshold(this.bufferLowThreshold)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
                 this.logger.debug('dataChannel.onOpen')
-                this._openDataChannel(dataChannel)
+                this.openDataChannel(dataChannel)
             })
         }
         dataChannel.onClosed(() => {
@@ -366,7 +366,7 @@ export class Connection {
         dataChannel.onBufferedAmountLow(() => {
             if (this.paused) {
                 this.paused = false
-                this._attemptToFlushMessages()
+                this.attemptToFlushMessages()
             }
         })
         dataChannel.onMessage((msg) => {
@@ -382,16 +382,16 @@ export class Connection {
         })
     }
 
-    _openDataChannel(dataChannel: DataChannel): void {
+    private openDataChannel(dataChannel: DataChannel): void {
         if (this.connectionTimeoutRef !== null) {
             clearInterval(this.connectionTimeoutRef)
         }
         this.dataChannel = dataChannel
-        setImmediate(() => this._attemptToFlushMessages())
+        setImmediate(() => this.attemptToFlushMessages())
         this.onOpen()
     }
 
-    _attemptToFlushMessages(): void {
+    private attemptToFlushMessages(): void {
         while (this.isOpen() && !this.messageQueue.empty()) {
             const queueItem = this.messageQueue.peek()
             if (queueItem.isFailed()) {
@@ -434,7 +434,7 @@ export class Connection {
                     } else if (this.flushTimeoutRef === null) {
                         this.flushTimeoutRef = setTimeout(() => {
                             this.flushTimeoutRef = null
-                            this._attemptToFlushMessages()
+                            this.attemptToFlushMessages()
                         }, 100)
                     }
                     return

@@ -66,7 +66,7 @@ export class WebRtcEndpoint extends EventEmitter {
         this.connections = {}
         this.newConnectionTimeout = newConnectionTimeout
         this.pingIntervalInMs = pingIntervalInMs
-        this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
+        this.pingTimeoutRef = setTimeout(() => this.pingConnections(), this.pingIntervalInMs)
         this.logger = getLogger(`streamr:WebRtcEndpoint:${id}`)
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description } : OfferOptions) => {
@@ -239,9 +239,9 @@ export class WebRtcEndpoint extends EventEmitter {
         nodeDataChannel.cleanup()
     }
 
-    _pingConnections() {
+    private pingConnections(): void {
         const connections = Object.values(this.connections)
         connections.forEach((connection) => connection.ping())
-        this.pingTimeoutRef = setTimeout(() => this._pingConnections(), this.pingIntervalInMs)
+        this.pingTimeoutRef = setTimeout(() => this.pingConnections(), this.pingIntervalInMs)
     }
 }

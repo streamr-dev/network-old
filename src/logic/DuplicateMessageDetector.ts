@@ -17,14 +17,14 @@ export class NumberPair {
     }
 
     greaterThan(otherPair: NumberPair): boolean {
-        return this._compareTo(otherPair) === 1
+        return this.compareTo(otherPair) === 1
     }
 
     equalTo(otherPair: NumberPair): boolean {
-        return this._compareTo(otherPair) === 0
+        return this.compareTo(otherPair) === 0
     }
 
-    _compareTo(otherPair: NumberPair): number {
+    private compareTo(otherPair: NumberPair): number {
         if (this.a > otherPair.a) {
             return 1
         }
@@ -147,7 +147,7 @@ export class DuplicateMessageDetector {
                 //   - last gap is [n, Infinity]
                 //   - anything not covered by a gap is considered seen
 
-                this._dropLowestGapIfOverMaxNumberOfGaps()
+                this.dropLowestGapIfOverMaxNumberOfGaps()
                 return true
             }
             if (number.greaterThan(lowerBound)) {
@@ -157,7 +157,7 @@ export class DuplicateMessageDetector {
         return false
     }
 
-    _dropLowestGapIfOverMaxNumberOfGaps(): void {
+    private dropLowestGapIfOverMaxNumberOfGaps(): void {
         // invariant: this.gaps.length <= this.maxNumberOfGaps + 1
         if (this.gaps.length > this.maxNumberOfGaps) {
             this.gaps.shift()

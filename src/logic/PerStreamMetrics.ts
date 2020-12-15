@@ -24,7 +24,7 @@ export class PerStreamMetrics {
     private readonly streams: { [key: string]: AllMetrics<Metric> } = {}
 
     recordResend(streamId: string): void {
-        this._setUpIfNeeded(streamId)
+        this.setUpIfNeeded(streamId)
         const { resends } = this.streams[streamId]
         resends.total += 1
         resends.last += 1
@@ -32,7 +32,7 @@ export class PerStreamMetrics {
     }
 
     recordTrackerInstruction(streamId: string): void {
-        this._setUpIfNeeded(streamId)
+        this.setUpIfNeeded(streamId)
         const { trackerInstructions } = this.streams[streamId]
         trackerInstructions.total += 1
         trackerInstructions.last += 1
@@ -40,7 +40,7 @@ export class PerStreamMetrics {
     }
 
     recordDataReceived(streamId: string): void {
-        this._setUpIfNeeded(streamId)
+        this.setUpIfNeeded(streamId)
         const { onDataReceived } = this.streams[streamId]
         onDataReceived.total += 1
         onDataReceived.last += 1
@@ -48,7 +48,7 @@ export class PerStreamMetrics {
     }
 
     recordIgnoredDuplicate(streamId: string): void {
-        this._setUpIfNeeded(streamId)
+        this.setUpIfNeeded(streamId)
         const ignoredDuplicate = this.streams[streamId]['onDataReceived:ignoredDuplicate']
         ignoredDuplicate.total += 1
         ignoredDuplicate.last += 1
@@ -56,7 +56,7 @@ export class PerStreamMetrics {
     }
 
     recordPropagateMessage(streamId: string): void {
-        this._setUpIfNeeded(streamId)
+        this.setUpIfNeeded(streamId)
         const { propagateMessage } = this.streams[streamId]
         propagateMessage.total += 1
         propagateMessage.last += 1
@@ -97,7 +97,7 @@ export class PerStreamMetrics {
         return result
     }
 
-    _setUpIfNeeded(streamId: string): void {
+    private setUpIfNeeded(streamId: string): void {
         if (!this.streams[streamId]) {
             this.streams[streamId] = {
                 resends: {

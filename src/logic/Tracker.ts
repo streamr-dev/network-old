@@ -190,7 +190,7 @@ export class Tracker extends EventEmitter {
                     await this.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors, counterValue)
                     this.logger.debug('sent instruction %j (%d) for stream %s to node %s', newNeighbors, counterValue, streamKey, nodeId)
                 } catch (e) {
-                    this.logger.error(`Failed to _formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
+                    this.logger.error(`Failed to formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
                 }
             })
         })

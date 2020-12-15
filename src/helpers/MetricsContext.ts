@@ -38,13 +38,13 @@ export class Metrics {
     }
 
     addQueriedMetric(name: string, queryFn: QueryFn): Metrics {
-        this._verifyUniqueness(name)
+        this.verifyUniqueness(name)
         this.queriedMetrics[name] = queryFn
         return this
     }
 
     addRecordedMetric(name: string, windowSizeInSeconds = 5): Metrics {
-        this._verifyUniqueness(name)
+        this.verifyUniqueness(name)
         this.recordedMetrics[name] = {
             rate: speedometer(windowSizeInSeconds),
             last: 0,
@@ -84,7 +84,7 @@ export class Metrics {
         })
     }
 
-    _verifyUniqueness(name: string): void | never {
+    private verifyUniqueness(name: string): void | never {
         if (this.queriedMetrics[name] || this.recordedMetrics[name]) {
             throw new Error(`Metric "${this.name}.${name}" already registered.`)
         }

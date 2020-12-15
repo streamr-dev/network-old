@@ -82,21 +82,21 @@ export class OverlayTopology {
     formInstructions(nodeId: string, forceGenerate = false): Instructions {
         const updatedNodes: Set<string> = new Set()
 
-        const excessNeighbors = -this._numOfMissingNeighbors(nodeId)
+        const excessNeighbors = -this.numOfMissingNeighbors(nodeId)
         if (excessNeighbors > 0) {
             const reducedNeighbors = this.shuffleArray([...this.nodes[nodeId]]).slice(0, this.maxNeighborsPerNode)
             this.update(nodeId, reducedNeighbors)
             updatedNodes.add(nodeId)
         }
 
-        if (this._numOfMissingNeighbors(nodeId) > 0) {
+        if (this.numOfMissingNeighbors(nodeId) > 0) {
             const candidates = Object.entries(this.nodes)
                 .filter(([n, neighbors]) => neighbors.size < this.maxNeighborsPerNode) // nodes with open slots
                 .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
                 .filter(([n, _]) => n !== nodeId) // remove self
                 .map(([n, _]) => n)
 
-            const neighborsToAdd = this.shuffleArray(candidates).slice(0, this._numOfMissingNeighbors(nodeId))
+            const neighborsToAdd = this.shuffleArray(candidates).slice(0, this.numOfMissingNeighbors(nodeId))
             if (neighborsToAdd.length > 0) {
                 this.update(nodeId, [...this.nodes[nodeId], ...neighborsToAdd])
                 updatedNodes.add(nodeId)
@@ -110,7 +110,7 @@ export class OverlayTopology {
         // neighbor with are full. Disconnecting any existing link in this set of nodes will open 2 free slots into the
         // network overall. Thus we want to make sure that we have at least 2 free slots ourselves otherwise we will
         // leave one slot free which could lead to a never-ending chain of disconnects and connects, one node at a time.
-        if (this._numOfMissingNeighbors(nodeId) > 1) {
+        if (this.numOfMissingNeighbors(nodeId) > 1) {
             const candidates = Object.entries(this.nodes)
                 .filter(([n, neighbors]) => neighbors.size >= this.maxNeighborsPerNode) // full nodes
                 .filter(([n, neighbors]) => !neighbors.has(nodeId)) // nodes that are not yet neighbors
@@ -118,7 +118,7 @@ export class OverlayTopology {
                 .map(([n, _]) => n)
 
             let disconnectionTargets = this.shuffleArray(candidates).reverse()
-            while (this._numOfMissingNeighbors(nodeId) > 1 && disconnectionTargets.length > 0) {
+            while (this.numOfMissingNeighbors(nodeId) > 1 && disconnectionTargets.length > 0) {
                 const n1 = disconnectionTargets.pop() as string
                 const n2candidates = [...this.nodes[n1]].filter((n) => !this.nodes[n].has(nodeId))
 
@@ -162,7 +162,7 @@ export class OverlayTopology {
         }))
     }
 
-    _numOfMissingNeighbors(nodeId: string): number {
+    private numOfMissingNeighbors(nodeId: string): number {
         return this.maxNeighborsPerNode - this.nodes[nodeId].size
     }
 }

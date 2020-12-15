@@ -35,7 +35,7 @@ export class InstructionThrottler {
             trackerId
         }
         if (!this.handling) {
-            this._invokeHandleFnWithLock()
+            this.invokeHandleFnWithLock()
         }
     }
 
@@ -54,7 +54,7 @@ export class InstructionThrottler {
         }
     }
 
-    async _invokeHandleFnWithLock(): Promise<void> {
+    private async invokeHandleFnWithLock(): Promise<void> {
         const streamIds = Object.keys(this.queue)
         const streamId = streamIds[0]
         const { instructionMessage, trackerId } = this.queue[streamId]
@@ -69,15 +69,15 @@ export class InstructionThrottler {
             logger.warn(err)
         } finally {
             this.ongoingPromise = null
-            if (this._isQueueEmpty()) {
+            if (this.isQueueEmpty()) {
                 this.handling = false
             } else {
-                this._invokeHandleFnWithLock()
+                this.invokeHandleFnWithLock()
             }
         }
     }
 
-    _isQueueEmpty(): boolean {
+    private isQueueEmpty(): boolean {
         return Object.keys(this.queue).length === 0
     }
 }

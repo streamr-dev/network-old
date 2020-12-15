@@ -125,7 +125,7 @@ class ProxiedResend {
         this.currentNeighbor = null
         this.timeoutRef = null
 
-        // Below are important for function identity in _detachEventHandlers
+        // Below are important for function identity in detachEventHandlers
         this.onUnicast = this.onUnicast.bind(this)
         this.onResendResponse = this.onResendResponse.bind(this)
         this.onNodeDisconnect = this.onNodeDisconnect.bind(this)
@@ -210,7 +210,7 @@ class ProxiedResend {
         }, () => {
             this.askNextNeighbor()
         }).catch((e) => {
-            logger.error(`Failed to _askNextNeighbor: ${neighborId}, error ${e}`)
+            logger.error(`Failed to askNextNeighbor: ${neighborId}, error ${e}`)
         })
     }
 
@@ -404,7 +404,7 @@ export class ForeignResendStrategy implements Strategy {
                 () => this.pendingTrackerResponse.addEntry(request, responseStream),
                 () => responseStream.push(null)
             ).catch((e) => {
-                logger.error(`Failed to _requestStorageNodes, error: ${e}`)
+                logger.error(`Failed to requestStorageNodes, error: ${e}`)
             })
         }
     }

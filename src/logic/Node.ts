@@ -366,7 +366,7 @@ export class Node extends EventEmitter {
         if (subscribers.length) {
             subscribers.forEach((subscriber) => {
                 this.nodeToNode.sendData(subscriber, streamMessage).catch((e) => {
-                    this.logger.error(`Failed to _propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
+                    this.logger.error(`Failed to propagateMessage ${streamMessage} to subscriber ${subscriber}, because of ${e}`)
                     this.emit(Event.MESSAGE_PROPAGATION_FAILED, streamMessage, subscriber, e)
                 })
             })
