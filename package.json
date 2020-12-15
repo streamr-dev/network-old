@@ -11,8 +11,11 @@
     "subscriber": "./bin/subscriber.js",
     "publisher": "./bin/publisher.js"
   },
-  "main": "./src/composition.js",
+  "main": "./dist/composition.js",
+  "types": "./dist/composition.d.ts",
   "scripts": {
+    "prepare": "tsc",
+    "build": "tsc",
     "tracker": "node $NODE_DEBUG_OPTION bin/tracker.js",
     "pub": "node $NODE_DEBUG_OPTION bin/publisher.js",
     "pub-1": "node $NODE_DEBUG_OPTION bin/publisher.js --port=30323",

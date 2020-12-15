@@ -64,6 +64,10 @@ Run the tests:
 
     npm run test
 
+To build project:
+
+    npm run build
+
 We use [eslint](https://github.com/eslint/eslint) for code formatting:
 
     npm run eslint

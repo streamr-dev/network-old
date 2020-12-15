@@ -1,7 +1,7 @@
 import { TrackerServer, Event as TrackerServerEvent } from "../protocol/TrackerServer"
 import getLogger from "../helpers/logger"
-import {NotFoundInPeerBookError} from '../connection/PeerBook'
-import {LocalCandidateMessage, LocalDescriptionMessage, RelayMessage, RtcConnectMessage} from "../../types/global"
+import { NotFoundInPeerBookError } from '../connection/PeerBook'
+import { LocalCandidateMessage, LocalDescriptionMessage, RelayMessage, RtcConnectMessage } from "../identifiers"
 import { RtcSubTypes } from "./RtcMessage"
 
 const logger = getLogger('streamr:rtcSignallingHandlers')
