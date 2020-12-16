@@ -42,11 +42,13 @@ describe('WebRtcEndpoint', () => {
     })
 
     afterEach(async () => {
-        await trackerNode1.stop()
-        await trackerNode2.stop()
-        await endpoint1.stop()
-        await endpoint2.stop()
-        await tracker.stop()
+        await Promise.allSettled([
+            tracker.stop(),
+            trackerNode1.stop(),
+            trackerNode2.stop(),
+            endpoint1.stop(),
+            endpoint2.stop()
+        ])
     })
 
     it('connection between nodes is established when both nodes invoke connect()', async () => {
