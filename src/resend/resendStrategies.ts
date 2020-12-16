@@ -305,7 +305,7 @@ class PendingTrackerResponseBookkeeper {
 export class ForeignResendStrategy implements Strategy {
     private readonly trackerNode: TrackerNode
     private readonly nodeToNode: NodeToNode
-    private readonly getTracker: (streamId: string) => string | null
+    private readonly getTracker: (streamId: StreamIdAndPartition) => string | null
     private readonly isSubscribedTo: (streamId: string) => boolean
     private readonly timeout: number
     private readonly pendingTrackerResponse: PendingTrackerResponseBookkeeper
@@ -316,7 +316,7 @@ export class ForeignResendStrategy implements Strategy {
     constructor(
         trackerNode: TrackerNode,
         nodeToNode: NodeToNode,
-        getTracker: (streamId: string) => string | null,
+        getTracker: (streamId: StreamIdAndPartition) => string | null,
         isSubscribedTo: (streamId: string) => boolean,
         timeout = 20 * 1000
     ) {
@@ -396,7 +396,7 @@ export class ForeignResendStrategy implements Strategy {
 
     private requestStorageNodes(request: ResendRequest, responseStream: Readable): void {
         const streamIdAndPartition = new StreamIdAndPartition(request.streamId, request.streamPartition)
-        const tracker = this.getTracker(streamIdAndPartition.key())
+        const tracker = this.getTracker(streamIdAndPartition)
         if (tracker == null) {
             responseStream.push(null)
         } else {

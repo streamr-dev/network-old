@@ -1,9 +1,5 @@
-import { cancelable, CancelablePromiseType } from "cancelable-promise"
 import { StreamIdAndPartition, StreamKey } from "../identifiers"
-import getLogger from "../helpers/logger"
 import { TrackerLayer } from "streamr-client-protocol"
-
-const logger = getLogger('streamr:InstructionThrottler')
 
 interface Queue {
     [key: string]: {
@@ -12,18 +8,20 @@ interface Queue {
     }
 }
 
+function wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 /**
  * InstructionThrottler makes sure that
- *  1. no more than one instruction is handled at a time
+ *  1. only 100 instructions are handled per second
  *  2. any new instructions arriving while an instruction is being handled are queued in a
  *     way where only the most latest instruction per streamId is kept in queue.
  */
-
 export class InstructionThrottler {
     private readonly handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>
-    private queue: Queue = {}
+    private queue: Queue = {} // streamId => instructionMessage
     private handling: boolean = false
-    private ongoingPromise: CancelablePromiseType<void> | null = null
 
     constructor(handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>) {
         this.handleFn = handleFn
@@ -49,31 +47,23 @@ export class InstructionThrottler {
 
     reset(): void {
         this.queue = {}
-        if (this.ongoingPromise) {
-            this.ongoingPromise.cancel()
-        }
     }
 
     private async invokeHandleFnWithLock(): Promise<void> {
         const streamIds = Object.keys(this.queue)
-        const streamId: StreamKey = streamIds[0]
-        const { instructionMessage, trackerId } = this.queue[streamId]
-        delete this.queue[streamId]
+        if (streamIds.length > 0) {
+            const streamId: StreamKey = streamIds[0]
+            const { instructionMessage, trackerId } = this.queue[streamId]
+            delete this.queue[streamId]
 
-        this.handling = true
-        try {
-            this.ongoingPromise = cancelable(this.handleFn(instructionMessage, trackerId))
-            await this.ongoingPromise
-        } catch (err) {
-            logger.warn('InstructionMessage handling threw error %s', err)
-            logger.warn(err)
-        } finally {
-            this.ongoingPromise = null
+            this.handling = true
+            await wait(10)
             if (this.isQueueEmpty()) {
                 this.handling = false
-            } else {
-                this.invokeHandleFnWithLock()
             }
+            this.handleFn(instructionMessage, trackerId)
+
+            this.invokeHandleFnWithLock()
         }
     }
 

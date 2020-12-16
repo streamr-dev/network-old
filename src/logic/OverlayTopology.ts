@@ -14,13 +14,16 @@ export interface Instructions {
     [key: string]: string[]
 }
 
+export interface TopologyNodes {
+    [key: string]: Set<string>
+}
+
+
 export class OverlayTopology {
     private readonly maxNeighborsPerNode: number
     private readonly shuffleArray: (arr: Array<string>) => Array<string>
     private readonly pickRandomElement: (arr: Array<string>) => string
-    private readonly nodes: {
-        [key: string]: Set<string>
-    }
+    private readonly nodes: TopologyNodes
 
     constructor(
         maxNeighborsPerNode: number,
@@ -34,6 +37,10 @@ export class OverlayTopology {
         this.shuffleArray = shuffleArrayFunction
         this.pickRandomElement = pickRandomElementFunction
         this.nodes = {}
+    }
+
+    getNodes(): Readonly<TopologyNodes> {
+        return this.nodes
     }
 
     hasNode(nodeId: string): boolean {

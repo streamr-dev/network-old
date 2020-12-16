@@ -377,7 +377,7 @@ export class Connection {
                 this.respondedPong = true
                 this.rtt = Date.now() - this.rttStart!
             } else {
-                this.onMessage(msg)
+                this.onMessage(msg.toString()) // TODO: what if we get binary?
             }
         })
     }

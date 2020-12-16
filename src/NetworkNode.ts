@@ -21,7 +21,7 @@ export class NetworkNode extends Node {
                 new ForeignResendStrategy(
                     opts.protocols.trackerNode,
                     opts.protocols.nodeToNode,
-                    (streamKey) => this.getTrackerId(streamKey),
+                    (streamIdAndPartition) => this.getTrackerId(streamIdAndPartition),
                     (node) => this.isNodePresent(node)
                 )
             ]

@@ -164,10 +164,10 @@ export class Node extends EventEmitter {
         })
 
         this.perStreamMetrics = new PerStreamMetrics()
+        // .addQueriedMetric('perStream', () => this.perStreamMetrics.report()) NET-122
         this.metrics = metricsContext.create('node')
             .addQueriedMetric('messageBufferSize', () => this.messageBuffer.size())
             .addQueriedMetric('seenButNotPropagatedSetSize', () => this.seenButNotPropagatedSet.size())
-            .addQueriedMetric('perStream', () => this.perStreamMetrics.report())
             .addRecordedMetric('resendRequests')
             .addRecordedMetric('unexpectedTrackerInstructions')
             .addRecordedMetric('trackerInstructions')
@@ -255,7 +255,7 @@ export class Node extends EventEmitter {
         const { nodeIds, counter } = instructionMessage
 
         // Check that tracker matches expected tracker
-        const expectedTrackerId = this.getTrackerId(streamId.key())
+        const expectedTrackerId = this.getTrackerId(streamId)
         if (trackerId !== expectedTrackerId) {
             this.metrics.record('unexpectedTrackerInstructions', 1)
             this.logger.warn(`Got instructions from unexpected tracker. Expected ${expectedTrackerId}, got from ${trackerId}`)
@@ -405,7 +405,9 @@ export class Node extends EventEmitter {
 
     private getStatus(tracker: string): Status {
         return {
-            streams: this.streams.getStreamsWithConnections((streamKey) => this.getTrackerId(streamKey) === tracker),
+            streams: this.streams.getStreamsWithConnections((streamKey) => {
+                return this.getTrackerId(StreamIdAndPartition.fromKey(streamKey)) === tracker
+            }),
             started: this.started,
             rtts: this.nodeToNode.getRtts(),
             location: this.peerInfo.location
@@ -413,7 +415,7 @@ export class Node extends EventEmitter {
     }
 
     private sendStreamStatus(streamId: StreamIdAndPartition): void {
-        const trackerId = this.getTrackerId(streamId.key())
+        const trackerId = this.getTrackerId(streamId)
 
         if (trackerId) {
             const oldTimeoutRef = this.sendStatusTimeout.get(trackerId)
@@ -447,8 +449,8 @@ export class Node extends EventEmitter {
         return node
     }
 
-    protected getTrackerId(streamKey: string): string | null {
-        const address = this.trackerRegistry.getTracker(streamKey, 0) // TODO: fix soon
+    protected getTrackerId(streamId: StreamIdAndPartition): string | null {
+        const address = this.trackerRegistry.getTracker(streamId.id, streamId.partition)
         return this.trackerBook[address] || null
     }
 

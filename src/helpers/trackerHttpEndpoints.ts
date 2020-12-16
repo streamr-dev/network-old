@@ -1,5 +1,7 @@
+import _ from "lodash"
 import { HttpRequest, HttpResponse, TemplatedApp } from "uWebSockets.js"
 import { MetricsContext } from "./MetricsContext"
+import { getTopology, getTopologyUnion } from "../logic/TopologyFactory"
 import getLogger from "./logger"
 import { Tracker } from "../logic/Tracker"
 
@@ -19,12 +21,31 @@ const respondWithError = (res: HttpResponse, req: HttpRequest, errorMessage: str
     }))
 }
 
+const cachedJsonGet = (wss: TemplatedApp, endpoint: string, maxAge: number, jsonFactory: () => Object): TemplatedApp => {
+    let cache: undefined | {
+        timestamp: number
+        json: Object
+    }
+    return wss.get(endpoint, (res, req) => {
+        extraLogger.debug('request to ' + endpoint)
+        writeCorsHeaders(res, req)
+        if ((cache === undefined) || (Date.now() > (cache.timestamp + maxAge))) {
+            cache = {
+                json: jsonFactory(),
+                timestamp: Date.now()
+            }
+        }
+        res.end(JSON.stringify(cache.json))
+    })
+}
+
 export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metricsContext: MetricsContext): void {
     wss.get('/topology/', (res, req) => {
         extraLogger.debug('request to /topology/')
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology()))
-    }).get('/topology/:streamId/', (res, req) => {
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream())))
+    })
+    wss.get('/topology/:streamId/', (res, req) => {
         const streamId = decodeURIComponent(req.getParameter(0)).trim()
         if (streamId.length === 0) {
             extraLogger.error('422 streamId must be a not empty string')
@@ -34,8 +55,9 @@ export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metric
 
         extraLogger.debug(`request to /topology/${streamId}/`)
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology(streamId, null)))
-    }).get('/topology/:streamId/:partition/', (res, req) => {
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream(), streamId, null)))
+    })
+    wss.get('/topology/:streamId/:partition/', (res, req) => {
         const streamId = decodeURIComponent(req.getParameter(0)).trim()
         if (streamId.length === 0) {
             extraLogger.error('422 streamId must be a not empty string')
@@ -52,19 +74,26 @@ export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metric
 
         extraLogger.debug(`request to /topology/${streamId}/${askedPartition}/`)
         writeCorsHeaders(res, req)
-        res.end(JSON.stringify(tracker.getTopology(streamId, askedPartition)))
-    }).get('/location/', (res, req) => {
+        res.end(JSON.stringify(getTopology(tracker.getOverlayPerStream(), streamId, askedPartition)))
+    })
+    cachedJsonGet(wss,'/topology-union/', 15 * 1000, () => {
+        const topologyUnion = getTopologyUnion(tracker.getOverlayPerStream())
+        return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
+    })
+    wss.get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
         writeCorsHeaders(res, req)
         res.end(JSON.stringify(tracker.getAllNodeLocations()))
-    }).get('/location/:nodeId/', (res, req) => {
+    })
+    wss.get('/location/:nodeId/', (res, req) => {
         const nodeId = req.getParameter(0)
         const location = tracker.getNodeLocation(nodeId)
 
         extraLogger.debug(`request to /location/${nodeId}/`)
         writeCorsHeaders(res, req)
         res.end(JSON.stringify(location || {}))
-    }).get('/metrics/', async (res, req) => {
+    })
+    wss.get('/metrics/', async (res, req) => {
         /* Can't return or yield from here without responding or attaching an abort handler */
         res.onAborted(() => {
             res.aborted = true
