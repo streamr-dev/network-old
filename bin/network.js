@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import { spawn } from "child_process"
-import path from "path"
-import program from "commander"
-import { version as CURRENT_VERSION } from "../package.json"
+const { spawn } = require('child_process')
+const path = require('path')
+
+const program = require('commander')
+
+const { version: CURRENT_VERSION } = require('../package.json')
 
 program
     .version(CURRENT_VERSION)
@@ -15,9 +17,9 @@ const { nodes: numberOfNodes } = program
 const startingPort = 30000
 const trackerPort = 27777
 const startingDebugPort = 9200
-const streams: string[] = []
+const streams = []
 
-for (let i = 0; i < parseInt(program.streams); i++) {
+for (let i = 0; i < parseInt(program.streams, 10); i++) {
     streams.push(`stream-${i}`)
 }
 
@@ -27,7 +29,7 @@ const productionEnv = Object.create(process.env)
 productionEnv.LOG_LEVEL = productionEnv.LOG_LEVEL || 'debug'
 
 // create tracker
-const tracker = path.resolve('./dist/bin/tracker.js')
+const tracker = path.resolve('./bin/tracker.js')
 let args = [tracker, '--port=' + trackerPort]
 
 if (process.env.NODE_DEBUG_OPTION !== undefined) {
@@ -41,9 +43,9 @@ spawn('node', args, {
 })
 
 setTimeout(() => {
-    for (let i = 0; i < parseInt(numberOfNodes); i++) {
+    for (let i = 0; i < parseInt(numberOfNodes, 10); i++) {
         args = [
-            path.resolve('./dist/bin/subscriber.js'),
+            path.resolve('./bin/subscriber.js'),
             '--streamId=' + streams[Math.floor(Math.random() * streams.length)],
             '--port=' + (startingPort + i),
             `--trackers=ws://127.0.0.1:${trackerPort}`

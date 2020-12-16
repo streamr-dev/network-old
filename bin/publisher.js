@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import program from "commander"
-import { MessageLayer } from "streamr-client-protocol"
-import { startNetworkNode } from "../src/composition"
-import { StreamIdAndPartition } from "../src/identifiers"
-import getLogger from "../src/helpers/logger"
-import { version as CURRENT_VERSION } from "../package.json"
-import { MetricsContext } from "../src/helpers/MetricsContext"
+const program = require('commander')
+const { MessageLayer } = require('streamr-client-protocol')
+
+const getLogger = require('../dist/helpers/logger').default
+const { version: CURRENT_VERSION } = require('../package.json')
+const { startNetworkNode } = require('../dist/composition')
+const { StreamIdAndPartition } = require('../dist/identifiers')
+const { MetricsContext } = require('../dist/helpers/MetricsContext')
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
@@ -25,15 +26,15 @@ program
     .description('Run publisher')
     .parse(process.argv)
 
-const publisherId: string = program.id || `publisher-${program.port}`
-const name: string = program.nodeName || publisherId
-const noise: number = parseInt(program.noise, 10)
+const publisherId = program.id || `publisher-${program.port}`
+const name = program.nodeName || publisherId
+const noise = parseInt(program.noise, 10)
 
-const messageChainId: string = `message-chain-id-${program.port}`
-const streamObj: StreamIdAndPartition = new StreamIdAndPartition(program.streamId, 0)
+const messageChainId = `message-chain-id-${program.port}`
+const streamObj = new StreamIdAndPartition(program.streamId, 0)
 const { id: streamId, partition } = streamObj
 
-function generateString(length: number): string {
+function generateString(length) {
     let result = ''
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     const charactersLength = characters.length
@@ -58,7 +59,7 @@ startNetworkNode({
 
         publisher.start()
 
-        let lastTimestamp: number | null = null
+        let lastTimestamp = null
         let sequenceNumber = 0
 
         setInterval(() => {

@@ -13,6 +13,7 @@
     "resolveJsonModule": true
   },
   "exclude": [
+    "bin",
     "dist",
     "examples",
     "jest.config.js",

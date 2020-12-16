@@ -7,10 +7,10 @@
     "url": "git+https://github.com/streamr-dev/network.git"
   },
   "bin": {
-    "network": "./dist/bin/network.js",
-    "publisher": "./dist/bin/publisher.js",
-    "subscriber": "./dist/bin/subscriber.js",
-    "tracker": "./dist/bin/tracker.js"
+    "network": "./bin/network.js",
+    "publisher": "./bin/publisher.js",
+    "subscriber": "./bin/subscriber.js",
+    "tracker": "./bin/tracker.js"
   },
   "main": "./dist/composition.js",
   "types": "./dist/composition.d.ts",
@@ -29,7 +29,7 @@
     "coverage": "jest --coverage",
     "test-integration": "jest test/integration",
     "eslint": "eslint .",
-    "network": "network"
+    "network": "node $NODE_DEBUG_OPTION bin/network.js"
   },
   "author": "Streamr Network AG <contact@streamr.network>",
   "license": "STREAMR NETWORK OPEN SOURCE LICENSE",

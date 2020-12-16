@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-import program from "commander"
-import { startNetworkNode } from "../src/composition"
-import getLogger from "../src/helpers/logger"
-import { version as CURRENT_VERSION } from "../package.json"
-import { MetricsContext } from "../src/helpers/MetricsContext"
-import { Event as NodeEvent } from "../src/logic/Node"
+const program = require('commander')
+const { MessageLayer } = require('streamr-client-protocol')
+
+const getLogger = require('../dist/helpers/logger').default
+const { version: CURRENT_VERSION } = require('../package.json')
+const { startNetworkNode } = require('../dist/composition')
+const { MetricsContext } = require('../dist/helpers/MetricsContext')
+const { Event: NodeEvent } = require('../dist/logic/Node')
 
 const logger = getLogger('streamr:bin:subscriber')
 
@@ -39,7 +41,7 @@ startNetworkNode({
 
     let messageNo = 0
     let lastReported = 0
-    subscriber.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, (streamMessage: any) => {
+    subscriber.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, (streamMessage) => {
         messageNo += 1
         logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
     })

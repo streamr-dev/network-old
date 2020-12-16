@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import program from "commander"
-import { startTracker } from "../src/composition"
-import getLogger from "../src/helpers/logger"
-import { version as CURRENT_VERSION } from "../package.json"
-import { MetricsContext } from "../src/helpers/MetricsContext"
-import pino from "pino"
+const program = require('commander')
+const pino = require('pino')
+
+const getLogger = require('../dist/helpers/logger').default
+const { version: CURRENT_VERSION } = require('../package.json')
+const { startTracker } = require('../dist/composition')
+const { MetricsContext } = require('../dist/helpers/MetricsContext')
 
 const logger = getLogger('streamr:bin:tracker')
 
@@ -20,10 +21,10 @@ program
     .description('Run tracker with reporting')
     .parse(process.argv)
 
-const id: string = program.id || `tracker-${program.port}`
-const name: string = program.trackerName || id
+const id = program.id || `tracker-${program.port}`
+const name = program.trackerName || id
 
-async function main(): Promise<void> {
+async function main() {
     const metricsContext = new MetricsContext(id)
     try {
         const tracker = await startTracker({
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
             metricsContext
         })
 
-        const trackerObj: { [key: string]: string } = {}
+        const trackerObj = {}
         const fields = ['ip', 'port', 'maxNeighborsPerNode', 'metrics', 'metricsInterval']
         fields.forEach((prop) => {
             trackerObj[prop] = program[prop]
