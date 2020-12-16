@@ -166,7 +166,8 @@ export class WebRtcEndpoint extends EventEmitter {
             },
             onClose: () => {
                 this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
-                this.emit(`disconnected:${connection.getPeerId()}`, connection.getPeerInfo())
+                const err = new Error(`disconnected ${connection.getPeerId()}`)
+                this.emit(`disconnected:${connection.getPeerId()}`, err)
                 this.metrics.record('close', 1)
                 delete this.connections[targetPeerId]
             },
