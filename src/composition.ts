@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import Protocol from "streamr-client-protocol"
+import * as Protocol from "streamr-client-protocol"
 import { MetricsContext } from "./helpers/MetricsContext"
 import { Location } from "./identifiers"
 import { PeerInfo } from "./connection/PeerInfo"
@@ -18,6 +18,8 @@ import { Readable } from "stream"
 const STUN_URLS = ['stun:stun.l.google.com:19302'] // TODO: make configurable
 
 const logger = getLogger("streamr:bin:composition")
+
+export { Protocol }
 
 export interface Storage {
     requestLast(
