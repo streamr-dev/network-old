@@ -50,6 +50,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private pingTimeoutRef: NodeJS.Timeout
     private readonly logger: pino.Logger
     private readonly metrics: Metrics
+    private stopped: boolean = false
 
     constructor(
         id: string,
@@ -137,6 +138,10 @@ export class WebRtcEndpoint extends EventEmitter {
         isOffering = this.id < targetPeerId,
         trackerInstructed = true
     ): Promise<string> {
+        // Prevent new connections from being opened when WebRtcEndpoint has been closed
+        if (this.stopped) {
+            return Promise.reject(new WebRtcError('WebRtcEndpoint has been stopped'))
+        }
         if (this.connections[targetPeerId]) {
             return Promise.resolve(targetPeerId)
         }
@@ -228,6 +233,7 @@ export class WebRtcEndpoint extends EventEmitter {
     }
 
     stop(): void {
+        this.stopped = true
         Object.values(this.connections).forEach((connection) => connection.close())
         clearTimeout(this.pingTimeoutRef)
         this.connections = {}
