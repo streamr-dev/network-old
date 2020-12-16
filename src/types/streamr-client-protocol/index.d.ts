@@ -240,7 +240,13 @@ declare module 'streamr-client-protocol' {
     module MessageLayer {
         class StreamMessage {
             messageId: MessageID
-            prevMsgRef: MessageRef
+            prevMsgRef: MessageRef | null
+
+            constructor(args : {
+                messageId: MessageID
+                prevMsgRef: MessageRef | null
+                content: Object
+            })
 
             getStreamId(): string
             getStreamPartition(): number
@@ -253,7 +259,11 @@ declare module 'streamr-client-protocol' {
             sequenceNumber: number
             publisherId: string
             msgChainId: string
+
+            constructor(streamId: string, streamPartition: number, timestamp: number, sequenceNumber: number,
+                        publisherId: string, msgChainId: string)
         }
+
 
         class MessageRef {
             timestamp: number

@@ -1,17 +1,18 @@
 #!/usr/bin/env node
+import program from "commander"
+import { startNetworkNode } from "../src/composition"
+import getLogger from "../src/helpers/logger"
+import { version as CURRENT_VERSION } from "../package.json"
+import { MetricsContext } from "../src/helpers/MetricsContext"
+import { Event as NodeEvent } from "../src/logic/Node"
 
-const program = require('commander')
-
-const CURRENT_VERSION = require('../package.json').version
-const { startNetworkNode } = require('../src/composition')
-const Node = require('../src/logic/Node')
-const logger = require('../src/helpers/logger')('streamr:bin:publisher')
+const logger = getLogger('streamr:bin:subscriber')
 
 program
     .version(CURRENT_VERSION)
     .option('--id <id>', 'Ethereum address / node id', undefined)
     .option('--nodeName <nodeName>', 'Human readble name for node', undefined)
-    .option('--port <port>', 'port', 30304)
+    .option('--port <port>', 'port', '30304')
     .option('--ip <ip>', 'ip', '127.0.0.1')
     .option('--trackers <trackers>', 'trackers', (value) => value.split(','), ['ws://127.0.0.1:27777'])
     .option('--streamId <streamId>', 'streamId to publish', 'stream-0')
@@ -22,8 +23,14 @@ program
 const id = program.id || `subscriber-${program.port}`
 const name = program.nodeName || id
 
+const metricsContext = new MetricsContext(id)
 startNetworkNode({
-    host: program.ip, port: program.port, name: id, id, trackers: program.trackers, storage: []
+    host: program.ip,
+    port: program.port,
+    name: id,
+    id,
+    trackers: program.trackers,
+    metricsContext
 }).then((subscriber) => {
     logger.info('started subscriber id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, metrics: %s',
         id, name, program.port, program.ip, program.trackers.join(', '), program.streamId, program.metrics)
@@ -32,7 +39,7 @@ startNetworkNode({
 
     let messageNo = 0
     let lastReported = 0
-    subscriber.on(Node.events.UNSEEN_MESSAGE_RECEIVED, (streamMessage) => {
+    subscriber.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, (streamMessage: any) => {
         messageNo += 1
         logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
     })
@@ -45,7 +52,7 @@ startNetworkNode({
 
     if (program.metrics) {
         setInterval(async () => {
-            logger.info(JSON.stringify(await subscriber.getMetrics(), null, 3))
+            logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
         }, 5000)
     }
     return true

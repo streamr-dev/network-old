@@ -8,7 +8,7 @@
 # streamr-network
 
 An extendable implementation of the server-side
-[Streamr Protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) logic written in Node.js.
+[Streamr Protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) logic written in TypeScript.
 The package mostly acts as a library for other packages wishing to implement a broker node, but additionally
 provides a full tracker executable, and a stripped-down network node executable.
 
