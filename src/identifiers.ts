@@ -52,7 +52,7 @@ export interface Location {
 }
 
 export interface StatusStreams {
-    [key: string]: {
+    [key: string]: { // StreamKey
         inboundNodes: string[]
         outboundNodes: string[]
         counter: number

@@ -22,7 +22,7 @@ eventPerType[TrackerLayer.TrackerMessage.TYPES.StatusMessage] = Event.NODE_STATU
 eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesRequest] = Event.STORAGE_NODES_REQUEST
 eventPerType[TrackerLayer.TrackerMessage.TYPES.RelayMessage] = Event.RELAY_MESSAGE_RECEIVED
 
-export declare interface TrackerNode {
+export interface TrackerNode {
     on(event: Event.NODE_CONNECTED, listener: (nodeId: string, isStorage: boolean) => void): this
     on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string, isStorage: boolean) => void): this
     on(event: Event.NODE_STATUS_RECEIVED, listener: (msg: TrackerLayer.StatusMessage, nodeId: string) => void): this

@@ -50,7 +50,7 @@ export interface NodeOptions {
 
 const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
-export declare interface Node {
+export interface Node {
     on(event: Event.NODE_CONNECTED, listener: (nodeId: string) => void): this
     on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string) => void): this
     on(event: Event.MESSAGE_RECEIVED, listener: (msg: MessageLayer.StreamMessage, nodeId: string) => void): this

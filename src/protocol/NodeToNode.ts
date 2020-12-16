@@ -28,7 +28,7 @@ eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseResending] = Event.
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseResent] = Event.RESEND_RESPONSE
 eventPerType[ControlLayer.ControlMessage.TYPES.ResendResponseNoResend] = Event.RESEND_RESPONSE
 
-export declare interface NodeToNode {
+export interface NodeToNode {
     on(event: Event.NODE_CONNECTED, listener: (nodeId: string) => void): this
     on(event: Event.NODE_DISCONNECTED, listener: (nodeId: string) => void): this
     on(event: Event.DATA_RECEIVED, listener: (message: ControlLayer.BroadcastMessage, nodeId: string) => void): this

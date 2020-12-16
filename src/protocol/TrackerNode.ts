@@ -25,7 +25,7 @@ eventPerType[TrackerLayer.TrackerMessage.TYPES.StorageNodesResponse] = Event.STO
 eventPerType[TrackerLayer.TrackerMessage.TYPES.RelayMessage] = Event.RELAY_MESSAGE_RECEIVED
 eventPerType[TrackerLayer.TrackerMessage.TYPES.ErrorMessage] = Event.RTC_ERROR_RECEIVED
 
-export declare interface TrackerNode {
+export interface TrackerNode {
     on(event: Event.CONNECTED_TO_TRACKER, listener: (trackerId: string) => void): this
     on(event: Event.TRACKER_DISCONNECTED, listener: (trackerId: string) => void): this
     on(event: Event.TRACKER_INSTRUCTION_RECEIVED, listener: (msg: TrackerLayer.InstructionMessage, trackerId: string) => void): this
