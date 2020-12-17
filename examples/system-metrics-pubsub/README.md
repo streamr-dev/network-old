@@ -16,5 +16,5 @@ npm run demo
 
 Run with debugging enabled
 ```
-demo-with-logging
+npm run demo-with-logging
 ```
