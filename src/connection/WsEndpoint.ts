@@ -7,7 +7,6 @@ import { Metrics, MetricsContext } from "../helpers/MetricsContext"
 import getLogger from "../helpers/logger"
 import pino from "pino"
 import { Rtts } from "../identifiers"
-import _ from "lodash"
 
 const extraLogger = getLogger('streamr:ws-endpoint')
 
