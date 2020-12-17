@@ -8,9 +8,8 @@ async function setUpEndpoint(peerId: string, peerType: string, city: string, por
     const peerInfo = PeerInfo.fromObject({
         peerId,
         peerType,
-        peerName:
-        peerId,
-            location: {
+        peerName: peerId,
+        location: {
             latitude: null,
             longitude: null,
             country: "Finland",
