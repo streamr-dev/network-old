@@ -231,7 +231,7 @@ export class Tracker extends EventEmitter {
     }
 
     getNodes(): ReadonlyArray<string> {
-        return Object.keys(this.getAllNodeLocations())
+        return this.trackerServer.getNodeIds()
     }
 
     getNodeLocation(node: NodeId): Location {

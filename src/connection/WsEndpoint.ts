@@ -7,6 +7,7 @@ import { Metrics, MetricsContext } from "../helpers/MetricsContext"
 import getLogger from "../helpers/logger"
 import pino from "pino"
 import { Rtts } from "../identifiers"
+import _ from "lodash"
 
 const extraLogger = getLogger('streamr:ws-endpoint')
 
@@ -501,6 +502,12 @@ export class WsEndpoint extends EventEmitter {
 
     getPeers(): ReadonlyMap<string, WsConnection | UWSConnection> {
         return this.connections
+    }
+
+    getPeerInfos(): PeerInfo[] {
+        return Array.from(this.connections.keys())
+            .map((address) => this.peerBook.getPeerInfo(address))
+            .filter((x) => x !== null) as PeerInfo[]
     }
 
     resolveAddress(peerId: string): string | never {

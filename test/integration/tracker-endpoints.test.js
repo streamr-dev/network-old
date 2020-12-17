@@ -80,9 +80,11 @@ describe('tracker endpoint', () => {
     })
 
     afterAll(async () => {
-        await nodeOne.stop()
-        await nodeTwo.stop()
-        await tracker.stop()
+        await Promise.allSettled([
+            tracker.stop(),
+            nodeOne.stop(),
+            nodeTwo.stop()
+        ])
     })
 
     it('/topology/', async () => {
