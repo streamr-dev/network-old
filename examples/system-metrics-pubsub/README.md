@@ -9,7 +9,7 @@ Install
 npm ci
 ```
 
-In one terminal window run `network-init`, which starts the tracker and publisher nodes:
+In one terminal window run `network-init`, which starts the tracker and publisher node:
 ```
 npm run network-init
 ```
