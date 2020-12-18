@@ -57,7 +57,7 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
-        pingIntervalInMs = 5 * 1000,
+        pingIntervalInMs = 30 * 1000,
         newConnectionTimeout = 5000
     ) {
         super()
@@ -183,6 +183,12 @@ export class WebRtcEndpoint extends EventEmitter {
             onError: (err) => {
                 this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
                 this.emit(`errored:${connection.getPeerId()}`, err)
+            },
+            onBufferLow: () => {
+                this.emit(Event.LOW_BACK_PRESSURE, connection.getPeerInfo())
+            },
+            onBufferHigh: () => {
+                this.emit(Event.HIGH_BACK_PRESSURE, connection.getPeerInfo())
             }
         })
         this.connections[targetPeerId] = connection

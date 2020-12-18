@@ -42,7 +42,7 @@ spawn('node', args, {
     stdio: [process.stdin, process.stdout, process.stderr]
 })
 
-setTimeout(() => {
+setTimeout(async () => {
     for (let i = 0; i < parseInt(numberOfNodes, 10); i++) {
         args = [
             path.resolve('./bin/subscriber.js'),
@@ -59,5 +59,8 @@ setTimeout(() => {
             env: productionEnv,
             stdio: [process.stdin, process.stdout, process.stderr]
         })
+
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 10))
     }
 }, 1000)
