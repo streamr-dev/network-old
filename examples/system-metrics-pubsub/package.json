@@ -4,8 +4,10 @@
   "description": "An example of using streamr-network in a pub/sub setting",
   "main": "index.ts",
   "scripts": {
-    "demo": "ts-node index.ts",
-    "demo-with-logging": "LOG_LEVEL=debug ts-node index.ts",
+    "network-init": "ts-node index.ts",
+    "network-init-with-logging": "LOG_LEVEL=debug ts-node index.ts",
+    "subscriber": "ts-node subscriber.ts",
+    "subscriber-with-logging": "LOG_LEVEL=debug ts-node subscriber.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Streamr Network AG <contact@streamr.network>",

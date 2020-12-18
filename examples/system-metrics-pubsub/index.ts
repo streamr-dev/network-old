@@ -25,7 +25,7 @@ function runTracker(): Promise<Tracker> {
  */
 async function runPublisher(): Promise<NetworkNode> {
     const publisherNode: NetworkNode = await startNetworkNode({
-        host: '127.0.01',
+        host: '127.0.0.1',
         port: 30301,
         id: 'publisherNode',
         trackers: ['ws://127.0.0.1:30300']
@@ -77,29 +77,8 @@ async function runPublisher(): Promise<NetworkNode> {
     return publisherNode
 }
 
-/**
- * Run a subscriber node that subscribes to stream "system-report" and logs all received messages in stdout.
- */
-async function runSubscriber(id: string, port: number): Promise<NetworkNode> {
-    const subscriberNode: NetworkNode = await startNetworkNode({
-        host: '127.0.01',
-        port: port,
-        name: id,
-        trackers: ['ws://127.0.0.1:30300']
-    })
-    subscriberNode.start()
-    subscriberNode.subscribe('system-report', 0)
-    subscriberNode.addMessageListener((msg: Protocol.MessageLayer.StreamMessage) => {
-        const msgAsJson = JSON.stringify(msg.getContent(), null, 2)
-        console.info(`${id} received ${msgAsJson}`)
-    })
-    return subscriberNode
-}
-
 async function main(): Promise<void> {
     const tracker: Tracker = await runTracker()
     const publisherNode: NetworkNode = await runPublisher()
-    const subscriberNodeOne: NetworkNode = await runSubscriber('subscriberNodeOne', 30302)
-    const subscriberNodeTwo: NetworkNode = await runSubscriber('subscriberNodeTwo', 30303)
 }
 main().catch((err) => console.error(err))
