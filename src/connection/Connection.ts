@@ -375,21 +375,21 @@ export class Connection {
                     + ' exceeding the limit of '
                     + this.dataChannel!.maxMessageSize()
                 queueItem.immediateFail(errorMessage)
-                this.messageQueue.pop()
                 this.logger.warn(errorMessage)
+                this.messageQueue.pop()
             } else if (this.paused || this.getBufferedAmount() >= this.bufferHighThreshold) {
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
                 }
-                return
+                return // method eventually re-scheduled by `onBufferedAmountLow`
             } else {
+                let sent = false
                 try {
                     // Checking `this.open()` is left out on purpose. We want the message to be discarded if it was not
                     // sent after MAX_TRIES regardless of the reason.
                     this.dataChannel!.sendMessage(queueItem.getMessage())
-                    this.messageQueue.pop()
-                    queueItem.delivered()
+                    sent = true
                 } catch (e) {
                     queueItem.incrementTries({
                         error: e.toString(),
@@ -402,13 +402,20 @@ export class Connection {
                         this.logger.warn('Failed to send message after %d tries due to\n\t%s',
                             MessageQueue.MAX_TRIES,
                             infoText)
-                    } else if (this.flushTimeoutRef === null) {
+                        this.messageQueue.pop()
+                    }
+                    if (this.flushTimeoutRef === null) {
                         this.flushTimeoutRef = setTimeout(() => {
                             this.flushTimeoutRef = null
                             this.attemptToFlushMessages()
                         }, this.flushRetryTimeout)
                     }
-                    return
+                    return // method rescheduled by `this.flushTimeoutRef`
+                }
+
+                if (sent) {
+                    this.messageQueue.pop()
+                    queueItem.delivered()
                 }
             }
         }

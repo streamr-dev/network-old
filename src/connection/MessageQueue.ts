@@ -1,6 +1,9 @@
 import Heap from 'heap'
+import getLogger from "../helpers/logger"
 
 type Info = Object
+
+const logger = getLogger("streamr:webrtc:MessageQueue")
 
 export class QueueItem<M> {
     private static nextNumber = 0
@@ -69,6 +72,7 @@ export class MessageQueue<M> {
 
     add(message: M): Promise<void> {
         if (this.size() === this.maxSize) {
+            logger.warn("Queue full. Dropping message.")
             this.pop().immediateFail("Message queue full, dropping message.")
         }
         return new Promise((resolve, reject) => {
