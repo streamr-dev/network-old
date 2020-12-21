@@ -1,65 +1,8 @@
-import Heap from 'heap'
 import nodeDataChannel, {DataChannel, DescriptionType, PeerConnection} from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import pino from "pino"
-
-type Info = Object
-
-class QueueItem<M> {
-    private static nextNumber = 0
-    public static readonly MAX_TRIES = 10
-
-    private readonly message: M
-    private readonly onSuccess: () => void
-    private readonly onError: (err: Error) => void
-    private readonly infos: Info[]
-    public readonly no: number
-    private tries: number
-    private failed: boolean
-
-    constructor(message: M, onSuccess: () => void, onError: (err: Error) => void) {
-        this.message = message
-        this.onSuccess = onSuccess
-        this.onError = onError
-        this.infos = []
-        this.no = QueueItem.nextNumber++
-        this.tries = 0
-        this.failed = false
-    }
-
-    getMessage(): M {
-        return this.message
-    }
-
-    getInfos(): ReadonlyArray<Info> {
-        return this.infos
-    }
-
-    isFailed(): boolean {
-        return this.failed
-    }
-
-    delivered(): void {
-        this.onSuccess()
-    }
-
-    incrementTries(info: Info): void | never {
-        this.tries += 1
-        this.infos.push(info)
-        if (this.tries >= QueueItem.MAX_TRIES) {
-            this.failed = true
-        }
-        if (this.isFailed()) {
-            this.onError(new Error('Failed to deliver message.'))
-        }
-    }
-
-    immediateFail(errMsg: string) {
-        this.failed = true
-        this.onError(new Error(errMsg))
-    }
-}
+import { MessageQueue } from "./MessageQueue"
 
 export interface ConstructorOptions {
     selfId: string
@@ -102,7 +45,7 @@ export class Connection {
     private readonly onBufferLow: () => void
     private readonly onBufferHigh: () => void
 
-    private readonly messageQueue: Heap<QueueItem<string>>
+    private readonly messageQueue: MessageQueue<string>
     private connection: PeerConnection | null
     private dataChannel: DataChannel | null
     private paused: boolean
@@ -148,7 +91,7 @@ export class Connection {
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingPongTimeout = pingPongTimeout
 
-        this.messageQueue = new Heap((a, b) => a.no - b.no)
+        this.messageQueue = new MessageQueue<string>()
         this.connection = null
         this.dataChannel = null
         this.paused = false
@@ -240,11 +183,8 @@ export class Connection {
     }
 
     send(message: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const queueItem = new QueueItem(message, resolve, reject)
-            this.messageQueue.push(queueItem)
-            setImmediate(() => this.attemptToFlushMessages())
-        })
+        setImmediate(() => this.attemptToFlushMessages())
+        return this.messageQueue.add(message)
     }
 
     close(err?: Error) {
@@ -418,7 +358,7 @@ export class Connection {
             } else {
                 try {
                     if (queueItem.getMessage().length > this.dataChannel!.maxMessageSize()) {
-                        const queueItem = this.messageQueue.pop()
+                        this.messageQueue.pop()
                         const errorMessage = 'Dropping message due to size '
                             + queueItem.getMessage().length
                             + ' exceeding the limit of '
@@ -447,7 +387,7 @@ export class Connection {
                     if (queueItem.isFailed()) {
                         const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
                         this.logger.warn('Failed to send message after %d tries due to\n\t%s',
-                            QueueItem.MAX_TRIES,
+                            MessageQueue.MAX_TRIES,
                             infoText)
                     } else if (this.flushTimeoutRef === null) {
                         this.flushTimeoutRef = setTimeout(() => {
