@@ -1,4 +1,4 @@
-import nodeDataChannel, {DataChannel, DescriptionType, PeerConnection} from 'node-datachannel'
+import nodeDataChannel, { DataChannel, DescriptionType, PeerConnection } from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import pino from "pino"
@@ -15,6 +15,7 @@ export interface ConstructorOptions {
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
     pingPongTimeout?: number
+    flushRetryTimeout?: number
     onLocalDescription: (type: DescriptionType, description: string) => void
     onLocalCandidate: (candidate: string, mid: string) => void
     onOpen: () => void
@@ -36,6 +37,7 @@ export class Connection {
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
     private readonly pingPongTimeout: number
+    private readonly flushRetryTimeout: number
     private readonly onLocalDescription: (type: DescriptionType, description: string) => void
     private readonly onLocalCandidate: (candidate: string, mid: string) => void
     private readonly onOpen: () => void
@@ -71,6 +73,7 @@ export class Connection {
         newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
         pingPongTimeout = 2000,
+        flushRetryTimeout = 500,
         onLocalDescription,
         onLocalCandidate,
         onOpen,
@@ -90,6 +93,7 @@ export class Connection {
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingPongTimeout = pingPongTimeout
+        this.flushRetryTimeout = flushRetryTimeout
 
         this.messageQueue = new MessageQueue<string>()
         this.connection = null
@@ -245,8 +249,9 @@ export class Connection {
                 this.logger.debug('failed to ping connection, error %s, re-attempting', e)
                 this.peerPingTimeoutRef = setTimeout(() => this.ping(attempt + 1), this.pingPongTimeout)
             } else {
-                this.logger.warn('failed all ping re-attempts to connection, terminating connection', e)
+                this.logger.warn('failed all ping re-attempts to connection, reattempting connection', e)
                 this.close(new Error('ping attempts failed'))
+                this.connect()
             }
         }
     }
@@ -262,8 +267,9 @@ export class Connection {
                 this.logger.debug('failed to pong connection, error %s, re-attempting', e)
                 this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), this.pingPongTimeout)
             } else {
-                this.logger.warn('failed all pong re-attempts to connection, terminating connection', e)
+                this.logger.warn('failed all pong re-attempts to connection, reattempting connection', e)
                 this.close(new Error('pong attempts failed'))
+                this.connect()
             }
         }
     }
@@ -289,6 +295,14 @@ export class Connection {
             return this.dataChannel!.bufferedAmount().valueOf()
         } catch (err) {
             return 0
+        }
+    }
+
+    getMaxMessageSize(): number {
+        try {
+            return this.dataChannel!.maxMessageSize().valueOf()
+        } catch (err) {
+            return 1024 * 1024
         }
     }
 
@@ -351,32 +365,31 @@ export class Connection {
     }
 
     private attemptToFlushMessages(): void {
-        while (this.isOpen() && !this.messageQueue.empty()) {
+        while (!this.messageQueue.empty()) {
             const queueItem = this.messageQueue.peek()
             if (queueItem.isFailed()) {
                 this.messageQueue.pop()
+            } else if (queueItem.getMessage().length > this.getMaxMessageSize())  {
+                const errorMessage = 'Dropping message due to size '
+                    + queueItem.getMessage().length
+                    + ' exceeding the limit of '
+                    + this.dataChannel!.maxMessageSize()
+                queueItem.immediateFail(errorMessage)
+                this.messageQueue.pop()
+                this.logger.warn(errorMessage)
+            } else if (this.paused || this.getBufferedAmount() >= this.bufferHighThreshold) {
+                if (!this.paused) {
+                    this.paused = true
+                    this.onBufferHigh()
+                }
+                return
             } else {
                 try {
-                    if (queueItem.getMessage().length > this.dataChannel!.maxMessageSize()) {
-                        this.messageQueue.pop()
-                        const errorMessage = 'Dropping message due to size '
-                            + queueItem.getMessage().length
-                            + ' exceeding the limit of '
-                            + this.dataChannel!.maxMessageSize()
-                        queueItem.immediateFail(errorMessage)
-                        this.logger.warn(errorMessage)
-                    } else if (this.dataChannel!.bufferedAmount() < this.bufferHighThreshold && !this.paused) {
-                        // TODO: emit LOW_BUFFER_THRESHOLD if paused true (or somewhere else?)
-                        this.dataChannel!.sendMessage(queueItem.getMessage())
-                        this.messageQueue.pop()
-                        queueItem.delivered()
-                    } else {
-                        if (!this.paused) {
-                            this.paused = true
-                            this.onBufferHigh()
-                        }
-                        return
-                    }
+                    // Checking `this.open()` is left out on purpose. We want the message to be discarded if it was not
+                    // sent after MAX_TRIES regardless of the reason.
+                    this.dataChannel!.sendMessage(queueItem.getMessage())
+                    this.messageQueue.pop()
+                    queueItem.delivered()
                 } catch (e) {
                     queueItem.incrementTries({
                         error: e.toString(),
@@ -393,7 +406,7 @@ export class Connection {
                         this.flushTimeoutRef = setTimeout(() => {
                             this.flushTimeoutRef = null
                             this.attemptToFlushMessages()
-                        }, 100)
+                        }, this.flushRetryTimeout)
                     }
                     return
                 }
