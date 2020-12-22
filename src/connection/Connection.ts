@@ -373,7 +373,7 @@ export class Connection {
                 const errorMessage = 'Dropping message due to size '
                     + queueItem.getMessage().length
                     + ' exceeding the limit of '
-                    + this.dataChannel!.maxMessageSize()
+                    + this.getMaxMessageSize()
                 queueItem.immediateFail(errorMessage)
                 this.logger.warn(errorMessage)
                 this.messageQueue.pop()
