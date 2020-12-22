@@ -71,9 +71,9 @@ export class Connection {
         stunUrls,
         bufferHighThreshold = 2 ** 20,
         bufferLowThreshold = 2 ** 17,
-        newConnectionTimeout = 5000,
+        newConnectionTimeout = 10 * 1000,
         maxPingPongAttempts = 5,
-        pingPongTimeout = 2000,
+        pingPongTimeout = 10 * 1000,
         flushRetryTimeout = 500,
         onLocalDescription,
         onLocalCandidate,
@@ -254,7 +254,6 @@ export class Connection {
             } else {
                 this.logger.warn('failed all ping re-attempts to connection, reattempting connection', e)
                 this.close(new Error('ping attempts failed'))
-                this.connect()
             }
         }
     }
@@ -272,7 +271,6 @@ export class Connection {
             } else {
                 this.logger.warn('failed all pong re-attempts to connection, reattempting connection', e)
                 this.close(new Error('pong attempts failed'))
-                this.connect()
             }
         }
     }
