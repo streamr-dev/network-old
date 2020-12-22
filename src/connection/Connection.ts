@@ -60,6 +60,7 @@ export class Connection {
     private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
+    private numOfConsecutiveSendFails: number
     private readonly logger: pino.Logger
 
     constructor({
@@ -110,6 +111,7 @@ export class Connection {
         this.rtt = null
         this.respondedPong = true
         this.rttStart = null
+        this.numOfConsecutiveSendFails = 0
 
         this.onLocalDescription = onLocalDescription
         this.onLocalCandidate = onLocalCandidate
@@ -224,6 +226,7 @@ export class Connection {
         this.connectionTimeoutRef = null
         this.peerPingTimeoutRef = null
         this.peerPongTimeoutRef = null
+        this.numOfConsecutiveSendFails = 0
 
         if (err) {
             this.onError(err)
@@ -399,7 +402,7 @@ export class Connection {
                     })
                     if (queueItem.isFailed()) {
                         const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
-                        this.logger.warn('Failed to send message after %d tries due to\n\t%s',
+                        this.logger.debug('Failed to send message after %d tries due to\n\t%s',
                             MessageQueue.MAX_TRIES,
                             infoText)
                         this.messageQueue.pop()
@@ -410,12 +413,17 @@ export class Connection {
                             this.attemptToFlushMessages()
                         }, this.flushRetryTimeout)
                     }
+                    this.numOfConsecutiveSendFails += 1
+                    if (this.numOfConsecutiveSendFails >= 100) {
+                        this.close(new Error("Reached over 100 consecutive send fails. Closing connection"))
+                    }
                     return // method rescheduled by `this.flushTimeoutRef`
                 }
 
                 if (sent) {
                     this.messageQueue.pop()
                     queueItem.delivered()
+                    this.numOfConsecutiveSendFails = 0
                 }
             }
         }
