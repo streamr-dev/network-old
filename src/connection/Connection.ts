@@ -4,7 +4,7 @@ import { PeerInfo } from './PeerInfo'
 import pino from "pino"
 import { MessageQueue } from "./MessageQueue"
 
-nodeDataChannel.initLogger(LogLevel.Error)
+nodeDataChannel.initLogger("Error" as LogLevel)
 
 export interface ConstructorOptions {
     selfId: string
