@@ -57,8 +57,8 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
-        pingIntervalInMs = 30 * 1000,
-        newConnectionTimeout = 10 * 1000
+        pingIntervalInMs = 5 * 1000,
+        newConnectionTimeout = 5000
     ) {
         super()
         this.id = id

@@ -60,7 +60,6 @@ export class Connection {
     private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
-    private numOfConsecutiveSendFails: number
     private readonly logger: pino.Logger
 
     constructor({
@@ -71,9 +70,9 @@ export class Connection {
         stunUrls,
         bufferHighThreshold = 2 ** 20,
         bufferLowThreshold = 2 ** 17,
-        newConnectionTimeout = 10 * 1000,
+        newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
-        pingPongTimeout = 10 * 1000,
+        pingPongTimeout = 2000,
         flushRetryTimeout = 500,
         onLocalDescription,
         onLocalCandidate,
@@ -111,7 +110,6 @@ export class Connection {
         this.rtt = null
         this.respondedPong = true
         this.rttStart = null
-        this.numOfConsecutiveSendFails = 0
 
         this.onLocalDescription = onLocalDescription
         this.onLocalCandidate = onLocalCandidate
@@ -226,7 +224,6 @@ export class Connection {
         this.connectionTimeoutRef = null
         this.peerPingTimeoutRef = null
         this.peerPongTimeoutRef = null
-        this.numOfConsecutiveSendFails = 0
 
         if (err) {
             this.onError(err)
@@ -411,17 +408,12 @@ export class Connection {
                             this.attemptToFlushMessages()
                         }, this.flushRetryTimeout)
                     }
-                    this.numOfConsecutiveSendFails += 1
-                    if (this.numOfConsecutiveSendFails >= 100) {
-                        this.close(new Error("Reached over 100 consecutive send fails. Closing connection"))
-                    }
                     return // method rescheduled by `this.flushTimeoutRef`
                 }
 
                 if (sent) {
                     this.messageQueue.pop()
                     queueItem.delivered()
-                    this.numOfConsecutiveSendFails = 0
                 }
             }
         }
