@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForEvent } from 'streamr-test-utils'
 
@@ -7,10 +9,10 @@ import { Event as NodeEvent } from '../../src/logic/Node'
 const { StreamMessage, MessageID } = MessageLayer
 
 describe('tracker assigns storage node to streams', () => {
-    let tracker
-    let subscriberOne
-    let subscriberTwo
-    let storageNode
+    let tracker: Tracker
+    let subscriberOne: NetworkNode
+    let subscriberTwo: NetworkNode
+    let storageNode: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({

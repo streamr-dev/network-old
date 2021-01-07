@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import { DescriptionType } from 'node-datachannel'
 import { TrackerLayer } from 'streamr-client-protocol'
 
 import { PeerInfo } from '../../src/connection/PeerInfo'
@@ -8,9 +9,9 @@ import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 const { ErrorMessage, RelayMessage } = TrackerLayer
 
 describe('RtcSignaller', () => {
-    let peerInfo
-    let trackerNodeMock
-    let rtcSignaller
+    let peerInfo: PeerInfo
+    let trackerNodeMock: any
+    let rtcSignaller: RtcSignaller
 
     beforeEach(() => {
         peerInfo = PeerInfo.newNode('node')
@@ -32,7 +33,7 @@ describe('RtcSignaller', () => {
 
     it('invoking onLocalDescription delegates to sendLocalDescription on trackerNode', () => {
         trackerNodeMock.sendLocalDescription = jest.fn().mockResolvedValue(true)
-        rtcSignaller.onLocalDescription('router', 'targetNode', 'type', 'description')
+        rtcSignaller.onLocalDescription('router', 'targetNode', 'type' as any, 'description')
         expect(trackerNodeMock.sendLocalDescription).toHaveBeenCalledWith('router', 'targetNode', peerInfo, 'type', 'description')
     })
 

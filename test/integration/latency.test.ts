@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer } from 'streamr-client-protocol'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
@@ -5,10 +7,10 @@ import { startNetworkNode, startTracker } from '../../src/composition'
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('latency metrics', () => {
-    let tracker
+    let tracker: Tracker
     const trackerPort = 32907
 
-    let node1
+    let node1: NetworkNode
     const port1 = 33978
 
     beforeEach(async () => {
@@ -34,14 +36,16 @@ describe('latency metrics', () => {
     })
 
     it('should fetch empty metrics', async () => {
+        // @ts-expect-error private field
         const metrics = await node1.metrics.report()
-        expect(metrics.latency.last).toEqual(0)
+        expect((metrics.latency as any).last).toEqual(0)
     })
 
     it('should send a single message to Node1 and collect latency', (done) => {
         node1.addMessageListener(async () => {
+            // @ts-expect-error private field
             const metrics = await node1.metrics.report()
-            expect(metrics.latency.last).toBeGreaterThan(0)
+            expect((metrics.latency as any).last).toBeGreaterThan(0)
             done()
         })
 
@@ -68,8 +72,9 @@ describe('latency metrics', () => {
             receivedMessages += 1
 
             if (receivedMessages === 5) {
+                // @ts-expect-error private field
                 const metrics = await node1.metrics.report()
-                expect(metrics.latency.last).toBeGreaterThan(0)
+                expect((metrics.latency as any).last).toBeGreaterThan(0)
                 done()
             }
         })

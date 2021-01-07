@@ -1,7 +1,7 @@
 import { PerStreamMetrics } from '../../src/logic/PerStreamMetrics'
 
 describe('PerStreamMetrics', () => {
-    let perStreamMetrics
+    let perStreamMetrics: PerStreamMetrics
 
     beforeEach(() => {
         perStreamMetrics = new PerStreamMetrics()

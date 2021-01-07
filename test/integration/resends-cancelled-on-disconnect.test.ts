@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { Readable } from 'stream'
 
 import { MessageLayer } from 'streamr-client-protocol'
@@ -51,11 +53,11 @@ const createSlowStream = () => {
 }
 
 describe('resend cancellation on disconnect', () => {
-    let tracker
-    let contactNode
-    let neighborOne
-    let neighborTwo
-    let neighborThree
+    let tracker: Tracker
+    let contactNode: NetworkNode
+    let neighborOne: NetworkNode
+    let neighborTwo: NetworkNode
+    let neighborThree: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({

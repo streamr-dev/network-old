@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { waitForEvent } from 'streamr-test-utils'
 import { TrackerLayer } from 'streamr-client-protocol'
 
@@ -8,13 +10,13 @@ import { StreamIdAndPartition } from '../../src/identifiers'
 import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 describe('check tracker, nodes and statuses from nodes', () => {
-    let tracker
+    let tracker: Tracker
     const trackerPort = 32900
 
-    let node1
+    let node1: NetworkNode
     const port1 = 33971
 
-    let node2
+    let node2: NetworkNode
     const port2 = 33972
 
     const s1 = new StreamIdAndPartition('stream-1', 0)
@@ -25,9 +27,8 @@ describe('check tracker, nodes and statuses from nodes', () => {
             port: trackerPort,
             id: 'tracker'
         })
-        // disable trackers formAndSendInstructions function
-        // eslint-disable-next-line no-underscore-dangle
-        tracker._formAndSendInstructions = () => {}
+        // @ts-expect-error private method
+        tracker.formAndSendInstructions = () => {}
         node1 = await startNetworkNode({
             host: '127.0.0.1',
             port: port1,
@@ -48,7 +49,9 @@ describe('check tracker, nodes and statuses from nodes', () => {
         node2.start()
 
         await Promise.all([
+            // @ts-expect-error private variable
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private variable
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })
@@ -87,7 +90,9 @@ describe('check tracker, nodes and statuses from nodes', () => {
         ])
 
         await Promise.all([
+            // @ts-expect-error private variable
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private variable
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
 

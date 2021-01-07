@@ -6,7 +6,7 @@ import { StreamIdAndPartition } from '../../src/identifiers'
 const { MessageID, MessageRef } = MessageLayer
 
 describe('StreamManager', () => {
-    let manager
+    let manager: StreamManager
 
     beforeEach(() => {
         manager = new StreamManager()

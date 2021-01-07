@@ -1,11 +1,11 @@
 import { waitForEvent } from 'streamr-test-utils'
 
-import { startEndpoint, Event } from '../../src/connection/WsEndpoint'
+import { startEndpoint, Event, WsEndpoint } from '../../src/connection/WsEndpoint'
 import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('passing address between WsEndpoints', () => {
-    let wsEndpoint1
-    let wsEndpoint2
+    let wsEndpoint1: WsEndpoint
+    let wsEndpoint2: WsEndpoint
 
     beforeEach(async () => {
         wsEndpoint1 = await startEndpoint('127.0.0.1', 31960, PeerInfo.newNode('wsEndpoint1'), null)

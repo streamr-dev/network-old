@@ -1,6 +1,7 @@
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer } from 'streamr-client-protocol'
 
-import { startNetworkNode, startTracker } from '../../src/composition'
+import { startNetworkNode, startTracker, Tracker } from '../../src/composition'
 
 const { StreamMessage, MessageID } = MessageLayer
 
@@ -11,9 +12,9 @@ const { StreamMessage, MessageID } = MessageLayer
  * this whole process is itself eventually delivered.
  */
 describe('message buffering of Node', () => {
-    let tracker
-    let sourceNode
-    let destinationNode
+    let tracker: Tracker
+    let sourceNode: NetworkNode
+    let destinationNode: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({

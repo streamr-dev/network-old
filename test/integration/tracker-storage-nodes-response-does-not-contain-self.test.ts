@@ -1,3 +1,4 @@
+import { Tracker } from '../../src/logic/Tracker'
 import { waitForEvent } from 'streamr-test-utils'
 
 import { PeerInfo } from '../../src/connection/PeerInfo'
@@ -11,10 +12,10 @@ import { StreamIdAndPartition } from '../../src/identifiers'
  * requesting storage node itself.
  */
 describe('storage nodes response from tracker does not contain self', () => {
-    let tracker
-    let storageNodeOne
-    let storageNodeTwo
-    let storageNodeThree
+    let tracker: Tracker
+    let storageNodeOne: TrackerNode
+    let storageNodeTwo: TrackerNode
+    let storageNodeThree: TrackerNode
 
     beforeEach(async () => {
         tracker = await startTracker({

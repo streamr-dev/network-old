@@ -25,9 +25,9 @@ const unicastMsg2 = new ControlLayer.UnicastMessage({
 })
 
 describe('ResendHandler', () => {
-    let resendHandler
-    let request
-    let notifyError
+    let resendHandler: ResendHandler
+    let request: ControlLayer.ResendLastRequest
+    let notifyError: any
 
     beforeEach(() => {
         request = new ControlLayer.ResendLastRequest({
@@ -172,7 +172,7 @@ describe('ResendHandler', () => {
     })
 
     describe('initialized with 1st and 2nd strategy both fulfilling', () => {
-        let neverShouldBeInvokedFn
+        let neverShouldBeInvokedFn: any
         beforeEach(() => {
             neverShouldBeInvokedFn = jest.fn()
 
@@ -273,7 +273,7 @@ describe('ResendHandler', () => {
 
     describe('timeout', () => {
         const maxInactivityPeriodInMs = 100
-        let getResendResponseStreamFn
+        let getResendResponseStreamFn: any
 
         beforeEach(() => {
             resendHandler = new ResendHandler([{
@@ -336,6 +336,7 @@ describe('ResendHandler', () => {
             }
         }], notifyError)
 
+        // @ts-expect-error private field
         expect(await resendHandler.metrics.report()).toEqual({
             meanAge: 0,
             numOfOngoingResends: 0
@@ -343,12 +344,14 @@ describe('ResendHandler', () => {
 
         const p1 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
         const p2 = waitForStreamToEnd(resendHandler.handleRequest(request, 'source'))
+        // @ts-expect-error private field
         expect(await resendHandler.metrics.report()).toMatchObject({
             meanAge: expect.any(Number),
             numOfOngoingResends: 2
         })
 
         await Promise.all([p1, p2])
+        // @ts-expect-error private field
         expect(await resendHandler.metrics.report()).toEqual({
             meanAge: 0,
             numOfOngoingResends: 0

@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
 import { waitForStreamToEnd, waitForEvent, toReadableStream } from 'streamr-test-utils'
 
@@ -7,7 +9,7 @@ import { Event as NodeEvent } from '../../src/logic/Node'
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
-const typesOfStreamItems = async (stream) => {
+const typesOfStreamItems = async (stream: any) => {
     const arr = await waitForStreamToEnd(stream)
     return arr.map((msg: any) => msg.type)
 }
@@ -19,10 +21,10 @@ const typesOfStreamItems = async (stream) => {
  * node.
  */
 describe('request resend from uninvolved node', () => {
-    let tracker
-    let uninvolvedNode
-    let involvedNode
-    let storageNode
+    let tracker: Tracker
+    let uninvolvedNode: NetworkNode
+    let involvedNode: NetworkNode
+    let storageNode: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -107,6 +109,7 @@ describe('request resend from uninvolved node', () => {
             ControlMessage.TYPES.UnicastMessage,
             ControlMessage.TYPES.UnicastMessage,
         ])
+        // @ts-expect-error private field
         expect(uninvolvedNode.streams.getStreamsAsKeys()).toEqual([]) // sanity check
     })
 })

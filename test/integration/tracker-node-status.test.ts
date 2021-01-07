@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { wait, waitForEvent } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
@@ -8,9 +10,9 @@ import { Event as NodeEvent } from '../../src/logic/Node'
  * This test verifies that tracker receives status messages from nodes with list of inBound and outBound connections
  */
 describe('check status message flow between tracker and two nodes', () => {
-    let tracker
-    let nodeOne
-    let nodeTwo
+    let tracker: Tracker
+    let nodeOne: NetworkNode
+    let nodeTwo: NetworkNode
     const streamId = 'stream-1'
     const streamId2 = 'stream-2'
 
@@ -51,9 +53,10 @@ describe('check status message flow between tracker and two nodes', () => {
     })
 
     it('tracker should receive status message from node', async (done) => {
+        // @ts-expect-error private field
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-1')
-            // eslint-disable-next-line no-underscore-dangle
+            // @ts-expect-error private field, missing parameter
             expect(statusMessage.status).toEqual(nodeOne.getStatus())
             done()
         })
@@ -62,9 +65,10 @@ describe('check status message flow between tracker and two nodes', () => {
     })
 
     it('tracker should receive status from second node', async (done) => {
+        // @ts-expect-error private field
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-2')
-            // eslint-disable-next-line no-underscore-dangle
+            // @ts-expect-error private field, missing parameter
             expect(statusMessage.status).toEqual(nodeTwo.getStatus())
             done()
         })
@@ -76,15 +80,16 @@ describe('check status message flow between tracker and two nodes', () => {
         nodeTwo.start()
 
         let receivedTotal = 0
+        // @ts-expect-error private field
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
             if (nodeId === 'node-1') {
-                // eslint-disable-next-line no-underscore-dangle
+                // @ts-expect-error private field, missing parameter
                 expect(statusMessage.status).toEqual(nodeOne.getStatus())
                 receivedTotal += 1
             }
 
             if (nodeId === 'node-2') {
-                // eslint-disable-next-line no-underscore-dangle
+                // @ts-expect-error private field, missing parameter
                 expect(statusMessage.status).toEqual(nodeTwo.getStatus())
                 receivedTotal += 1
             }
@@ -115,6 +120,7 @@ describe('check status message flow between tracker and two nodes', () => {
             wait(2000)
         ])
 
+        // @ts-expect-error private field
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
             if (nodeId === 'node-1') {
                 // eslint-disable-next-line no-underscore-dangle
@@ -145,14 +151,19 @@ describe('check status message flow between tracker and two nodes', () => {
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
 
+        // @ts-expect-error private field
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
+            // @ts-expect-error private field
             if (nodeId === nodeOne.peerInfo.peerId) {
                 expect(Object.keys(statusMessage.status.location).length).toEqual(4)
+                // @ts-expect-error private field
                 expect(tracker.locationManager.nodeLocations['node-1']).toBeUndefined()
             }
 
+            // @ts-expect-error private field
             if (nodeId === nodeTwo.peerInfo.peerId) {
                 expect(Object.keys(statusMessage.status.location).length).toEqual(4)
+                // @ts-expect-error private field
                 expect(tracker.locationManager.nodeLocations['node-2'].country).toBe('FI')
             }
             receivedTotal += 1

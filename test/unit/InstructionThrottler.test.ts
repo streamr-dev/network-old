@@ -4,15 +4,15 @@ import { TrackerLayer } from 'streamr-client-protocol'
 import { InstructionThrottler } from '../../src/logic/InstructionThrottler'
 
 describe('InstructionThrottler', () => {
-    let handlerCb
-    let instructionThrottler
+    let handlerCb: any
+    let instructionThrottler: InstructionThrottler
 
     beforeEach(() => {
         handlerCb = jest.fn().mockResolvedValue(true)
         instructionThrottler = new InstructionThrottler(handlerCb)
     })
 
-    function createInstruction(streamId, counter) {
+    function createInstruction(streamId: string, counter: number) {
         return new TrackerLayer.InstructionMessage({
             requestId: 'requestId',
             streamId,

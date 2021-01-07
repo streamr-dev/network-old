@@ -1,10 +1,10 @@
 import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('PeerInfo', () => {
-    let nodeInfo
-    let storageInfo
-    let trackerInfo
-    let unknownInfo
+    let nodeInfo: PeerInfo
+    let storageInfo: PeerInfo
+    let trackerInfo: PeerInfo
+    let unknownInfo: PeerInfo
 
     beforeEach(() => {
         nodeInfo = PeerInfo.newNode('node', 'NetworkNode')

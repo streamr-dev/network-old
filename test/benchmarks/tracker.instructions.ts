@@ -4,7 +4,7 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 
 import { wait } from 'streamr-test-utils'
 
-async function runNetwork(currentBenchmark, numberOfNodes, startingPort, timeout = 60 * 1000, trackerPort = 27777) {
+async function runNetwork(currentBenchmark: number, numberOfNodes: number, startingPort: number, timeout = 60 * 1000, trackerPort = 27777) {
     const productionEnv = Object.create(process.env)
     // productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
     productionEnv.checkUncaughtException = true
@@ -63,17 +63,17 @@ interface Benchmark {
     memory:any
 }
 
-function extractMetrics(metrics): Benchmark {
+function extractMetrics(metrics: any): Benchmark {
     return {
         sendInstruction: metrics.trackerMetrics.metrics.sendInstruction,
         memory: metrics.processMetrics.memory
     }
 }
 
-const arrMax = (arr) => Math.max(...arr)
-const arrMin = (arr) => Math.min(...arr)
-const arrAvg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length
-const arrayColumn = (arr, n) => arr.map((x) => x[n])
+const arrMax = (arr: number[]) => Math.max(...arr)
+const arrMin = (arr: number[]) => Math.min(...arr)
+const arrAvg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length
+const arrayColumn = (arr: any, n: string) => arr.map((x: any) => x[n])
 
 async function run(numberOfBenchmarks = 10, numberOfNodes = 100, timeout = 60 * 1000) {
     const benchmarks: Benchmark[] = []

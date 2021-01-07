@@ -1,7 +1,7 @@
 import { InstructionCounter } from '../../src/logic/InstructionCounter'
 
 describe('InstructionCounter', () => {
-    let instructionCounter
+    let instructionCounter: InstructionCounter
 
     beforeEach(() => {
         instructionCounter = new InstructionCounter()
@@ -22,7 +22,7 @@ describe('InstructionCounter', () => {
                 },
             }
         }
-        const filtered = instructionCounter.filterStatus(status, 'node')
+        const filtered = instructionCounter.filterStatus(status as any, 'node')
         expect(filtered).toEqual(status.streams)
     })
 
@@ -55,7 +55,7 @@ describe('InstructionCounter', () => {
                 },
             }
         }
-        const filtered = instructionCounter.filterStatus(status, 'node')
+        const filtered = instructionCounter.filterStatus(status as any, 'node')
         expect(filtered).toEqual({
             'stream-2': {
                 inboundNodes: [],
@@ -97,7 +97,7 @@ describe('InstructionCounter', () => {
                 },
             }
         }
-        const filtered = instructionCounter.filterStatus(status, 'another-node')
+        const filtered = instructionCounter.filterStatus(status as any, 'another-node')
         expect(filtered).toEqual(status.streams)
     })
 
@@ -135,7 +135,7 @@ describe('InstructionCounter', () => {
         }
 
         instructionCounter.removeNode('node')
-        const filtered = instructionCounter.filterStatus(status, 'node')
+        const filtered = instructionCounter.filterStatus(status as any, 'node')
         expect(filtered).toEqual(status.streams)
     })
 
@@ -173,7 +173,7 @@ describe('InstructionCounter', () => {
         }
 
         instructionCounter.removeStream('stream-3')
-        const filtered = instructionCounter.filterStatus(status, 'node')
+        const filtered = instructionCounter.filterStatus(status as any, 'node')
 
         expect(filtered).toEqual({
             'stream-2': {

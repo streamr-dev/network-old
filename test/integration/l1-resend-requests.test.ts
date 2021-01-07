@@ -1,13 +1,14 @@
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
 import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
-import { startNetworkNode, startTracker } from '../../src/composition'
+import { startNetworkNode, startTracker, Tracker } from '../../src/composition'
 import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
-const typesOfStreamItems = async (stream) => {
+const typesOfStreamItems = async (stream: any) => {
     const arr = await waitForStreamToEnd(stream)
     return arr.map((msg: any) => msg.type)
 }
@@ -20,8 +21,8 @@ const typesOfStreamItems = async (stream) => {
  *      c) uses its local storage to find messages.
  */
 describe('resend requests are fulfilled at L1', () => {
-    let tracker
-    let contactNode
+    let tracker: Tracker
+    let contactNode: NetworkNode
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -64,6 +65,7 @@ describe('resend requests are fulfilled at L1', () => {
         contactNode.start()
         contactNode.subscribe('streamId', 0)
 
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
     })
 

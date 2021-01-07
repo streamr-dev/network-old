@@ -29,7 +29,7 @@ for (let i = 0; i < numOfRounds; ++i) {
 }
 
 const report = Object.entries(measurements).map(([numOfNodes, values]) => {
-    const mean = values.reduce((acc, v) => acc + v, 0) / values.length
+    const mean = values.reduce((acc: number, v: number) => acc + v, 0) / values.length
     const msPerJoinedNode = mean / Number(numOfNodes)
     return {
         numOfNodes,

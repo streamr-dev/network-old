@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { waitForEvent, eventsWithArgsToArray } from 'streamr-test-utils'
 import { TrackerLayer } from 'streamr-client-protocol'
 
@@ -24,11 +26,11 @@ const TRACKER_NODE_EVENTS_OF_INTEREST = [
 ]
 
 describe('multi trackers', () => {
-    let trackerOne
-    let trackerTwo
-    let trackerThree
-    let nodeOne
-    let nodeTwo
+    let trackerOne: Tracker
+    let trackerTwo: Tracker
+    let trackerThree: Tracker
+    let nodeOne: NetworkNode
+    let nodeTwo: NetworkNode
 
     beforeAll(async () => {
         trackerOne = await startTracker({
@@ -62,15 +64,21 @@ describe('multi trackers', () => {
 
         nodeOne.start()
         await Promise.all([
+            // @ts-expect-error private field
             waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
 
         nodeTwo.start()
         await Promise.all([
+            // @ts-expect-error private field
             waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })
@@ -89,8 +97,11 @@ describe('multi trackers', () => {
         nodeOne.subscribe(FIRST_STREAM, 0)
 
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
@@ -102,8 +113,11 @@ describe('multi trackers', () => {
         nodeOne.subscribe(SECOND_STREAM, 0)
 
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
@@ -115,8 +129,11 @@ describe('multi trackers', () => {
         nodeOne.subscribe(THIRD_STREAM, 0)
 
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(trackerOne.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerTwo.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(trackerThree.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
         ])
 
@@ -130,7 +147,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(FIRST_STREAM_2, 0)
         nodeTwo.subscribe(FIRST_STREAM_2, 0)
 
+        // @ts-expect-error private field
         let nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        // @ts-expect-error private field
         let nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([
@@ -147,7 +166,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(SECOND_STREAM_2, 0)
         nodeTwo.subscribe(SECOND_STREAM_2, 0)
 
+        // @ts-expect-error private field
         nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        // @ts-expect-error private field
         nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([
@@ -164,7 +185,9 @@ describe('multi trackers', () => {
         nodeOne.subscribe(THIRD_STREAM_2, 0)
         nodeTwo.subscribe(THIRD_STREAM_2, 0)
 
+        // @ts-expect-error private field
         nodeOneEvents = eventsWithArgsToArray(nodeOne.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
+        // @ts-expect-error private field
         nodeTwoEvents = eventsWithArgsToArray(nodeTwo.trackerNode, TRACKER_NODE_EVENTS_OF_INTEREST)
 
         await Promise.all([

@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForCondition, waitForEvent } from 'streamr-test-utils'
 
@@ -7,11 +9,11 @@ import { startTracker, startNetworkNode } from '../../src/composition'
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('message propagation in network', () => {
-    let tracker
-    let n1
-    let n2
-    let n3
-    let n4
+    let tracker: Tracker
+    let n1: NetworkNode
+    let n2: NetworkNode
+    let n3: NetworkNode
+    let n4: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({

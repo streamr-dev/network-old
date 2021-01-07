@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { waitForEvent, waitForCondition } from 'streamr-test-utils'
 
 import { startStorageNode, startNetworkNode, startTracker } from '../../src/composition'
@@ -6,11 +8,11 @@ import { Event as NodeEvent } from '../../src/logic/Node'
 import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 describe('multiple storage nodes', () => {
-    let tracker
-    let storageOne
-    let storageTwo
-    let storageThree
-    let node
+    let tracker: Tracker
+    let storageOne: NetworkNode
+    let storageTwo: NetworkNode
+    let storageThree: NetworkNode
+    let node: NetworkNode
 
     const trackerPort = 49800
     const storageOnePort = 49801
@@ -94,6 +96,7 @@ describe('multiple storage nodes', () => {
         storageThree.start()
 
         await Promise.all([
+            // @ts-expect-error private method
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
             waitForEvent(storageThree, NodeEvent.NODE_SUBSCRIBED)
         ])

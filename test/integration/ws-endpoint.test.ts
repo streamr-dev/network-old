@@ -1,3 +1,4 @@
+import { Tracker } from '../../src/logic/Tracker'
 import WebSocket from 'ws'
 import { waitForEvent, wait } from 'streamr-test-utils'
 
@@ -67,7 +68,7 @@ describe('ws-endpoint', () => {
 
     describe('test direct connections from simple websocket', () => {
         const trackerPort = 38481
-        let tracker
+        let tracker: Tracker
 
         beforeEach(async () => {
             tracker = await startTracker({

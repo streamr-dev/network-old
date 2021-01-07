@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { waitForEvent } from 'streamr-test-utils'
 import { TrackerLayer } from 'streamr-client-protocol'
 
@@ -11,9 +13,9 @@ import { Event, WsEndpoint } from '../../src/connection/WsEndpoint'
  * This test verifies that tracker can send instructions to node and node will connect and disconnect based on the instructions
  */
 describe('Check tracker instructions to node', () => {
-    let tracker
-    let nodeOne
-    let nodeTwo
+    let tracker: Tracker
+    let nodeOne: NetworkNode
+    let nodeTwo: NetworkNode
     const streamId = 'stream-1'
 
     beforeAll(async () => {
@@ -53,6 +55,7 @@ describe('Check tracker instructions to node', () => {
 
     it('tracker should receive statuses from both nodes', (done) => {
         let receivedTotal = 0
+        // @ts-expect-error private field
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, () => {
             receivedTotal += 1
 
@@ -68,6 +71,7 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
         // send empty list
+        // @ts-expect-error private field
         await tracker.trackerServer.endpoint.send(
             'node-1',
             new TrackerLayer.InstructionMessage({
@@ -79,14 +83,18 @@ describe('Check tracker instructions to node', () => {
             }).serialize()
         )
 
+        // @ts-expect-error private field
         await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
 
+        // @ts-expect-error private field
         expect(nodeOne.trackerNode.endpoint.getPeers().size).toBe(1)
 
         nodeOne.unsubscribe(streamId, 0)
 
+        // @ts-expect-error private field
         await waitForEvent(nodeTwo.nodeToNode.endpoint, Event.PEER_DISCONNECTED)
+        // @ts-expect-error private field
         expect(nodeTwo.trackerNode.endpoint.getPeers().size).toBe(1)
     })
 })

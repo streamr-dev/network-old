@@ -1,7 +1,8 @@
+import { Status } from '../../src/identifiers'
 import { wait, waitForEvent } from 'streamr-test-utils'
 
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { startTracker } from '../../src/composition'
+import { startTracker, Tracker } from '../../src/composition'
 import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 import { startEndpoint } from '../../src/connection/WsEndpoint'
@@ -9,7 +10,7 @@ import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 const WAIT_TIME = 200
 
-const formStatus = (counter1, counter2, nodes1, nodes2) => ({
+const formStatus = (counter1: number, counter2: number, nodes1: string[], nodes2: string[]): Status => ({
     streams: {
         'stream-1::0': {
             inboundNodes: nodes1,
@@ -22,12 +23,12 @@ const formStatus = (counter1, counter2, nodes1, nodes2) => ({
             counter: counter2
         }
     }
-})
+} as any)
 
 describe('tracker: counter filtering', () => {
-    let tracker
-    let trackerNode1
-    let trackerNode2
+    let tracker: Tracker
+    let trackerNode1: TrackerNode
+    let trackerNode2: TrackerNode
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -99,6 +100,7 @@ describe('tracker: counter filtering', () => {
     test('NET-36: tracker receiving status with old counter should not affect topology', async () => {
         const topologyBefore = getTopology(tracker.getOverlayPerStream())
         trackerNode1.sendStatus('tracker', formStatus(0, 0, [], []))
+        // @ts-expect-error trackerServer is private
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual(topologyBefore)
     })
@@ -106,6 +108,7 @@ describe('tracker: counter filtering', () => {
     test('NET-36: tracker receiving status with partial old counter should not affect topology', async () => {
         const topologyBefore = getTopology(tracker.getOverlayPerStream())
         trackerNode1.sendStatus('tracker', formStatus(1, 0, [], []))
+        // @ts-expect-error trackerServer is private
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual(topologyBefore)
     })

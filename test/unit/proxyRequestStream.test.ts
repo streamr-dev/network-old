@@ -7,8 +7,8 @@ const { ResendResponseResending, ResendResponseNoResend, ResendResponseResent, U
 const { StreamMessage, MessageID } = MessageLayer
 
 describe('proxyRequestStream', () => {
-    let sendFn
-    let request
+    let sendFn: any
+    let request: any
 
     beforeEach(() => {
         sendFn = jest.fn()

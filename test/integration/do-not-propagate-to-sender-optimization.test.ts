@@ -1,3 +1,5 @@
+import { NetworkNode } from '../../src/NetworkNode'
+import { Tracker } from '../../src/logic/Tracker'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForCondition } from 'streamr-test-utils'
 
@@ -10,10 +12,10 @@ const { StreamMessage, MessageID, MessageRef } = MessageLayer
  * obviously already know about the message.
  */
 describe('optimization: do not propagate to sender', () => {
-    let tracker
-    let n1
-    let n2
-    let n3
+    let tracker: Tracker
+    let n1: NetworkNode
+    let n2: NetworkNode
+    let n3: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -78,13 +80,16 @@ describe('optimization: do not propagate to sender', () => {
         }))
 
         const checkFn = async () => {
+            // @ts-expect-error private variable
             const reportN1 = await n1.metrics.report()
+            // @ts-expect-error private variable
             const reportN2 = await n2.metrics.report()
+            // @ts-expect-error private variable
             const reportN3 = await n3.metrics.report()
 
-            const n1Duplicates = reportN1['onDataReceived:ignoredDuplicate'].total
-            const n2Duplicates = reportN2['onDataReceived:ignoredDuplicate'].total
-            const n3Duplicates = reportN3['onDataReceived:ignoredDuplicate'].total
+            const n1Duplicates = (reportN1['onDataReceived:ignoredDuplicate'] as any).total
+            const n2Duplicates = (reportN2['onDataReceived:ignoredDuplicate'] as any).total
+            const n3Duplicates = (reportN3['onDataReceived:ignoredDuplicate'] as any).total
 
             if (n1Duplicates + n2Duplicates + n3Duplicates > 0) {
                 expect(n1Duplicates + n2Duplicates + n3Duplicates).toEqual(2)

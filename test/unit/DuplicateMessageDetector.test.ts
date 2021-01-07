@@ -50,7 +50,7 @@ test('only last gap is checked if no previous number given', () => {
 })
 
 describe('gap handling', () => {
-    let detector
+    let detector: DuplicateMessageDetector
     beforeEach(() => {
         detector = new DuplicateMessageDetector()
         detector.markAndCheck(null, new NumberPair(10, 0))
@@ -93,8 +93,8 @@ describe('gap handling', () => {
 })
 
 describe('duplicates return false and do not change state', () => {
-    let detector
-    let expectedState
+    let detector: DuplicateMessageDetector
+    let expectedState: string
     beforeEach(() => {
         detector = new DuplicateMessageDetector()
         detector.markAndCheck(new NumberPair(1, 0), new NumberPair(10, 0))
@@ -141,7 +141,7 @@ describe('duplicates return false and do not change state', () => {
 })
 
 describe('erroneous messages that overlap gaps', () => {
-    let detector
+    let detector: DuplicateMessageDetector
     let expectedState
     beforeEach(() => {
         detector = new DuplicateMessageDetector()

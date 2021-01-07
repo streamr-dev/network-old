@@ -1,7 +1,7 @@
 import { MetricsContext } from '../../src/helpers/MetricsContext'
 
 describe('metrics', () => {
-    let context
+    let context: MetricsContext
 
     beforeEach(() => {
         jest.useFakeTimers('modern').setSystemTime(100)
@@ -127,14 +127,14 @@ describe('metrics', () => {
         const metrics = context.create('metricOne')
         metrics.addRecordedMetric('metric')
         expect(() => {
-            metrics.addQueriedMetric('metric', () => {})
+            metrics.addQueriedMetric('metric', (() => {}) as any)
         }).toThrowError('Metric "metricOne.metric" already registered.')
     })
 
     it('cannot record for non-existing recoded metric', () => {
         const metrics = context.create('metricOne')
         expect(() => {
-            metrics.record('non-existing-metric', () => {})
+            metrics.record('non-existing-metric', (() => {}) as any)
         }).toThrowError('Not a recorded metric "metricOne.non-existing-metric".')
     })
 

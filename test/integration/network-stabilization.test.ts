@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import assert from 'assert'
 
 import { wait } from 'streamr-test-utils'
@@ -5,7 +7,7 @@ import { wait } from 'streamr-test-utils'
 import { startNetworkNode, startTracker } from '../../src/composition'
 import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
-function areEqual(a, b) {
+function areEqual(a: any, b: any) {
     try {
         assert.deepStrictEqual(a, b)
     } catch (error) {
@@ -18,8 +20,8 @@ function areEqual(a, b) {
 }
 
 describe('check network stabilization', () => {
-    let tracker
-    let nodes
+    let tracker: Tracker
+    let nodes: NetworkNode[]
     const MAX_NODES = 10
     const startingPort = 39001
 

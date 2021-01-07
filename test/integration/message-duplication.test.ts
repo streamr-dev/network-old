@@ -1,3 +1,5 @@
+import { NetworkNode } from '../../src/NetworkNode'
+import { Tracker } from '../../src/logic/Tracker'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForCondition, waitForEvent, wait } from 'streamr-test-utils'
 
@@ -10,10 +12,10 @@ const { StreamMessage, MessageID } = MessageLayer
  * This test verifies that on receiving a duplicate message, it is not re-emitted to the node's subscribers.
  */
 describe('duplicate message detection and avoidance', () => {
-    let tracker
-    let contactNode
-    let otherNodes
-    let numOfReceivedMessages
+    let tracker: Tracker
+    let contactNode: NetworkNode
+    let otherNodes: NetworkNode[]
+    let numOfReceivedMessages: number[]
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -63,6 +65,7 @@ describe('duplicate message detection and avoidance', () => {
         ])
 
         const allNodesConnnectedToTrackerPromise = Promise.all(otherNodes.map((node) => {
+            // @ts-expect-error private field
             return waitForEvent(node.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
         }))
         // eslint-disable-next-line no-restricted-syntax
@@ -85,7 +88,7 @@ describe('duplicate message detection and avoidance', () => {
         // Set up 1st test case
         let totalMessages = 0
         numOfReceivedMessages = [0, 0, 0, 0, 0]
-        const updater = (i) => () => {
+        const updater = (i: number) => () => {
             totalMessages += 1
             numOfReceivedMessages[i] += 1
         }
@@ -124,8 +127,9 @@ describe('duplicate message detection and avoidance', () => {
 
     test('maximum times a node receives duplicates of message is bounded by total number of repeaters', async () => {
         const numOfDuplicates = await Promise.all(otherNodes.map(async (n) => {
+            // @ts-expect-error private field
             const report = await n.metrics.report()
-            return report['onDataReceived:ignoredDuplicate'].total
+            return (report['onDataReceived:ignoredDuplicate'] as any).total
         }))
 
         expect(numOfDuplicates).toHaveLength(5)

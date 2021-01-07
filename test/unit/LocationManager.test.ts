@@ -1,7 +1,7 @@
 import { LocationManager } from '../../src/logic/LocationManager'
 
 describe('LocationManager', () => {
-    let locationManager
+    let locationManager: LocationManager
 
     beforeEach(() => {
         locationManager = new LocationManager()
@@ -13,7 +13,9 @@ describe('LocationManager', () => {
                 nodeId: 'nodeId',
                 location: {
                     city: 'Helsinki',
-                    country: 'Finland'
+                    country: 'Finland',
+                    latitude: null,
+                    longitude: null
                 },
                 address: 'ws://193.166.4.1'
             })
@@ -41,12 +43,13 @@ describe('LocationManager', () => {
             locationManager.updateLocation({
                 nodeId: 'nodeId',
                 location: null,
-                address: null
+                address: null as any
             })
             expect(locationManager.getNodeLocation('nodeId')).toBeUndefined()
         })
 
         it('passing invalid address causes error to be logged', () => {
+            // @ts-expect-error private field
             locationManager.logger.error = jest.fn()
             locationManager.updateLocation({
                 nodeId: 'nodeId',
@@ -54,6 +57,7 @@ describe('LocationManager', () => {
                 address: 'dsjklgasdjklgjasdklgj'
             })
             expect(locationManager.getNodeLocation('nodeId')).toBeUndefined()
+            // @ts-expect-error private field
             expect(locationManager.logger.error).toHaveBeenCalled()
         })
 
@@ -62,7 +66,9 @@ describe('LocationManager', () => {
                 nodeId: 'nodeId',
                 location: {
                     city: 'Helsinki',
-                    country: 'Finland'
+                    country: 'Finland',
+                    latitude: null,
+                    longitude: null
                 },
                 address: 'ws://193.166.4.1'
             })

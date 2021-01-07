@@ -7,16 +7,17 @@ import { NodeToNode, Event as NodeToNodeEvent } from '../../src/protocol/NodeToN
 import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 import { TrackerServer, Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 import { PeerInfo } from '../../src/connection/PeerInfo'
+import { DescriptionType } from 'node-datachannel'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 const UUID_REGEX = /[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}/
 
 describe('delivery of messages in protocol layer', () => {
-    let nodeToNode1
-    let nodeToNode2
-    let trackerNode
-    let trackerServer
+    let nodeToNode1: NodeToNode
+    let nodeToNode2: NodeToNode
+    let trackerNode: TrackerNode
+    let trackerServer: TrackerServer
 
     beforeAll(async () => {
         const wsEndpoint1 = await startEndpoint('127.0.0.1', 28511, PeerInfo.newNode('nodeToNode1'), null)
@@ -30,6 +31,7 @@ describe('delivery of messages in protocol layer', () => {
         trackerServer = new TrackerServer(wsEndpoint4)
 
         // Connect nodeToNode1 <-> nodeToNode2
+        // @ts-expect-error parameter count
         nodeToNode1.connectToNode(nodeToNode2.getAddress())
         await waitForEvent(nodeToNode2, NodeToNodeEvent.NODE_CONNECTED)
 
@@ -232,6 +234,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendStatus is delivered', async () => {
         trackerNode.sendStatus('trackerServer', {
+            // @ts-expect-error missing fields
             status: 'status'
         })
         const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
@@ -353,7 +356,7 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendLocalDescription is delivered (trackerNode->trackerServer)', async () => {
-        trackerNode.sendLocalDescription('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'offer', 'description')
+        trackerNode.sendLocalDescription('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), DescriptionType.Offer, 'description')
         const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)

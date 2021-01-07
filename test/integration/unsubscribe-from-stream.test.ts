@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForEvent } from 'streamr-test-utils'
@@ -9,9 +11,9 @@ import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 const { StreamMessage, MessageID } = MessageLayer
 
 describe('node unsubscribing from a stream', () => {
-    let tracker
-    let nodeA
-    let nodeB
+    let tracker: Tracker
+    let nodeA: NetworkNode
+    let nodeB: NetworkNode
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -45,7 +47,9 @@ describe('node unsubscribing from a stream', () => {
         await Promise.all([
             waitForEvent(nodeA, NodeEvent.NODE_SUBSCRIBED),
             waitForEvent(nodeB, NodeEvent.NODE_SUBSCRIBED),
+            // @ts-expect-error private field
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         ])
     })

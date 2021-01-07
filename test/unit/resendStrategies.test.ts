@@ -5,8 +5,9 @@ import { waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
 import { LocalResendStrategy, ForeignResendStrategy } from '../../src/resend/resendStrategies'
 import { StreamIdAndPartition } from '../../src/identifiers'
-import { Event as NodeToNodeEvent } from '../../src/protocol/NodeToNode'
-import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { Event as NodeToNodeEvent, NodeToNode } from '../../src/protocol/NodeToNode'
+import { Event as TrackerNodeEvent, TrackerNode } from '../../src/protocol/TrackerNode'
+import { Readable } from 'stream'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 const { ResendLastRequest, ResendFromRequest, ResendRangeRequest } = ControlLayer
@@ -78,8 +79,8 @@ const createUnicastMessage = (timestamp = 0) => {
 }
 
 describe('LocalResendStrategy#getResendResponseStream', () => {
-    let storage
-    let resendStrategy
+    let storage: any
+    let resendStrategy: LocalResendStrategy
 
     beforeEach(async () => {
         storage = {}
@@ -152,19 +153,19 @@ describe('LocalResendStrategy#getResendResponseStream', () => {
 })
 
 describe('ForeignResendStrategy#getResendResponseStream', () => {
-    let nodeToNode
-    let trackerNode
-    let getTracker
-    let isSubscribedTo
-    let resendStrategy
-    let request
+    let nodeToNode: NodeToNode
+    let trackerNode: TrackerNode
+    let getTracker: any
+    let isSubscribedTo: any
+    let resendStrategy: ForeignResendStrategy
+    let request: any
 
     beforeEach(async () => {
-        nodeToNode = new EventEmitter()
-        trackerNode = new EventEmitter()
+        nodeToNode = new EventEmitter() as any
+        trackerNode = new EventEmitter() as any
         getTracker = jest.fn()
         isSubscribedTo = jest.fn()
-        resendStrategy = new ForeignResendStrategy(trackerNode, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
+        resendStrategy = new ForeignResendStrategy(trackerNode as any, nodeToNode, getTracker, isSubscribedTo, TIMEOUT)
         request = resendLastRequest
     })
 
@@ -209,7 +210,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
     })
 
     describe('after sending storage node query to tracker', () => {
-        let responseStream
+        let responseStream: Readable
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
@@ -294,11 +295,11 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
     })
 
     describe('after connecting to a storage node', () => {
-        let responseStream
+        let responseStream: Readable
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve() as any
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn()
             nodeToNode.disconnectFromNode = jest.fn()
@@ -320,7 +321,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
         }
 
         test('forwards request to storage node', async () => {
-            nodeToNode.send.mockReturnValue(Promise.resolve())
+            (nodeToNode.send as any).mockReturnValue(Promise.resolve())
 
             await emitTrackerResponse()
 
@@ -329,7 +330,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
         })
 
         test('if forwarding request to storage node fails, returns empty stream', async () => {
-            nodeToNode.send.mockReturnValue(Promise.reject())
+            (nodeToNode.send as any).mockReturnValue(Promise.reject())
 
             await emitTrackerResponse()
 
@@ -339,7 +340,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
         })
 
         test('if storage node disconnects, returns empty stream', async () => {
-            nodeToNode.send.mockReturnValue(Promise.resolve())
+            (nodeToNode.send as any).mockReturnValue(Promise.resolve())
 
             await emitTrackerResponse()
             nodeToNode.emit(NodeToNodeEvent.NODE_DISCONNECTED, 'storageNode')
@@ -351,11 +352,11 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
     })
 
     describe('after forwarding request to storage node', () => {
-        let responseStream
+        let responseStream: Readable
 
         beforeEach((done) => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve() as any
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
             nodeToNode.send = jest.fn().mockResolvedValue(null)
             nodeToNode.disconnectFromNode = jest.fn()
@@ -379,6 +380,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
         test('if no response within timeout, returns empty stream', async () => {
             jest.advanceTimersByTime(TIMEOUT)
 
+            // @ts-expect-error private field
             // eslint-disable-next-line no-underscore-dangle
             expect(responseStream._readableState.ended).toEqual(true)
             const streamAsArray = await waitForStreamToEnd(responseStream)
@@ -390,6 +392,7 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
             nodeToNode.emit(NodeToNodeEvent.RESEND_RESPONSE, resendResponseResending, 'storageNode')
             jest.advanceTimersByTime(TIMEOUT - 1)
 
+            // @ts-expect-error private field
             // eslint-disable-next-line no-underscore-dangle
             expect(responseStream._readableState.ended).toEqual(false)
         })
@@ -405,12 +408,14 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
             )
             jest.advanceTimersByTime(TIMEOUT - 1)
 
+            // @ts-expect-error private field
             // eslint-disable-next-line no-underscore-dangle
             expect(responseStream._readableState.ended).toEqual(false)
         })
 
         test('if storage node responds with ResendResponseNoResend, returned stream is closed', () => {
             nodeToNode.emit(NodeToNodeEvent.RESEND_RESPONSE, resendResponseNoResend, 'storageNode')
+            // @ts-expect-error private field
             // eslint-disable-next-line no-underscore-dangle
             expect(responseStream._readableState.ended).toEqual(true)
         })
@@ -437,13 +442,13 @@ describe('ForeignResendStrategy#getResendResponseStream', () => {
     })
 
     describe('after connecting to storage node and on response stream closed', () => {
-        let responseStream
+        let responseStream: Readable
 
         beforeEach(() => {
             getTracker.mockReturnValue(['tracker'])
-            trackerNode.sendStorageNodesRequest = () => Promise.resolve()
+            trackerNode.sendStorageNodesRequest = () => Promise.resolve() as any
             nodeToNode.connectToNode = () => Promise.resolve('storageNode')
-            nodeToNode.send = () => Promise.resolve()
+            nodeToNode.send = () => Promise.resolve() as any
             nodeToNode.disconnectFromNode = jest.fn()
 
             responseStream = resendStrategy.getResendResponseStream(request)

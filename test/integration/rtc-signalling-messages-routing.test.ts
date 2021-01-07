@@ -1,3 +1,4 @@
+import { Tracker } from '../../src/logic/Tracker'
 import { waitForEvent } from 'streamr-test-utils'
 import { TrackerLayer } from 'streamr-client-protocol'
 
@@ -7,6 +8,7 @@ import { PeerInfo } from '../../src/connection/PeerInfo'
 import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 import { startTracker } from '../../src/composition'
+import { DescriptionType } from 'node-datachannel'
 
 const { RelayMessage, ErrorMessage } = TrackerLayer
 
@@ -14,9 +16,9 @@ const { RelayMessage, ErrorMessage } = TrackerLayer
  * Validate the relaying logic of tracker's WebRTC signalling messages.
  */
 describe('RTC signalling messages are routed to destination via tracker', () => {
-    let tracker
-    let originatorTrackerNode
-    let targetTrackerNode
+    let tracker: Tracker
+    let originatorTrackerNode: TrackerNode
+    let targetTrackerNode: TrackerNode
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -34,7 +36,9 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
         targetTrackerNode.connectToTracker(tracker.getAddress())
 
         await Promise.all([
+            // @ts-expect-error private method
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED),
+            // @ts-expect-error private method
             waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_CONNECTED),
             waitForEvent(targetTrackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
             waitForEvent(originatorTrackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
@@ -52,7 +56,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
-            'offer',
+            DescriptionType.Offer,
             'description'
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
@@ -72,7 +76,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
-            'answer',
+            DescriptionType.Answer,
             'description'
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)

@@ -1,3 +1,5 @@
+import { NetworkNode } from '../../src/NetworkNode'
+import { Tracker } from '../../src/logic/Tracker'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
@@ -7,10 +9,10 @@ import { Event, TrackerServer } from '../../src/protocol/TrackerServer'
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('resend requests on streams with no activity', () => {
-    let tracker
-    let subscriberOne
-    let subscriberTwo
-    let storageNode
+    let tracker: Tracker
+    let subscriberOne: NetworkNode
+    let subscriberTwo: NetworkNode
+    let storageNode: NetworkNode
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -64,13 +66,19 @@ describe('resend requests on streams with no activity', () => {
             }]
         })
 
+        // @ts-expect-error no method
         storageNode.addBootstrapTracker(tracker.getAddress())
+        // @ts-expect-error no method
         subscriberOne.addBootstrapTracker(tracker.getAddress())
+        // @ts-expect-error no method
         subscriberTwo.addBootstrapTracker(tracker.getAddress())
 
         await Promise.all([
+            // @ts-expect-error no method
             waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
+            // @ts-expect-error no method
             waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
+            // @ts-expect-error no method
             waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
         ])
     })
@@ -84,8 +92,9 @@ describe('resend requests on streams with no activity', () => {
 
     it('resend request works on streams that are not subscribed to', async () => {
         const stream = subscriberOne.requestResendLast('streamId', 0, 'requestId', 10)
+        // @ts-expect-error no method
         await waitForEvent(tracker.protocols.trackerServer, Event.STORAGE_NODES_REQUEST)
-        const data = await waitForStreamToEnd(stream)
+        const data = await waitForStreamToEnd(stream as any)
         expect(data.length).toEqual(0)
     })
 })

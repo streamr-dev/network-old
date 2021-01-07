@@ -1,8 +1,9 @@
+import { DescriptionType } from 'node-datachannel'
 import { waitForCondition, wait } from 'streamr-test-utils'
 
 import { Connection } from '../../src/connection/Connection'
 
-function onConnectPromise(functions) {
+function onConnectPromise(functions: any) {
     return new Promise((resolve, reject) => {
         // eslint-disable-next-line no-param-reassign
         functions.onOpen = resolve
@@ -11,7 +12,7 @@ function onConnectPromise(functions) {
     })
 }
 
-function onClosePromise(functions) {
+function onClosePromise(functions: any) {
     return new Promise((resolve, reject) => {
         // eslint-disable-next-line no-param-reassign
         functions.onClose = resolve
@@ -25,18 +26,18 @@ function onClosePromise(functions) {
  * is "abstracted away" by local functions.
  */
 describe('Connection', () => {
-    let connectionOne
-    let connectionTwo
-    let oneFunctions
-    let twoFunctions
+    let connectionOne: any
+    let connectionTwo: any
+    let oneFunctions: any
+    let twoFunctions: any
 
     beforeEach(async () => {
         oneFunctions = {
-            onLocalDescription: (type, description) => {
+            onLocalDescription: (type: DescriptionType, description: string) => {
                 // Simulate tracker relay behaviour
                 connectionTwo.setRemoteDescription(description, type)
             },
-            onLocalCandidate: (candidate, mid) => {
+            onLocalCandidate: (candidate: string, mid: string) => {
                 // Simulate tracker relay behaviour
                 connectionTwo.addRemoteCandidate(candidate, mid)
             },
@@ -49,16 +50,16 @@ describe('Connection', () => {
             onClose: () => {
 
             },
-            onError: (err) => {
+            onError: (err: Error) => {
                 throw err
             }
         }
         twoFunctions = {
-            onLocalDescription: (type, description) => {
+            onLocalDescription: (type: DescriptionType, description: string) => {
                 // Simulate tracker relay behaviour
                 connectionOne.setRemoteDescription(description, type)
             },
-            onLocalCandidate: (candidate, mid) => {
+            onLocalCandidate: (candidate: string, mid: string) => {
                 // Simulate tracker relay behaviour
                 connectionOne.addRemoteCandidate(candidate, mid)
             },
@@ -71,7 +72,7 @@ describe('Connection', () => {
             onClose: () => {
 
             },
-            onError: (err) => {
+            onError: (err: Error) => {
                 throw err
             }
         }
@@ -124,12 +125,12 @@ describe('Connection', () => {
 
     it('can send messages to each other', async () => {
         const p1 = new Promise((resolve) => {
-            oneFunctions.onMessage = (message) => {
+            oneFunctions.onMessage = (message: string) => {
                 resolve(message)
             }
         })
         const p2 = new Promise((resolve) => {
-            twoFunctions.onMessage = (message) => {
+            twoFunctions.onMessage = (message: string) => {
                 resolve(message)
             }
         })
@@ -175,7 +176,7 @@ describe('Connection', () => {
         await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
 
         const msgsReceivedByConnectionTwo: string[] = []
-        twoFunctions.onMessage = (msg) => msgsReceivedByConnectionTwo.push(msg)
+        twoFunctions.onMessage = (msg: string) => msgsReceivedByConnectionTwo.push(msg)
 
         for (let i = 1; i <= 10; ++i) {
             connectionOne.send(`msg-${i}`)
@@ -200,7 +201,7 @@ describe('Connection', () => {
     it('connection timeouts if other end does not connect too', (done) => {
         connectionOne.newConnectionTimeout = 200 // would be better to pass via constructor
         connectionOne.connect()
-        oneFunctions.onError = (err) => {
+        oneFunctions.onError = (err: Error) => {
             expect(err).toEqual(new Error('timed out'))
             expect(connectionOne.isOpen()).toEqual(false)
             done()

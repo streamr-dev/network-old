@@ -1,10 +1,12 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import http from 'http'
 
 import { waitForCondition } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
 
-function getHttp(url) {
+function getHttp(url: string) {
     return new Promise((resolve, reject) => {
         http.get(url, (resp) => {
             let data = ''
@@ -31,9 +33,9 @@ function getHttp(url) {
 const trackerPort = 31750
 
 describe('tracker endpoint', () => {
-    let tracker
-    let nodeOne
-    let nodeTwo
+    let tracker: Tracker
+    let nodeOne: NetworkNode
+    let nodeTwo: NetworkNode
 
     beforeAll(async () => {
         tracker = await startTracker({
@@ -76,6 +78,7 @@ describe('tracker endpoint', () => {
         nodeOne.start()
         nodeTwo.start()
 
+        // @ts-expect-error private variable
         await waitForCondition(() => Object.keys(tracker.overlayPerStream).length === 3)
     })
 

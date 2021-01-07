@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { waitForEvent, waitForCondition } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
@@ -6,9 +8,9 @@ import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 describe('check tracker, nodes and statuses from nodes', () => {
-    let tracker
-    let subscriberOne
-    let subscriberTwo
+    let tracker: Tracker
+    let subscriberOne: NetworkNode
+    let subscriberTwo: NetworkNode
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -44,6 +46,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
 
     it('should be able to start two nodes, receive statuses, subscribe to streams', async () => {
         subscriberOne.start()
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual({
             'stream-1::0': {
@@ -55,6 +58,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         })
 
         subscriberTwo.start()
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual({
             'stream-1::0': {
@@ -76,10 +80,12 @@ describe('check tracker, nodes and statuses from nodes', () => {
             waitForEvent(subscriberOne, NodeEvent.NODE_SUBSCRIBED),
             waitForEvent(subscriberTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
 
         subscriberOne.unsubscribe('stream-2', 2)
         await waitForEvent(subscriberTwo, NodeEvent.NODE_UNSUBSCRIBED)
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual({
             'stream-1::0': {
@@ -93,6 +99,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
 
         subscriberOne.unsubscribe('stream-1', 0)
         await waitForEvent(subscriberTwo, NodeEvent.NODE_UNSUBSCRIBED)
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual({
             'stream-1::0': {
@@ -112,6 +119,7 @@ describe('check tracker, nodes and statuses from nodes', () => {
         })
 
         subscriberTwo.unsubscribe('stream-2', 2)
+        // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         expect(getTopology(tracker.getOverlayPerStream())).toEqual({})
     }, 10 * 1000)

@@ -1,3 +1,5 @@
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
 import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
@@ -7,7 +9,7 @@ import { Event as NodeEvent } from '../../src/logic/Node'
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
-const typesOfStreamItems = async (stream) => {
+const typesOfStreamItems = async (stream: any) => {
     const arr = await waitForStreamToEnd(stream)
     return arr.map((msg: any) => msg.type)
 }
@@ -22,11 +24,11 @@ const typesOfStreamItems = async (stream) => {
  * between the requesting client and the storage node.
  */
 describe('resend requests are fulfilled at L3', () => {
-    let tracker
-    let contactNode
-    let neighborOne
-    let neighborTwo
-    let storageNode
+    let tracker: Tracker
+    let contactNode: NetworkNode
+    let neighborOne: NetworkNode
+    let neighborTwo: NetworkNode
+    let storageNode: NetworkNode
 
     beforeEach(async () => {
         tracker = await startTracker({
