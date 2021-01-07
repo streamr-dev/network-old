@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { OverlayTopology } from '../../src/logic/OverlayTopology'
+import { OverlayTopology, TopologyState } from '../../src/logic/OverlayTopology'
 
 const numOfNeighbors = 4
 const numOfRounds = 1000
@@ -10,7 +10,7 @@ const idxToNodeId = (idx) => `${idx + 1}`
 const nodeIdToIdx = (nodeId) => Number.parseInt(nodeId, 10) - 1
 
 // Run topology experiment
-const states = []
+const states: TopologyState[] = []
 for (let i = 0; i < numOfRounds; ++i) {
     const topology = new OverlayTopology(numOfNeighbors)
 
@@ -40,7 +40,7 @@ return
 */
 
 // Set up occurrence matrix filled with zeroes
-const occurrenceMatrix = []
+const occurrenceMatrix: number[][] = []
 for (let i = 0; i < numOfNodes; ++i) {
     occurrenceMatrix[i] = []
     for (let j = 0; j < numOfNodes; ++j) {

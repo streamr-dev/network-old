@@ -5,8 +5,12 @@ const numOfRounds = 10
 const numOfNeighbors = 4
 const numOfNodeConfigurations = [10, 100, 200, 500, 1000, 2000, 5000]
 
+interface Measurements {
+    [key: number]: any[]
+}
+
 // Run topology experiment
-const measurements = {}
+const measurements: Measurements = {}
 numOfNodeConfigurations.forEach((k) => {
     measurements[k] = []
 })
@@ -26,7 +30,7 @@ for (let i = 0; i < numOfRounds; ++i) {
 
 const report = Object.entries(measurements).map(([numOfNodes, values]) => {
     const mean = values.reduce((acc, v) => acc + v, 0) / values.length
-    const msPerJoinedNode = mean / numOfNodes
+    const msPerJoinedNode = mean / Number(numOfNodes)
     return {
         numOfNodes,
         mean,

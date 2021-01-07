@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import path from 'path'
-import { spawn } from 'child_process'
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 
 import { wait } from 'streamr-test-utils'
 
@@ -9,7 +9,7 @@ async function runNetwork(currentBenchmark, numberOfNodes, startingPort, timeout
     // productionEnv.DEBUG = 'streamr:*,-streamr:connection:*'
     productionEnv.checkUncaughtException = true
 
-    const processes = []
+    const processes: ChildProcessWithoutNullStreams[] = []
 
     // create tracker
     const tracker = path.resolve('../../bin/tracker.js')
@@ -58,7 +58,12 @@ async function runNetwork(currentBenchmark, numberOfNodes, startingPort, timeout
     return metrics
 }
 
-function extractMetrics(metrics) {
+interface Benchmark {
+    sendInstruction: any
+    memory:any
+}
+
+function extractMetrics(metrics): Benchmark {
     return {
         sendInstruction: metrics.trackerMetrics.metrics.sendInstruction,
         memory: metrics.processMetrics.memory
@@ -71,7 +76,7 @@ const arrAvg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length
 const arrayColumn = (arr, n) => arr.map((x) => x[n])
 
 async function run(numberOfBenchmarks = 10, numberOfNodes = 100, timeout = 60 * 1000) {
-    const benchmarks = []
+    const benchmarks: Benchmark[] = []
     console.info('Starting benchmark')
     for (let i = 0; i < numberOfBenchmarks; i++) {
         console.info(`\nRunning benchmark ${i}`)
