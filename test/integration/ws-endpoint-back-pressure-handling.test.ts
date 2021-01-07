@@ -32,7 +32,7 @@ describe('WsEndpoint: back pressure handling', () => {
 
     it('emits LOW_BACK_PRESSURE after high back pressure', (done) => {
         let hitHighBackPressure = false
-        let sendInterval = null
+        let sendInterval: ReturnType<typeof setInterval> | null = null
         ep1.on(Event.HIGH_BACK_PRESSURE, () => {
             hitHighBackPressure = true
 
@@ -41,7 +41,7 @@ describe('WsEndpoint: back pressure handling', () => {
 
             ep1.on(Event.LOW_BACK_PRESSURE, (peerInfo) => {
                 expect(peerInfo).toEqual(PeerInfo.newNode('ep2'))
-                clearInterval(sendInterval)
+                clearInterval(sendInterval!)
                 done()
             })
         })

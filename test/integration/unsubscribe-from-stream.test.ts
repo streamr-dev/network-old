@@ -57,7 +57,7 @@ describe('node unsubscribing from a stream', () => {
     })
 
     test('node still receives data for subscribed streams thru existing connections', async () => {
-        const actual = []
+        const actual: string[] = []
 
         nodeB.addMessageListener((streamMessage) => {
             actual.push(`${streamMessage.getStreamId()}::${streamMessage.getStreamPartition()}`)

@@ -2,7 +2,7 @@
 import { waitForEvent } from 'streamr-test-utils'
 
 import { startEndpoint, Event, DisconnectionReason, DisconnectionCode } from '../../src/connection/WsEndpoint'
-import { PeerInfo } from '../../src/connection/PeerInfo'
+import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
 
 describe('check and kill dead connections', () => {
     let node1
@@ -56,6 +56,6 @@ describe('check and kill dead connections', () => {
         node1.pingConnections()
 
         const [peerInfo] = await waitForEvent(node1, Event.PEER_DISCONNECTED)
-        expect(peerInfo).toEqual(new PeerInfo('node2', 'node', 'node2', defaultLocation))
+        expect(peerInfo).toEqual(new PeerInfo('node2', PeerType.Node, 'node2', defaultLocation))
     })
 })

@@ -1,12 +1,12 @@
 import WebSocket from 'ws'
 import { waitForEvent, wait } from 'streamr-test-utils'
 
-import { Event, DisconnectionCode, startEndpoint } from '../../src/connection/WsEndpoint'
+import { Event, DisconnectionCode, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
 import { PeerInfo } from '../../src/connection/PeerInfo'
 import { startTracker } from '../../src/composition'
 
 describe('ws-endpoint', () => {
-    const endpoints = []
+    const endpoints: WsEndpoint[] = []
 
     it('create five endpoints and init connection between them, should be able to start and stop successfully', async () => {
         for (let i = 0; i < 5; i++) {
@@ -22,7 +22,7 @@ describe('ws-endpoint', () => {
             expect(endpoints[i].getPeers().size).toBe(0)
         }
 
-        const promises = []
+        const promises: Promise<any>[] = []
 
         for (let i = 0; i < 5; i++) {
             promises.push(waitForEvent(endpoints[i], Event.PEER_CONNECTED))

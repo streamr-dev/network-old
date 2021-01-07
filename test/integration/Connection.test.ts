@@ -43,7 +43,7 @@ describe('Connection', () => {
             onOpen: () => {
 
             },
-            onMessage: (message) => {
+            onMessage: (msg: string) => {
 
             },
             onClose: () => {
@@ -65,7 +65,7 @@ describe('Connection', () => {
             onOpen: () => {
 
             },
-            onMessage: (message) => {
+            onMessage: (msg: string) => {
 
             },
             onClose: () => {
@@ -87,18 +87,23 @@ describe('Connection', () => {
             onMessage: (...args) => oneFunctions.onMessage(...args),
             onClose: (...args) => oneFunctions.onClose(...args),
             onError: (...args) => oneFunctions.onError(...args),
+            onBufferLow: () => {},
+            onBufferHigh: () => {}
         })
         connectionTwo = new Connection({
             selfId: 'two',
             targetPeerId: 'one',
             routerId: 'routerId',
             stunUrls: [],
+            isOffering: false,
             onLocalDescription: (...args) => twoFunctions.onLocalDescription(...args),
             onLocalCandidate: (...args) => twoFunctions.onLocalCandidate(...args),
             onOpen: (...args) => twoFunctions.onOpen(...args),
             onMessage: (...args) => twoFunctions.onMessage(...args),
             onClose: (...args) => twoFunctions.onClose(...args),
             onError: (...args) => twoFunctions.onError(...args),
+            onBufferLow: () => {},
+            onBufferHigh: () => {}
         })
     })
 
@@ -169,7 +174,7 @@ describe('Connection', () => {
 
         await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
 
-        const msgsReceivedByConnectionTwo = []
+        const msgsReceivedByConnectionTwo: string[] = []
         twoFunctions.onMessage = (msg) => msgsReceivedByConnectionTwo.push(msg)
 
         for (let i = 1; i <= 10; ++i) {

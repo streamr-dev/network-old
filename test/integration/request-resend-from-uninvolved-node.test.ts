@@ -9,7 +9,7 @@ const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 const typesOfStreamItems = async (stream) => {
     const arr = await waitForStreamToEnd(stream)
-    return arr.map((msg) => msg.type)
+    return arr.map((msg: any) => msg.type)
 }
 
 /**
@@ -38,6 +38,8 @@ describe('request resend from uninvolved node', () => {
             storages: [{
                 store: () => {},
                 requestLast: () => toReadableStream(),
+                requestFrom: () => toReadableStream(),
+                requestRange: () => toReadableStream()
             }]
         })
         involvedNode = await startNetworkNode({
@@ -48,8 +50,22 @@ describe('request resend from uninvolved node', () => {
             storages: [{
                 store: () => {},
                 requestLast: () => toReadableStream(),
+                requestFrom: () => toReadableStream(),
+                requestRange: () => toReadableStream()
             }]
         })
+        const mockRequest = () => toReadableStream(
+            new StreamMessage({
+                messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
+                prevMsgRef: new MessageRef(666, 50),
+                content: {},
+            }),
+            new StreamMessage({
+                messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
+                prevMsgRef: new MessageRef(756, 0),
+                content: {},
+            })
+        )
         storageNode = await startStorageNode({
             host: '127.0.0.1',
             port: 28643,
@@ -57,18 +73,9 @@ describe('request resend from uninvolved node', () => {
             trackers: [tracker.getAddress()],
             storages: [{
                 store: () => {},
-                requestLast: () => toReadableStream(
-                    new StreamMessage({
-                        messageId: new MessageID('streamId', 0, 756, 0, 'publisherId', 'msgChainId'),
-                        prevMsgRef: new MessageRef(666, 50),
-                        content: {},
-                    }),
-                    new StreamMessage({
-                        messageId: new MessageID('streamId', 0, 800, 0, 'publisherId', 'msgChainId'),
-                        prevMsgRef: new MessageRef(756, 0),
-                        content: {},
-                    })
-                )
+                requestLast: mockRequest,
+                requestFrom: mockRequest,
+                requestRange: mockRequest
             }]
         })
 

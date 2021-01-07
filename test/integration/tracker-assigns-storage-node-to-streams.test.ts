@@ -58,14 +58,14 @@ describe('tracker assigns storage node to streams', () => {
             content: {},
         }))
 
-        const [msg1] = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
+        const [msg1]: any = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
 
         subscriberTwo.publish(new StreamMessage({
             messageId: new MessageID('stream-2', 0, 10, 0, 'publisherId', 'msgChainId'),
             content: {},
         }))
 
-        const [msg2] = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
+        const [msg2]: any = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
         expect(msg1.getStreamId()).toEqual('stream-1')
         expect(msg2.getStreamId()).toEqual('stream-2')
     })
@@ -75,13 +75,13 @@ describe('tracker assigns storage node to streams', () => {
             messageId: new MessageID('new-stream-1', 0, 5, 0, 'publisherId', 'msgChainId'),
             content: {},
         }))
-        const [msg1] = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
+        const [msg1]: any = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
 
         subscriberTwo.publish(new StreamMessage({
             messageId: new MessageID('new-stream-2', 0, 10, 0, 'publisherId', 'msgChainId'),
             content: {},
         }))
-        const [msg2] = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
+        const [msg2]: any = await waitForEvent(storageNode, NodeEvent.UNSEEN_MESSAGE_RECEIVED)
 
         expect(msg1.getStreamId()).toEqual('new-stream-1')
         expect(msg2.getStreamId()).toEqual('new-stream-2')

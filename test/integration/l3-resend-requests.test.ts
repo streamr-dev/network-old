@@ -9,7 +9,7 @@ const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 const typesOfStreamItems = async (stream) => {
     const arr = await waitForStreamToEnd(stream)
-    return arr.map((msg) => msg.type)
+    return arr.map((msg: any) => msg.type)
 }
 
 /**

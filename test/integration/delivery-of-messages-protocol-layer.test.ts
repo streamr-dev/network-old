@@ -24,8 +24,8 @@ describe('delivery of messages in protocol layer', () => {
         const wsEndpoint3 = await startEndpoint('127.0.0.1', 28513, PeerInfo.newNode('trackerNode'), null)
         const wsEndpoint4 = await startEndpoint('127.0.0.1', 28514, PeerInfo.newTracker('trackerServer'), null)
 
-        nodeToNode1 = new NodeToNode(wsEndpoint1)
-        nodeToNode2 = new NodeToNode(wsEndpoint2)
+        nodeToNode1 = new NodeToNode(wsEndpoint1 as any) // TODO: check cast
+        nodeToNode2 = new NodeToNode(wsEndpoint2 as any) // TODO: check cast
         trackerNode = new TrackerNode(wsEndpoint3)
         trackerServer = new TrackerServer(wsEndpoint4)
 
@@ -54,12 +54,12 @@ describe('delivery of messages in protocol layer', () => {
             content: {
                 hello: 'world'
             },
-            messageType: StreamMessage.CONTENT_TYPES.MESSAGE,
+            messageType: StreamMessage.MESSAGE_TYPES.MESSAGE,
             signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
             signature: 'signature',
         })
         nodeToNode2.sendData('nodeToNode1', streamMessage)
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.DATA_RECEIVED)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.DATA_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.BroadcastMessage)
         expect(source).toEqual('nodeToNode2')
@@ -80,7 +80,7 @@ describe('delivery of messages in protocol layer', () => {
             content: {
                 hello: 'world'
             },
-            messageType: StreamMessage.CONTENT_TYPES.MESSAGE,
+            messageType: StreamMessage.MESSAGE_TYPES.MESSAGE,
             signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
             signature: 'signature',
         })
@@ -89,7 +89,7 @@ describe('delivery of messages in protocol layer', () => {
             streamMessage,
         })
         nodeToNode2.send('nodeToNode1', unicastMessage)
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.UNICAST_RECEIVED)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.UNICAST_RECEIVED)
 
         expect(msg).toBeInstanceOf(ControlLayer.UnicastMessage)
         expect(source).toEqual('nodeToNode2')
@@ -106,7 +106,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendInstruction is delivered', async () => {
         trackerServer.sendInstruction('trackerNode', new StreamIdAndPartition('stream', 10), ['trackerNode'], 15)
-        const [msg, trackerId] = await waitForEvent(trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
+        const [msg, trackerId]: any = await waitForEvent(trackerNode, TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED)
 
         expect(trackerId).toEqual('trackerServer')
         expect(msg).toBeInstanceOf(TrackerLayer.InstructionMessage)
@@ -123,8 +123,9 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
             numberLast: 100,
+            sessionToken: null
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendLastRequest)
         expect(source).toEqual('nodeToNode2')
@@ -142,8 +143,9 @@ describe('delivery of messages in protocol layer', () => {
             streamPartition: 10,
             fromMsgRef: new MessageRef(1, 1),
             publisherId: 'publisherId',
+            sessionToken: null
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendFromRequest)
         expect(source).toEqual('nodeToNode2')
@@ -164,8 +166,9 @@ describe('delivery of messages in protocol layer', () => {
             toMsgRef: new MessageRef(2, 2),
             publisherId: 'publisherId',
             msgChainId: 'msgChainId',
+            sessionToken: null
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_REQUEST)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendRangeRequest)
         expect(source).toEqual('nodeToNode2')
@@ -185,7 +188,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResending)
         expect(source).toEqual('nodeToNode2')
@@ -201,7 +204,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseResent)
         expect(source).toEqual('nodeToNode2')
@@ -217,7 +220,7 @@ describe('delivery of messages in protocol layer', () => {
             streamId: 'stream',
             streamPartition: 10,
         }))
-        const [msg, source] = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
+        const [msg, source]: any = await waitForEvent(nodeToNode1, NodeToNodeEvent.RESEND_RESPONSE)
 
         expect(msg).toBeInstanceOf(ControlLayer.ResendResponseNoResend)
         expect(source).toEqual('nodeToNode2')
@@ -231,7 +234,7 @@ describe('delivery of messages in protocol layer', () => {
         trackerNode.sendStatus('trackerServer', {
             status: 'status'
         })
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.StatusMessage)
         expect(source).toEqual('trackerNode')
@@ -243,7 +246,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendStorageNodesRequest is delivered', async () => {
         trackerNode.sendStorageNodesRequest('trackerServer', new StreamIdAndPartition('stream', 10))
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServerEvent.STORAGE_NODES_REQUEST)
+        const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.STORAGE_NODES_REQUEST)
 
         expect(msg).toBeInstanceOf(TrackerLayer.StorageNodesRequest)
         expect(source).toEqual('trackerNode')
@@ -254,7 +257,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendStorageNodes is delivered', async () => {
         trackerServer.sendStorageNodesResponse('trackerNode', new StreamIdAndPartition('stream', 10), ['trackerNode'])
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.StorageNodesResponse)
         expect(source).toEqual('trackerServer')
@@ -266,7 +269,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendUnknownPeerRtcError is delivered', async () => {
         trackerServer.sendUnknownPeerRtcError('trackerNode', 'requestId', 'unknownTargetNode')
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.RTC_ERROR_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.RTC_ERROR_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.ErrorMessage)
         expect(source).toEqual('trackerServer')
@@ -276,7 +279,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRtcOffer is delivered (trackerServer->trackerNode)', async () => {
         trackerServer.sendRtcOffer('trackerNode', 'requestId', PeerInfo.newNode('originatorNode'), 'description')
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerServer')
@@ -291,7 +294,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRtcAnswer is delivered (trackerServer->trackerNode)', async () => {
         trackerServer.sendRtcAnswer('trackerNode', 'requestId', PeerInfo.newNode('originatorNode'), 'description')
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerServer')
@@ -306,7 +309,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRtcConnect is delivered (trackerServer->trackerNode)', async () => {
         trackerServer.sendRtcConnect('trackerNode', 'requestId', PeerInfo.newNode('originatorNode'))
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerServer')
@@ -319,7 +322,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRemoteCandidate is delivered (trackerServer->trackerNode)', async () => {
         trackerServer.sendRemoteCandidate('trackerNode', 'requestId', PeerInfo.newNode('originatorNode'), 'candidate', 'mid')
-        const [msg, source] = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerServer')
@@ -335,7 +338,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendLocalCandidate is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendLocalCandidate('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'candidate', 'mid')
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')
@@ -351,7 +354,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendLocalDescription is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendLocalDescription('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), 'offer', 'description')
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')
@@ -367,7 +370,7 @@ describe('delivery of messages in protocol layer', () => {
 
     test('sendRtcConnect is delivered (trackerNode->trackerServer)', async () => {
         trackerNode.sendRtcConnect('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'))
-        const [msg, source] = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
+        const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)
         expect(source).toEqual('trackerNode')

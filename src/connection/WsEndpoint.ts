@@ -657,7 +657,7 @@ export async function startEndpoint(
     port: number,
     peerInfo: PeerInfo,
     advertisedWsUrl: string | null,
-    metricsContext: MetricsContext,
+    metricsContext?: MetricsContext,
     pingInterval?: number | undefined,
     privateKeyFileName?: string | undefined,
     certFileName?: string | undefined,

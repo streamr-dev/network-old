@@ -88,7 +88,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/`)
         expect(status).toEqual(200)
         expect(jsonResult['stream-1::0']).not.toBeUndefined()
         expect(jsonResult['stream-2::0']).not.toBeUndefined()
@@ -96,7 +96,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/stream-1/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/`)
         expect(status).toEqual(200)
         expect(jsonResult['stream-1::0']).not.toBeUndefined()
         expect(jsonResult['stream-2::0']).toBeUndefined()
@@ -104,7 +104,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/sandbox%2test%2stream-3/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/sandbox%2Ftest%2Fstream-3/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/sandbox%2Ftest%2Fstream-3/`)
         expect(status).toEqual(200)
         expect(jsonResult['stream-1::0']).toBeUndefined()
         expect(jsonResult['stream-2::0']).toBeUndefined()
@@ -112,13 +112,13 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/non-existing-stream/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/non-existing-stream/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/non-existing-stream/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({})
     })
 
     it('/topology/%20/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/%20/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/%20/`)
         expect(status).toEqual(422)
         expect(jsonResult).toEqual({
             errorMessage: 'streamId cannot be empty'
@@ -126,7 +126,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/stream-1/0/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/0/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/0/`)
         expect(status).toEqual(200)
         expect(jsonResult['stream-1::0']).not.toBeUndefined()
         expect(jsonResult['stream-2::0']).toBeUndefined()
@@ -134,7 +134,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/sandbox%2test%2stream-3/0/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/sandbox%2Ftest%2Fstream-3/0/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/sandbox%2Ftest%2Fstream-3/0/`)
         expect(status).toEqual(200)
         expect(jsonResult['stream-1::0']).toBeUndefined()
         expect(jsonResult['stream-2::0']).toBeUndefined()
@@ -142,13 +142,13 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/non-existing-stream/0/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/non-existing-stream/0/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/non-existing-stream/0/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({})
     })
 
     it('/topology/%20/1/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/%20/1/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/%20/1/`)
         expect(status).toEqual(422)
         expect(jsonResult).toEqual({
             errorMessage: 'streamId cannot be empty'
@@ -156,7 +156,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/topology/stream-1/-666/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/-666/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/topology/stream-1/-666/`)
         expect(status).toEqual(422)
         expect(jsonResult).toEqual({
             errorMessage: 'partition must be a positive integer (was -666)'
@@ -164,7 +164,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/node-connections/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/node-connections/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/node-connections/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({
             'node-1': ['node-2'],
@@ -173,7 +173,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/location/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/location/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/location/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({
             'node-1': {
@@ -192,7 +192,7 @@ describe('tracker endpoint', () => {
     })
 
     it('/location/node-1/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/location/node-1/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/location/node-1/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({
             country: 'CH',
@@ -203,13 +203,13 @@ describe('tracker endpoint', () => {
     })
 
     it('/location/non-existing-node/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/location/non-existing-node/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/location/non-existing-node/`)
         expect(status).toEqual(200)
         expect(jsonResult).toEqual({})
     })
 
     it('/metrics/', async () => {
-        const [status, jsonResult] = await getHttp(`http://127.0.0.1:${trackerPort}/metrics/`)
+        const [status, jsonResult]: any = await getHttp(`http://127.0.0.1:${trackerPort}/metrics/`)
         expect(status).toEqual(200)
         expect(jsonResult.peerId).toEqual('tracker')
         expect(jsonResult.startTime).toBeGreaterThan(1600000000000)

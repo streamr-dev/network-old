@@ -64,10 +64,10 @@ describe('message propagation in network', () => {
     })
 
     it('messages are delivered to nodes in the network according to stream subscriptions', async () => {
-        const n1Messages = []
-        const n2Messages = []
-        const n3Messages = []
-        const n4Messages = []
+        const n1Messages: any[] = []
+        const n2Messages: any[] = []
+        const n3Messages: any[] = []
+        const n4Messages: any[] = []
 
         n1.addMessageListener((streamMessage) => n1Messages.push({
             streamId: streamMessage.messageId.streamId,

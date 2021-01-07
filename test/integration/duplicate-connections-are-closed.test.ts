@@ -19,7 +19,7 @@ describe('duplicate connections are closed', () => {
 
     test('if two endpoints open a connection (socket) to each other concurrently, one of them should be closed', async () => {
         let connectionsOpened = 0
-        const connectionsClosedReasons = []
+        const connectionsClosedReasons: string[] = []
 
         wsEndpoint1.on('connection', () => {
             connectionsOpened += 1
@@ -37,7 +37,7 @@ describe('duplicate connections are closed', () => {
             waitForEvent(wsEndpoint1, 'close'),
             waitForEvent(wsEndpoint2, 'close')
         ]).then((res) => {
-            const reason = res[2]
+            const reason: any = res[2]
             connectionsClosedReasons.push(reason)
             return res
         })

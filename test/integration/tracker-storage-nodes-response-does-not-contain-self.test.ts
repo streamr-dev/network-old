@@ -47,7 +47,7 @@ describe('storage nodes response from tracker does not contain self', () => {
 
     it('storage node response does not contain self', async () => {
         await storageNodeOne.sendStorageNodesRequest('tracker', new StreamIdAndPartition('stream', 0))
-        const [msg] = await waitForEvent(storageNodeOne, TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED)
+        const [msg]: any = await waitForEvent(storageNodeOne, TrackerNodeEvent.STORAGE_NODES_RESPONSE_RECEIVED)
         expect(msg.nodeIds).toEqual(['storageNodeTwo', 'storageNodeThree'])
     })
 })
