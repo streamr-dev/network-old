@@ -56,7 +56,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
-            DescriptionType.Offer,
+            'offer' as DescriptionType.Offer, // TODO should be able to use the enum directly
             'description'
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
@@ -76,7 +76,7 @@ describe('RTC signalling messages are routed to destination via tracker', () => 
             'tracker',
             'target',
             PeerInfo.newNode('originator'),
-            DescriptionType.Answer,
+            'answer' as DescriptionType.Answer, // TODO should be able to use the enum directly
             'description'
         )
         const [rtcOffer] = await waitForEvent(targetTrackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)

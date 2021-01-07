@@ -356,7 +356,13 @@ describe('delivery of messages in protocol layer', () => {
     })
 
     test('sendLocalDescription is delivered (trackerNode->trackerServer)', async () => {
-        trackerNode.sendLocalDescription('trackerServer', 'targetNode', PeerInfo.newNode('originatorNode'), DescriptionType.Offer, 'description')
+        trackerNode.sendLocalDescription(
+            'trackerServer',
+            'targetNode',
+            PeerInfo.newNode('originatorNode'),
+            'offer' as DescriptionType.Offer, // TODO should be able to use the enum directly
+            'description'
+        )
         const [msg, source]: any = await waitForEvent(trackerServer, TrackerServerEvent.RELAY_MESSAGE_RECEIVED)
 
         expect(msg).toBeInstanceOf(TrackerLayer.RelayMessage)

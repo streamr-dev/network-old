@@ -37,7 +37,7 @@ describe('check and kill dead connections', () => {
         expect(connection!.readyState).toEqual(1)
 
         // break connection, not using mock, because it's a uWS external object
-        connection!.readyState = 0
+        connection!.terminate()
 
         // @ts-expect-error private method
         jest.spyOn(node1, 'onClose').mockImplementation(() => {})

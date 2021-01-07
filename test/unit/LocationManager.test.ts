@@ -21,7 +21,9 @@ describe('LocationManager', () => {
             })
             expect(locationManager.getNodeLocation('nodeId')).toEqual({
                 city: 'Helsinki',
-                country: 'Finland'
+                country: 'Finland',
+                latitude: null,
+                longitude: null
             })
         })
 
@@ -79,7 +81,9 @@ describe('LocationManager', () => {
             })
             expect(locationManager.getNodeLocation('nodeId')).toEqual({
                 city: 'Helsinki',
-                country: 'Finland'
+                country: 'Finland',
+                latitude: null,
+                longitude: null
             })
         })
     })
