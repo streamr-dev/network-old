@@ -618,7 +618,7 @@ export class WsEndpoint extends EventEmitter {
 }
 
 export function startWebSocketServer(
-    host: string,
+    host: string | null,
     port: number,
     privateKeyFileName: string | undefined = undefined,
     certFileName: string | undefined = undefined

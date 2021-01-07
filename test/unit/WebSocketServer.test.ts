@@ -23,8 +23,7 @@ describe('test starting startWebSocketServer', () => {
     })
 
     test('wss raises error', () => {
-        // host must be 'Text and data can only be passed by String, ArrayBuffer or TypedArray.'
-        return expect(startWebSocketServer(null, null))
+        return expect(startWebSocketServer(null, null as any))
             .rejects
             .toEqual('Text and data can only be passed by String, ArrayBuffer or TypedArray.')
     })
@@ -60,7 +59,7 @@ describe('test starting startWebSocketServer', () => {
         )
 
         const peerInfo = PeerInfo.newTracker('id', 'name')
-        const endpoint = new WsEndpoint('127.0.0.1', wssPort, wss, listenSocket, peerInfo, null, undefined, false)
+        const endpoint = new WsEndpoint('127.0.0.1', wssPort, wss, listenSocket, peerInfo, null, undefined)
         const ws = new WebSocket(`wss://127.0.0.1:${wssPort}/ws?address=127.0.0.1`,
             undefined, {
                 rejectUnauthorized: false, // needed to accept self-signed certificate

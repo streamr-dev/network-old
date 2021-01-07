@@ -9,7 +9,7 @@ export function getTopology(
 ): { [key: string]: TopologyState } {
     const topology: { [key: string]: TopologyState } = {}
 
-    let streamKeys = []
+    let streamKeys: string[] = []
 
     if (streamId && partition === null) {
         streamKeys = Object.keys(overlayPerStream).filter((streamKey) => streamKey.includes(streamId))

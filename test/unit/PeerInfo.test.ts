@@ -42,7 +42,7 @@ describe('PeerInfo', () => {
     })
 
     it('PeerInfo constructor throws if invalid peerType', () => {
-        expect(() => new PeerInfo('peerId', 'invalidPeerType')).toThrow()
+        expect(() => new PeerInfo('peerId', 'invalidPeerType' as any)).toThrow()
     })
 
     it('fromObject', () => {
@@ -55,7 +55,7 @@ describe('PeerInfo', () => {
     })
 
     it('use id as name if name not given', () => {
-        const peerInfo = PeerInfo.newNode('nodeId', null, {})
+        const peerInfo = PeerInfo.newNode('nodeId', null)
         expect(peerInfo.peerName).toEqual('nodeId')
     })
 

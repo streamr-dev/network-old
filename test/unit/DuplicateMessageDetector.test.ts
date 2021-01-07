@@ -157,7 +157,7 @@ describe('erroneous messages that overlap gaps', () => {
     })
 
     it('previousNumber below gap while number in gap', () => {
-        expect(() => detector.markAndCheck(new NumberPair(5, 0), new NumberPair(15))).toThrowError(GapMisMatchError)
+        expect(() => detector.markAndCheck(new NumberPair(5, 0), new NumberPair(15, 0))).toThrowError(GapMisMatchError)
     })
 
     it('previousNumber in gap while number over gap', () => {

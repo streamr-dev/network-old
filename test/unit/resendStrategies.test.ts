@@ -20,6 +20,7 @@ const resendLastRequest = new ResendLastRequest({
     streamPartition: 0,
     requestId: 'requestId',
     numberLast: 10,
+    sessionToken: null
 })
 
 const resendFromRequest = new ResendFromRequest({
@@ -27,7 +28,8 @@ const resendFromRequest = new ResendFromRequest({
     streamPartition: 0,
     requestId: 'requestId',
     fromMsgRef: new MessageRef(1555555555555, 0),
-    publisherId: 'publisherId'
+    publisherId: 'publisherId',
+    sessionToken: null
 })
 
 const resendRangeRequest = new ResendRangeRequest({
@@ -38,6 +40,7 @@ const resendRangeRequest = new ResendRangeRequest({
     toMsgRef: new MessageRef(1555555555555, 1000),
     publisherId: 'publisherId',
     msgChainId: 'msgChainId',
+    sessionToken: null
 })
 
 const msg1 = new StreamMessage({

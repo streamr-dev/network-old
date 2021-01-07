@@ -35,6 +35,7 @@ describe('ResendHandler', () => {
             streamPartition: 0,
             requestId: 'requestId',
             numberLast: 10,
+            sessionToken: null
         })
         notifyError = jest.fn()
     })
@@ -194,7 +195,7 @@ describe('ResendHandler', () => {
     })
 
     test('destroying returned stream destroys (and closes) underlying response stream ', (done) => {
-        let underlyingResponeStream = null
+        let underlyingResponeStream: Readable | null = null
 
         resendHandler = new ResendHandler([{
             getResendResponseStream: () => {
@@ -208,14 +209,14 @@ describe('ResendHandler', () => {
 
         const requestStream = resendHandler.handleRequest(request, 'source')
         requestStream.on('close', () => {
-            expect(underlyingResponeStream.destroyed).toEqual(true)
+            expect(underlyingResponeStream!.destroyed).toEqual(true)
             done()
         })
         requestStream.destroy()
     })
 
     test('pausing/resuming returned stream pauses/resumes underlying response stream ', (done) => {
-        let underlyingResponseStream = null
+        let underlyingResponseStream: Readable | null = null
 
         resendHandler = new ResendHandler([{
             getResendResponseStream: () => {
@@ -230,9 +231,9 @@ describe('ResendHandler', () => {
         const requestStream = resendHandler.handleRequest(request, 'source')
 
         requestStream.on('pause', () => {
-            expect(underlyingResponseStream.isPaused()).toEqual(true)
+            expect(underlyingResponseStream!.isPaused()).toEqual(true)
             requestStream.on('resume', () => {
-                expect(underlyingResponseStream.isPaused()).toEqual(false)
+                expect(underlyingResponseStream!.isPaused()).toEqual(false)
                 requestStream.destroy() // clean up
                 done()
             })
@@ -255,6 +256,7 @@ describe('ResendHandler', () => {
                 streamPartition: 0,
                 requestId: 'requestId',
                 numberLast: 10,
+                sessionToken: null
             }),
             error: new Error('yikes'),
         })
@@ -359,7 +361,9 @@ describe('ResendHandler', () => {
                 return new Readable({
                     objectMode: true,
                     read() {
+                        // @ts-expect-error TGTEST
                         if (!this.first) {
+                            // @ts-expect-error TGTEST
                             this.first = true
                             this.push('first')
                         } else {
@@ -391,7 +395,9 @@ describe('ResendHandler', () => {
                 return new Readable({
                     objectMode: true,
                     read() {
+                        // @ts-expect-error TGTEST
                         if (!this.first) {
+                            // @ts-expect-error TGTEST
                             this.first = true
                             this.push('first')
                         } else {
