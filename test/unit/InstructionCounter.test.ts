@@ -1,4 +1,4 @@
-const { InstructionCounter } = require('../../src/logic/InstructionCounter')
+import { InstructionCounter } from '../../src/logic/InstructionCounter'
 
 describe('InstructionCounter', () => {
     let instructionCounter

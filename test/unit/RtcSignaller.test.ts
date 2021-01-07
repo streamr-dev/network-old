@@ -1,10 +1,11 @@
-const { EventEmitter } = require('events')
+import { EventEmitter } from 'events'
+import { TrackerLayer } from 'streamr-client-protocol'
 
-const { ErrorMessage, RelayMessage } = require('streamr-client-protocol').TrackerLayer
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { RtcSignaller } from '../../src/logic/RtcSignaller'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { RtcSignaller } = require('../../src/logic/RtcSignaller')
-const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
+const { ErrorMessage, RelayMessage } = TrackerLayer
 
 describe('RtcSignaller', () => {
     let peerInfo

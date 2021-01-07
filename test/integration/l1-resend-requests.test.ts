@@ -1,8 +1,8 @@
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const { waitForEvent, waitForStreamToEnd, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
+import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer

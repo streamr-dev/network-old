@@ -1,11 +1,11 @@
-const { waitForEvent } = require('streamr-test-utils')
-const { TrackerLayer } = require('streamr-client-protocol')
+import { waitForEvent } from 'streamr-test-utils'
+import { TrackerLayer } from 'streamr-client-protocol'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { Event: NodeEvent } = require('../../src/logic/Node')
-const { StreamIdAndPartition } = require('../../src/identifiers')
-const { getTopology } = require('../../src/logic/trackerSummaryUtils')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { Event as NodeEvent } from '../../src/logic/Node'
+import { StreamIdAndPartition } from '../../src/identifiers'
+import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 describe('check tracker, nodes and statuses from nodes', () => {
     let tracker

@@ -1,9 +1,8 @@
 /* eslint-disable no-underscore-dangle */
-const { waitForEvent } = require('streamr-test-utils')
+import { waitForEvent } from 'streamr-test-utils'
 
-const { startEndpoint, Event, DisconnectionReason, DisconnectionCode } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { events } = require('../../src/connection/WsEndpoint')
+import { startEndpoint, Event, DisconnectionReason, DisconnectionCode } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('check and kill dead connections', () => {
     let node1

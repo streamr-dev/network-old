@@ -1,12 +1,12 @@
-const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
-const { waitForEvent } = require('streamr-test-utils')
+import { MessageLayer, ControlLayer, TrackerLayer } from 'streamr-client-protocol'
+import { waitForEvent } from 'streamr-test-utils'
 
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { StreamIdAndPartition } = require('../../src/identifiers')
-const { NodeToNode, Event: NodeToNodeEvent } = require('../../src/protocol/NodeToNode')
-const { TrackerNode, Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { TrackerServer, Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+import { startEndpoint } from '../../src/connection/WsEndpoint'
+import { StreamIdAndPartition } from '../../src/identifiers'
+import { NodeToNode, Event as NodeToNodeEvent } from '../../src/protocol/NodeToNode'
+import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { TrackerServer, Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 

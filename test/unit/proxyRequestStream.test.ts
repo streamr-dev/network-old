@@ -1,14 +1,10 @@
-const { toReadableStream } = require('streamr-test-utils')
-const {
-    ResendResponseResending,
-    ResendResponseNoResend,
-    ResendResponseResent,
-    UnicastMessage,
-    ResendLastRequest,
-} = require('streamr-client-protocol').ControlLayer
-const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
+import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
+import { toReadableStream } from 'streamr-test-utils'
 
-const { proxyRequestStream } = require('../../src/resend/proxyRequestStream')
+import { proxyRequestStream } from '../../src/resend/proxyRequestStream'
+
+const { ResendResponseResending, ResendResponseNoResend, ResendResponseResent, UnicastMessage, ResendLastRequest } = ControlLayer
+const { StreamMessage, MessageID } = MessageLayer
 
 describe('proxyRequestStream', () => {
     let sendFn

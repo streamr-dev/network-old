@@ -1,9 +1,9 @@
-const { Readable } = require('stream')
+import { Readable } from 'stream'
 
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const { waitForStreamToEnd, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
+import { waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
-const { ResendHandler } = require('../../src/resend/ResendHandler')
+import { ResendHandler } from '../../src/resend/ResendHandler'
 
 const { StreamMessage, MessageID } = MessageLayer
 

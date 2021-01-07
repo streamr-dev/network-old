@@ -1,4 +1,4 @@
-const { PerStreamMetrics } = require('../../src/logic/PerStreamMetrics')
+import { PerStreamMetrics } from '../../src/logic/PerStreamMetrics'
 
 describe('PerStreamMetrics', () => {
     let perStreamMetrics

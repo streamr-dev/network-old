@@ -1,8 +1,10 @@
-const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
-const { waitForCondition, waitForEvent, wait } = require('streamr-test-utils')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForCondition, waitForEvent, wait } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+
+const { StreamMessage, MessageID } = MessageLayer
 
 /**
  * This test verifies that on receiving a duplicate message, it is not re-emitted to the node's subscribers.

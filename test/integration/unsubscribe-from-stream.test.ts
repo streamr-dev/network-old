@@ -1,9 +1,12 @@
-const { StreamMessage, MessageID } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent } = require('streamr-test-utils')
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: NodeEvent } = require('../../src/logic/Node')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForEvent } from 'streamr-test-utils'
+
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as NodeEvent } from '../../src/logic/Node'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+
+const { StreamMessage, MessageID } = MessageLayer
 
 describe('node unsubscribing from a stream', () => {
     let tracker

@@ -1,11 +1,11 @@
-const { waitForEvent } = require('streamr-test-utils')
-const { TrackerLayer } = require('streamr-client-protocol')
+import { waitForEvent } from 'streamr-test-utils'
+import { TrackerLayer } from 'streamr-client-protocol'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { Event: NodeEvent } = require('../../src/logic/Node')
-const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const WsEndpoint = require('../../src/connection/WsEndpoint')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { Event as NodeEvent } from '../../src/logic/Node'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { WsEndpoint } from '../../src/connection/WsEndpoint'
 
 /**
  * This test verifies that tracker can send instructions to node and node will connect and disconnect based on the instructions

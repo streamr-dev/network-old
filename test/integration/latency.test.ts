@@ -1,6 +1,8 @@
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
+import { MessageLayer } from 'streamr-client-protocol'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
+import { startNetworkNode, startTracker } from '../../src/composition'
+
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('latency metrics', () => {
     let tracker

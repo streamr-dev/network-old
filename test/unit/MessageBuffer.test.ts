@@ -1,4 +1,4 @@
-const { MessageBuffer } = require('../../src/helpers/MessageBuffer')
+import { MessageBuffer } from '../../src/helpers/MessageBuffer'
 
 jest.useFakeTimers()
 

@@ -1,8 +1,9 @@
-const WebSocket = require('ws')
-const uWS = require('uWebSockets.js')
+import WebSocket from 'ws'
 
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { startWebSocketServer, WsEndpoint } = require('../../src/connection/WsEndpoint')
+import uWS from 'uWebSockets.js'
+
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { startWebSocketServer, WsEndpoint } from '../../src/connection/WsEndpoint'
 
 const wssPort = 7777
 

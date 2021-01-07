@@ -1,8 +1,8 @@
-const { MessageLayer, ControlLayer } = require('streamr-client-protocol')
-const { waitForStreamToEnd, waitForEvent, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer, ControlLayer } from 'streamr-client-protocol'
+import { waitForStreamToEnd, waitForEvent, toReadableStream } from 'streamr-test-utils'
 
-const { startNetworkNode, startStorageNode, startTracker } = require('../../src/composition')
-const { Event: NodeEvent } = require('../../src/logic/Node')
+import { startNetworkNode, startStorageNode, startTracker } from '../../src/composition'
+import { Event as NodeEvent } from '../../src/logic/Node'
 
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer

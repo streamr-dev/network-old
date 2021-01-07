@@ -1,8 +1,10 @@
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForCondition, waitForEvent } = require('streamr-test-utils')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForCondition, waitForEvent } from 'streamr-test-utils'
 
-const { Event: NodeEvent } = require('../../src/logic/Node')
-const { startTracker, startNetworkNode } = require('../../src/composition')
+import { Event as NodeEvent } from '../../src/logic/Node'
+import { startTracker, startNetworkNode } from '../../src/composition'
+
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('message propagation in network', () => {
     let tracker

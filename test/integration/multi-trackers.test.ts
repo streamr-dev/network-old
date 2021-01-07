@@ -1,10 +1,10 @@
-const { waitForEvent, eventsWithArgsToArray } = require('streamr-test-utils')
-const { TrackerLayer } = require('streamr-client-protocol')
+import { waitForEvent, eventsWithArgsToArray } from 'streamr-test-utils'
+import { TrackerLayer } from 'streamr-client-protocol'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { Node, Event: NodeEvent } = require('../../src/logic/Node')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { Node, Event as NodeEvent } from '../../src/logic/Node'
 
 // TODO: maybe worth re-designing this in a way that isn't this arbitrary?
 const FIRST_STREAM = 'stream-1' // assigned to trackerOne (arbitrarily by hashing algo)

@@ -1,8 +1,10 @@
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent, waitForStreamToEnd, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker, startStorageNode } = require('../../src/composition')
-const TrackerServer = require('../../src/protocol/TrackerServer')
+import { startNetworkNode, startTracker, startStorageNode } from '../../src/composition'
+import { TrackerServer } from '../../src/protocol/TrackerServer'
+
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('resend requests on streams with no activity', () => {
     let tracker

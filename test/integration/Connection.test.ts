@@ -1,6 +1,6 @@
-const { waitForCondition, wait } = require('streamr-test-utils')
+import { waitForCondition, wait } from 'streamr-test-utils'
 
-const { Connection } = require('../../src/connection/Connection')
+import { Connection } from '../../src/connection/Connection'
 
 function onConnectPromise(functions) {
     return new Promise((resolve, reject) => {

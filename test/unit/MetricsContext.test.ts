@@ -1,4 +1,4 @@
-const { MetricsContext } = require('../../src/helpers/MetricsContext')
+import { MetricsContext } from '../../src/helpers/MetricsContext'
 
 describe('metrics', () => {
     let context

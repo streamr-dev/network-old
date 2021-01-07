@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-const path = require('path')
-const { spawn } = require('child_process')
+import path from 'path'
+import { spawn } from 'child_process'
 
-const { wait } = require('streamr-test-utils')
+import { wait } from 'streamr-test-utils'
 
 async function runNetwork(currentBenchmark, numberOfNodes, startingPort, timeout = 60 * 1000, trackerPort = 27777) {
     const productionEnv = Object.create(process.env)

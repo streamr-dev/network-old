@@ -1,12 +1,12 @@
-const { EventEmitter } = require('events')
+import { EventEmitter } from 'events'
 
-const { MessageLayer, ControlLayer, TrackerLayer } = require('streamr-client-protocol')
-const { waitForStreamToEnd, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer, ControlLayer, TrackerLayer } from 'streamr-client-protocol'
+import { waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
-const { LocalResendStrategy, ForeignResendStrategy } = require('../../src/resend/resendStrategies')
-const { StreamIdAndPartition } = require('../../src/identifiers')
-const { Event: NodeToNodeEvent } = require('../../src/protocol/NodeToNode')
-const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
+import { LocalResendStrategy, ForeignResendStrategy } from '../../src/resend/resendStrategies'
+import { StreamIdAndPartition } from '../../src/identifiers'
+import { Event as NodeToNodeEvent } from '../../src/protocol/NodeToNode'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 const { ResendLastRequest, ResendFromRequest, ResendRangeRequest } = ControlLayer

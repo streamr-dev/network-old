@@ -1,10 +1,13 @@
-const { Readable } = require('stream')
+import { Readable } from 'stream'
 
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForEvent, wait, toReadableStream } = require('streamr-test-utils')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForEvent, wait, toReadableStream } from 'streamr-test-utils'
 
-const { startNetworkNode, startStorageNode, startTracker } = require('../../src/composition')
-const { Event: NodeEvent } = require('../../src/logic/Node')
+import { startNetworkNode, startStorageNode, startTracker } from '../../src/composition'
+import { Event as NodeEvent } from '../../src/logic/Node'
+
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
+
 /**
  * This test verifies that a node does not attempt to send a resend response to
  * a node that previously requested a resend but then promptly disconnected.

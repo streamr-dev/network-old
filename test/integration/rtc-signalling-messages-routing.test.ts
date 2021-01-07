@@ -1,12 +1,14 @@
-const { waitForEvent } = require('streamr-test-utils')
-const { RelayMessage, ErrorMessage } = require('streamr-client-protocol').TrackerLayer
+import { waitForEvent } from 'streamr-test-utils'
+import { TrackerLayer } from 'streamr-client-protocol'
 
-const { RtcSubTypes } = require('../../src/logic/RtcMessage')
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { TrackerNode, Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { startTracker } = require('../../src/composition')
+import { RtcSubTypes } from '../../src/logic/RtcMessage'
+import { startEndpoint } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { startTracker } from '../../src/composition'
+
+const { RelayMessage, ErrorMessage } = TrackerLayer
 
 /**
  * Validate the relaying logic of tracker's WebRTC signalling messages.

@@ -1,7 +1,4 @@
-const { DuplicateMessageDetector,
-    NumberPair,
-    GapMisMatchError,
-    InvalidNumberingError } = require('../../src/logic/DuplicateMessageDetector')
+import { DuplicateMessageDetector, NumberPair, GapMisMatchError, InvalidNumberingError } from '../../src/logic/DuplicateMessageDetector'
 
 test('starts empty', () => {
     const detector = new DuplicateMessageDetector()

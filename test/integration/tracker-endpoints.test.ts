@@ -1,8 +1,8 @@
-const http = require('http')
+import http from 'http'
 
-const { waitForCondition } = require('streamr-test-utils')
+import { waitForCondition } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
+import { startNetworkNode, startTracker } from '../../src/composition'
 
 function getHttp(url) {
     return new Promise((resolve, reject) => {

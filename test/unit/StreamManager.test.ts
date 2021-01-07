@@ -1,7 +1,7 @@
-const { MessageLayer } = require('streamr-client-protocol')
+import { MessageLayer } from 'streamr-client-protocol'
 
-const { StreamManager } = require('../../src/logic/StreamManager')
-const { StreamIdAndPartition } = require('../../src/identifiers')
+import { StreamManager } from '../../src/logic/StreamManager'
+import { StreamIdAndPartition } from '../../src/identifiers'
 
 const { MessageID, MessageRef } = MessageLayer
 

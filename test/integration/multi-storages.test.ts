@@ -1,9 +1,9 @@
-const { waitForEvent, waitForCondition } = require('streamr-test-utils')
+import { waitForEvent, waitForCondition } from 'streamr-test-utils'
 
-const { startStorageNode, startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { Event: NodeEvent } = require('../../src/logic/Node')
-const { getTopology } = require('../../src/logic/trackerSummaryUtils')
+import { startStorageNode, startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { Event as NodeEvent } from '../../src/logic/Node'
+import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 describe('multiple storage nodes', () => {
     let tracker

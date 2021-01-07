@@ -1,6 +1,6 @@
-const { MessageLayer } = require('streamr-client-protocol')
+import { MessageLayer } from 'streamr-client-protocol'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
+import { startNetworkNode, startTracker } from '../../src/composition'
 
 const { StreamMessage, MessageID } = MessageLayer
 

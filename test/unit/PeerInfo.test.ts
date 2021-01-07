@@ -1,4 +1,4 @@
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('PeerInfo', () => {
     let nodeInfo

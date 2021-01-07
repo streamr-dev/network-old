@@ -1,11 +1,11 @@
-const { wait, waitForEvent } = require('streamr-test-utils')
+import { wait, waitForEvent } from 'streamr-test-utils'
 
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { startTracker } = require('../../src/composition')
-const { TrackerNode, Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { getTopology } = require('../../src/logic/trackerSummaryUtils')
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { startTracker } from '../../src/composition'
+import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { startEndpoint } from '../../src/connection/WsEndpoint'
+import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 const WAIT_TIME = 200
 

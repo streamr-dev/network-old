@@ -1,6 +1,6 @@
-const { ControlLayer } = require('streamr-client-protocol')
+import { ControlLayer } from 'streamr-client-protocol'
 
-const { decode } = require('../../src/helpers/MessageEncoder')
+import { decode } from '../../src/helpers/MessageEncoder'
 
 describe('encoder', () => {
     const controlMessage = new ControlLayer.ResendResponseNoResend({

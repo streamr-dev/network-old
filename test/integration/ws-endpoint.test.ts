@@ -1,10 +1,9 @@
-const WebSocket = require('ws')
-const { waitForEvent, wait } = require('streamr-test-utils')
+import WebSocket from 'ws'
+import { waitForEvent, wait } from 'streamr-test-utils'
 
-const { Event, DisconnectionCode } = require('../../src/connection/WsEndpoint')
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { startTracker } = require('../../src/composition')
+import { Event, DisconnectionCode, startEndpoint } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { startTracker } from '../../src/composition'
 
 describe('ws-endpoint', () => {
     const endpoints = []

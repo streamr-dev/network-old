@@ -1,7 +1,7 @@
-const { waitForEvent } = require('streamr-test-utils')
+import { waitForEvent } from 'streamr-test-utils'
 
-const { startEndpoint, DisconnectionReason } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+import { startEndpoint, DisconnectionReason } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('duplicate connections are closed', () => {
     let wsEndpoint1

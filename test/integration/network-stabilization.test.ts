@@ -1,9 +1,9 @@
-const assert = require('assert')
+import assert from 'assert'
 
-const { wait } = require('streamr-test-utils')
+import { wait } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { getTopology } = require('../../src/logic/trackerSummaryUtils')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { getTopology } from '../../src/logic/trackerSummaryUtils'
 
 function areEqual(a, b) {
     try {

@@ -1,7 +1,9 @@
-const { StreamMessage, MessageID, MessageRef } = require('streamr-client-protocol').MessageLayer
-const { waitForCondition } = require('streamr-test-utils')
+import { MessageLayer } from 'streamr-client-protocol'
+import { waitForCondition } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
+import { startNetworkNode, startTracker } from '../../src/composition'
+
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 /**
  * This test verifies that on receiving a message, the receiver will not propagate the message to the sender as they

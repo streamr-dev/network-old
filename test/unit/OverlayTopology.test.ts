@@ -1,4 +1,4 @@
-const { OverlayTopology } = require('../../src/logic/OverlayTopology')
+import { OverlayTopology } from '../../src/logic/OverlayTopology'
 
 const maxNeighborsPerNodeArray = [4, 8, 12, 16]
 

@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-const OverlayTopology = require('../../src/logic/OverlayTopology')
+import { OverlayTopology } from '../../src/logic/OverlayTopology'
 
 const numOfRounds = 10
 const numOfNeighbors = 4

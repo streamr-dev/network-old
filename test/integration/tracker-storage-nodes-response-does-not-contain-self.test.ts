@@ -1,10 +1,10 @@
-const { waitForEvent } = require('streamr-test-utils')
+import { waitForEvent } from 'streamr-test-utils'
 
-const { PeerInfo } = require('../../src/connection/PeerInfo')
-const { startEndpoint } = require('../../src/connection/WsEndpoint')
-const { TrackerNode, Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { startTracker } = require('../../src/composition')
-const { StreamIdAndPartition } = require('../../src/identifiers')
+import { PeerInfo } from '../../src/connection/PeerInfo'
+import { startEndpoint } from '../../src/connection/WsEndpoint'
+import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { startTracker } from '../../src/composition'
+import { StreamIdAndPartition } from '../../src/identifiers'
 
 /**
  * Ensure that when a storage node requests storage nodes from tracker, the list does not contain the

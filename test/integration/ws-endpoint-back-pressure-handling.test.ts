@@ -1,5 +1,5 @@
-const { startEndpoint, Event } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+import { startEndpoint, Event } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('WsEndpoint: back pressure handling', () => {
     let ep1

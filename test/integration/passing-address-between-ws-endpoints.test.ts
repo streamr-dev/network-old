@@ -1,8 +1,7 @@
-const { waitForEvent } = require('streamr-test-utils')
+import { waitForEvent } from 'streamr-test-utils'
 
-const { startEndpoint, Event } = require('../../src/connection/WsEndpoint')
-const { events } = require('../../src/connection/WsEndpoint')
-const { PeerInfo } = require('../../src/connection/PeerInfo')
+import { startEndpoint, Event } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('passing address between WsEndpoints', () => {
     let wsEndpoint1

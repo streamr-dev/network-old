@@ -1,8 +1,8 @@
-const { wait, waitForEvent } = require('streamr-test-utils')
+import { wait, waitForEvent } from 'streamr-test-utils'
 
-const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
-const { Event: NodeEvent } = require('../../src/logic/Node')
+import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
+import { Event as NodeEvent } from '../../src/logic/Node'
 
 /**
  * This test verifies that tracker receives status messages from nodes with list of inBound and outBound connections
