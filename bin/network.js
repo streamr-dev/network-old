@@ -26,7 +26,7 @@ for (let i = 0; i < parseInt(program.streams, 10); i++) {
 let debug = false
 
 const productionEnv = Object.create(process.env)
-// productionEnv.LOG_LEVEL = productionEnv.LOG_LEVEL || 'debug'
+productionEnv.LOG_LEVEL = productionEnv.LOG_LEVEL || 'debug'
 
 // create tracker
 const tracker = path.resolve('./bin/tracker.js')
