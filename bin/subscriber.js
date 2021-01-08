@@ -54,7 +54,7 @@ startNetworkNode({
 
     if (program.metrics) {
         setInterval(async () => {
-            // logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
+            logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
         }, 5000)
     }
     return true
