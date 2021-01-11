@@ -364,10 +364,8 @@ describe('ResendHandler', () => {
                 return new Readable({
                     objectMode: true,
                     read() {
-                        // @ts-expect-error TGTEST
-                        if (!this.first) {
-                            // @ts-expect-error TGTEST
-                            this.first = true
+                        if (!(this as any).first) {
+                            (this as any).first = true
                             this.push('first')
                         } else {
                             this.push(null)
@@ -398,10 +396,8 @@ describe('ResendHandler', () => {
                 return new Readable({
                     objectMode: true,
                     read() {
-                        // @ts-expect-error TGTEST
-                        if (!this.first) {
-                            // @ts-expect-error TGTEST
-                            this.first = true
+                        if (!(this as any).first) {
+                            (this as any).first = true
                             this.push('first')
                         } else {
                             this.push(null)

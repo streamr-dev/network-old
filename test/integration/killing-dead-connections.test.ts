@@ -40,7 +40,7 @@ describe('check and kill dead connections', () => {
         connection!.terminate()
 
         // @ts-expect-error private method
-        jest.spyOn(node1, 'onClose').mockImplementation(() => {})
+        jest.spyOn(node1, 'onClose').mockImplementation()
 
         // check connections
         jest.spyOn(connection!, 'ping').mockImplementation(() => {
