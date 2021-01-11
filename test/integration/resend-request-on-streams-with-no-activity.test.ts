@@ -1,10 +1,10 @@
-import { NetworkNode } from '../../src/NetworkNode'
-import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../NetworkNode'
+import { Tracker } from '../logic/Tracker'
 import { MessageLayer } from 'streamr-client-protocol'
 import { waitForEvent, waitForStreamToEnd, toReadableStream } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker, startStorageNode } from '../../src/composition'
-import { Event, TrackerServer } from '../../src/protocol/TrackerServer'
+import { Event } from '../../src/protocol/TrackerServer'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
@@ -23,19 +23,19 @@ describe('resend requests on streams with no activity', () => {
         subscriberOne = await startNetworkNode({
             host: '127.0.0.1',
             port: 32905,
-            trackers: [],
+            trackers: [ tracker.getAddress() ],
             id: 'subscriberOne'
         })
         subscriberTwo = await startNetworkNode({
             host: '127.0.0.1',
             port: 32906,
-            trackers: [],
+            trackers: [ tracker.getAddress() ],
             id: 'subscriberTwo'
         })
         storageNode = await startStorageNode({
             host: '127.0.0.1',
             port: 32907,
-            trackers: [],
+            trackers: [ tracker.getAddress() ],
             id: 'storageNode',
             storages: [{
                 store: () => {},
@@ -66,20 +66,17 @@ describe('resend requests on streams with no activity', () => {
             }]
         })
 
-        // @ts-expect-error no method
-        storageNode.addBootstrapTracker(tracker.getAddress())
-        // @ts-expect-error no method
-        subscriberOne.addBootstrapTracker(tracker.getAddress())
-        // @ts-expect-error no method
-        subscriberTwo.addBootstrapTracker(tracker.getAddress())
+        subscriberOne.start()
+        subscriberTwo.start()
+        storageNode.start()
 
         await Promise.all([
-            // @ts-expect-error no method
-            waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
-            // @ts-expect-error no method
-            waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
-            // @ts-expect-error no method
-            waitForEvent(tracker.protocols.trackerServer, Event.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private method
+            waitForEvent(tracker.trackerServer, Event.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private method
+            waitForEvent(tracker.trackerServer, Event.NODE_STATUS_RECEIVED),
+            // @ts-expect-error private method
+            waitForEvent(tracker.trackerServer, Event.NODE_STATUS_RECEIVED),
         ])
     })
 
@@ -92,9 +89,9 @@ describe('resend requests on streams with no activity', () => {
 
     it('resend request works on streams that are not subscribed to', async () => {
         const stream = subscriberOne.requestResendLast('streamId', 0, 'requestId', 10)
-        // @ts-expect-error no method
-        await waitForEvent(tracker.protocols.trackerServer, Event.STORAGE_NODES_REQUEST)
+        // @ts-expect-error private method
+        await waitForEvent(tracker.trackerServer, Event.STORAGE_NODES_REQUEST)
         const data = await waitForStreamToEnd(stream as any)
-        expect(data.length).toEqual(0)
+        expect(data.length).toEqual(3)
     })
 })
