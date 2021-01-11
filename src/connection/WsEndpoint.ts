@@ -535,8 +535,6 @@ export class WsEndpoint extends EventEmitter {
             }
 
             this.logger.debug('<=== %s connecting to me', address)
-            // added 'connection' event for test - duplicate-connections-are-closed.test.js
-            this.emit('connection', ws)
             this.onNewConnection(ws, address, clientPeerInfo, false)
         } catch (e) {
             this.logger.debug('dropped incoming connection because of %s', e)

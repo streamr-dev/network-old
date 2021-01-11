@@ -1,6 +1,6 @@
 import { waitForEvent } from 'streamr-test-utils'
 
-import { startEndpoint, DisconnectionReason, WsEndpoint } from '../../src/connection/WsEndpoint'
+import { startEndpoint, DisconnectionReason, WsEndpoint, Event } from '../../src/connection/WsEndpoint'
 import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('duplicate connections are closed', () => {
@@ -21,12 +21,10 @@ describe('duplicate connections are closed', () => {
         let connectionsOpened = 0
         const connectionsClosedReasons: string[] = []
 
-        // @ts-expect-error paremeter type
-        wsEndpoint1.on('connection', () => {
+        wsEndpoint1.on(Event.PEER_CONNECTED, () => {
             connectionsOpened += 1
         })
-        // @ts-expect-error paremeter type
-        wsEndpoint2.on('connection', () => {
+        wsEndpoint2.on(Event.PEER_CONNECTED, () => {
             connectionsOpened += 1
         })
 
@@ -44,7 +42,6 @@ describe('duplicate connections are closed', () => {
             return res
         })
 
-        expect(connectionsOpened).toEqual(2) // sanity check
         expect(connectionsClosedReasons).toEqual([DisconnectionReason.DUPLICATE_SOCKET]) // length === 1
 
         // to be sure that everything wrong happened
