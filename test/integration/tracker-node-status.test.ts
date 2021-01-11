@@ -13,6 +13,7 @@ describe('check status message flow between tracker and two nodes', () => {
     let tracker: Tracker
     let nodeOne: NetworkNode
     let nodeTwo: NetworkNode
+    const TRACKER_ID = 'tracker'
     const streamId = 'stream-1'
     const streamId2 = 'stream-2'
 
@@ -27,7 +28,7 @@ describe('check status message flow between tracker and two nodes', () => {
         tracker = await startTracker({
             host: '127.0.0.1',
             port: 30750,
-            id: 'tracker'
+            id: TRACKER_ID
         })
         nodeOne = await startNetworkNode({
             host: '127.0.0.1',
@@ -56,8 +57,8 @@ describe('check status message flow between tracker and two nodes', () => {
         // @ts-expect-error private field
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-1')
-            // @ts-expect-error private field, missing parameter
-            expect(statusMessage.status).toEqual(nodeOne.getStatus())
+            // @ts-expect-error private field
+            expect(statusMessage.status).toEqual(nodeOne.getStatus(TRACKER_ID))
             done()
         })
 
@@ -68,8 +69,8 @@ describe('check status message flow between tracker and two nodes', () => {
         // @ts-expect-error private field
         tracker.trackerServer.once(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, peerInfo) => {
             expect(peerInfo).toEqual('node-2')
-            // @ts-expect-error private field, missing parameter
-            expect(statusMessage.status).toEqual(nodeTwo.getStatus())
+            // @ts-expect-error private field
+            expect(statusMessage.status).toEqual(nodeTwo.getStatus(TRACKER_ID))
             done()
         })
         nodeTwo.start()
@@ -83,14 +84,14 @@ describe('check status message flow between tracker and two nodes', () => {
         // @ts-expect-error private field
         tracker.trackerServer.on(TrackerServerEvent.NODE_STATUS_RECEIVED, (statusMessage, nodeId) => {
             if (nodeId === 'node-1') {
-                // @ts-expect-error private field, missing parameter
-                expect(statusMessage.status).toEqual(nodeOne.getStatus())
+                // @ts-expect-error private field
+                expect(statusMessage.status).toEqual(nodeOne.getStatus(TRACKER_ID))
                 receivedTotal += 1
             }
 
             if (nodeId === 'node-2') {
-                // @ts-expect-error private field, missing parameter
-                expect(statusMessage.status).toEqual(nodeTwo.getStatus())
+                // @ts-expect-error private field
+                expect(statusMessage.status).toEqual(nodeTwo.getStatus(TRACKER_ID))
                 receivedTotal += 1
             }
 
