@@ -23,19 +23,19 @@ describe('resend requests on streams with no activity', () => {
         subscriberOne = await startNetworkNode({
             host: '127.0.0.1',
             port: 32905,
-            trackers: [ tracker.getAddress() ],
+            trackers: [tracker.getAddress()],
             id: 'subscriberOne'
         })
         subscriberTwo = await startNetworkNode({
             host: '127.0.0.1',
             port: 32906,
-            trackers: [ tracker.getAddress() ],
+            trackers: [tracker.getAddress()],
             id: 'subscriberTwo'
         })
         storageNode = await startStorageNode({
             host: '127.0.0.1',
             port: 32907,
-            trackers: [ tracker.getAddress() ],
+            trackers: [tracker.getAddress()],
             id: 'storageNode',
             storages: [{
                 store: () => {},

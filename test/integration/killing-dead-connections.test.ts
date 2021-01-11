@@ -4,8 +4,8 @@ import { waitForEvent } from 'streamr-test-utils'
 import { startEndpoint, Event, DisconnectionReason, DisconnectionCode, WsEndpoint } from '../../src/connection/WsEndpoint'
 import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
 
-const STATE_OPEN = 1;
-const STATE_CLOSING = 2;
+const STATE_OPEN = 1
+const STATE_CLOSING = 2
 
 describe('check and kill dead connections', () => {
     let node1: WsEndpoint
@@ -48,7 +48,7 @@ describe('check and kill dead connections', () => {
         })
         // @ts-expect-error private method
         node1.pingConnections()
-        
+
         expect(connection!.readyState).toEqual(STATE_CLOSING)
 
         // @ts-expect-error private method
