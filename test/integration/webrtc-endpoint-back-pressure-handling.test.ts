@@ -60,7 +60,7 @@ describe('WebRtcEndpoint: back pressure handling', () => {
     })
 
     function inflictHighBackPressure(): Promise<void> {
-        for (let i=0; i <= 25; ++i) {
+        for (let i = 0; i <= 25; ++i) {
             ep1.send('ep2', new Array(1024 * 256).fill('X').join(''))
         }
         return wait(0) // Relinquish control to allow for setImmediate(() => this.attemptToFlushMessages())

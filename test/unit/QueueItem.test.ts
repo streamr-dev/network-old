@@ -10,7 +10,7 @@ describe(QueueItem, () => {
 
     it("does not become failed if incrementTries invoked less than MAX_RETRIES times", () => {
         const item = new QueueItem("message", () => {}, () => {})
-        for (let i=0; i < MessageQueue.MAX_TRIES - 1; ++i) {
+        for (let i = 0; i < MessageQueue.MAX_TRIES - 1; ++i) {
             item.incrementTries({ error: 'error' })
         }
         expect(item.isFailed()).toEqual(false)
@@ -18,7 +18,7 @@ describe(QueueItem, () => {
 
     it("becomes failed if incrementTries invoked MAX_RETRIES times", () => {
         const item = new QueueItem("message", () => {}, () => {})
-        for (let i=0; i < MessageQueue.MAX_TRIES; ++i) {
+        for (let i = 0; i < MessageQueue.MAX_TRIES; ++i) {
             item.incrementTries({ error: 'error' })
         }
         expect(item.isFailed()).toEqual(true)
@@ -60,7 +60,7 @@ describe(QueueItem, () => {
             successFn = jest.fn()
             errorFn = jest.fn()
             const item = new QueueItem<string>("message", successFn, errorFn)
-            for (let i=0; i < MessageQueue.MAX_TRIES; ++i) {
+            for (let i = 0; i < MessageQueue.MAX_TRIES; ++i) {
                 item.incrementTries({ error: `error ${i}` })
             }
         })

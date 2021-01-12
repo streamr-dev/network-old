@@ -45,7 +45,7 @@ describe(MessageQueue, () => {
 
     it('drops message in FIFO order when adding to full queue', async () => {
         const recordedErrors: {i: number, err: Error}[] = []
-        for (let i=1; i <= 10; ++i) {
+        for (let i = 1; i <= 10; ++i) {
             messageQueue.add(`message ${i}`).catch((err: Error) => {
                 recordedErrors.push({
                     i,

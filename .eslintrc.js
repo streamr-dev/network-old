@@ -23,7 +23,6 @@ module.exports = {
         'quotes': DISABLED,
         'quote-props': DISABLED,
         'no-multiple-empty-lines': DISABLED,
-        'space-infix-ops': DISABLED,
         'object-curly-newline': DISABLED,
         'promise/no-callback-in-promise': DISABLED,
         '@typescript-eslint/no-unused-vars': [ERROR, { 'argsIgnorePattern': '^_' }],
