@@ -31,7 +31,6 @@ module.exports = {
         '@typescript-eslint/no-var-requires': DISABLED,
         '@typescript-eslint/no-explicit-any': DISABLED,
         '@typescript-eslint/no-empty-function': DISABLED,
-        '@typescript-eslint/no-non-null-assertion': DISABLED,
-        '@typescript-eslint/ban-types': DISABLED
+        '@typescript-eslint/no-non-null-assertion': DISABLED
     }
 }
