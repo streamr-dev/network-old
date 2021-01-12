@@ -1,4 +1,4 @@
-import { MessageQueue, QueueItem } from "../../src/connection/MessageQueue"
+import { MessageQueue } from "../../src/connection/MessageQueue"
 import { wait } from "streamr-test-utils"
 
 describe(MessageQueue, () => {

@@ -61,10 +61,10 @@ describe('WebRtcEndpoint', () => {
         let ep1NumOfReceivedMessages = 0
         let ep2NumOfReceivedMessages = 0
 
-        endpoint1.on(EndpointEvent.MESSAGE_RECEIVED, (targetPeerId, message) => {
+        endpoint1.on(EndpointEvent.MESSAGE_RECEIVED, () => {
             ep1NumOfReceivedMessages += 1
         })
-        endpoint2.on(EndpointEvent.MESSAGE_RECEIVED, (targetPeerId, message) => {
+        endpoint2.on(EndpointEvent.MESSAGE_RECEIVED, () => {
             ep2NumOfReceivedMessages += 1
         })
 
@@ -99,10 +99,10 @@ describe('WebRtcEndpoint', () => {
         let ep1NumOfReceivedMessages = 0
         let ep2NumOfReceivedMessages = 0
 
-        endpoint1.on(EndpointEvent.MESSAGE_RECEIVED, (targetPeerId, message) => {
+        endpoint1.on(EndpointEvent.MESSAGE_RECEIVED, () => {
             ep1NumOfReceivedMessages += 1
         })
-        endpoint2.on(EndpointEvent.MESSAGE_RECEIVED, (targetPeerId, message) => {
+        endpoint2.on(EndpointEvent.MESSAGE_RECEIVED, () => {
             ep2NumOfReceivedMessages += 1
         })
 

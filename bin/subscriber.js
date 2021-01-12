@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const program = require('commander')
-const { MessageLayer } = require('streamr-client-protocol')
 
 const getLogger = require('../dist/helpers/logger').default
 const { version: CURRENT_VERSION } = require('../package.json')

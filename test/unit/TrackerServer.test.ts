@@ -6,7 +6,7 @@ import { PeerInfo } from "../../src/connection/PeerInfo"
 describe(TrackerServer, () => {
     it('getNodeIds', () => {
         const trackerServer = new TrackerServer({
-            on(event: Event, args: any): void {
+            on(_event: Event, _args: any): void {
             },
             getPeerInfo(): Readonly<PeerInfo> {
                 return PeerInfo.newNode("nodeZero", "nodeZero", null)
