@@ -1,6 +1,6 @@
-import { StreamIdAndPartition, StreamKey } from "../identifiers"
-import { DuplicateMessageDetector, NumberPair } from "./DuplicateMessageDetector"
-import { MessageLayer } from "streamr-client-protocol"
+import { StreamIdAndPartition, StreamKey } from '../identifiers'
+import { DuplicateMessageDetector, NumberPair } from './DuplicateMessageDetector'
+import { MessageLayer } from 'streamr-client-protocol'
 
 interface StreamStateRepresentation {
     inboundNodes: Array<string>

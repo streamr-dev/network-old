@@ -3,7 +3,7 @@ import nodeDataChannel, { DescriptionType } from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import { Connection } from './Connection'
-import { Metrics, MetricsContext } from "../helpers/MetricsContext";
+import { Metrics, MetricsContext } from '../helpers/MetricsContext';
 import {
     AnswerOptions,
     ConnectOptions,
@@ -11,9 +11,9 @@ import {
     OfferOptions,
     RemoteCandidateOptions,
     RtcSignaller
-} from "../logic/RtcSignaller"
-import { Rtts } from "../identifiers"
-import pino from "pino"
+} from '../logic/RtcSignaller'
+import { Rtts } from '../identifiers'
+import pino from 'pino'
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',

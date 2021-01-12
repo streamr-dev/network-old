@@ -1,12 +1,12 @@
-import { EventEmitter } from "events"
-import uWS from "uWebSockets.js"
-import WebSocket from "ws";
-import { PeerBook } from "./PeerBook"
-import {PeerInfo, PeerType} from "./PeerInfo"
-import { Metrics, MetricsContext } from "../helpers/MetricsContext"
-import getLogger from "../helpers/logger"
-import pino from "pino"
-import { Rtts } from "../identifiers"
+import { EventEmitter } from 'events'
+import uWS from 'uWebSockets.js'
+import WebSocket from 'ws';
+import { PeerBook } from './PeerBook'
+import {PeerInfo, PeerType} from './PeerInfo'
+import { Metrics, MetricsContext } from '../helpers/MetricsContext'
+import getLogger from '../helpers/logger'
+import pino from 'pino'
+import { Rtts } from '../identifiers'
 
 const extraLogger = getLogger('streamr:ws-endpoint')
 

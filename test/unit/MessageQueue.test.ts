@@ -1,5 +1,5 @@
-import { MessageQueue } from "../../src/connection/MessageQueue"
-import { wait } from "streamr-test-utils"
+import { MessageQueue } from '../../src/connection/MessageQueue'
+import { wait } from 'streamr-test-utils'
 
 describe(MessageQueue, () => {
     let messageQueue: MessageQueue<string>
@@ -31,11 +31,11 @@ describe(MessageQueue, () => {
     })
 
     it('preserves FIFO insertion order (add & pop)', () => {
-        messageQueue.add("hello")
-        messageQueue.add("world")
-        messageQueue.add("!")
-        messageQueue.add("lorem")
-        messageQueue.add("ipsum")
+        messageQueue.add('hello')
+        messageQueue.add('world')
+        messageQueue.add('!')
+        messageQueue.add('lorem')
+        messageQueue.add('ipsum')
         expect(messageQueue.pop().getMessage()).toEqual('hello')
         expect(messageQueue.pop().getMessage()).toEqual('world')
         expect(messageQueue.pop().getMessage()).toEqual('!')
@@ -62,11 +62,11 @@ describe(MessageQueue, () => {
         expect(recordedErrors).toEqual([
             {
                 i: 1,
-                err: new Error("Message queue full, dropping message.")
+                err: new Error('Message queue full, dropping message.')
             },
             {
                 i: 2,
-                err: new Error("Message queue full, dropping message.")
+                err: new Error('Message queue full, dropping message.')
             }
         ])
     })

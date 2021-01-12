@@ -1,5 +1,5 @@
 import Heap from 'heap'
-import getLogger from "../helpers/logger"
+import getLogger from '../helpers/logger'
 
 type Info = Object
 

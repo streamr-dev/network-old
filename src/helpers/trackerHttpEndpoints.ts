@@ -1,9 +1,9 @@
-import _ from "lodash"
-import { HttpRequest, HttpResponse, TemplatedApp } from "uWebSockets.js"
-import { MetricsContext } from "./MetricsContext"
-import { getNodeConnections, getTopology } from "../logic/trackerSummaryUtils"
-import getLogger from "./logger"
-import { Tracker } from "../logic/Tracker"
+import _ from 'lodash'
+import { HttpRequest, HttpResponse, TemplatedApp } from 'uWebSockets.js'
+import { MetricsContext } from './MetricsContext'
+import { getNodeConnections, getTopology } from '../logic/trackerSummaryUtils'
+import getLogger from './logger'
+import { Tracker } from '../logic/Tracker'
 
 const extraLogger = getLogger('streamr:tracker:http-endpoints')
 

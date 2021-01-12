@@ -1,4 +1,4 @@
-import { Location } from "../identifiers"
+import { Location } from '../identifiers'
 
 export enum PeerType {
     Tracker = 'tracker',

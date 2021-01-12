@@ -1,6 +1,6 @@
-import { ControlLayer, TrackerLayer } from "streamr-client-protocol"
-import { RtcSubTypes } from "./logic/RtcMessage"
-import { PeerInfo } from "./connection/PeerInfo"
+import { ControlLayer, TrackerLayer } from 'streamr-client-protocol'
+import { RtcSubTypes } from './logic/RtcMessage'
+import { PeerInfo } from './connection/PeerInfo'
 
 /**
  * Uniquely identifies a stream

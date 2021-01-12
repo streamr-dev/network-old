@@ -1,23 +1,23 @@
-import { EventEmitter } from "events"
-import { MessageLayer, TrackerLayer, Utils } from "streamr-client-protocol"
+import { EventEmitter } from 'events'
+import { MessageLayer, TrackerLayer, Utils } from 'streamr-client-protocol'
 import { NodeToNode, Event as NodeToNodeEvent } from '../protocol/NodeToNode'
 import { TrackerNode, Event as TrackerNodeEvent } from '../protocol/TrackerNode'
-import { MessageBuffer } from "../helpers/MessageBuffer"
-import { SeenButNotPropagatedSet } from "../helpers/SeenButNotPropagatedSet"
-import { ResendHandler, Strategy } from "../resend/ResendHandler"
-import { ResendRequest, Status, StreamIdAndPartition } from "../identifiers"
-import { DisconnectionReason } from "../connection/WsEndpoint"
-import { proxyRequestStream } from "../resend/proxyRequestStream"
-import { Metrics, MetricsContext } from "../helpers/MetricsContext"
-import { promiseTimeout } from "../helpers/PromiseTools"
-import { PerStreamMetrics } from "./PerStreamMetrics"
-import { StreamManager } from "./StreamManager"
-import { InstructionThrottler } from "./InstructionThrottler"
-import { GapMisMatchError, InvalidNumberingError } from "./DuplicateMessageDetector"
+import { MessageBuffer } from '../helpers/MessageBuffer'
+import { SeenButNotPropagatedSet } from '../helpers/SeenButNotPropagatedSet'
+import { ResendHandler, Strategy } from '../resend/ResendHandler'
+import { ResendRequest, Status, StreamIdAndPartition } from '../identifiers'
+import { DisconnectionReason } from '../connection/WsEndpoint'
+import { proxyRequestStream } from '../resend/proxyRequestStream'
+import { Metrics, MetricsContext } from '../helpers/MetricsContext'
+import { promiseTimeout } from '../helpers/PromiseTools'
+import { PerStreamMetrics } from './PerStreamMetrics'
+import { StreamManager } from './StreamManager'
+import { InstructionThrottler } from './InstructionThrottler'
+import { GapMisMatchError, InvalidNumberingError } from './DuplicateMessageDetector'
 import getLogger from '../helpers/logger'
-import { PeerInfo } from "../connection/PeerInfo"
-import { Readable } from "stream"
-import pino from "pino"
+import { PeerInfo } from '../connection/PeerInfo'
+import { Readable } from 'stream'
+import pino from 'pino'
 
 export enum Event {
     NODE_CONNECTED = 'streamr:node:node-connected',

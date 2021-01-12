@@ -1,6 +1,6 @@
-import { MetricsContext, Metrics } from "../helpers/MetricsContext"
-import { Readable } from "stream"
-import { ResendRequest } from "../identifiers"
+import { MetricsContext, Metrics } from '../helpers/MetricsContext'
+import { Readable } from 'stream'
+import { ResendRequest } from '../identifiers'
 
 export interface Strategy {
     getResendResponseStream: (request: ResendRequest, source: string | null) => Readable

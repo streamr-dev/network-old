@@ -1,9 +1,9 @@
-import { Node, Event as NodeEvent, NodeOptions } from "./logic/Node"
-import { ForeignResendStrategy, LocalResendStrategy } from "./resend/resendStrategies"
-import { StreamIdAndPartition } from "./identifiers"
-import { ControlLayer, MessageLayer } from "streamr-client-protocol"
+import { Node, Event as NodeEvent, NodeOptions } from './logic/Node'
+import { ForeignResendStrategy, LocalResendStrategy } from './resend/resendStrategies'
+import { StreamIdAndPartition } from './identifiers'
+import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import ReadableStream = NodeJS.ReadableStream
-import { Storage } from "./composition"
+import { Storage } from './composition'
 
 export interface NetworkNodeOptions extends Omit<NodeOptions, "resendStrategies"> {
     storages: Array<Storage>
