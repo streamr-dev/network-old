@@ -18,7 +18,6 @@ module.exports = {
         'promise/always-return': WARN,
         'import/no-unresolved': DISABLED,
         'import/extensions': DISABLED,
-        // TODO remove some of these is possible
         'import/order': DISABLED,
         'quote-props': DISABLED,
         'object-curly-newline': DISABLED,
