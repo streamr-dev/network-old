@@ -26,11 +26,17 @@ module.exports = {
         'space-infix-ops': DISABLED,
         'object-curly-newline': DISABLED,
         'promise/no-callback-in-promise': DISABLED,
-        'typescript-eslint/no-var-requires': DISABLED,
         '@typescript-eslint/no-unused-vars': DISABLED,
-        '@typescript-eslint/no-var-requires': DISABLED,
         '@typescript-eslint/no-explicit-any': DISABLED,
         '@typescript-eslint/no-empty-function': DISABLED,
         '@typescript-eslint/no-non-null-assertion': DISABLED
-    }
+    },
+    'overrides': [
+        {
+            'files': ['*.js'],
+            'rules': {
+                '@typescript-eslint/no-var-requires': DISABLED
+            }
+        }
+    ]
 }
