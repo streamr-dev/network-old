@@ -8,8 +8,8 @@ import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 const { ControlMessage } = ControlLayer
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
-const typesOfStreamItems = async (stream: any) => {
-    const arr = await waitForStreamToEnd(stream)
+const typesOfStreamItems = async (stream: NodeJS.ReadableStream) => {
+    const arr = await waitForStreamToEnd(stream as any)
     return arr.map((msg: any) => msg.type)
 }
 

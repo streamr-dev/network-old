@@ -3,7 +3,16 @@ import { waitForCondition, wait } from 'streamr-test-utils'
 
 import { Connection } from '../../src/connection/Connection'
 
-function onConnectPromise(functions: any) {
+interface ConnectionFunctions {
+    onOpen: (data?: any) => void
+    onClose: (data?: any) => void
+    onError: () => void
+    onMessage: (msg: string) => void
+    onLocalDescription: (type: DescriptionType, description: string) => void
+    onLocalCandidate: (candidate: string, mid: string) => void
+}
+
+function onConnectPromise(functions: ConnectionFunctions) {
     return new Promise((resolve, reject) => {
         // eslint-disable-next-line no-param-reassign
         functions.onOpen = resolve
@@ -12,7 +21,7 @@ function onConnectPromise(functions: any) {
     })
 }
 
-function onClosePromise(functions: any) {
+function onClosePromise(functions: ConnectionFunctions) {
     return new Promise((resolve, reject) => {
         // eslint-disable-next-line no-param-reassign
         functions.onClose = resolve

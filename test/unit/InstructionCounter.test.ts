@@ -1,3 +1,4 @@
+import { Status } from '../../src/identifiers'
 import { InstructionCounter } from '../../src/logic/InstructionCounter'
 
 describe('InstructionCounter', () => {
@@ -8,7 +9,7 @@ describe('InstructionCounter', () => {
     })
 
     it('filterStatus returns all if counters have not been set', () => {
-        const status = {
+        const status: Partial<Status> = {
             streams: {
                 'stream-1': {
                     inboundNodes: [],
@@ -22,7 +23,7 @@ describe('InstructionCounter', () => {
                 },
             }
         }
-        const filtered = instructionCounter.filterStatus(status as any, 'node')
+        const filtered = instructionCounter.filterStatus(status as Status, 'node')
         expect(filtered).toEqual(status.streams)
     })
 
