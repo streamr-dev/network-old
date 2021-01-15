@@ -2,6 +2,7 @@ const { waitForEvent } = require('streamr-test-utils')
 
 import { Tracker } from '../../src/logic/Tracker'
 import { NetworkNode } from '../../src/NetworkNode'
+
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: NodeEvent } = require('../../src/logic/Node')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
@@ -13,7 +14,7 @@ describe('Check tracker instructions to node', () => {
     let tracker: Tracker
     let nodeOne: NetworkNode
     let nodeTwo: NetworkNode
-    const streamId: string = 'stream-1'
+    const streamId = 'stream-1'
 
     beforeEach(async () => {
         tracker = await startTracker({
