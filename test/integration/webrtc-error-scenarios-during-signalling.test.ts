@@ -1,5 +1,7 @@
 const { waitForEvent } = require('streamr-test-utils')
 
+import { Tracker } from '../../src/logic/Tracker'
+import { NetworkNode } from '../../src/NetworkNode'
 const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: NodeEvent } = require('../../src/logic/Node')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
@@ -8,10 +10,10 @@ const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
  * Tests for error scenarios during signalling
  */
 describe('Check tracker instructions to node', () => {
-    let tracker
-    let nodeOne
-    let nodeTwo
-    const streamId = 'stream-1'
+    let tracker: Tracker
+    let nodeOne: NetworkNode
+    let nodeTwo: NetworkNode
+    const streamId: string = 'stream-1'
 
     beforeEach(async () => {
         tracker = await startTracker({
@@ -50,7 +52,10 @@ describe('Check tracker instructions to node', () => {
     it('connection recovers after timeout if one endpoint closes during signalling', async () => {
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
+
+        // @ts-expect-error private field
         await waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        // @ts-expect-error private field
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
 
@@ -58,19 +63,27 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
             waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
+
+        // @ts-expect-error private field
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
+
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         ])
 
+        // @ts-expect-error private field
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
+        // @ts-expect-error private field
         nodeOne.nodeToNode.endpoint.connections['node-2'].close()
 
         await Promise.allSettled([
@@ -78,15 +91,14 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeTwo, NodeEvent.NODE_DISCONNECTED)
         ])
 
-        expect([...nodeOne.streams.streams.get('stream-1::0').inboundNodes]).toEqual([])
-        expect([...nodeTwo.streams.streams.get('stream-1::0').inboundNodes]).toEqual([])
-
         await Promise.allSettled([
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
             waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
 
+        // @ts-expect-error private field
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
@@ -95,19 +107,27 @@ describe('Check tracker instructions to node', () => {
         nodeTwo.subscribe('stream-id', 0)
 
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         ])
 
         await Promise.all([
+            // @ts-expect-error private field
             nodeOne.trackerNode.endpoint.close('tracker'),
+            // @ts-expect-error private field
             nodeTwo.trackerNode.endpoint.close('tracker'),
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
+            // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
         ])
 
         await Promise.all([
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
+            // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
         ])
 
@@ -115,7 +135,9 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
             waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
+        // @ts-expect-error private field
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
@@ -124,22 +146,29 @@ describe('Check tracker instructions to node', () => {
         nodeTwo.subscribe('stream-id', 0)
 
         await Promise.race([
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
+            // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         ])
 
         await Promise.all([
+            // @ts-expect-error private field
             nodeOne.trackerNode.endpoint.close('tracker'),
+            // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
         ])
 
+        // @ts-expect-error private field
         await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
 
         await Promise.all([
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
             waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
+        // @ts-expect-error private field
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 })
