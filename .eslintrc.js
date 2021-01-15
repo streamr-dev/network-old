@@ -5,11 +5,22 @@ const ERROR = 2
 module.exports = {
     parser: '@typescript-eslint/parser',
     extends: [
-        'streamr-nodejs',
         'plugin:promise/recommended',
         'plugin:@typescript-eslint/recommended'
     ],
     rules: {
+        'arrow-parens': [ERROR, 'always'],
+        'curly': [ERROR, 'all'],
+        'indent': [ERROR, 4],
+        'no-console': [WARN, { allow: ['warn', 'error'] }],
+        'no-debugger': WARN,
+        'no-multiple-empty-lines': [ERROR, {
+            max: 1,
+            maxBOF: 0,
+        }],
+        'no-underscore-dangle': ERROR,
+        'require-atomic-updates': ERROR,
+        'semi': [ERROR, 'never'],
         'newline-per-chained-call': DISABLED,
         'max-len': [WARN, {
             code: 150
