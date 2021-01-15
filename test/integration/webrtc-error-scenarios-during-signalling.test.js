@@ -5,6 +5,7 @@ const { startNetworkNode, startTracker } = require('../../src/composition')
 const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { Event: NodeEvent } = require('../../src/logic/Node')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
+const { Event: WebrtcEvent } = require('../../src/connection/WebRtcEndpoint')
 const WsEndpoint = require('../../src/connection/WsEndpoint')
 
 /**
@@ -55,15 +56,15 @@ describe('Check tracker instructions to node', () => {
         nodeTwo.subscribe(streamId, 0)
         await waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
-
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
         expect([...nodeOne.streams.streams.get('stream-1::0').inboundNodes]).toEqual([])
-        await Promise.allSettled([
-            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
+
+        await Promise.all([
+            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
-        expect([...nodeTwo.streams.streams.get('stream-1::0').inboundNodes]).toEqual(['node-1'])
-        expect([...nodeOne.streams.streams.get('stream-1::0').inboundNodes]).toEqual(['node-2'])
+        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
@@ -86,19 +87,15 @@ describe('Check tracker instructions to node', () => {
         expect([...nodeTwo.streams.streams.get('stream-1::0').inboundNodes]).toEqual([])
 
         await Promise.allSettled([
-            waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
-            waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
+            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
         ])
 
-        expect([...nodeTwo.streams.streams.get('stream-1::0').inboundNodes]).toEqual(['node-1'])
-        expect([...nodeOne.streams.streams.get('stream-1::0').inboundNodes]).toEqual(['node-2'])
+        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
-    it('nodes recover if tracker fails during signalling', async (done) => {
-        nodeOne.on(NodeEvent.NODE_SUBSCRIBED, () => {
-            expect([...nodeTwo.streams.streams.get('stream-1::0').inboundNodes]).toEqual(['node-1'])
-            done()
-        })
+    it('nodes recover if both signaller connections fail during signalling', async () => {
         nodeOne.subscribe('stream-id', 0)
         nodeTwo.subscribe('stream-id', 0)
 
@@ -107,16 +104,52 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         ])
 
-        await tracker.stop()
-        tracker = await startTracker({
-            host: '127.0.0.1',
-            port: 35115,
-            id: 'tracker'
-        })
+        await Promise.all([
+            nodeOne.trackerNode.endpoint.close('tracker'),
+            nodeTwo.trackerNode.endpoint.close('tracker'),
+            waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
+            waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
+        ])
 
         await Promise.all([
+            nodeOne.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
+            nodeTwo.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
-            waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
+            waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
         ])
+
+        await Promise.all([
+            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
+        ])
+        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
+    })
+
+    it('nodes recover if one signaller connection fails during signalling', async () => {
+        nodeOne.subscribe('stream-id', 0)
+        nodeTwo.subscribe('stream-id', 0)
+
+        await Promise.race([
+            waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
+            waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
+        ])
+
+        await Promise.all([
+            nodeOne.trackerNode.endpoint.close('tracker'),
+            waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
+        ])
+
+        await Promise.all([
+            nodeOne.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
+            waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
+        ])
+
+        await Promise.all([
+            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
+            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
+        ])
+        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
+        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 })
