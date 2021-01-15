@@ -58,12 +58,9 @@ describe('Check tracker instructions to node', () => {
         await waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         // @ts-expect-error private field
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
-        await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
 
-        await Promise.all([
-            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
-            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
-        ])
+        await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
+        await waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
 
         // @ts-expect-error private field
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
