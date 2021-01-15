@@ -43,24 +43,20 @@ startNetworkNode({
     let lastReported = 0
     subscriber.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, (streamMessage) => {
         messageNo += 1
-        // logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
+        logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
     })
 
     setInterval(() => {
         const newMessages = messageNo - lastReported
-        // console.info('%s received %d (%d)', id, messageNo, newMessages)
+        console.info('%s received %d (%d)', id, messageNo, newMessages)
         lastReported = messageNo
     }, 60 * 1000)
 
     if (program.metrics) {
         setInterval(async () => {
-            // logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
+            logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
         }, 5000)
     }
-
-    setInterval(() => {
-        console.log(Object.keys(subscriber.nodeToNode.endpoint.connections).length, [...subscriber.streams.streams.get('stream-0::0').inboundNodes].length)
-    }, 5000)
     return true
 }).catch((err) => {
     throw err
