@@ -59,17 +59,14 @@ describe('Check tracker instructions to node', () => {
         // @ts-expect-error private field
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
 
+        nodeTwo.on(NodeEvent.NODE_CONNECTED, () => {
+            // @ts-expect-error private field
+            expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
+        })
+
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
 
-        await Promise.race([
-            waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
-            waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED)
-        ])
 
-        // @ts-expect-error private field
-        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
-        // @ts-expect-error private field
-        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
     })
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
