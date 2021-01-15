@@ -1,12 +1,8 @@
-const { waitForEvent, wait, waitForCondition } = require('streamr-test-utils')
-const { TrackerLayer } = require('streamr-client-protocol')
+const { waitForEvent } = require('streamr-test-utils')
 
 const { startNetworkNode, startTracker } = require('../../src/composition')
-const { Event: TrackerServerEvent } = require('../../src/protocol/TrackerServer')
 const { Event: NodeEvent } = require('../../src/logic/Node')
 const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
-const { Event: WebrtcEvent } = require('../../src/connection/WebRtcEndpoint')
-const WsEndpoint = require('../../src/connection/WsEndpoint')
 
 /**
  * Tests for error scenarios during signalling
@@ -137,7 +133,7 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
         ])
 
-        await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
+        await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER)
 
         await Promise.all([
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
