@@ -63,10 +63,7 @@ describe('Check tracker instructions to node', () => {
             // @ts-expect-error private field
             expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
         })
-
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
-
-
     })
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
