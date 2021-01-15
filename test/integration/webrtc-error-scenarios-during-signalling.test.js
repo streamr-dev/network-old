@@ -29,7 +29,7 @@ describe('Check tracker instructions to node', () => {
             port: 35116,
             id: 'node-1',
             trackers: [tracker.getAddress()],
-            disconnectionWaitTime: 2000,
+            disconnectionWaitTime: 200,
             newWebrtcConnectionTimeout: 2000
         })
         nodeTwo = await startNetworkNode({
@@ -37,7 +37,7 @@ describe('Check tracker instructions to node', () => {
             port: 35117,
             id: 'node-2',
             trackers: [tracker.getAddress()],
-            disconnectionWaitTime: 2000,
+            disconnectionWaitTime: 200,
             newWebrtcConnectionTimeout: 2000
         })
 
@@ -57,7 +57,6 @@ describe('Check tracker instructions to node', () => {
         await waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
         await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
-        expect([...nodeOne.streams.streams.get('stream-1::0').inboundNodes]).toEqual([])
 
         await Promise.all([
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
@@ -112,8 +111,6 @@ describe('Check tracker instructions to node', () => {
         ])
 
         await Promise.all([
-            nodeOne.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
-            nodeTwo.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
         ])
@@ -140,10 +137,7 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.TRACKER_DISCONNECTED),
         ])
 
-        await Promise.all([
-            nodeOne.trackerNode.connectToTracker('ws://127.0.0.1:35115'),
-            waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
-        ])
+        await waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.CONNECTED_TO_TRACKER),
 
         await Promise.all([
             waitForEvent(nodeOne, NodeEvent.NODE_CONNECTED),
