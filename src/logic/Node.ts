@@ -136,7 +136,7 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
         this.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId) => {
-            this.handleBufferedMessagesTimeoutRef = setTimeout(() => this.handleBufferedMessages(streamId), 10)
+            this.handleBufferedMessagesTimeoutRef = setTimeout(() => this.handleBufferedMessages(streamId), 50)
             this.sendStreamStatus(streamId)
         })
         this.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
