@@ -1,7 +1,7 @@
 import { Tracker } from '../../src/logic/Tracker'
 import { NetworkNode } from '../../src/NetworkNode'
 import { MessageLayer } from 'streamr-client-protocol'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
+import { wait, waitForCondition, waitForEvent } from 'streamr-test-utils'
 
 import { Event as NodeEvent } from '../../src/logic/Node'
 import { startTracker, startNetworkNode } from '../../src/composition'
@@ -27,25 +27,29 @@ describe('message propagation in network', () => {
                 host: '127.0.0.1',
                 port: 33312,
                 id: 'node-1',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                disconnectionWaitTime: 200
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 33313,
                 id: 'node-2',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                disconnectionWaitTime: 200
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 33314,
                 id: 'node-3',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                disconnectionWaitTime: 200
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 33315,
                 id: 'node-4',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                disconnectionWaitTime: 200
             })
         ]).then((res) => {
             [n1, n2, n3, n4] = res

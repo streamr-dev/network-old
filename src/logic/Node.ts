@@ -86,8 +86,9 @@ export class Node extends EventEmitter {
     private readonly perStreamMetrics: PerStreamMetrics
     private readonly metrics: Metrics
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
+    private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
 
-    constructor(opts: NodeOptions) {
+        constructor(opts: NodeOptions) {
         super()
 
         if (!(opts.protocols.trackerNode instanceof TrackerNode) || !(opts.protocols.nodeToNode instanceof NodeToNode)) {
@@ -135,7 +136,7 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
         this.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
         this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId) => {
-            this.handleBufferedMessages(streamId)
+            this.handleBufferedMessagesTimeoutRef = setTimeout(() => this.handleBufferedMessages(streamId), 10)
             this.sendStreamStatus(streamId)
         })
         this.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
@@ -387,6 +388,10 @@ export class Node extends EventEmitter {
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
+        }
+        if (this.handleBufferedMessagesTimeoutRef) {
+            clearTimeout(this.handleBufferedMessagesTimeoutRef)
+            this.handleBufferedMessagesTimeoutRef = null
         }
 
         Object.values(this.disconnectionTimers).forEach((timeout) => clearTimeout(timeout))
