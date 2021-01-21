@@ -10,7 +10,7 @@ const { Event: TrackerNodeEvent } = require('../../src/protocol/TrackerNode')
 /**
  * Tests for error scenarios during signalling
  */
-describe('Check tracker instructions to node', () => {
+describe('Signalling error scenarios', () => {
     let tracker: Tracker
     let nodeOne: NetworkNode
     let nodeTwo: NetworkNode
@@ -63,7 +63,6 @@ describe('Check tracker instructions to node', () => {
             // @ts-expect-error private field
             expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
         })
-        await waitForEvent(nodeOne, NodeEvent.NODE_DISCONNECTED)
     })
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
