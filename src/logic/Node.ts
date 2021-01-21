@@ -182,7 +182,7 @@ export class Node extends EventEmitter {
             .addRecordedMetric('latency')
     }
 
-    start() {
+    start(): void {
         this.logger.debug('started %s (%s)', this.peerInfo.peerId, this.peerInfo.peerName)
         this.connectToBootstrapTrackers()
         this.connectToBoostrapTrackersInterval = setInterval(

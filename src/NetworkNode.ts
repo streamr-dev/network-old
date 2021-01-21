@@ -36,7 +36,7 @@ export class NetworkNode extends Node {
         this.onDataReceived(streamMessage)
     }
 
-    addMessageListener(cb: (msg: MessageLayer.StreamMessage) => void) {
+    addMessageListener(cb: (msg: MessageLayer.StreamMessage) => void): void {
         this.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, cb)
     }
 

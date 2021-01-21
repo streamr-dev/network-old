@@ -119,23 +119,23 @@ export class RtcSignaller {
             })
     }
 
-    setOfferListener(fn: (opts: OfferOptions) => void) {
+    setOfferListener(fn: (opts: OfferOptions) => void): void {
         this.offerListener = fn
     }
 
-    setAnswerListener(fn: (opts: AnswerOptions) => void) {
+    setAnswerListener(fn: (opts: AnswerOptions) => void): void {
         this.answerListener = fn
     }
 
-    setRemoteCandidateListener(fn: (opts: RemoteCandidateOptions) => void) {
+    setRemoteCandidateListener(fn: (opts: RemoteCandidateOptions) => void): void {
         this.remoteCandidateListener = fn
     }
 
-    setErrorListener(fn: (opts: ErrorOptions) => void) {
+    setErrorListener(fn: (opts: ErrorOptions) => void): void {
         this.errorListener = fn
     }
 
-    setConnectListener(fn: (opts: ConnectOptions) => void) {
+    setConnectListener(fn: (opts: ConnectOptions) => void): void {
         this.connectListener = fn
     }
 }

@@ -6,7 +6,7 @@ import { RtcSubTypes } from './RtcMessage'
 
 const logger = getLogger('streamr:rtcSignallingHandlers')
 
-export function attachRtcSignalling(trackerServer: TrackerServer) {
+export function attachRtcSignalling(trackerServer: TrackerServer): void {
     if (!(trackerServer instanceof TrackerServer)) {
         throw new Error('trackerServer not instance of TrackerServer')
     }

@@ -193,7 +193,7 @@ export class Connection {
         return this.messageQueue.add(message)
     }
 
-    close(err?: Error) {
+    close(err?: Error): void {
         if (this.dataChannel) {
             try {
                 this.dataChannel.close()

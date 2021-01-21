@@ -116,7 +116,7 @@ export class WsEndpoint extends EventEmitter {
     private readonly serverHost: string
     private readonly serverPort: number
     private readonly wss: uWS.TemplatedApp
-    private listenSocket: any
+    private listenSocket: uWS.us_listen_socket | null
     private readonly peerInfo: PeerInfo
     private readonly advertisedWsUrl: string | null
 
@@ -131,7 +131,7 @@ export class WsEndpoint extends EventEmitter {
         host: string,
         port: number,
         wss: uWS.TemplatedApp,
-        listenSocket: any,
+        listenSocket: uWS.us_listen_socket,
         peerInfo: PeerInfo,
         advertisedWsUrl: string | null,
         metricsContext = new MetricsContext(peerInfo.peerId),
@@ -634,7 +634,7 @@ export function startWebSocketServer(
             server = uWS.App()
         }
 
-        const cb = (listenSocket: any): void => {
+        const cb = (listenSocket: uWS.us_listen_socket): void => {
             if (listenSocket) {
                 resolve([server, listenSocket])
             } else {

@@ -100,7 +100,7 @@ export class StreamManager {
         return [...new Set([...inboundNodes, ...outboundNodes])]
     }
 
-    isSetUp(streamId: StreamIdAndPartition) {
+    isSetUp(streamId: StreamIdAndPartition): boolean {
         return this.streams.has(streamId.key())
     }
 
