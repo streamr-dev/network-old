@@ -62,7 +62,13 @@ export class TrackerNode extends EventEmitter {
         }))
     }
 
-    sendLocalDescription(trackerId: string, targetNode: string, originatorInfo: PeerInfo, type: DescriptionType, description: string): Promise<TrackerLayer.RelayMessage> {
+    sendLocalDescription(
+        trackerId: string, 
+        targetNode: string, 
+        originatorInfo: PeerInfo, 
+        type: DescriptionType, 
+        description: string
+    ): Promise<TrackerLayer.RelayMessage> {
         return this.send(trackerId, new TrackerLayer.RelayMessage({
             requestId: uuidv4(),
             originator: originatorInfo,
@@ -75,7 +81,13 @@ export class TrackerNode extends EventEmitter {
         }))
     }
 
-    sendLocalCandidate(trackerId: string, targetNode: string, originatorInfo: PeerInfo, candidate: string, mid: string): Promise<TrackerLayer.RelayMessage> {
+    sendLocalCandidate(
+        trackerId: string, 
+        targetNode: string, 
+        originatorInfo: PeerInfo,
+        candidate: string, 
+        mid: string
+    ): Promise<TrackerLayer.RelayMessage> {
         return this.send(trackerId, new TrackerLayer.RelayMessage({
             requestId: uuidv4(),
             originator: originatorInfo,
