@@ -211,6 +211,7 @@ export class WebRtcEndpoint extends EventEmitter {
                 this.metrics.record('outSpeed', message.length)
                 this.metrics.record('msgSpeed', 1)
                 this.metrics.record('msgOutSpeed', 1)
+                return undefined
             })
             .catch((err) => {
                 this.metrics.record('sendFailed', 1)
