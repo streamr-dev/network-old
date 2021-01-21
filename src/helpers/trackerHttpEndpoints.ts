@@ -21,10 +21,10 @@ const respondWithError = (res: HttpResponse, req: HttpRequest, errorMessage: str
     }))
 }
 
-const cachedJsonGet = (wss: TemplatedApp, endpoint: string, maxAge: number, jsonFactory: () => Object): TemplatedApp => {
+const cachedJsonGet = (wss: TemplatedApp, endpoint: string, maxAge: number, jsonFactory: () => any): TemplatedApp => {
     let cache: undefined | {
         timestamp: number
-        json: Object
+        json: any
     }
     return wss.get(endpoint, (res, req) => {
         extraLogger.debug('request to ' + endpoint)

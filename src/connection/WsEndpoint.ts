@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import uWS from 'uWebSockets.js'
-import WebSocket from 'ws';
+import WebSocket from 'ws'
 import { PeerBook } from './PeerBook'
 import {PeerInfo, PeerType} from './PeerInfo'
 import { Metrics, MetricsContext } from '../helpers/MetricsContext'
@@ -173,7 +173,7 @@ export class WsEndpoint extends EventEmitter {
 
                 /* This immediately calls open handler, you must not use res after this call */
                 res.upgrade({
-                        // @ts-ignore TODO: type definition mismatch, update uws?
+                    // @ts-expect-error TODO: type definition mismatch, update uws?
                     address: req.getQuery('address'),
                     peerId: req.getHeader('streamr-peer-id'),
                     peerType: req.getHeader('streamr-peer-type'),
@@ -187,7 +187,7 @@ export class WsEndpoint extends EventEmitter {
             open: (ws) => {
                 this.onIncomingConnection(ws as UWSConnection)
             },
-            message: (ws, message, isBinary) => {
+            message: (ws, message, _isBinary) => {
                 const connection = this.connections.get(ws.address)
 
                 if (connection) {

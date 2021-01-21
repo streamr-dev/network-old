@@ -22,7 +22,7 @@ export class InstructionThrottler {
     private readonly handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>
     private queue: Queue = {} // streamId => instructionMessage
     private instructionCounter: { [key: string]: number } = {} // streamId => counter
-    private handling: boolean = false
+    private handling = false
     private ongoingPromise: CancelablePromiseType<void> | null = null
 
     constructor(handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>) {

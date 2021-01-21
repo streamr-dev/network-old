@@ -174,6 +174,7 @@ export class ResendHandler {
                     .on('data', requestStream.push.bind(requestStream))
 
                 if (await this.readStreamUntilEndOrError(ctx.responseStream, request)) {
+                    // eslint-disable-next-line require-atomic-updates
                     ctx.stop = true
                 }
             }

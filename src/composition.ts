@@ -138,17 +138,17 @@ export function startStorageNode(opts: NetworkNodeOptions): Promise<NetworkNode>
 }
 
 function startNode({
-   host,
-   port,
-   id = uuidv4(),
-   name,
-   location,
-   trackers,
-   storages = [],
-   advertisedWsUrl  = null,
-   metricsContext = new MetricsContext(id),
-   pingInterval,
-   disconnectionWaitTime
+    host,
+    port,
+    id = uuidv4(),
+    name,
+    location,
+    trackers,
+    storages = [],
+    advertisedWsUrl  = null,
+    metricsContext = new MetricsContext(id),
+    pingInterval,
+    disconnectionWaitTime
 }: NetworkNodeOptions, peerInfoFn: (id: string, name: string | undefined, location: Location | null | undefined) => PeerInfo): Promise<NetworkNode> {
     const peerInfo = peerInfoFn(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {

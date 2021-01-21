@@ -3,7 +3,7 @@ import nodeDataChannel, { DescriptionType } from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import { Connection } from './Connection'
-import { Metrics, MetricsContext } from '../helpers/MetricsContext';
+import { Metrics, MetricsContext } from '../helpers/MetricsContext'
 import {
     AnswerOptions,
     ConnectOptions,
@@ -50,7 +50,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private pingTimeoutRef: NodeJS.Timeout
     private readonly logger: pino.Logger
     private readonly metrics: Metrics
-    private stopped: boolean = false
+    private stopped = false
 
     constructor(
         id: string,

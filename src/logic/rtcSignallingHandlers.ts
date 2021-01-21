@@ -53,7 +53,7 @@ export function attachRtcSignalling(trackerServer: TrackerServer) {
         })
     }
 
-    trackerServer.on(TrackerServerEvent.RELAY_MESSAGE_RECEIVED, (relayMessage: RelayMessage, source: string) => {
+    trackerServer.on(TrackerServerEvent.RELAY_MESSAGE_RECEIVED, (relayMessage: RelayMessage, _source: string) => {
         const {
             subType,
             requestId,

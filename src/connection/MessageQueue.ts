@@ -1,7 +1,7 @@
 import Heap from 'heap'
 import getLogger from '../helpers/logger'
 
-type Info = Object
+type Info = unknown
 
 const logger = getLogger("streamr:webrtc:MessageQueue")
 
@@ -65,7 +65,7 @@ export class MessageQueue<M> {
     private readonly heap: Heap<QueueItem<M>>
     private readonly maxSize: number
 
-    constructor(maxSize: number = 5000) {
+    constructor(maxSize = 5000) {
         this.heap = new Heap<QueueItem<M>>((a, b) => a.no - b.no)
         this.maxSize = maxSize
     }

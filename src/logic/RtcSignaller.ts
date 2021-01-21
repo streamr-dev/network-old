@@ -1,7 +1,7 @@
 import { TrackerNode, Event as TrackerNodeEvent } from '../protocol/TrackerNode'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from '../connection/PeerInfo'
-import { RtcSubTypes } from './RtcMessage';
+import { RtcSubTypes } from './RtcMessage'
 import { RelayMessage, RtcErrorMessage } from '../identifiers'
 import pino from 'pino'
 import { DescriptionType } from 'node-datachannel'
