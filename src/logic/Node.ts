@@ -88,7 +88,7 @@ export class Node extends EventEmitter {
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
     private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
 
-        constructor(opts: NodeOptions) {
+    constructor(opts: NodeOptions) {
         super()
 
         if (!(opts.protocols.trackerNode instanceof TrackerNode) || !(opts.protocols.nodeToNode instanceof NodeToNode)) {
