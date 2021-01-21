@@ -5,36 +5,12 @@ import { Tracker } from '../../src/logic/Tracker'
 import { NetworkNode } from '../../src/NetworkNode'
 import { Event as TrackerServerEvent } from '../../src/protocol/TrackerServer'
 import { startTracker, startNetworkNode, startStorageNode, Storage } from '../../src/composition'
-import { ChangeListener, StorageConfig } from '../../src/logic/StorageConfig'
-import { StreamIdAndPartition, StreamKey } from '../../src/identifiers'
+import { StreamIdAndPartition } from '../../src/identifiers'
+import { MockStorageConfig } from './MockStorageConfig'
 
 const { StreamMessage, MessageID } = MessageLayer
 
 const HOST = '127.0.0.1'
-
-class MockStorageConfig implements StorageConfig {
-    private streams: Set<StreamKey> = new Set()
-
-    private listeners: ChangeListener[] = []
-
-    getStreams() {
-        return Array.from(this.streams.values()).map((key) => StreamIdAndPartition.fromKey(key))
-    }
-
-    addChangeListener(listener: ChangeListener) {
-        this.listeners.push(listener)
-    }
-
-    addStream(stream: StreamIdAndPartition) {
-        this.streams.add(stream.key())
-        this.listeners.forEach((listener) => listener.onStreamAdded(stream))
-    }
-
-    removeStream(stream: StreamIdAndPartition) {
-        this.streams.delete(stream.key())
-        this.listeners.forEach((listener) => listener.onStreamRemoved(stream))
-    }
-}
 
 const createMockStream = () => {
     return new StreamIdAndPartition(uuidv4(), Math.floor(Math.random() * 100))
