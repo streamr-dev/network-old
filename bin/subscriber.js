@@ -47,7 +47,7 @@ startNetworkNode({
 
     setInterval(() => {
         const newMessages = messageNo - lastReported
-        console.info('%s received %d (%d)', id, messageNo, newMessages)
+        logger.info('%s received %d (%d)', id, messageNo, newMessages)
         lastReported = messageNo
     }, 60 * 1000)
 
