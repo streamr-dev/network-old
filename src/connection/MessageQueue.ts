@@ -1,7 +1,7 @@
 import Heap from 'heap'
 import getLogger from '../helpers/logger'
 
-type Info = unknown
+type Info = Record<string, unknown>
 
 const logger = getLogger("streamr:webrtc:MessageQueue")
 
