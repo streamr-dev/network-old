@@ -173,7 +173,6 @@ export class WsEndpoint extends EventEmitter {
 
                 /* This immediately calls open handler, you must not use res after this call */
                 res.upgrade({
-                    // @ts-expect-error TODO: type definition mismatch, update uws?
                     address: req.getQuery('address'),
                     peerId: req.getHeader('streamr-peer-id'),
                     peerType: req.getHeader('streamr-peer-type'),
