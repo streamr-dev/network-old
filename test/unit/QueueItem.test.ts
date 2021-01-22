@@ -5,7 +5,7 @@ describe(QueueItem, () => {
     it('starts as non-failed', () => {
         const item = new QueueItem('message', () => {}, () => {})
         expect(item.isFailed()).toEqual(false)
-        expect(item.getInfos()).toEqual([])
+        expect(item.getErrorInfos()).toEqual([])
     })
 
     it('does not become failed if incrementTries invoked less than MAX_RETRIES times', () => {
@@ -22,14 +22,14 @@ describe(QueueItem, () => {
             item.incrementTries({ error: 'error' })
         }
         expect(item.isFailed()).toEqual(true)
-        expect(item.getInfos()).toEqual(Array(MessageQueue.MAX_TRIES).fill({ error: 'error' }))
+        expect(item.getErrorInfos()).toEqual(Array(MessageQueue.MAX_TRIES).fill({ error: 'error' }))
     })
 
     it('becomes failed immediately if immediateFail invoked', () => {
         const item = new QueueItem('message', () => {}, () => {})
         item.immediateFail('error')
         expect(item.isFailed()).toEqual(true)
-        expect(item.getInfos()).toEqual([])
+        expect(item.getErrorInfos()).toEqual([])
     })
 
     describe('when method delivered() invoked', () => {

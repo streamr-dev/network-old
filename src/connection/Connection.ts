@@ -398,7 +398,7 @@ export class Connection {
                         message: queueItem.getMessage()
                     })
                     if (queueItem.isFailed()) {
-                        const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
+                        const infoText = queueItem.getErrorInfos().map((i) => JSON.stringify(i)).join('\n\t')
                         this.logger.debug('Failed to send message after %d tries due to\n\t%s',
                             MessageQueue.MAX_TRIES,
                             infoText)
