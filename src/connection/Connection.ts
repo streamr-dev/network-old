@@ -1,8 +1,8 @@
 import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection } from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
-import pino from "pino"
-import { MessageQueue, QueueItem } from "./MessageQueue"
+import pino from 'pino'
+import { MessageQueue, QueueItem } from './MessageQueue'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
@@ -193,7 +193,7 @@ export class Connection {
         return this.messageQueue.add(message)
     }
 
-    close(err?: Error) {
+    close(err?: Error): void {
         if (this.dataChannel) {
             try {
                 this.dataChannel.close()
@@ -364,27 +364,6 @@ export class Connection {
         this.onOpen()
     }
 
-    private processFailedMessage(queueItem: QueueItem<any>, e: Error): void {
-        queueItem.incrementTries({
-            error: e.toString(),
-            'connection.iceConnectionState': this.lastGatheringState,
-            'connection.connectionState': this.lastState,
-            message: queueItem.getMessage()
-        })
-        if (queueItem.isFailed()) {
-            const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
-            this.logger.debug('Failed to send message after %d tries due to\n\t%s',
-                MessageQueue.MAX_TRIES,
-                infoText)
-            this.messageQueue.pop()
-        }
-        if (this.flushTimeoutRef === null) {
-            this.flushTimeoutRef = setTimeout(() => {
-                this.flushTimeoutRef = null
-                this.attemptToFlushMessages()
-            }, this.flushRetryTimeout)
-        }
-    }
     private attemptToFlushMessages(): void {
         while (!this.messageQueue.empty()) {
             const queueItem = this.messageQueue.peek()
@@ -422,6 +401,28 @@ export class Connection {
                     this.processFailedMessage(queueItem, new Error('sendMessage returned false'))
                 }
             }
+        }
+    }
+
+    private processFailedMessage(queueItem: QueueItem<any>, e: Error): void {
+        queueItem.incrementTries({
+            error: e.toString(),
+            'connection.iceConnectionState': this.lastGatheringState,
+            'connection.connectionState': this.lastState,
+            message: queueItem.getMessage()
+        })
+        if (queueItem.isFailed()) {
+            const infoText = queueItem.getErrorInfos().map((i) => JSON.stringify(i)).join('\n\t')
+            this.logger.debug('Failed to send message after %d tries due to\n\t%s',
+                MessageQueue.MAX_TRIES,
+                infoText)
+            this.messageQueue.pop()
+        }
+        if (this.flushTimeoutRef === null) {
+            this.flushTimeoutRef = setTimeout(() => {
+                this.flushTimeoutRef = null
+                this.attemptToFlushMessages()
+            }, this.flushRetryTimeout)
         }
     }
 }
