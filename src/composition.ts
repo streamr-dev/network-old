@@ -1,19 +1,19 @@
 import { v4 as uuidv4 } from 'uuid'
-import * as Protocol from "streamr-client-protocol"
-import { MetricsContext } from "./helpers/MetricsContext"
-import { Location, StreamIdAndPartition } from "./identifiers"
-import { PeerInfo } from "./connection/PeerInfo"
-import { startEndpoint } from "./connection/WsEndpoint"
-import { Tracker } from "./logic/Tracker"
-import { TrackerServer } from "./protocol/TrackerServer"
-import { trackerHttpEndpoints } from "./helpers/trackerHttpEndpoints"
-import getLogger from "./helpers/logger"
-import { TrackerNode } from "./protocol/TrackerNode"
-import { RtcSignaller } from "./logic/RtcSignaller"
-import { WebRtcEndpoint } from "./connection/WebRtcEndpoint"
-import { NodeToNode } from "./protocol/NodeToNode"
-import { NetworkNode } from "./NetworkNode"
-import { Readable } from "stream"
+import * as Protocol from 'streamr-client-protocol'
+import { MetricsContext } from './helpers/MetricsContext'
+import { Location, StreamIdAndPartition } from './identifiers'
+import { PeerInfo } from './connection/PeerInfo'
+import { startEndpoint } from './connection/WsEndpoint'
+import { Tracker } from './logic/Tracker'
+import { TrackerServer } from './protocol/TrackerServer'
+import { trackerHttpEndpoints } from './helpers/trackerHttpEndpoints'
+import getLogger from './helpers/logger'
+import { TrackerNode } from './protocol/TrackerNode'
+import { RtcSignaller } from './logic/RtcSignaller'
+import { WebRtcEndpoint } from './connection/WebRtcEndpoint'
+import { NodeToNode } from './protocol/NodeToNode'
+import { NetworkNode } from './NetworkNode'
+import { Readable } from 'stream'
 import { StorageConfig } from './logic/StorageConfig'
 
 const STUN_URLS = ['stun:stun.l.google.com:19302'] // TODO: make configurable
@@ -84,7 +84,8 @@ export interface NetworkNodeOptions {
     advertisedWsUrl?: string | null
     metricsContext?: MetricsContext
     pingInterval?: number,
-    disconnectionWaitTime?: number
+    disconnectionWaitTime?: number,
+    newWebrtcConnectionTimeout?: number
 }
 
 export interface StorageNodeOptions extends NetworkNodeOptions {
@@ -152,23 +153,31 @@ export async function startStorageNode(opts: StorageNodeOptions): Promise<Networ
 }
 
 function startNode({
-   host,
-   port,
-   id = uuidv4(),
-   name,
-   location,
-   trackers,
-   storages = [],
-   advertisedWsUrl  = null,
-   metricsContext = new MetricsContext(id),
-   pingInterval,
-   disconnectionWaitTime
+    host,
+    port,
+    id = uuidv4(),
+    name,
+    location,
+    trackers,
+    storages = [],
+    advertisedWsUrl  = null,
+    metricsContext = new MetricsContext(id),
+    pingInterval,
+    disconnectionWaitTime,
+    newWebrtcConnectionTimeout
 }: NetworkNodeOptions, peerInfoFn: (id: string, name: string | undefined, location: Location | null | undefined) => PeerInfo): Promise<NetworkNode> {
     const peerInfo = peerInfoFn(id, name, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
-        const nodeToNode = new NodeToNode(new WebRtcEndpoint(id, STUN_URLS, webRtcSignaller, metricsContext, pingInterval))
+        const nodeToNode = new NodeToNode(new WebRtcEndpoint(
+            id, 
+            STUN_URLS, 
+            webRtcSignaller, 
+            metricsContext, 
+            pingInterval, 
+            newWebrtcConnectionTimeout
+        ))
         return new NetworkNode({
             peerInfo,
             trackers,
