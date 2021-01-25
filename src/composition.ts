@@ -142,13 +142,13 @@ export function startNetworkNode(opts: NetworkNodeOptions): Promise<NetworkNode>
 export async function startStorageNode(opts: StorageNodeOptions): Promise<NetworkNode> {
     const node = await startNode(opts, PeerInfo.newStorage)
     const storageConfig = opts.storageConfig
-    storageConfig.getStreams().forEach(stream => {
+    storageConfig.getStreams().forEach((stream) => {
         node.subscribe(stream.id, stream.partition)
     })
     storageConfig.addChangeListener({
         onStreamAdded: (stream: StreamIdAndPartition) => node.subscribe(stream.id, stream.partition),
         onStreamRemoved: (stream: StreamIdAndPartition) => node.unsubscribe(stream.id, stream.partition)
-    });
+    })
     return node
 }
 
