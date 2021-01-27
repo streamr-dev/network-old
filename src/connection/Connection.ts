@@ -134,6 +134,11 @@ export class Connection {
             this.logger.debug('conn.onStateChange: %s', state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close()
+            } if (state === 'connecting' && !this.connectionTimeoutRef) {
+                this.connectionTimeoutRef = setTimeout(() => {
+                    this.logger.warn('connection timed out')
+                    this.close(new Error('timed out'))
+                }, this.newConnectionTimeout)
             }
         })
         this.connection.onGatheringStateChange((state) => {
@@ -336,14 +341,13 @@ export class Connection {
             this.close(new Error(e))
         })
         dataChannel.onBufferedAmountLow(() => {
-            if (this.paused) {
-                this.paused = false
-                this.attemptToFlushMessages()
-                this.onBufferLow()
-            }
+            this.paused = false
+            this.attemptToFlushMessages()
+            this.onBufferLow()
+            console.log("BUFFER LOW")
         })
         dataChannel.onMessage((msg) => {
-            this.logger.debug('dataChannel.onmessage: %s', msg)
+            this.logger.debug('dataChannel.onmessage: %s', this.peerInfo.peerId)
             if (msg === 'ping') {
                 this.pong()
             } else if (msg === 'pong') {
@@ -381,6 +385,7 @@ export class Connection {
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
+                    console.log('BUFFER HIGH')
                 }
                 return // method eventually re-scheduled by `onBufferedAmountLow`
             } else {
