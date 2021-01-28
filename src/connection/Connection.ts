@@ -413,8 +413,7 @@ export class Connection {
         queueItem.incrementTries({
             error: e.toString(),
             'connection.iceConnectionState': this.lastGatheringState,
-            'connection.connectionState': this.lastState,
-            message: queueItem.getMessage()
+            'connection.connectionState': this.lastState
         })
         if (queueItem.isFailed()) {
             const infoText = queueItem.getErrorInfos().map((i) => JSON.stringify(i)).join('\n\t')
