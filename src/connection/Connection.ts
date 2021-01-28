@@ -341,10 +341,11 @@ export class Connection {
             this.close(new Error(e))
         })
         dataChannel.onBufferedAmountLow(() => {
-            this.paused = false
-            this.attemptToFlushMessages()
-            this.onBufferLow()
-            console.log("BUFFER LOW")
+            if (this.paused) {
+                this.paused = false
+                this.attemptToFlushMessages()
+                this.onBufferLow()
+            }
         })
         dataChannel.onMessage((msg) => {
             this.logger.debug('dataChannel.onmessage: %s', this.peerInfo.peerId)
@@ -385,7 +386,6 @@ export class Connection {
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
-                    console.log('BUFFER HIGH')
                 }
                 return // method eventually re-scheduled by `onBufferedAmountLow`
             } else {
