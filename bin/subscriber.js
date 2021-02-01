@@ -42,7 +42,7 @@ startNetworkNode({
     let lastReported = 0
     subscriber.on(NodeEvent.UNSEEN_MESSAGE_RECEIVED, (streamMessage) => {
         messageNo += 1
-        logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
+        // logger.info('received %j, data %j', streamMessage.getMsgChainId(), streamMessage.getParsedContent())
     })
 
     setInterval(() => {
