@@ -2,7 +2,7 @@ import { Tracker } from '../../src/logic/Tracker'
 import { NetworkNode } from '../../src/NetworkNode'
 
 import { MessageLayer } from 'streamr-client-protocol'
-import { waitForEvent } from 'streamr-test-utils'
+import { wait, waitForEvent } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
 import { Event as NodeEvent } from '../../src/logic/Node'
@@ -36,21 +36,21 @@ describe('node unsubscribing from a stream', () => {
             disconnectionWaitTime: 200
         })
 
-        nodeA.subscribe('s', 1)
-        nodeB.subscribe('s', 1)
-        nodeA.subscribe('s', 2)
-        nodeB.subscribe('s', 2)
-
         nodeA.start()
         nodeB.start()
 
+        nodeA.subscribe('s', 2)
+        nodeB.subscribe('s', 2)
         await Promise.all([
             waitForEvent(nodeA, NodeEvent.NODE_SUBSCRIBED),
             waitForEvent(nodeB, NodeEvent.NODE_SUBSCRIBED),
-            // @ts-expect-error private field
-            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED),
-            // @ts-expect-error private field
-            waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
+        ])
+
+        nodeA.subscribe('s', 1)
+        nodeB.subscribe('s', 1)
+        await Promise.all([
+            waitForEvent(nodeA, NodeEvent.NODE_SUBSCRIBED),
+            waitForEvent(nodeB, NodeEvent.NODE_SUBSCRIBED),
         ])
     })
 
@@ -62,7 +62,6 @@ describe('node unsubscribing from a stream', () => {
 
     test('node still receives data for subscribed streams thru existing connections', async () => {
         const actual: string[] = []
-
         nodeB.addMessageListener((streamMessage) => {
             actual.push(`${streamMessage.getStreamId()}::${streamMessage.getStreamPartition()}`)
         })
