@@ -2,7 +2,6 @@ import { cancelable, CancelablePromiseType } from 'cancelable-promise'
 import { StreamIdAndPartition, StreamKey } from '../identifiers'
 import { TrackerLayer } from 'streamr-client-protocol'
 import getLogger from '../helpers/logger'
-import { startTracker } from "../composition"
 
 const logger = getLogger('streamr:logic:InstructionThrottler')
 
