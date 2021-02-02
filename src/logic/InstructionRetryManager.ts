@@ -12,7 +12,7 @@ export class InstructionRetryManager {
 
     constructor(handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>, intervalInMs: number) {
         this.handleFn = handleFn
-        this.intervalInMs = intervalInMs || 20000
+        this.intervalInMs = intervalInMs || 30000
         this.instructionRetryIntervals = {}
     }
 
