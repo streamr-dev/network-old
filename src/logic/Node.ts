@@ -258,7 +258,6 @@ export class Node extends EventEmitter {
     }
 
     async handleTrackerInstruction(instructionMessage: TrackerLayer.InstructionMessage, trackerId: string): Promise<void> {
-        console.log(this.peerInfo.peerId, 'here')
         const streamId = StreamIdAndPartition.fromMessage(instructionMessage)
         const { nodeIds, counter } = instructionMessage
 
