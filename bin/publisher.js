@@ -5,7 +5,6 @@ const { MessageLayer } = require('streamr-client-protocol')
 const getLogger = require('../dist/helpers/logger').default
 const { version: CURRENT_VERSION } = require('../package.json')
 const { startNetworkNode } = require('../dist/composition')
-const { StreamIdAndPartition } = require('../dist/identifiers')
 const { MetricsContext } = require('../dist/helpers/MetricsContext')
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
