@@ -19,7 +19,7 @@ program
     .option('--port <port>', 'port', '30302')
     .option('--ip <ip>', 'ip', '127.0.0.1')
     .option('--trackers <trackers>', 'trackers', (value) => value.split(','), ['ws://127.0.0.1:27777'])
-    .option('--streamId <streamId>', 'streamId to publish', 'stream-0')
+    .option('--streamIds <streamIds>', 'streamId to publish',  (value) => value.split(','), ['stream-0'])
     .option('--metrics <metrics>', 'log metrics', false)
     .option('--intervalInMs <intervalInMs>', 'interval to publish in ms', '2000')
     .option('--noise <noise>', 'bytes to add to messages', '64')
@@ -31,8 +31,6 @@ const name = program.opts().nodeName || publisherId
 const noise = parseInt(program.opts().noise, 10)
 
 const messageChainId = `message-chain-id-${program.opts().port}`
-const streamObj = new StreamIdAndPartition(program.opts().streamId, 0)
-const { id: streamId, partition } = streamObj
 
 function generateString(length) {
     let result = ''
@@ -65,17 +63,17 @@ startNetworkNode({
         setInterval(() => {
             const timestamp = Date.now()
             const msg = 'Hello world, ' + new Date().toLocaleString()
-
-            const streamMessage = new StreamMessage({
-                messageId: new MessageID(streamId, partition, timestamp, sequenceNumber, publisherId, messageChainId),
-                prevMsgRef: lastTimestamp == null ? null : new MessageRef(lastTimestamp, sequenceNumber - 1),
-                content: {
-                    msg,
-                    noise: generateString(noise)
-                },
+            program.opts().streamIds.forEach((streamId) => {
+                const streamMessage = new StreamMessage({
+                    messageId: new MessageID(streamId, 0, timestamp, sequenceNumber, publisherId, messageChainId),
+                    prevMsgRef: lastTimestamp == null ? null : new MessageRef(lastTimestamp, sequenceNumber - 1),
+                    content: {
+                        msg,
+                        noise: generateString(noise)
+                    },
+                })
+                publisher.publish(streamMessage)
             })
-            publisher.publish(streamMessage)
-
             sequenceNumber += 1
             lastTimestamp = timestamp
         }, program.opts().intervalInMs)
