@@ -235,27 +235,6 @@ export class Tracker extends EventEmitter {
         return this.overlayConnectionRtts
     }
 
-    getNodeConnectionRtts(nodeId: string): { [key: string]: number } {
-        try {
-            return this.overlayConnectionRtts[nodeId]
-        } catch {
-            return {}
-        }
-    }
-
-    getNodeToNodeConnectionRtts(nodeOne: string, nodeTwo: string): number | null {
-        try {
-            return this.overlayConnectionRtts[nodeOne][nodeTwo]
-        } catch {
-            try {
-                return this.overlayConnectionRtts[nodeOne][nodeTwo]
-            } catch {
-                this.logger.warn('Overlay connection rtt', nodeOne, nodeTwo, 'not found')
-            }
-        }
-        return null
-    }
-
     getStorageNodes(): ReadonlyArray<NodeId> {
         return [...this.storageNodes]
     }
