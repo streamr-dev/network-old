@@ -80,6 +80,11 @@ export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metric
         const topologyUnion = getNodeConnections(tracker.getNodes(), tracker.getOverlayPerStream())
         return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
     })
+    wss.get('/node-connections/latencies/', (res, req) => {
+        extraLogger.debug('request to /node-connections/latencies/')
+        writeCorsHeaders(res, req)
+        res.end(JSON.stringify(tracker.getOverlayConnectionRtts()))
+    })
     wss.get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')
         writeCorsHeaders(res, req)
