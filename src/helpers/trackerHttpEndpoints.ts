@@ -81,9 +81,20 @@ export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metric
         return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
     })
     wss.get('/node-to-node-latencies/', (res, req) => {
-        extraLogger.debug('request to /node-connections/latencies/')
+        extraLogger.debug('request to /node-to-node-latencies/')
         writeCorsHeaders(res, req)
         res.end(JSON.stringify(tracker.getOverlayConnectionRtts()))
+    })
+    wss.get('/node-to-node-latencies/:nodeId/', (res, req) => {
+        const nodeId = decodeURIComponent(req.getParameter(0)).trim()
+        if (nodeId.length === 0) {
+            extraLogger.error('422 nodeId must be a not empty string')
+            respondWithError(res, req, 'nodeId cannot be empty')
+            return
+        }
+        extraLogger.debug(`request to /node-to-node-latencies/${nodeId}/`)
+        writeCorsHeaders(res, req)
+        res.end(JSON.stringify(tracker.getNodeConnectionRtts(nodeId)))
     })
     wss.get('/location/', (res, req) => {
         extraLogger.debug('request to /location/')

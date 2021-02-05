@@ -235,6 +235,14 @@ export class Tracker extends EventEmitter {
         return this.overlayConnectionRtts
     }
 
+    getNodeConnectionRtts(nodeId: string): { [key: string]: number } {
+        try {
+            return this.overlayConnectionRtts[nodeId]
+        } catch {
+            return {}
+        }
+    }
+
     getStorageNodes(): ReadonlyArray<NodeId> {
         return [...this.storageNodes]
     }
