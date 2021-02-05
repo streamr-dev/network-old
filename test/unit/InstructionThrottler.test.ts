@@ -53,7 +53,6 @@ describe('InstructionThrottler', () => {
             [createInstruction('stream-1', 1), 'tracker-1'],
             [createInstruction('stream-1', 5), 'tracker-1']
         ])
-        console.log()
     })
 
     it('all instructions are handled when inserting them slowly with identical keys (no throttle)', async () => {

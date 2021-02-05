@@ -68,6 +68,12 @@ describe('Check tracker instructions to node', () => {
             waitForEvent(nodeOne, NodeEvent.NODE_SUBSCRIBED),
             waitForEvent(nodeTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
+
+        // @ts-expect-error private field
+        expect(Object.keys(nodeOne.nodeToNode.endpoint.connections).length).toBe(1)
+        // @ts-expect-error private field
+        expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections).length).toBe(1)
+
         // send empty list
         // @ts-expect-error private field
         await tracker.trackerServer.endpoint.send(

@@ -36,7 +36,7 @@ export class InstructionThrottler {
 
     add(instructionMessage: TrackerLayer.InstructionMessage, trackerId: string): void {
         const streamId = StreamIdAndPartition.fromMessage(instructionMessage).key()
-        if (!this.instructionCounter[streamId] || this.instructionCounter[streamId]) {
+        if (!this.instructionCounter[streamId] || this.instructionCounter[streamId] <= instructionMessage.counter) {
             this.instructionCounter[streamId] = instructionMessage.counter
             this.queue[StreamIdAndPartition.fromMessage(instructionMessage).key()] = {
                 instructionMessage,
@@ -67,14 +67,7 @@ export class InstructionThrottler {
     }
 
     isIdle(): boolean {
-        let idle = true
-        Object.values(this.ongoingPromises).forEach((promises) => {
-            if (promises.handling) {
-                idle = false
-                return
-            }
-        })
-        return idle
+        return !Object.values(this.ongoingPromises).some((p) => p.handling)
     }
 
     reset(): void {
