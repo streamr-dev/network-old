@@ -160,7 +160,7 @@ export class Node extends EventEmitter {
                 avgLatency = 0.8 * avgLatency + 0.2 * currentLatency
             }
 
-            this.metrics.record('latency', avgLatency)
+            this.metrics.set('latency', avgLatency)
         })
 
         this.perStreamMetrics = new PerStreamMetrics()
