@@ -1,7 +1,7 @@
 import { StreamIdAndPartition } from '../identifiers'
 import { OverlayPerStream, OverlayConnectionRtts } from './Tracker'
 
-type OverLayWithRtts = { [key: string]: { [key: string]: { neighborId: string, rtt: number | null }[] }[] }
+type OverLayWithRtts = { [key: string]: { [key: string]: { neighborId: string, rtt: number | null }[] } }
 
 export function getTopology(
     overlayPerStream: OverlayPerStream,
