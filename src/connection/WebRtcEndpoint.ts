@@ -162,8 +162,8 @@ export class WebRtcEndpoint extends EventEmitter {
             isOffering,
             stunUrls: this.stunUrls,
             newConnectionTimeout: this.newConnectionTimeout,
-            bufferThresholdHigh: this.bufferThresholdHigh || 2 ** 18,
-            bufferThresholdLow: this.bufferThresholdLow || 2 ** 16,
+            bufferThresholdHigh: this.bufferThresholdHigh,
+            bufferThresholdLow: this.bufferThresholdLow,
             onLocalDescription: (type, description) => {
                 this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
             },
