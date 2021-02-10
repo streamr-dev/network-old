@@ -1,7 +1,6 @@
-import _ from 'lodash'
 import { HttpRequest, HttpResponse, TemplatedApp } from 'uWebSockets.js'
 import { MetricsContext } from './MetricsContext'
-import { getNodeConnections, getTopology } from '../logic/trackerSummaryUtils'
+import { addRttsToNodeConnections, getNodeConnections, getTopology } from '../logic/trackerSummaryUtils'
 import getLogger from './logger'
 import { Tracker } from '../logic/Tracker'
 
@@ -78,7 +77,9 @@ export function trackerHttpEndpoints(wss: TemplatedApp, tracker: Tracker, metric
     })
     cachedJsonGet(wss,'/node-connections/', 15 * 1000, () => {
         const topologyUnion = getNodeConnections(tracker.getNodes(), tracker.getOverlayPerStream())
-        return _.mapValues(topologyUnion, (targetNodes) => Array.from(targetNodes))
+        return Object.assign({}, ...Object.entries(topologyUnion).map(([nodeId, neighbors]) => {
+            return addRttsToNodeConnections(nodeId, Array.from(neighbors), tracker.getOverlayConnectionRtts())
+        }))
     })
     wss.get('/node-to-node-latencies/', (res, req) => {
         extraLogger.debug('request to /node-to-node-latencies/')

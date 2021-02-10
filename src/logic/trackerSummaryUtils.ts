@@ -29,14 +29,7 @@ export function getTopology(
     streamKeys.forEach((streamKey) => {
         const streamOverlay = overlayPerStream[streamKey].state()
         topology[streamKey] = Object.assign({}, ...Object.entries(streamOverlay).map(([nodeId, neighbors]) => {
-            return {
-                [nodeId]: neighbors.map((neighborId) => {
-                    return {
-                        neighborId,
-                        rtt: getNodeToNodeConnectionRtts(nodeId, neighborId, connectionRtts[nodeId], connectionRtts[neighborId])
-                    }
-                })
-            }
+            return addRttsToNodeConnections(nodeId, neighbors, connectionRtts)
         }))
     })
 
@@ -54,6 +47,17 @@ export function getNodeConnections(nodes: readonly string[], overlayPerStream: O
         })
     })
     return result
+}
+
+export function addRttsToNodeConnections(nodeId: string, neighbors: Array<string>, connectionRtts: OverlayConnectionRtts): { [key: string]: { neighborId: string, rtt: number | null }[] } {
+    return {
+        [nodeId]: neighbors.map((neighborId) => {
+            return {
+                neighborId,
+                rtt: getNodeToNodeConnectionRtts(nodeId, neighborId, connectionRtts[nodeId], connectionRtts[neighborId])
+            }
+        })
+    }
 }
 
 function getNodeToNodeConnectionRtts(nodeOne: string, nodeTwo: string, nodeOneRtts: { [key: string]: number }, nodeTwoRtts: { [key: string]: number }): number | null {
