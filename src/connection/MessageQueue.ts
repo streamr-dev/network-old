@@ -65,7 +65,7 @@ export class MessageQueue<M> {
     private readonly heap: Heap<QueueItem<M>>
     private readonly maxSize: number
 
-    constructor(maxSize = 5000) {
+    constructor(maxSize = 500) {
         this.heap = new Heap<QueueItem<M>>((a, b) => a.no - b.no)
         this.maxSize = maxSize
     }
