@@ -188,7 +188,9 @@ export class Node extends EventEmitter {
             const affectedStreams: StreamIdAndPartition[] = []
             this.getNeighbors().forEach((neighbor) => {
                 if (!this.nodeToNode.isConnectionInitiated(neighbor)) {
-                    affectedStreams.push(...this.streams.removeNodeFromAllStreams(neighbor))
+                    const streams = this.streams.removeNodeFromAllStreams(neighbor)
+                    this.logger.warn('detectDisconnectedNodes: node %s removed (from streams %s)', neighbor, streams)
+                    affectedStreams.push(...streams)
                 }
             })
             affectedStreams.forEach((streamId) => {
