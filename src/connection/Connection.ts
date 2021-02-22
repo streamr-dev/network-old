@@ -388,6 +388,7 @@ export class Connection {
                 this.logger.warn(errorMessage)
                 this.messageQueue.pop()
             } else if (this.paused || this.getBufferedAmount() >= this.bufferThresholdHigh) {
+                this.logger.warn('Buffer full (%d, %s, %s)', this.getBufferedAmount(), this.paused, this.isOpen())
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
