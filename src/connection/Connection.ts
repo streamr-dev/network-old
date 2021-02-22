@@ -7,8 +7,6 @@ import generateString from '../helpers/generateString'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
-const MAX_SUBSEQUENT_SEND_FAILURES = 5000
-
 export interface ConstructorOptions {
     selfId: string
     targetPeerId: string
@@ -66,7 +64,6 @@ export class Connection {
     private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
-    private subsequentSendFailures = 0
     private readonly logger: pino.Logger
 
     constructor({
@@ -406,7 +403,6 @@ export class Connection {
                 }
 
                 if (sent) {
-                    this.subsequentSendFailures = 0
                     this.messageQueue.pop()
                     queueItem.delivered()
                 } else {
@@ -434,11 +430,6 @@ export class Connection {
                 this.flushTimeoutRef = null
                 this.attemptToFlushMessages()
             }, this.flushRetryTimeout)
-        }
-        this.subsequentSendFailures += 1
-        if (this.subsequentSendFailures >= MAX_SUBSEQUENT_SEND_FAILURES) {
-            this.logger.warn(`Encountered ${MAX_SUBSEQUENT_SEND_FAILURES} subsequent send failures`)
-            this.close(new Error(`Encountered ${MAX_SUBSEQUENT_SEND_FAILURES} subsequent send failures`))
         }
     }
 }
