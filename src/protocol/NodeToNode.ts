@@ -78,6 +78,11 @@ export class NodeToNode extends EventEmitter {
         this.endpoint.close(receiverNodeId, reason)
     }
 
+    // TODO: Hack for NET-203. Do not rely on elsewhere.
+    isConnectionInitiated(targetPeerId: string): boolean {
+        return this.endpoint.isConnectionInitiated(targetPeerId)
+    }
+
     getAddress(): string {
         return this.endpoint.getAddress()
     }

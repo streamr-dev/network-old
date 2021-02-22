@@ -246,6 +246,11 @@ export class WebRtcEndpoint extends EventEmitter {
         return rtts
     }
 
+    // TODO: Hack for NET-203. Do not rely on elsewhere.
+    isConnectionInitiated(targetPeerId: string): boolean {
+        return this.connections[targetPeerId] != null
+    }
+
     getAddress(): string {
         return this.id
     }

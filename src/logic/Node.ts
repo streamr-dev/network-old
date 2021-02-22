@@ -87,6 +87,7 @@ export class Node extends EventEmitter {
     private readonly metrics: Metrics
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
     private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
+    private detectDisconnectedNodesTimeoutRef: NodeJS.Timeout | null
 
     constructor(opts: NodeOptions) {
         super()
@@ -180,6 +181,20 @@ export class Node extends EventEmitter {
             .addRecordedMetric('onUnsubscribeRequest')
             .addRecordedMetric('onNodeDisconnect')
             .addRecordedMetric('latency')
+
+        // TODO: Hack to address (NET-203) problem in which stream state manager contains neighbors that we are not
+        // connected to any more (or never connected?)
+        this.detectDisconnectedNodesTimeoutRef = setInterval(() => {
+            const affectedStreams: StreamIdAndPartition[] = []
+            this.getNeighbors().forEach((neighbor) => {
+                if (!this.nodeToNode.isConnectionInitiated(neighbor)) {
+                    affectedStreams.push(...this.streams.removeNodeFromAllStreams(neighbor))
+                }
+            })
+            affectedStreams.forEach((streamId) => {
+                this.sendStreamStatus(streamId)
+            })
+        }, 60 * 1000)
     }
 
     start(): void {
