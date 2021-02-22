@@ -3,6 +3,7 @@ import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import pino from 'pino'
 import { MessageQueue, QueueItem } from './MessageQueue'
+import generateString from '../helpers/generateString'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
@@ -31,6 +32,7 @@ export interface ConstructorOptions {
 }
 
 export class Connection {
+    private readonly id: string // random string ID for debugging purposes
     private readonly selfId: string
     private peerInfo: PeerInfo
     private readonly routerId: string
@@ -88,6 +90,7 @@ export class Connection {
         onBufferLow,
         onBufferHigh
     }: ConstructorOptions) {
+        this.id = generateString(5)
         this.selfId = selfId
         this.peerInfo = PeerInfo.newUnknown(targetPeerId)
         this.routerId = routerId
@@ -125,7 +128,7 @@ export class Connection {
         this.onBufferLow = onBufferLow
         this.onBufferHigh = onBufferHigh
 
-        this.logger = getLogger(`streamr:WebRtc:Connection(${this.selfId}-->${this.getPeerId()})`)
+        this.logger = getLogger(`streamr:WebRtc:Connection(${this.selfId}-->${this.getPeerId()}, ${this.id})`)
     }
 
     connect(): void {
