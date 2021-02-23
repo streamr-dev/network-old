@@ -92,6 +92,12 @@ export class MessageQueue<M> {
         return this.heap.size()
     }
 
+    totalBytes(): number {
+        return this.heap.toArray().reduce((acc, item) => {
+            return acc + (item.getMessage() as unknown as string).length
+        }, 0)
+    }
+
     empty(): boolean {
         return this.heap.empty()
     }

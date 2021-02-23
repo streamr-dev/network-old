@@ -347,6 +347,7 @@ export class Connection {
                 this.paused = false
                 this.attemptToFlushMessages()
                 this.onBufferLow()
+                this.logger.warn('Buffer LOW (%d, %s, %s, %d)', this.getBufferedAmount(), this.paused, this.isOpen(), this.messageQueue.totalBytes())
             }
         })
         dataChannel.onMessage((msg) => {
@@ -385,10 +386,11 @@ export class Connection {
                 this.logger.warn(errorMessage)
                 this.messageQueue.pop()
             } else if (this.paused || this.getBufferedAmount() >= this.bufferThresholdHigh) {
-                this.logger.warn('Buffer full (%d, %s, %s)', this.getBufferedAmount(), this.paused, this.isOpen())
+                this.logger.warn('Buffer full (%d, %s, %s, %d)', this.getBufferedAmount(), this.paused, this.isOpen(), this.messageQueue.totalBytes())
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
+                    this.logger.warn('Buffer HIGH (%d, %s, %s, %d)', this.getBufferedAmount(), this.paused, this.isOpen(), this.messageQueue.totalBytes())
                 }
                 return // method eventually re-scheduled by `onBufferedAmountLow`
             } else {
