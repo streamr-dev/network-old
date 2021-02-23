@@ -345,9 +345,9 @@ export class Connection {
         dataChannel.onBufferedAmountLow(() => {
             if (this.paused) {
                 this.paused = false
-                this.attemptToFlushMessages()
                 this.onBufferLow()
                 this.logger.warn('Buffer LOW (%d, %s, %s, %d)', this.getBufferedAmount(), this.paused, this.isOpen(), this.messageQueue.totalBytes())
+                setImmediate(() => this.attemptToFlushMessages())
             }
         })
         dataChannel.onMessage((msg) => {
