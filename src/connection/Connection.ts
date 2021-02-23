@@ -328,7 +328,6 @@ export class Connection {
 
     private setupDataChannel(dataChannel: DataChannel): void {
         this.paused = false
-        dataChannel.setBufferedAmountLowThreshold(this.bufferThresholdLow)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
                 this.logger.debug('dataChannel.onOpen')
