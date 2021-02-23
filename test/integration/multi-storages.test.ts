@@ -92,7 +92,9 @@ describe('multiple storage nodes', () => {
         node.subscribe('stream-2', 0)
         node.subscribe('stream-3', 0)
 
-        await waitForCondition(() => Object.keys(getTopology(tracker.getOverlayPerStream())).length === 3)
+        await waitForCondition(() => {
+            return Object.keys(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).length === 3
+        })
         storageThree.start()
 
         await Promise.all([
@@ -101,13 +103,13 @@ describe('multiple storage nodes', () => {
             waitForEvent(storageThree, NodeEvent.NODE_SUBSCRIBED)
         ])
 
-        expect(getTopology(tracker.getOverlayPerStream())['stream-1::0'].storageThree).toEqual([
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-1::0'].storageThree).toEqual([
             'node', 'storageOne', 'storageTwo'
         ])
-        expect(getTopology(tracker.getOverlayPerStream())['stream-2::0'].storageThree).toEqual([
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-2::0'].storageThree).toEqual([
             'node', 'storageOne', 'storageTwo'
         ])
-        expect(getTopology(tracker.getOverlayPerStream())['stream-3::0'].storageThree).toEqual([
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-3::0'].storageThree).toEqual([
             'node', 'storageOne', 'storageTwo'
         ])
     })
