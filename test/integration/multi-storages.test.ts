@@ -75,14 +75,32 @@ describe('multiple storage nodes', () => {
 
         expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).toEqual({
             'stream-1::0': {
-                node: ['storageOne', 'storageTwo'],
-                storageOne: ['node', 'storageTwo'],
-                storageTwo: ['node', 'storageOne']
+                node: [
+                    { neighborId: 'storageOne', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageOne: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageTwo: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageOne', rtt: null }
+                ]
             },
             'stream-2::0': {
-                node: ['storageOne', 'storageTwo'],
-                storageOne: ['node', 'storageTwo'],
-                storageTwo: ['node', 'storageOne']
+                node: [
+                    { neighborId: 'storageOne', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageOne: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageTwo: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageOne', rtt: null }
+                ]
             }
         })
 
@@ -106,13 +124,46 @@ describe('multiple storage nodes', () => {
         ])
 
         expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-1::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
         expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-2::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
         expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-3::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
     })
 })
