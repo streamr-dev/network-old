@@ -61,8 +61,8 @@ export class WebRtcEndpoint extends EventEmitter {
         metricsContext: MetricsContext,
         pingIntervalInMs = 5 * 1000,
         newConnectionTimeout = 5000,
-        webrtcDatachannelBufferThresholdLow = 2 ** 16,
-        webrtcDatachannelBufferThresholdHigh = 2 ** 18
+        webrtcDatachannelBufferThresholdLow = 2 ** 22,
+        webrtcDatachannelBufferThresholdHigh = 2 ** 25
     ) {
         super()
         this.id = id
