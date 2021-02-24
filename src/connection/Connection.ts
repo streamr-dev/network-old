@@ -1,4 +1,10 @@
-import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection } from 'node-datachannel'
+import nodeDataChannel, {
+    DataChannel,
+    DescriptionType,
+    LogLevel,
+    PeerConnection,
+    ReliabilityType
+} from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
 import pino from 'pino'
@@ -156,7 +162,12 @@ export class Connection {
         })
 
         if (this.isOffering) {
-            const dataChannel = this.connection.createDataChannel('streamrDataChannel')
+            const config = {
+                reliability: {
+                    unordered: true
+                }
+            }
+            const dataChannel = this.connection.createDataChannel('streamrDataChannel', config as any)
             this.setupDataChannel(dataChannel)
         } else {
             this.connection.onDataChannel((dataChannel) => {
