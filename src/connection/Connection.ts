@@ -1,8 +1,8 @@
 import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection } from 'node-datachannel'
 import getLogger from '../helpers/logger'
 import { PeerInfo } from './PeerInfo'
-import pino from "pino"
-import { MessageQueue } from "./MessageQueue"
+import pino from 'pino'
+import { MessageQueue, QueueItem } from './MessageQueue'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
@@ -12,8 +12,8 @@ export interface ConstructorOptions {
     routerId: string
     isOffering: boolean
     stunUrls: string[]
-    bufferHighThreshold?: number
-    bufferLowThreshold?: number
+    bufferThresholdLow?: number
+    bufferThresholdHigh?: number
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
     pingPongTimeout?: number
@@ -34,8 +34,8 @@ export class Connection {
     private readonly routerId: string
     private readonly isOffering: boolean
     private readonly stunUrls: string[]
-    private readonly bufferHighThreshold: number
-    private readonly bufferLowThreshold: number
+    private readonly bufferThresholdHigh: number
+    private readonly bufferThresholdLow: number
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
     private readonly pingPongTimeout: number
@@ -70,8 +70,8 @@ export class Connection {
         routerId,
         isOffering,
         stunUrls,
-        bufferHighThreshold = 2 ** 20,
-        bufferLowThreshold = 2 ** 17,
+        bufferThresholdHigh = 2 ** 17,
+        bufferThresholdLow = 2 ** 15,
         newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
         pingPongTimeout = 2000,
@@ -90,8 +90,8 @@ export class Connection {
         this.routerId = routerId
         this.isOffering = isOffering
         this.stunUrls = stunUrls
-        this.bufferHighThreshold = bufferHighThreshold
-        this.bufferLowThreshold = bufferLowThreshold
+        this.bufferThresholdHigh = bufferThresholdHigh
+        this.bufferThresholdLow = bufferThresholdLow
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingPongTimeout = pingPongTimeout
@@ -134,6 +134,11 @@ export class Connection {
             this.logger.debug('conn.onStateChange: %s', state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close()
+            } if (state === 'connecting' && !this.connectionTimeoutRef) {
+                this.connectionTimeoutRef = setTimeout(() => {
+                    this.logger.warn('connection timed out')
+                    this.close(new Error('timed out'))
+                }, this.newConnectionTimeout)
             }
         })
         this.connection.onGatheringStateChange((state) => {
@@ -193,7 +198,7 @@ export class Connection {
         return this.messageQueue.add(message)
     }
 
-    close(err?: Error) {
+    close(err?: Error): void {
         if (this.dataChannel) {
             try {
                 this.dataChannel.close()
@@ -320,7 +325,7 @@ export class Connection {
 
     private setupDataChannel(dataChannel: DataChannel): void {
         this.paused = false
-        dataChannel.setBufferedAmountLowThreshold(this.bufferLowThreshold)
+        dataChannel.setBufferedAmountLowThreshold(this.bufferThresholdLow)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
                 this.logger.debug('dataChannel.onOpen')
@@ -333,7 +338,6 @@ export class Connection {
         })
         dataChannel.onError((e) => {
             this.logger.warn('dataChannel.onError: %s', e)
-            this.close(new Error(e))
         })
         dataChannel.onBufferedAmountLow(() => {
             if (this.paused) {
@@ -343,7 +347,7 @@ export class Connection {
             }
         })
         dataChannel.onMessage((msg) => {
-            this.logger.debug('dataChannel.onmessage: %s', msg)
+            this.logger.debug('dataChannel.onmessage: %s', this.peerInfo.peerId)
             if (msg === 'ping') {
                 this.pong()
             } else if (msg === 'pong') {
@@ -377,7 +381,7 @@ export class Connection {
                 queueItem.immediateFail(errorMessage)
                 this.logger.warn(errorMessage)
                 this.messageQueue.pop()
-            } else if (this.paused || this.getBufferedAmount() >= this.bufferHighThreshold) {
+            } else if (this.paused || this.getBufferedAmount() >= this.bufferThresholdHigh) {
                 if (!this.paused) {
                     this.paused = true
                     this.onBufferHigh()
@@ -388,36 +392,40 @@ export class Connection {
                 try {
                     // Checking `this.open()` is left out on purpose. We want the message to be discarded if it was not
                     // sent after MAX_TRIES regardless of the reason.
-                    this.dataChannel!.sendMessage(queueItem.getMessage())
-                    sent = true
+                    sent = this.dataChannel!.sendMessage(queueItem.getMessage())
                 } catch (e) {
-                    queueItem.incrementTries({
-                        error: e.toString(),
-                        'connection.iceConnectionState': this.lastGatheringState,
-                        'connection.connectionState': this.lastState,
-                        message: queueItem.getMessage()
-                    })
-                    if (queueItem.isFailed()) {
-                        const infoText = queueItem.getInfos().map((i) => JSON.stringify(i)).join('\n\t')
-                        this.logger.debug('Failed to send message after %d tries due to\n\t%s',
-                            MessageQueue.MAX_TRIES,
-                            infoText)
-                        this.messageQueue.pop()
-                    }
-                    if (this.flushTimeoutRef === null) {
-                        this.flushTimeoutRef = setTimeout(() => {
-                            this.flushTimeoutRef = null
-                            this.attemptToFlushMessages()
-                        }, this.flushRetryTimeout)
-                    }
+                    this.processFailedMessage(queueItem, e)
                     return // method rescheduled by `this.flushTimeoutRef`
                 }
 
                 if (sent) {
                     this.messageQueue.pop()
                     queueItem.delivered()
+                } else {
+                    this.processFailedMessage(queueItem, new Error('sendMessage returned false'))
                 }
             }
+        }
+    }
+
+    private processFailedMessage(queueItem: QueueItem<any>, e: Error): void {
+        queueItem.incrementTries({
+            error: e.toString(),
+            'connection.iceConnectionState': this.lastGatheringState,
+            'connection.connectionState': this.lastState
+        })
+        if (queueItem.isFailed()) {
+            const infoText = queueItem.getErrorInfos().map((i) => JSON.stringify(i)).join('\n\t')
+            this.logger.debug('Failed to send message after %d tries due to\n\t%s',
+                MessageQueue.MAX_TRIES,
+                infoText)
+            this.messageQueue.pop()
+        }
+        if (this.flushTimeoutRef === null) {
+            this.flushTimeoutRef = setTimeout(() => {
+                this.flushTimeoutRef = null
+                this.attemptToFlushMessages()
+            }, this.flushRetryTimeout)
         }
     }
 }

@@ -8,21 +8,18 @@ const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('latency metrics', () => {
     let tracker: Tracker
-    const trackerPort = 32907
-
     let node1: NetworkNode
-    const port1 = 33978
 
     beforeEach(async () => {
         tracker = await startTracker({
             host: '127.0.0.1',
-            port: trackerPort,
+            port: 32910,
             id: 'tracker'
         })
 
         node1 = await startNetworkNode({
             host: '127.0.0.1',
-            port: port1,
+            port: 32911,
             id: 'node1',
             trackers: [tracker.getAddress()]
         })
@@ -65,7 +62,7 @@ describe('latency metrics', () => {
         }))
     })
 
-    it('should send a bunch of messages to Node1 and collect latency', async (done) => {
+    it('should send a bunch of messages to Node1 and collect latency',(done) => {
         let receivedMessages = 0
 
         node1.addMessageListener(async () => {

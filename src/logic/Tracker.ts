@@ -1,15 +1,15 @@
-import { EventEmitter } from "events"
-import getLogger from "../helpers/logger"
-import { Metrics, MetricsContext } from "../helpers/MetricsContext"
-import { TrackerServer, Event as TrackerServerEvent } from "../protocol/TrackerServer"
-import { OverlayTopology } from "./OverlayTopology"
-import { InstructionCounter } from "./InstructionCounter"
-import { LocationManager } from "./LocationManager"
-import { attachRtcSignalling } from "./rtcSignallingHandlers"
-import { PeerInfo } from "../connection/PeerInfo"
-import { Location, Status, StatusStreams, StreamIdAndPartition, StreamKey } from "../identifiers"
-import { TrackerLayer } from "streamr-client-protocol"
-import pino from "pino"
+import { EventEmitter } from 'events'
+import getLogger from '../helpers/logger'
+import { Metrics, MetricsContext } from '../helpers/MetricsContext'
+import { TrackerServer, Event as TrackerServerEvent } from '../protocol/TrackerServer'
+import { OverlayTopology } from './OverlayTopology'
+import { InstructionCounter } from './InstructionCounter'
+import { LocationManager } from './LocationManager'
+import { attachRtcSignalling } from './rtcSignallingHandlers'
+import { PeerInfo } from '../connection/PeerInfo'
+import { Location, Status, StatusStreams, StreamIdAndPartition, StreamKey } from '../identifiers'
+import { TrackerLayer } from 'streamr-client-protocol'
+import pino from 'pino'
 
 type NodeId = string
 type StreamId = string
@@ -30,6 +30,9 @@ export interface TrackerOptions {
 // streamKey => overlayTopology, where streamKey = streamId::partition
 export type OverlayPerStream = { [key: string]: OverlayTopology }
 
+// nodeId => connected nodeId => rtt
+export type OverlayConnectionRtts = { [key: string]: { [key: string]: number } }
+
 export interface Tracker {
     on(event: Event.NODE_CONNECTED, listener: (nodeId: NodeId) => void): this
 }
@@ -39,11 +42,7 @@ export class Tracker extends EventEmitter {
     private readonly trackerServer: TrackerServer
     private readonly peerInfo: PeerInfo
     private readonly overlayPerStream: OverlayPerStream
-    private readonly overlayConnectionRtts: {
-        [key: string]: {
-            [key: string]: number
-        }
-    }
+    private readonly overlayConnectionRtts: OverlayConnectionRtts
     private readonly locationManager: LocationManager
     private readonly instructionCounter: InstructionCounter
     private readonly storageNodes: Set<NodeId>
@@ -66,7 +65,7 @@ export class Tracker extends EventEmitter {
         this.peerInfo = opts.peerInfo
 
         this.overlayPerStream = {}
-        this.overlayConnectionRtts = {} // nodeId => connected nodeId => rtt
+        this.overlayConnectionRtts = {}
         this.locationManager = new LocationManager()
         this.instructionCounter = new InstructionCounter()
         this.storageNodes = new Set()
@@ -125,13 +124,8 @@ export class Tracker extends EventEmitter {
 
         // update topology
         this.createNewOverlayTopologies(streams)
-        this.updateAllStorages()
-        if (!this.storageNodes.has(source)) {
-            this.updateNode(source, filteredStreams, streams)
-            this.formAndSendInstructions(source, Object.keys(streams))
-        } else {
-            this.formAndSendInstructions(source, Object.keys(this.overlayPerStream))
-        }
+        this.updateNode(source, filteredStreams, streams)
+        this.formAndSendInstructions(source, Object.keys(streams))
     }
 
     findStorageNodes(storageNodesRequest: TrackerLayer.StorageNodesRequest, source: NodeId): void {
@@ -158,17 +152,6 @@ export class Tracker extends EventEmitter {
             if (this.overlayPerStream[streamId] == null) {
                 this.overlayPerStream[streamId] = new OverlayTopology(this.maxNeighborsPerNode)
             }
-        })
-    }
-
-    // Ensure each storage node is associated with each stream
-    private updateAllStorages(): void {
-        Object.values(this.overlayPerStream).forEach((overlayTopology) => {
-            this.storageNodes.forEach((storageNode) => {
-                if (!overlayTopology.hasNode(storageNode)) {
-                    overlayTopology.update(storageNode, [])
-                }
-            })
         })
     }
 
@@ -245,6 +228,10 @@ export class Tracker extends EventEmitter {
 
     getNodeLocation(node: NodeId): Location {
         return this.locationManager.getNodeLocation(node)
+    }
+
+    getOverlayConnectionRtts(): { [key: string]: { [key: string]: number } } {
+        return this.overlayConnectionRtts
     }
 
     getStorageNodes(): ReadonlyArray<NodeId> {

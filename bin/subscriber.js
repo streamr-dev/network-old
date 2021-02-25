@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const program = require('commander')
-const { MessageLayer } = require('streamr-client-protocol')
 
 const getLogger = require('../dist/helpers/logger').default
 const { version: CURRENT_VERSION } = require('../package.json')
@@ -17,27 +16,27 @@ program
     .option('--port <port>', 'port', '30304')
     .option('--ip <ip>', 'ip', '127.0.0.1')
     .option('--trackers <trackers>', 'trackers', (value) => value.split(','), ['ws://127.0.0.1:27777'])
-    .option('--streamId <streamId>', 'streamId to publish', 'stream-0')
+    .option('--streamIds <streamIds>', 'streamId to publish', (value) => value.split(','), ['stream-0'])
     .option('--metrics <metrics>', 'log metrics', false)
     .description('Run subscriber')
     .parse(process.argv)
 
-const id = program.id || `subscriber-${program.port}`
-const name = program.nodeName || id
+const id = program.opts().id || `subscriber-${program.opts().port}`
+const name = program.opts().nodeName || id
 
 const metricsContext = new MetricsContext(id)
 startNetworkNode({
-    host: program.ip,
-    port: program.port,
+    host: program.opts().ip,
+    port: program.opts().port,
     name: id,
     id,
-    trackers: program.trackers,
+    trackers: program.opts().trackers,
     metricsContext
 }).then((subscriber) => {
     logger.info('started subscriber id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, metrics: %s',
-        id, name, program.port, program.ip, program.trackers.join(', '), program.streamId, program.metrics)
+        id, name, program.opts().port, program.opts().ip, program.opts().trackers.join(', '), program.opts().streamId, program.opts().metrics)
     subscriber.start()
-    subscriber.subscribe(program.streamId, 0)
+    program.opts().streamIds.forEach((stream) => subscriber.subscribe(stream, 0))
 
     let messageNo = 0
     let lastReported = 0
@@ -48,15 +47,16 @@ startNetworkNode({
 
     setInterval(() => {
         const newMessages = messageNo - lastReported
-        console.info('%s received %d (%d)', id, messageNo, newMessages)
+        logger.info('%s received %d (%d)', id, messageNo, newMessages)
         lastReported = messageNo
     }, 60 * 1000)
 
-    if (program.metrics) {
+    if (program.opts().metrics) {
         setInterval(async () => {
             logger.info(JSON.stringify(await metricsContext.report(true), null, 3))
         }, 5000)
     }
+
     return true
 }).catch((err) => {
     throw err
