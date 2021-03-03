@@ -37,8 +37,11 @@ export class InstructionRetryManager {
     }
 
     removeStreamId(streamId: StreamKey): void {
-        clearTimeout(this.instructionRetryIntervals[streamId])
-        delete this.instructionRetryIntervals[streamId]
+        if (streamId in this.instructionRetryIntervals) {
+            clearTimeout(this.instructionRetryIntervals[streamId])
+            delete this.instructionRetryIntervals[streamId]
+            logger.debug('StreamId', streamId, 'successfully removed from InstructionRetryManager')
+        }
     }
 
     reset(): void {
