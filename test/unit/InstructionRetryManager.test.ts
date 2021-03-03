@@ -1,4 +1,4 @@
-import { wait, waitForCondition } from 'streamr-test-utils'
+import { wait } from 'streamr-test-utils'
 import { TrackerLayer } from 'streamr-client-protocol'
 
 import { InstructionRetryManager } from '../../src/logic/InstructionRetryManager'
