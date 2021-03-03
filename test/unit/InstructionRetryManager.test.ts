@@ -9,7 +9,7 @@ describe('InstructionRetryManager', () => {
 
     beforeEach(() => {
         handlerCb = jest.fn().mockResolvedValue(true)
-        instructionRetryManager = new InstructionRetryManager(handlerCb, 300)
+        instructionRetryManager = new InstructionRetryManager(handlerCb, 100)
     })
 
     function createInstruction(streamId: string, counter: number) {
@@ -28,7 +28,7 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-4', 4), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-5', 5), 'tracker-2')
 
-        await wait(330)
+        await wait(110)
 
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
@@ -46,7 +46,7 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-4', 4), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-5', 5), 'tracker-2')
 
-        await wait(660)
+        await wait(220)
 
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
@@ -65,7 +65,7 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-1', 1), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-2', 2), 'tracker-2')
 
-        await wait(330)
+        await wait(110)
 
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
@@ -75,7 +75,7 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-1', 5), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-2', 8), 'tracker-2')
 
-        await wait(330)
+        await wait(110)
 
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
@@ -88,14 +88,14 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-1', 1), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-2', 2), 'tracker-2')
 
-        await wait(330)
+        await wait(110)
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
             [createInstruction('stream-2', 2), 'tracker-2'],
         ])
 
         instructionRetryManager.removeStreamId('stream-1::0')
-        await wait(330)
+        await wait(110)
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
             [createInstruction('stream-2', 2), 'tracker-2'],
@@ -106,13 +106,13 @@ describe('InstructionRetryManager', () => {
         instructionRetryManager.add(createInstruction('stream-1', 1), 'tracker-1')
         instructionRetryManager.add(createInstruction('stream-2', 2), 'tracker-2')
 
-        await wait(330)
+        await wait(110)
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
             [createInstruction('stream-2', 2), 'tracker-2'],
         ])
         instructionRetryManager.reset()
-        await wait(600)
+        await wait(220)
         expect(handlerCb.mock.calls).toEqual([
             [createInstruction('stream-1', 1), 'tracker-1'],
             [createInstruction('stream-2', 2), 'tracker-2'],
