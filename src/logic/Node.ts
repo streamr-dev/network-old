@@ -112,7 +112,7 @@ export class Node extends EventEmitter {
         this.bufferMaxSize = opts.bufferMaxSize || 10000
         this.disconnectionWaitTime = opts.disconnectionWaitTime || 30 * 1000
         this.nodeConnectTimeout = opts.nodeConnectTimeout || 2000
-        this.instructionRetryInterval = opts.instructionRetryInterval || 15000
+        this.instructionRetryInterval = opts.instructionRetryInterval || 30000
         this.started = new Date().toLocaleString()
         const metricsContext = opts.metricsContext || new MetricsContext('')
 
