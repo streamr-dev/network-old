@@ -7,17 +7,17 @@ const logger = getLogger('streamr:logic:InstructionRetryManager')
 export class InstructionRetryManager {
     private readonly handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>
     private readonly intervalInMs: number
-    private instructionRetryIntervals: { [key: string]: NodeJS.Timeout }  // streamId => instructionMessage
+    private instructionRetryIntervals: { [key: string]: NodeJS.Timeout }
 
     constructor(handleFn: (instructionMessage: TrackerLayer.InstructionMessage, trackerId: string) => Promise<void>, intervalInMs: number) {
         this.handleFn = handleFn
-        this.intervalInMs = intervalInMs || 30000
+        this.intervalInMs = intervalInMs
         this.instructionRetryIntervals = {}
     }
 
     add(instructionMessage: TrackerLayer.InstructionMessage, trackerId: string): void {
         const id = StreamIdAndPartition.fromMessage(instructionMessage).key()
-        if (this.instructionRetryIntervals) {
+        if (this.instructionRetryIntervals[id]) {
             clearTimeout(this.instructionRetryIntervals[id])
         }
         this.instructionRetryIntervals[id] = setTimeout(() =>

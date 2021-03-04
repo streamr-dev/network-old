@@ -132,7 +132,7 @@ export class Node extends EventEmitter {
         this.trackerRegistry = Utils.createTrackerRegistry(opts.trackers)
         this.trackerBook = {}
         this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
-        this.instructionRetryManager = new InstructionRetryManager(this.handleTrackerInstruction.bind(this), 10000)
+        this.instructionRetryManager = new InstructionRetryManager(this.handleTrackerInstruction.bind(this), this.instructionRetryInterval)
 
         this.trackerNode.on(TrackerNodeEvent.CONNECTED_TO_TRACKER, (trackerId) => this.onConnectedToTracker(trackerId))
         this.trackerNode.on(TrackerNodeEvent.TRACKER_INSTRUCTION_RECEIVED, (streamMessage, trackerId) => this.onTrackerInstructionReceived(trackerId, streamMessage))  // eslint-disable-line max-len
@@ -394,6 +394,7 @@ export class Node extends EventEmitter {
         this.logger.debug('stopping')
         this.resendHandler.stop()
         this.instructionThrottler.reset()
+        this.instructionRetryManager.reset()
 
         if (this.connectToBoostrapTrackersInterval) {
             clearInterval(this.connectToBoostrapTrackersInterval)
