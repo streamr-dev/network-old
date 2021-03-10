@@ -184,7 +184,7 @@ export class Node extends EventEmitter {
             .addRecordedMetric('onSubscribeRequest')
             .addRecordedMetric('onUnsubscribeRequest')
             .addRecordedMetric('onNodeDisconnect')
-            .addRecordedMetric('latency')
+            .addFixedMetric('latency')
     }
 
     start(): void {
