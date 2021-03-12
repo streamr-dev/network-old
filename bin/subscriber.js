@@ -57,6 +57,10 @@ startNetworkNode({
         }, 5000)
     }
 
+    setInterval(() => {
+        console.log(Object.keys(subscriber.nodeToNode.endpoint.connections).length, [...subscriber.streams.streams.get('stream-0::0').inboundNodes].length)
+    }, 5000)
+
     return true
 }).catch((err) => {
     throw err
