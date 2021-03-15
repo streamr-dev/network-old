@@ -69,18 +69,38 @@ describe('multiple storage nodes', () => {
         node.subscribe('stream-1', 0)
         node.subscribe('stream-2', 0)
 
-        await waitForCondition(() => Object.keys(getTopology(tracker.getOverlayPerStream())).length === 2)
+        await waitForCondition(() => {
+            return Object.keys(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).length === 2
+        })
 
-        expect(getTopology(tracker.getOverlayPerStream())).toEqual({
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).toEqual({
             'stream-1::0': {
-                node: ['storageOne', 'storageTwo'],
-                storageOne: ['node', 'storageTwo'],
-                storageTwo: ['node', 'storageOne']
+                node: [
+                    { neighborId: 'storageOne', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageOne: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageTwo: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageOne', rtt: null }
+                ]
             },
             'stream-2::0': {
-                node: ['storageOne', 'storageTwo'],
-                storageOne: ['node', 'storageTwo'],
-                storageTwo: ['node', 'storageOne']
+                node: [
+                    { neighborId: 'storageOne', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageOne: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageTwo', rtt: null }
+                ],
+                storageTwo: [
+                    { neighborId: 'node', rtt: null },
+                    { neighborId: 'storageOne', rtt: null }
+                ]
             }
         })
 
@@ -92,7 +112,9 @@ describe('multiple storage nodes', () => {
         node.subscribe('stream-2', 0)
         node.subscribe('stream-3', 0)
 
-        await waitForCondition(() => Object.keys(getTopology(tracker.getOverlayPerStream())).length === 3)
+        await waitForCondition(() => {
+            return Object.keys(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).length === 3
+        })
         storageThree.start()
 
         await Promise.all([
@@ -101,14 +123,47 @@ describe('multiple storage nodes', () => {
             waitForEvent(storageThree, NodeEvent.NODE_SUBSCRIBED)
         ])
 
-        expect(getTopology(tracker.getOverlayPerStream())['stream-1::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-1::0'].storageThree).toEqual([
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
-        expect(getTopology(tracker.getOverlayPerStream())['stream-2::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-2::0'].storageThree).toEqual([
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
-        expect(getTopology(tracker.getOverlayPerStream())['stream-3::0'].storageThree).toEqual([
-            'node', 'storageOne', 'storageTwo'
+        expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())['stream-3::0'].storageThree).toEqual([
+            {
+                neighborId: 'node',
+                rtt: null
+            },
+            {
+                neighborId: 'storageOne',
+                rtt: null
+            },
+            {
+                neighborId: 'storageTwo',
+                rtt: null
+            }
         ])
     })
 })
