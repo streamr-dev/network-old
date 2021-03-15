@@ -91,7 +91,7 @@ export class Node extends EventEmitter {
     private readonly metrics: Metrics
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
     private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
-    private detectDisconnectedNodesTimeoutRef: NodeJS.Timeout | null
+    private detectDisconnectedNodesTimeoutRef: NodeJS.Timeout | null = null
 
     constructor(opts: NodeOptions) {
         super()
