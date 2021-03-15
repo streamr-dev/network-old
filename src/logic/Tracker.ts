@@ -111,7 +111,7 @@ export class Tracker extends EventEmitter {
     processNodeStatus(statusMessage: TrackerLayer.StatusMessage, source: NodeId): void {
         this.metrics.record('processNodeStatus', 1)
         const status = statusMessage.status as Status
-        const { streams, rtts, location } = status
+        const { streams, rtts, location, singleStream } = status
         const filteredStreams = this.instructionCounter.filterStatus(status, source)
 
         // update RTTs and location
@@ -124,7 +124,11 @@ export class Tracker extends EventEmitter {
 
         // update topology
         this.createNewOverlayTopologies(streams)
-        this.updateNode(source, filteredStreams, streams)
+        if (singleStream) {
+            this.updateNodeOnStream(source, streams)
+        } else {
+            this.updateNode(source, filteredStreams, streams)
+        }
         this.formAndSendInstructions(source, Object.keys(streams))
     }
 
@@ -171,6 +175,19 @@ export class Tracker extends EventEmitter {
             })
 
         this.logger.debug('update node %s for streams %j', node, Object.keys(allStreams))
+    }
+
+    private updateNodeOnStream(node: NodeId, streams: StatusStreams): void {
+        if (streams && Object.keys(streams).length > 0) {
+            const streamKey = Object.keys(streams)[0]
+            const status = streams[streamKey]
+            if (!status) {
+                this.leaveAndCheckEmptyOverlay(streamKey, this.overlayPerStream[streamKey], node)
+            } else {
+                const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
+                this.overlayPerStream[streamKey].update(node, [...neighbors])
+            }
+        }
     }
 
     private formAndSendInstructions(node: NodeId, streamKeys: Array<StreamKey>, forceGenerate = false): void {

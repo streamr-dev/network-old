@@ -263,7 +263,7 @@ export class Node extends EventEmitter {
         const streamId = StreamIdAndPartition.fromMessage(instructionMessage)
         const { nodeIds, counter } = instructionMessage
 
-        this.instructionRetryManager.add(instructionMessage, trackerId)
+        // this.instructionRetryManager.add(instructionMessage, trackerId)
 
         // Check that tracker matches expected tracker
         const expectedTrackerId = this.getTrackerId(streamId)
@@ -423,7 +423,8 @@ export class Node extends EventEmitter {
             }),
             started: this.started,
             rtts: this.nodeToNode.getRtts(),
-            location: this.peerInfo.location
+            location: this.peerInfo.location,
+            singleStream: false
         }
     }
 
@@ -433,7 +434,8 @@ export class Node extends EventEmitter {
                 streams: this.streams.getStreamState(streamId),
                 started: this.started,
                 rtts: this.nodeToNode.getRtts(),
-                location: this.peerInfo.location
+                location: this.peerInfo.location,
+                singleStream: true
             }
         }
     }

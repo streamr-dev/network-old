@@ -76,29 +76,17 @@ describe('check tracker, nodes and statuses from nodes', () => {
         subscriberOne.start()
         subscriberTwo.start()
 
-        subscriberOne.subscribe('stream-1', 0)
-        subscriberOne.subscribe('stream-2', 2)
-
-        subscriberTwo.subscribe('stream-1', 0)
-        subscriberTwo.subscribe('stream-2', 2)
-
         await Promise.all([
             waitForEvent(subscriberOne, NodeEvent.NODE_SUBSCRIBED),
             waitForEvent(subscriberTwo, NodeEvent.NODE_SUBSCRIBED)
         ])
-        console.log(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts()))
         // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
-
-        console.log(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts()))
 
         subscriberOne.unsubscribe('stream-2', 2)
         await waitForEvent(subscriberTwo, NodeEvent.NODE_UNSUBSCRIBED)
-        console.log(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts()))
         // @ts-expect-error private field
         await waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
-
-        console.log(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts()))
         expect(getTopology(tracker.getOverlayPerStream(), tracker.getOverlayConnectionRtts())).toEqual({
             'stream-1::0': {
                 subscriberOne: [{neighborId: 'subscriberTwo', rtt: null}],
