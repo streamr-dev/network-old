@@ -83,10 +83,15 @@ export class StreamManager {
 
     getStreamState(streamId: StreamIdAndPartition): { [key: string]: StreamStateRepresentation } {
         const streamState = this.streams.get(streamId.key())
-        if (!streamState) {
-            return {}
-        }
         const result: { [key: string]: StreamStateRepresentation } = {}
+        if (!streamState) {
+            result[streamId.key()] = {
+                inboundNodes: new Array<string>(),
+                outboundNodes: new Array<string>(),
+                counter: -1
+            }
+            return result
+        }
         result[streamId.key()] = {
             inboundNodes: [...streamState.inboundNodes],
             outboundNodes: [...streamState.outboundNodes],

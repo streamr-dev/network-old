@@ -141,9 +141,11 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
         this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
         this.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
-        this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId) => {
+        this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId, sendStatus = true) => {
             this.handleBufferedMessages(streamId)
-            this.prepareAndSendStreamStatus(streamId)
+            if (sendStatus) {
+                this.prepareAndSendStreamStatus(streamId)
+            }
         })
         this.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.resumeResendsOfNode(nodeId)
@@ -202,22 +204,24 @@ export class Node extends EventEmitter {
         this.prepareAndSendFullStatus(tracker)
     }
 
-    subscribeToStreamIfHaveNotYet(streamId: StreamIdAndPartition): void {
+    subscribeToStreamIfHaveNotYet(streamId: StreamIdAndPartition, sendStatus = true): void {
         if (!this.streams.isSetUp(streamId)) {
             this.logger.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
-            this.prepareAndSendStreamStatus(streamId)
+            if (sendStatus) {
+                this.prepareAndSendStreamStatus(streamId)
+            }
         }
     }
 
-    unsubscribeFromStream(streamId: StreamIdAndPartition): void {
+    unsubscribeFromStream(streamId: StreamIdAndPartition, sendStatus = true): void {
         this.logger.debug('unsubscribeFromStream: remove %s from streams', streamId)
         const trackerId = this.getTrackerId(streamId)
         this.streams.removeStream(streamId)
         this.instructionThrottler.removeStreamId(streamId.key())
         this.instructionRetryManager.removeStreamId(streamId.key())
-        if (trackerId) {
-            this.prepareAndSendFullStatus(trackerId)
+        if (trackerId && sendStatus) {
+            this.prepareAndSendStreamStatus(streamId)
         }
     }
 
@@ -263,7 +267,7 @@ export class Node extends EventEmitter {
         const streamId = StreamIdAndPartition.fromMessage(instructionMessage)
         const { nodeIds, counter } = instructionMessage
 
-        // this.instructionRetryManager.add(instructionMessage, trackerId)
+        this.instructionRetryManager.add(instructionMessage, trackerId)
 
         // Check that tracker matches expected tracker
         const expectedTrackerId = this.getTrackerId(streamId)
@@ -277,25 +281,26 @@ export class Node extends EventEmitter {
         this.perStreamMetrics.recordTrackerInstruction(instructionMessage.streamId)
         this.logger.debug('received instructions for %s, nodes to connect %o', streamId, nodeIds)
 
-        this.subscribeToStreamIfHaveNotYet(streamId)
+        this.subscribeToStreamIfHaveNotYet(streamId, false)
         const currentNodes = this.streams.getAllNodesForStream(streamId)
         const nodesToUnsubscribeFrom = currentNodes.filter((nodeId) => !nodeIds.includes(nodeId))
 
         const subscribePromises = nodeIds.map(async (nodeId) => {
             await promiseTimeout(this.nodeConnectTimeout, this.nodeToNode.connectToNode(nodeId, trackerId))
             this.clearDisconnectionTimer(nodeId)
-            this.subscribeToStreamOnNode(nodeId, streamId)
+            this.subscribeToStreamOnNode(nodeId, streamId, false)
             return nodeId
         })
 
         nodesToUnsubscribeFrom.forEach((nodeId) => {
-            this.unsubscribeFromStreamOnNode(nodeId, streamId)
+            this.unsubscribeFromStreamOnNode(nodeId, streamId, false)
         })
         const results = await Promise.allSettled(subscribePromises)
         if (this.streams.isSetUp(streamId)) {
             this.streams.updateCounter(streamId, counter)
         }
 
+        this.prepareAndSendStreamStatus(streamId)
         // Log success / failures
         const subscribeNodeIds: string[] = []
         const unsubscribeNodeIds: string[] = []
@@ -303,7 +308,6 @@ export class Node extends EventEmitter {
             if (res.status === 'fulfilled') {
                 subscribeNodeIds.push(res.value)
             } else {
-                this.prepareAndSendStreamStatus(streamId)
                 this.logger.debug(`failed to subscribe (or connect) to node ${res.reason}`)
             }
         })
@@ -466,10 +470,10 @@ export class Node extends EventEmitter {
         }
     }
 
-    private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition): string {
+    private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): string {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-        this.emit(Event.NODE_SUBSCRIBED, node, streamId)
+        this.emit(Event.NODE_SUBSCRIBED, node, streamId, false)
         return node
     }
 
@@ -482,7 +486,7 @@ export class Node extends EventEmitter {
         return this.streams.isNodePresent(nodeId)
     }
 
-    private unsubscribeFromStreamOnNode(node: string, streamId: StreamIdAndPartition): void {
+    private unsubscribeFromStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): void {
         const trackerId = this.getTrackerId(streamId)
         this.streams.removeNodeFromStream(streamId, node)
         this.logger.debug('node %s unsubscribed from stream %s', node, streamId)
@@ -498,7 +502,7 @@ export class Node extends EventEmitter {
                 }
             }, this.disconnectionWaitTime)
         }
-        if (trackerId) {
+        if (trackerId && sendStatus) {
             this.prepareAndSendStreamStatus(streamId)
         }
     }
@@ -508,7 +512,12 @@ export class Node extends EventEmitter {
         this.resendHandler.cancelResendsOfNode(node)
         const streams = this.streams.removeNodeFromAllStreams(node)
         this.logger.debug('removed all subscriptions of node %s', node)
-        streams.forEach((s) => this.prepareAndSendStreamStatus(s))
+        const trackers = [...new Set(streams.map((streamId) => this.getTrackerId(streamId)))]
+        trackers.forEach((trackerId) => {
+            if (trackerId) {
+                this.prepareAndSendFullStatus(trackerId)
+            }
+        })
         this.emit(Event.NODE_DISCONNECTED, node)
     }
 

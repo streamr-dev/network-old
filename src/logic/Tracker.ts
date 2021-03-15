@@ -181,11 +181,10 @@ export class Tracker extends EventEmitter {
         if (streams && Object.keys(streams).length > 0) {
             const streamKey = Object.keys(streams)[0]
             const status = streams[streamKey]
-            if (!status) {
+            const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
+            this.overlayPerStream[streamKey].update(node, [...neighbors])
+            if (status.counter === -1 && this.overlayPerStream[streamKey]) {
                 this.leaveAndCheckEmptyOverlay(streamKey, this.overlayPerStream[streamKey], node)
-            } else {
-                const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
-                this.overlayPerStream[streamKey].update(node, [...neighbors])
             }
         }
     }
