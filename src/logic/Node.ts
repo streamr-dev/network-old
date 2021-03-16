@@ -112,7 +112,7 @@ export class Node extends EventEmitter {
         this.bufferMaxSize = opts.bufferMaxSize || 10000
         this.disconnectionWaitTime = opts.disconnectionWaitTime || 30 * 1000
         this.nodeConnectTimeout = opts.nodeConnectTimeout || 2000
-        this.instructionRetryInterval = opts.instructionRetryInterval || 30000
+        this.instructionRetryInterval = opts.instructionRetryInterval || 60000
         this.started = new Date().toLocaleString()
         const metricsContext = opts.metricsContext || new MetricsContext('')
 
@@ -432,22 +432,20 @@ export class Node extends EventEmitter {
         }
     }
 
-    private getStreamStatus(tracker: string, streamId: StreamIdAndPartition): Status | undefined {
-        if (tracker === this.getTrackerId(streamId)) {
-            return {
-                streams: this.streams.getStreamState(streamId),
-                started: this.started,
-                rtts: this.nodeToNode.getRtts(),
-                location: this.peerInfo.location,
-                singleStream: true
-            }
+    private getStreamStatus(streamId: StreamIdAndPartition): Status {
+        return {
+            streams: this.streams.getStreamState(streamId),
+            started: this.started,
+            rtts: this.nodeToNode.getRtts(),
+            location: this.peerInfo.location,
+            singleStream: true
         }
     }
 
     private prepareAndSendStreamStatus(streamId: StreamIdAndPartition): void {
         const trackerId = this.getTrackerId(streamId)
         if (trackerId) {
-            const status = this.getStreamStatus(trackerId, streamId)
+            const status = this.getStreamStatus(streamId)
             if (status) {
                 this.sendStatus(trackerId, status)
             } else {
