@@ -178,30 +178,35 @@ export class Tracker extends EventEmitter {
     }
 
     private updateNodeOnStream(node: NodeId, streams: StatusStreams): void {
-        if (streams && Object.keys(streams).length > 0) {
+        if (streams && Object.keys(streams).length === 1) {
             const streamKey = Object.keys(streams)[0]
             const status = streams[streamKey]
-            const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
-            this.overlayPerStream[streamKey].update(node, [...neighbors])
-            if (status.counter === -1 && this.overlayPerStream[streamKey]) {
+            if (status.counter === -1) {
                 this.leaveAndCheckEmptyOverlay(streamKey, this.overlayPerStream[streamKey], node)
+            } else {
+                const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
+                this.overlayPerStream[streamKey].update(node, [...neighbors])
             }
+        } else {
+            this.logger.warn('Empty single stream Status received')
         }
     }
 
     private formAndSendInstructions(node: NodeId, streamKeys: Array<StreamKey>, forceGenerate = false): void {
         streamKeys.forEach((streamKey) => {
-            const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
-            Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
-                this.metrics.record('instructionsSent', 1)
-                try {
-                    const counterValue = this.instructionCounter.setOrIncrement(nodeId, streamKey)
-                    await this.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors, counterValue)
-                    this.logger.debug('sent instruction %j (%d) for stream %s to node %s', newNeighbors, counterValue, streamKey, nodeId)
-                } catch (e) {
-                    this.logger.error(`Failed to formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
-                }
-            })
+            if (this.overlayPerStream[streamKey]) {
+                const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
+                Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
+                    this.metrics.record('instructionsSent', 1)
+                    try {
+                        const counterValue = this.instructionCounter.setOrIncrement(nodeId, streamKey)
+                        await this.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors, counterValue)
+                        this.logger.debug('sent instruction %j (%d) for stream %s to node %s', newNeighbors, counterValue, streamKey, nodeId)
+                    } catch (e) {
+                        this.logger.error(`Failed to formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
+                    }
+                })
+            }
         })
     }
 
