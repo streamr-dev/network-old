@@ -190,7 +190,7 @@ export class Node extends EventEmitter {
 
         // TODO: Hack to address (NET-203) problem in which stream state manager contains neighbors that we are not
         // connected to any more (or never connected?)
-        /*this.detectDisconnectedNodesTimeoutRef = setInterval(() => {
+        this.detectDisconnectedNodesTimeoutRef = setInterval(() => {
             const affectedStreams: StreamIdAndPartition[] = []
             this.getNeighbors().forEach((neighbor) => {
                 if (!this.nodeToNode.isConnectionInitiated(neighbor)) {
@@ -202,7 +202,7 @@ export class Node extends EventEmitter {
             affectedStreams.forEach((streamId) => {
                 this.sendStreamStatus(streamId)
             })
-        }, 60 * 1000)*/
+        }, 10 * 1000)
     }
 
     start(): void {
