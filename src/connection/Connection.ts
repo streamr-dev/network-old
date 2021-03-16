@@ -241,7 +241,7 @@ export class Connection {
         this.onClose()
     }
 
-    async ping(attempt = 0): Promise<void> {
+    ping(attempt = 0): void | never {
         if (this.peerPingTimeoutRef !== null) {
             clearTimeout(this.peerPingTimeoutRef)
         }
@@ -252,7 +252,7 @@ export class Connection {
                 }
                 this.respondedPong = false
                 this.rttStart = Date.now()
-                await this.send('ping')
+                this.dataChannel!.sendMessage('ping')
             }
         } catch (e) {
             if (attempt < this.maxPingPongAttempts && this.isOpen()) {
@@ -265,12 +265,12 @@ export class Connection {
         }
     }
 
-    async pong(attempt = 0): Promise<void> {
+    pong(attempt = 0): void {
         if (this.peerPongTimeoutRef !== null) {
             clearTimeout(this.peerPongTimeoutRef)
         }
         try {
-            await this.send('pong')
+            this.dataChannel!.sendMessage('pong')
         } catch (e) {
             if (attempt < this.maxPingPongAttempts && this.dataChannel && this.isOpen()) {
                 this.logger.debug('failed to pong connection, error %s, re-attempting', e)
