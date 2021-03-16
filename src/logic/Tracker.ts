@@ -125,7 +125,7 @@ export class Tracker extends EventEmitter {
         // update topology
         this.createNewOverlayTopologies(streams)
         if (singleStream) {
-            this.updateNodeOnStream(source, streams)
+            this.updateNodeOnStream(source, filteredStreams)
         } else {
             this.updateNode(source, filteredStreams, streams)
         }
