@@ -88,7 +88,7 @@ export class StreamManager {
             result[streamId.key()] = {
                 inboundNodes: new Array<string>(),
                 outboundNodes: new Array<string>(),
-                counter: -1
+                counter: -1 // -1 signals unsubscribe
             }
             return result
         }
