@@ -95,7 +95,7 @@ export class Connection {
         this.stunUrls = stunUrls
         this.bufferThresholdHigh = bufferThresholdHigh
         this.bufferThresholdLow = bufferThresholdLow
-        this.newConnectionTimeout = 30 * 1000
+        this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingPongTimeout = pingPongTimeout
         this.flushRetryTimeout = flushRetryTimeout
