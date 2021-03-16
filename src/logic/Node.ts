@@ -216,11 +216,10 @@ export class Node extends EventEmitter {
 
     unsubscribeFromStream(streamId: StreamIdAndPartition, sendStatus = true): void {
         this.logger.debug('unsubscribeFromStream: remove %s from streams', streamId)
-        const trackerId = this.getTrackerId(streamId)
         this.streams.removeStream(streamId)
         this.instructionThrottler.removeStreamId(streamId.key())
         this.instructionRetryManager.removeStreamId(streamId.key())
-        if (trackerId && sendStatus) {
+        if (sendStatus) {
             this.prepareAndSendStreamStatus(streamId)
         }
     }
