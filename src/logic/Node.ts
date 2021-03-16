@@ -6,7 +6,7 @@ import { MessageBuffer } from '../helpers/MessageBuffer'
 import { SeenButNotPropagatedSet } from '../helpers/SeenButNotPropagatedSet'
 import { ResendHandler, Strategy } from '../resend/ResendHandler'
 import { ResendRequest, Status, StreamIdAndPartition } from '../identifiers'
-import { DisconnectionReason, startEndpoint } from '../connection/WsEndpoint'
+import { DisconnectionReason } from '../connection/WsEndpoint'
 import { proxyRequestStream } from '../resend/proxyRequestStream'
 import { Metrics, MetricsContext } from '../helpers/MetricsContext'
 import { promiseTimeout } from '../helpers/PromiseTools'
@@ -473,7 +473,7 @@ export class Node extends EventEmitter {
     private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): string {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-        this.emit(Event.NODE_SUBSCRIBED, node, streamId, false)
+        this.emit(Event.NODE_SUBSCRIBED, node, streamId, sendStatus)
         return node
     }
 
@@ -487,7 +487,6 @@ export class Node extends EventEmitter {
     }
 
     private unsubscribeFromStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): void {
-        const trackerId = this.getTrackerId(streamId)
         this.streams.removeNodeFromStream(streamId, node)
         this.logger.debug('node %s unsubscribed from stream %s', node, streamId)
         this.emit(Event.NODE_UNSUBSCRIBED, node, streamId)
@@ -502,7 +501,7 @@ export class Node extends EventEmitter {
                 }
             }, this.disconnectionWaitTime)
         }
-        if (trackerId && sendStatus) {
+        if (sendStatus) {
             this.prepareAndSendStreamStatus(streamId)
         }
     }
