@@ -149,7 +149,6 @@ function startNode({
     storages = [],
     advertisedWsUrl  = null,
     metricsContext = new MetricsContext(id),
-    pingInterval,
     disconnectionWaitTime,
     newWebrtcConnectionTimeout,
     webrtcDatachannelBufferThresholdLow,
@@ -157,15 +156,14 @@ function startNode({
     stunUrls = ['stun:stun.l.google.com:19302']
 }: NetworkNodeOptions, peerInfoFn: (id: string, name: string | undefined, location: Location | null | undefined) => PeerInfo): Promise<NetworkNode> {
     const peerInfo = peerInfoFn(id, name, location)
-    return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {
+    return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
         const nodeToNode = new NodeToNode(new WebRtcEndpoint(
             id, 
             stunUrls,
             webRtcSignaller, 
-            metricsContext, 
-            pingInterval, 
+            metricsContext,
             newWebrtcConnectionTimeout,
             webrtcDatachannelBufferThresholdLow,
             webrtcDatachannelBufferThresholdHigh
