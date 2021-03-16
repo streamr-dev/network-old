@@ -46,8 +46,6 @@ export class WebRtcEndpoint extends EventEmitter {
     private readonly rtcSignaller: RtcSignaller
     private connections: { [key: string]: Connection }
     private readonly newConnectionTimeout: number
-    private readonly pingIntervalInMs: number
-    private pingTimeoutRef: NodeJS.Timeout
     private readonly logger: pino.Logger
     private readonly metrics: Metrics
     private stopped = false
@@ -59,7 +57,6 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
-        pingIntervalInMs = 5 * 1000,
         newConnectionTimeout = 5000,
         webrtcDatachannelBufferThresholdLow = 2 ** 22,
         webrtcDatachannelBufferThresholdHigh = 2 ** 25
@@ -70,8 +67,6 @@ export class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller = rtcSignaller
         this.connections = {}
         this.newConnectionTimeout = newConnectionTimeout
-        this.pingIntervalInMs = pingIntervalInMs
-        this.pingTimeoutRef = setTimeout(() => this.pingConnections(), this.pingIntervalInMs)
         this.logger = getLogger(`streamr:WebRtcEndpoint:${id}`)
         this.bufferThresholdLow = webrtcDatachannelBufferThresholdLow
         this.bufferThresholdHigh = webrtcDatachannelBufferThresholdHigh
@@ -258,7 +253,6 @@ export class WebRtcEndpoint extends EventEmitter {
     stop(): void {
         this.stopped = true
         Object.values(this.connections).forEach((connection) => connection.close())
-        clearTimeout(this.pingTimeoutRef)
         this.connections = {}
         this.rtcSignaller.setOfferListener(() => {})
         this.rtcSignaller.setAnswerListener(() => {})
@@ -267,11 +261,5 @@ export class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller.setConnectListener(() => {})
         this.removeAllListeners()
         nodeDataChannel.cleanup()
-    }
-
-    private pingConnections(): void {
-        const connections = Object.values(this.connections)
-        connections.forEach((connection) => connection.ping())
-        this.pingTimeoutRef = setTimeout(() => this.pingConnections(), this.pingIntervalInMs)
     }
 }
