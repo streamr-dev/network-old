@@ -141,16 +141,9 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.DATA_RECEIVED, (broadcastMessage, nodeId) => this.onDataReceived(broadcastMessage.streamMessage, nodeId))
         this.nodeToNode.on(NodeToNodeEvent.NODE_DISCONNECTED, (nodeId) => this.onNodeDisconnected(nodeId))
         this.nodeToNode.on(NodeToNodeEvent.RESEND_REQUEST, (request, source) => this.requestResend(request, source))
-        this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId, sendStatus = true) => {
-            this.handleBufferedMessages(streamId)
-            if (sendStatus) {
-                this.prepareAndSendStreamStatus(streamId)
-            }
-        })
         this.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.resumeResendsOfNode(nodeId)
         })
-
         this.nodeToNode.on(NodeToNodeEvent.HIGH_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.pauseResendsOfNode(nodeId)
         })
@@ -470,7 +463,11 @@ export class Node extends EventEmitter {
     private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): string {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-        this.emit(Event.NODE_SUBSCRIBED, node, streamId, sendStatus)
+        this.handleBufferedMessages(streamId)
+        if (sendStatus) {
+            this.prepareAndSendStreamStatus(streamId)
+        }
+        this.emit(Event.NODE_SUBSCRIBED, node, streamId)
         return node
     }
 
