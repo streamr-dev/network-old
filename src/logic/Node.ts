@@ -92,7 +92,6 @@ export class Node extends EventEmitter {
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
     private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
     private detectDisconnectedNodesTimeoutRef: NodeJS.Timeout | null = null
-    private statusIntervalRef: NodeJS.Timeout
 
     constructor(opts: NodeOptions) {
         super()
@@ -146,6 +145,7 @@ export class Node extends EventEmitter {
         this.on(Event.NODE_SUBSCRIBED, (nodeId, streamId) => {
             // timeout needed to get around bug in WebRTC library
             this.handleBufferedMessagesTimeoutRef = setTimeout(() => this.handleBufferedMessages(streamId), 20)
+            this.sendStreamStatus(streamId)
         })
         this.nodeToNode.on(NodeToNodeEvent.LOW_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.resumeResendsOfNode(nodeId)
@@ -154,8 +154,6 @@ export class Node extends EventEmitter {
         this.nodeToNode.on(NodeToNodeEvent.HIGH_BACK_PRESSURE, (nodeId) => {
             this.resendHandler.pauseResendsOfNode(nodeId)
         })
-
-        this.statusIntervalRef = setInterval(() => this.sendStreamStatus(), 2000)
 
         let avgLatency = -1
 
@@ -201,6 +199,9 @@ export class Node extends EventEmitter {
                     affectedStreams.push(...streams)
                 }
             })
+            affectedStreams.forEach((streamId) => {
+                this.sendStreamStatus(streamId)
+            })
         }, 10 * 1000)
     }
 
@@ -223,6 +224,7 @@ export class Node extends EventEmitter {
         if (!this.streams.isSetUp(streamId)) {
             this.logger.debug('add %s to streams', streamId)
             this.streams.setUpStream(streamId)
+            this.sendStreamStatus(streamId)
         }
     }
 
@@ -231,6 +233,7 @@ export class Node extends EventEmitter {
         this.streams.removeStream(streamId)
         this.instructionThrottler.removeStreamId(streamId.key())
         this.instructionRetryManager.removeStreamId(streamId.key())
+        this.sendStreamStatus(streamId)
     }
 
     requestResend(request: ResendRequest, source: string | null): Readable {
@@ -315,6 +318,7 @@ export class Node extends EventEmitter {
             if (res.status === 'fulfilled') {
                 subscribeNodeIds.push(res.value)
             } else {
+                this.sendStreamStatus(streamId)
                 this.logger.debug(`failed to subscribe (or connect) to node ${res.reason}`)
             }
         })
@@ -438,10 +442,11 @@ export class Node extends EventEmitter {
         }
     }
 
-    private sendStreamStatus(): void {
-        Object.values(this.trackerBook).forEach((trackerId) => {
+    private sendStreamStatus(streamId: StreamIdAndPartition): void {
+        const trackerId = this.getTrackerId(streamId)
+        if (trackerId) {
             this.sendStatus(trackerId)
-        })
+        }
     }
 
     private async sendStatus(tracker: string): Promise<void> {
@@ -486,6 +491,8 @@ export class Node extends EventEmitter {
                 }
             }, this.disconnectionWaitTime)
         }
+
+        this.sendStreamStatus(streamId)
     }
 
     onNodeDisconnected(node: string): void {
@@ -493,6 +500,7 @@ export class Node extends EventEmitter {
         this.resendHandler.cancelResendsOfNode(node)
         const streams = this.streams.removeNodeFromAllStreams(node)
         this.logger.debug('removed all subscriptions of node %s', node)
+        streams.forEach((s) => this.sendStreamStatus(s))
         this.emit(Event.NODE_DISCONNECTED, node)
     }
 
