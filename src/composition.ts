@@ -7,15 +7,12 @@ import { startEndpoint } from './connection/WsEndpoint'
 import { Tracker } from './logic/Tracker'
 import { TrackerServer } from './protocol/TrackerServer'
 import { trackerHttpEndpoints } from './helpers/trackerHttpEndpoints'
-import getLogger from './helpers/logger'
 import { TrackerNode } from './protocol/TrackerNode'
 import { RtcSignaller } from './logic/RtcSignaller'
 import { WebRtcEndpoint } from './connection/WebRtcEndpoint'
 import { NodeToNode } from './protocol/NodeToNode'
 import { NetworkNode } from './NetworkNode'
 import { Readable } from 'stream'
-
-const logger = getLogger("streamr:bin:composition")
 
 export {
     Location,
@@ -123,7 +120,6 @@ export function startTracker({
         })
 
         if (attachHttpEndpoints) {
-            logger.debug('attaching HTTP endpoints to the tracker on port %s', port)
             trackerHttpEndpoints(endpoint.getWss(), tracker, metricsContext)
         }
 
@@ -161,7 +157,7 @@ function startNode({
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
         const nodeToNode = new NodeToNode(new WebRtcEndpoint(
-            id, 
+            peerInfo,
             stunUrls,
             webRtcSignaller, 
             metricsContext, 
