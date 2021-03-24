@@ -45,6 +45,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private readonly rtcSignaller: RtcSignaller
     private connections: { [key: string]: Connection }
     private readonly newConnectionTimeout: number
+    private readonly pingInterval: number
     private readonly logger: Logger
     private readonly metrics: Metrics
     private stopped = false
@@ -57,6 +58,7 @@ export class WebRtcEndpoint extends EventEmitter {
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
         newConnectionTimeout = 5000,
+        pingInterval = 2 * 1000,
         webrtcDatachannelBufferThresholdLow = 2 ** 15,
         webrtcDatachannelBufferThresholdHigh = 2 ** 17
     ) {
@@ -66,6 +68,7 @@ export class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller = rtcSignaller
         this.connections = {}
         this.newConnectionTimeout = newConnectionTimeout
+        this.pingInterval = pingInterval
         this.logger = new Logger(['connection', 'WebRtcEndpoint'], peerInfo)
         this.bufferThresholdLow = webrtcDatachannelBufferThresholdLow
         this.bufferThresholdHigh = webrtcDatachannelBufferThresholdHigh
@@ -155,9 +158,10 @@ export class WebRtcEndpoint extends EventEmitter {
             routerId,
             isOffering,
             stunUrls: this.stunUrls,
-            newConnectionTimeout: this.newConnectionTimeout,
             bufferThresholdHigh: this.bufferThresholdHigh,
             bufferThresholdLow: this.bufferThresholdLow,
+            newConnectionTimeout: this.newConnectionTimeout,
+            pingInterval: this.pingInterval,
             onLocalDescription: (type, description) => {
                 this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
             },

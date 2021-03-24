@@ -176,6 +176,7 @@ function startNode({
             webRtcSignaller, 
             metricsContext,
             newWebrtcConnectionTimeout,
+            pingInterval,
             webrtcDatachannelBufferThresholdLow,
             webrtcDatachannelBufferThresholdHigh
         ))

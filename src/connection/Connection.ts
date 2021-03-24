@@ -15,7 +15,7 @@ export interface ConstructorOptions {
     bufferThresholdHigh?: number
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
-    pingPongTimeout?: number
+    pingInterval?: number
     flushRetryTimeout?: number
     onLocalDescription: (type: DescriptionType, description: string) => void
     onLocalCandidate: (candidate: string, mid: string) => void
@@ -37,7 +37,7 @@ export class Connection {
     private readonly bufferThresholdLow: number
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
-    private readonly pingPongTimeout: number
+    private readonly pingInterval: number
     private readonly flushRetryTimeout: number
     private readonly onLocalDescription: (type: DescriptionType, description: string) => void
     private readonly onLocalCandidate: (candidate: string, mid: string) => void
@@ -73,7 +73,7 @@ export class Connection {
         bufferThresholdLow = 2 ** 15,
         newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
-        pingPongTimeout = 5 * 1000,
+        pingInterval = 2 * 1000,
         flushRetryTimeout = 500,
         onLocalDescription,
         onLocalCandidate,
@@ -93,7 +93,7 @@ export class Connection {
         this.bufferThresholdLow = bufferThresholdLow
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
-        this.pingPongTimeout = pingPongTimeout
+        this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
         this.logger = new Logger(['connection', 'Connection', `${this.selfId}-->${this.getPeerId()}`])
 
@@ -106,7 +106,7 @@ export class Connection {
 
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
-        this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingPongTimeout)
+        this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingInterval)
 
         this.rtt = null
         this.respondedPong = true
@@ -245,7 +245,7 @@ export class Connection {
         if (this.pingTimeoutRef) {
             clearTimeout(this.pingTimeoutRef)
         }
-        setTimeout(() => this.ping(), this.pingPongTimeout)
+        setTimeout(() => this.ping(), this.pingInterval)
     }
 
     pong(): void {
