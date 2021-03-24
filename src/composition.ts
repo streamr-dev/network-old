@@ -160,9 +160,9 @@ function startNode({
             peerInfo,
             stunUrls,
             webRtcSignaller, 
-            metricsContext, 
-            pingInterval, 
+            metricsContext,
             newWebrtcConnectionTimeout,
+            pingInterval,
             webrtcDatachannelBufferThresholdLow,
             webrtcDatachannelBufferThresholdHigh
         ))
