@@ -2,14 +2,13 @@
 const program = require('commander')
 const { MessageLayer } = require('streamr-client-protocol')
 
-const getLogger = require('../dist/helpers/logger').default
+const { Logger } = require('../dist/helpers/logger')
 const { version: CURRENT_VERSION } = require('../package.json')
 const { startNetworkNode } = require('../dist/composition')
 const { MetricsContext } = require('../dist/helpers/MetricsContext')
+const { PeerInfo } = require('../dist/connection/PeerInfo')
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
-
-const logger = getLogger('streamr:bin:publisher')
 
 program
     .version(CURRENT_VERSION)
@@ -25,9 +24,11 @@ program
     .description('Run publisher')
     .parse(process.argv)
 
-const publisherId = program.opts().id || `publisher-${program.opts().port}`
+const publisherId = program.opts().id || `PU${program.opts().port}`
 const name = program.opts().nodeName || publisherId
 const noise = parseInt(program.opts().noise, 10)
+const peerInfo = PeerInfo.newNode(publisherId, name)
+const logger = new Logger(['bin', 'publisher'], peerInfo)
 
 const messageChainId = `message-chain-id-${program.opts().port}`
 

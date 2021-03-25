@@ -2,12 +2,11 @@
 const program = require('commander')
 const pino = require('pino')
 
-const getLogger = require('../dist/helpers/logger').default
+const { Logger } = require('../dist/helpers/logger')
 const { version: CURRENT_VERSION } = require('../package.json')
 const { startTracker } = require('../dist/composition')
 const { MetricsContext } = require('../dist/helpers/MetricsContext')
-
-const logger = getLogger('streamr:bin:tracker')
+const { PeerInfo } = require('../dist/connection/PeerInfo')
 
 program
     .version(CURRENT_VERSION)
@@ -21,8 +20,10 @@ program
     .description('Run tracker with reporting')
     .parse(process.argv)
 
-const id = program.opts().id || `tracker-${program.opts().port}`
+const id = program.opts().id || `TR${program.opts().port}`
 const name = program.opts().trackerName || id
+const peerInfo = PeerInfo.newNode(id, name)
+const logger = new Logger(['bin', 'publisher'], id)
 
 async function main() {
     const metricsContext = new MetricsContext(id)
@@ -66,12 +67,12 @@ async function main() {
 main()
 
 // pino.finalLogger
-process.on('uncaughtException', pino.final(logger, (err, finalLogger) => {
-    finalLogger.error(err, 'uncaughtException')
-    process.exit(1)
-}))
-
-process.on('unhandledRejection', pino.final(logger, (err, finalLogger) => {
-    finalLogger.error(err, 'unhandledRejection')
-    process.exit(1)
-}))
+// process.on('uncaughtException', pino.final(logger, (err, finalLogger) => {
+//     finalLogger.error(err, 'uncaughtException')
+//     process.exit(1)
+// }))
+//
+// process.on('unhandledRejection', pino.final(logger, (err, finalLogger) => {
+//     finalLogger.error(err, 'unhandledRejection')
+//     process.exit(1)
+// }))
