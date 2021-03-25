@@ -4,6 +4,14 @@ import { RtcSubTypes } from './logic/RtcMessage'
 /**
  * Uniquely identifies a stream
  */
+export type StreamID = string & {
+    __brand: 'StreamID'
+}
+
+export function toStreamId(str: string) {
+    return str.toLowerCase() as StreamID
+}
+
 export class StreamIdAndPartition {
     public readonly id: string
     public readonly partition: number
@@ -15,7 +23,7 @@ export class StreamIdAndPartition {
         if (!Number.isInteger(partition)) {
             throw new Error(`invalid partition: ${partition}`)
         }
-        this.id = id
+        this.id = toStreamId(id)
         this.partition = partition
     }
 
