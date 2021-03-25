@@ -26,10 +26,10 @@ program
 
 const id = program.opts().id || `PU${program.opts().port}`
 const name = program.opts().nodeName || id
-const noise = parseInt(program.opts().noise, 10)
-
 const peerInfo = PeerInfo.newNode(id, name)
 const logger = new Logger(['bin', 'publisher'], peerInfo)
+
+const noise = parseInt(program.opts().noise, 10)
 
 const messageChainId = `message-chain-id-${program.opts().port}`
 
