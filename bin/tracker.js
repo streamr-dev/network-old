@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const program = require('commander')
-const pino = require('pino')
 
 const { Logger } = require('../dist/helpers/logger')
 const { version: CURRENT_VERSION } = require('../package.json')
@@ -23,7 +22,7 @@ program
 const id = program.opts().id || `TR${program.opts().port}`
 const name = program.opts().trackerName || id
 const peerInfo = PeerInfo.newNode(id, name)
-const logger = new Logger(['bin', 'publisher'], id)
+const logger = new Logger(['bin', 'publisher'], peerInfo)
 
 async function main() {
     const metricsContext = new MetricsContext(id)
@@ -65,14 +64,3 @@ async function main() {
 }
 
 main()
-
-// pino.finalLogger
-// process.on('uncaughtException', pino.final(logger, (err, finalLogger) => {
-//     finalLogger.error(err, 'uncaughtException')
-//     process.exit(1)
-// }))
-//
-// process.on('unhandledRejection', pino.final(logger, (err, finalLogger) => {
-//     finalLogger.error(err, 'unhandledRejection')
-//     process.exit(1)
-// }))
