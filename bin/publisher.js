@@ -28,7 +28,7 @@ const id = program.opts().id || `PU${program.opts().port}`
 const name = program.opts().nodeName || id
 const noise = parseInt(program.opts().noise, 10)
 
-const peerInfo = PeerInfo.newNode(publisherId, name)
+const peerInfo = PeerInfo.newNode(id, name)
 const logger = new Logger(['bin', 'publisher'], peerInfo)
 
 const messageChainId = `message-chain-id-${program.opts().port}`
@@ -43,18 +43,18 @@ function generateString(length) {
     return result
 }
 
-const metricsContext = new MetricsContext(publisherId)
+const metricsContext = new MetricsContext(id)
 startNetworkNode({
     host: program.opts().ip,
     port: program.opts().port,
-    name: publisherId,
-    id: publisherId,
+    name,
+    id,
     trackers: program.opts().trackers,
     metricsContext
 })
     .then((publisher) => {
         logger.info('started publisher id: %s, name: %s, port: %d, ip: %s, trackers: %s, streamId: %s, intervalInMs: %d, metrics: %s',
-            publisherId, name, program.opts().port, program.opts().ip, program.opts().trackers.join(', '), program.opts().streamId, program.opts().intervalInMs, program.opts().metrics)
+            id, name, program.opts().port, program.opts().ip, program.opts().trackers.join(', '), program.opts().streamId, program.opts().intervalInMs, program.opts().metrics)
 
         publisher.start()
 
@@ -66,7 +66,7 @@ startNetworkNode({
             const msg = 'Hello world, ' + new Date().toLocaleString()
             program.opts().streamIds.forEach((streamId) => {
                 const streamMessage = new StreamMessage({
-                    messageId: new MessageID(streamId, 0, timestamp, sequenceNumber, publisherId, messageChainId),
+                    messageId: new MessageID(streamId, 0, timestamp, sequenceNumber, id, messageChainId),
                     prevMsgRef: lastTimestamp == null ? null : new MessageRef(lastTimestamp, sequenceNumber - 1),
                     content: {
                         msg,

@@ -28,7 +28,7 @@ const metricsContext = new MetricsContext(id)
 startNetworkNode({
     host: program.opts().ip,
     port: program.opts().port,
-    name: id,
+    name,
     id,
     trackers: program.opts().trackers,
     metricsContext
