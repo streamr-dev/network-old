@@ -63,6 +63,7 @@ export interface Status {
     rtts: Rtts
     location: Location
     started: string
+    singleStream: boolean // indicate whether this is a status update for only a single stream
 }
 
 export type ResendRequest = ControlLayer.ResendLastRequest
@@ -98,8 +99,7 @@ export type RemoteCandidateMessage = {
 export type RtcConnectMessage = {
     subType: RtcSubTypes.RTC_CONNECT
     data: {
-        candidate: string
-        mid: string
+        force: boolean
     }
 }
 

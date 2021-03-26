@@ -1,7 +1,6 @@
 import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection } from 'node-datachannel'
-import getLogger from '../helpers/logger'
+import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
-import pino from 'pino'
 import { MessageQueue, QueueItem } from './MessageQueue'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
@@ -16,7 +15,7 @@ export interface ConstructorOptions {
     bufferThresholdHigh?: number
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
-    pingPongTimeout?: number
+    pingInterval?: number
     flushRetryTimeout?: number
     onLocalDescription: (type: DescriptionType, description: string) => void
     onLocalCandidate: (candidate: string, mid: string) => void
@@ -38,7 +37,7 @@ export class Connection {
     private readonly bufferThresholdLow: number
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
-    private readonly pingPongTimeout: number
+    private readonly pingInterval: number
     private readonly flushRetryTimeout: number
     private readonly onLocalDescription: (type: DescriptionType, description: string) => void
     private readonly onLocalCandidate: (candidate: string, mid: string) => void
@@ -48,8 +47,9 @@ export class Connection {
     private readonly onError: (err: Error) => void
     private readonly onBufferLow: () => void
     private readonly onBufferHigh: () => void
-
+    private readonly logger: Logger
     private readonly messageQueue: MessageQueue<string>
+
     private connection: PeerConnection | null
     private dataChannel: DataChannel | null
     private paused: boolean
@@ -57,12 +57,11 @@ export class Connection {
     private lastGatheringState: string | null
     private flushTimeoutRef: NodeJS.Timeout | null
     private connectionTimeoutRef: NodeJS.Timeout | null
-    private peerPingTimeoutRef: NodeJS.Timeout | null
-    private peerPongTimeoutRef: NodeJS.Timeout | null
+    private pingTimeoutRef: NodeJS.Timeout | null
+    private pingAttempts = 0
     private rtt: number | null
     private respondedPong: boolean
     private rttStart: number | null
-    private readonly logger: pino.Logger
 
     constructor({
         selfId,
@@ -74,7 +73,7 @@ export class Connection {
         bufferThresholdLow = 2 ** 15,
         newConnectionTimeout = 5000,
         maxPingPongAttempts = 5,
-        pingPongTimeout = 2000,
+        pingInterval = 2 * 1000,
         flushRetryTimeout = 500,
         onLocalDescription,
         onLocalCandidate,
@@ -94,10 +93,11 @@ export class Connection {
         this.bufferThresholdLow = bufferThresholdLow
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
-        this.pingPongTimeout = pingPongTimeout
+        this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
+        this.logger = new Logger(['connection', 'Connection', `${this.selfId}-->${this.getPeerId()}`])
 
-        this.messageQueue = new MessageQueue<string>()
+        this.messageQueue = new MessageQueue<string>(this.logger)
         this.connection = null
         this.dataChannel = null
         this.paused = false
@@ -106,8 +106,7 @@ export class Connection {
 
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
-        this.peerPingTimeoutRef = null
-        this.peerPongTimeoutRef = null
+        this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingInterval)
 
         this.rtt = null
         this.respondedPong = true
@@ -121,8 +120,6 @@ export class Connection {
         this.onError = onError
         this.onBufferLow = onBufferLow
         this.onBufferHigh = onBufferHigh
-
-        this.logger = getLogger(`streamr:WebRtc:Connection(${this.selfId}-->${this.getPeerId()})`)
     }
 
     connect(): void {
@@ -174,10 +171,10 @@ export class Connection {
             try {
                 this.connection.setRemoteDescription(description, type)
             } catch (err) {
-                this.close(err)
+                this.logger.warn('setRemoteDescription failed, reason: %s', err)
             }
         } else {
-            this.logger.warn('attempt to invoke setRemoteDescription, but connection is null')
+            this.logger.warn('skipped setRemoteDescription, connection is null')
         }
     }
 
@@ -186,10 +183,10 @@ export class Connection {
             try {
                 this.connection.addRemoteCandidate(candidate, mid)
             } catch (err) {
-                this.close(err)
+                this.logger.warn('addRemoteCandidate failed, reason: %s', err)
             }
         } else {
-            this.logger.warn('attempt to invoke setRemoteDescription, but connection is null')
+            this.logger.warn('skipped addRemoteCandidate, connection is null')
         }
     }
 
@@ -203,14 +200,14 @@ export class Connection {
             try {
                 this.dataChannel.close()
             } catch (e) {
-                this.logger.warn(e)
+                this.logger.warn('dc.close() errored: %s', e)
             }
         }
         if (this.connection) {
             try {
                 this.connection.close()
             } catch (e) {
-                this.logger.warn(e)
+                this.logger.warn('conn.close() errored: %s', e)
             }
         }
         if (this.flushTimeoutRef) {
@@ -219,18 +216,14 @@ export class Connection {
         if (this.connectionTimeoutRef) {
             clearTimeout(this.connectionTimeoutRef)
         }
-        if (this.peerPingTimeoutRef) {
-            clearTimeout(this.peerPingTimeoutRef)
-        }
-        if (this.peerPongTimeoutRef) {
-            clearTimeout(this.peerPongTimeoutRef)
+        if (this.pingTimeoutRef) {
+            clearTimeout(this.pingTimeoutRef)
         }
         this.dataChannel = null
         this.connection = null
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
-        this.peerPingTimeoutRef = null
-        this.peerPongTimeoutRef = null
+        this.pingTimeoutRef = null
 
         if (err) {
             this.onError(err)
@@ -238,45 +231,25 @@ export class Connection {
         this.onClose()
     }
 
-    ping(attempt = 0): void | never {
-        if (this.peerPingTimeoutRef !== null) {
-            clearTimeout(this.peerPingTimeoutRef)
-        }
-        try {
-            if (this.isOpen()) {
-                if (!this.respondedPong) {
-                    throw new Error('dataChannel is not active')
-                }
-                this.respondedPong = false
+    ping(): void {
+        if (this.isOpen()) {
+            if (this.pingAttempts >= this.maxPingPongAttempts) {
+                this.logger.warn(`failed to receive any pong after ${this.maxPingPongAttempts} ping attempts, closing connection`)
+                this.close(new Error('pong not received'))
+            } else {
                 this.rttStart = Date.now()
                 this.dataChannel!.sendMessage('ping')
-            }
-        } catch (e) {
-            if (attempt < this.maxPingPongAttempts && this.isOpen()) {
-                this.logger.debug('failed to ping connection, error %s, re-attempting', e)
-                this.peerPingTimeoutRef = setTimeout(() => this.ping(attempt + 1), this.pingPongTimeout)
-            } else {
-                this.logger.warn('failed all ping re-attempts to connection, reattempting connection', e)
-                this.close(new Error('ping attempts failed'))
+                this.pingAttempts += 1
             }
         }
+        if (this.pingTimeoutRef) {
+            clearTimeout(this.pingTimeoutRef)
+        }
+        setTimeout(() => this.ping(), this.pingInterval)
     }
 
-    pong(attempt = 0): void {
-        if (this.peerPongTimeoutRef !== null) {
-            clearTimeout(this.peerPongTimeoutRef)
-        }
-        try {
-            this.dataChannel!.sendMessage('pong')
-        } catch (e) {
-            if (attempt < this.maxPingPongAttempts && this.dataChannel && this.isOpen()) {
-                this.logger.debug('failed to pong connection, error %s, re-attempting', e)
-                this.peerPongTimeoutRef = setTimeout(() => this.pong(attempt + 1), this.pingPongTimeout)
-            } else {
-                this.logger.warn('failed all pong re-attempts to connection, reattempting connection', e)
-                this.close(new Error('pong attempts failed'))
-            }
-        }
+    pong(): void {
+        this.dataChannel!.sendMessage('pong')
     }
 
     setPeerInfo(peerInfo: PeerInfo): void {
@@ -328,16 +301,16 @@ export class Connection {
         dataChannel.setBufferedAmountLowThreshold(this.bufferThresholdLow)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
-                this.logger.debug('dataChannel.onOpen')
+                this.logger.debug('dc.onOpen')
                 this.openDataChannel(dataChannel)
             })
         }
         dataChannel.onClosed(() => {
-            this.logger.debug('dataChannel.onClosed')
+            this.logger.debug('dc.onClosed')
             this.close()
         })
         dataChannel.onError((e) => {
-            this.logger.warn('dataChannel.onError: %s', e)
+            this.logger.warn('dc.onError: %s', e)
         })
         dataChannel.onBufferedAmountLow(() => {
             if (this.paused) {
@@ -347,11 +320,11 @@ export class Connection {
             }
         })
         dataChannel.onMessage((msg) => {
-            this.logger.debug('dataChannel.onmessage: %s', this.peerInfo.peerId)
+            this.logger.debug('dc.onmessage')
             if (msg === 'ping') {
                 this.pong()
             } else if (msg === 'pong') {
-                this.respondedPong = true
+                this.pingAttempts = 0
                 this.rtt = Date.now() - this.rttStart!
             } else {
                 this.onMessage(msg.toString()) // TODO: what if we get binary?
@@ -416,7 +389,7 @@ export class Connection {
         })
         if (queueItem.isFailed()) {
             const infoText = queueItem.getErrorInfos().map((i) => JSON.stringify(i)).join('\n\t')
-            this.logger.debug('Failed to send message after %d tries due to\n\t%s',
+            this.logger.debug('failed to send message after %d tries due to\n\t%s',
                 MessageQueue.MAX_TRIES,
                 infoText)
             this.messageQueue.pop()

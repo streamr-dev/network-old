@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import getLogger from '../helpers/logger'
+import { Logger } from '../helpers/Logger'
 import { Metrics, MetricsContext } from '../helpers/MetricsContext'
 import { TrackerServer, Event as TrackerServerEvent } from '../protocol/TrackerServer'
 import { OverlayTopology } from './OverlayTopology'
@@ -9,7 +9,6 @@ import { attachRtcSignalling } from './rtcSignallingHandlers'
 import { PeerInfo } from '../connection/PeerInfo'
 import { Location, Status, StatusStreams, StreamIdAndPartition, StreamKey } from '../identifiers'
 import { TrackerLayer } from 'streamr-client-protocol'
-import pino from 'pino'
 
 type NodeId = string
 type StreamId = string
@@ -46,7 +45,7 @@ export class Tracker extends EventEmitter {
     private readonly locationManager: LocationManager
     private readonly instructionCounter: InstructionCounter
     private readonly storageNodes: Set<NodeId>
-    private readonly logger: pino.Logger
+    private readonly logger: Logger
     private readonly metrics: Metrics
 
     constructor(opts: TrackerOptions) {
@@ -64,9 +63,10 @@ export class Tracker extends EventEmitter {
         this.trackerServer = opts.protocols.trackerServer
         this.peerInfo = opts.peerInfo
 
+        this.logger = new Logger(['logic', 'Tracker'], this.peerInfo)
         this.overlayPerStream = {}
         this.overlayConnectionRtts = {}
-        this.locationManager = new LocationManager()
+        this.locationManager = new LocationManager(this.logger)
         this.instructionCounter = new InstructionCounter()
         this.storageNodes = new Set()
 
@@ -82,10 +82,7 @@ export class Tracker extends EventEmitter {
         this.trackerServer.on(TrackerServerEvent.STORAGE_NODES_REQUEST, (message, nodeId) => {
             this.findStorageNodes(message, nodeId)
         })
-        attachRtcSignalling(this.trackerServer)
-
-        this.logger = getLogger(`streamr:logic:tracker:${this.peerInfo.peerId}`)
-        this.logger.debug('started %s', this.peerInfo.peerId)
+        attachRtcSignalling(this.logger, this.trackerServer)
 
         this.metrics = metricsContext.create('tracker')
             .addRecordedMetric('onNodeDisconnected')
@@ -103,15 +100,15 @@ export class Tracker extends EventEmitter {
     }
 
     onNodeDisconnected(node: NodeId): void {
+        this.logger.debug('node %s disconnected', node)
         this.metrics.record('onNodeDisconnected', 1)
         this.removeNode(node)
-        this.logger.debug('unregistered node %s from tracker', node)
     }
 
     processNodeStatus(statusMessage: TrackerLayer.StatusMessage, source: NodeId): void {
         this.metrics.record('processNodeStatus', 1)
         const status = statusMessage.status as Status
-        const { streams, rtts, location } = status
+        const { streams, rtts, location, singleStream } = status
         const filteredStreams = this.instructionCounter.filterStatus(status, source)
 
         // update RTTs and location
@@ -124,7 +121,11 @@ export class Tracker extends EventEmitter {
 
         // update topology
         this.createNewOverlayTopologies(streams)
-        this.updateNode(source, filteredStreams, streams)
+        if (singleStream) {
+            this.updateNodeOnStream(source, filteredStreams)
+        } else {
+            this.updateNode(source, filteredStreams, streams)
+        }
         this.formAndSendInstructions(source, Object.keys(streams))
     }
 
@@ -134,12 +135,13 @@ export class Tracker extends EventEmitter {
         const storageNodeIds = [...this.storageNodes].filter((s) => s !== source)
         this.trackerServer.sendStorageNodesResponse(source, streamId, storageNodeIds)
             .catch((e) => {
-                this.logger.error(`Failed to sendStorageNodes to node ${source}, ${streamId} because of ${e}`)
+                this.logger.error('Failed to send StorageNodesResponse to %s for stream %s, reason: %s',
+                    source, streamId, e)
             })
     }
 
     stop(): Promise<void> {
-        this.logger.debug('stopping tracker')
+        this.logger.debug('stopping')
         return this.trackerServer.stop()
     }
 
@@ -169,23 +171,45 @@ export class Tracker extends EventEmitter {
             .forEach(([streamKey, overlayTopology]) => {
                 this.leaveAndCheckEmptyOverlay(streamKey, overlayTopology, node)
             })
+    }
 
-        this.logger.debug('update node %s for streams %j', node, Object.keys(allStreams))
+    private updateNodeOnStream(node: NodeId, streams: StatusStreams): void {
+        if (streams && Object.keys(streams).length === 1) {
+            const streamKey = Object.keys(streams)[0]
+            const status = streams[streamKey]
+            if (status.counter === -1) {
+                this.leaveAndCheckEmptyOverlay(streamKey, this.overlayPerStream[streamKey], node)
+            } else {
+                const neighbors = new Set([...status.inboundNodes, ...status.outboundNodes])
+                this.overlayPerStream[streamKey].update(node, [...neighbors])
+            }
+        } else {
+            this.logger.debug('unexpected empty single-stream status received from node %s, contents %j', node, streams)
+        }
     }
 
     private formAndSendInstructions(node: NodeId, streamKeys: Array<StreamKey>, forceGenerate = false): void {
         streamKeys.forEach((streamKey) => {
-            const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
-            Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
-                this.metrics.record('instructionsSent', 1)
-                try {
-                    const counterValue = this.instructionCounter.setOrIncrement(nodeId, streamKey)
-                    await this.trackerServer.sendInstruction(nodeId, StreamIdAndPartition.fromKey(streamKey), newNeighbors, counterValue)
-                    this.logger.debug('sent instruction %j (%d) for stream %s to node %s', newNeighbors, counterValue, streamKey, nodeId)
-                } catch (e) {
-                    this.logger.error(`Failed to formAndSendInstructions to node ${nodeId}, streamKey ${streamKey}, because of ${e}`)
-                }
-            })
+            if (this.overlayPerStream[streamKey]) {
+                const instructions = this.overlayPerStream[streamKey].formInstructions(node, forceGenerate)
+                Object.entries(instructions).forEach(async ([nodeId, newNeighbors]) => {
+                    this.metrics.record('instructionsSent', 1)
+                    try {
+                        const counterValue = this.instructionCounter.setOrIncrement(nodeId, streamKey)
+                        await this.trackerServer.sendInstruction(
+                            nodeId,
+                            StreamIdAndPartition.fromKey(streamKey),
+                            newNeighbors,
+                            counterValue
+                        )
+                        this.logger.debug('instruction %j (counter=%d, stream=%s, requestId=%s) sent to node %s',
+                            newNeighbors, counterValue, streamKey, nodeId)
+                    } catch (e) {
+                        this.logger.error(`Failed to send instructions (stream=%s) to node %s, reason: %s`,
+                            streamKey, nodeId, e)
+                    }
+                })
+            }
         })
     }
 

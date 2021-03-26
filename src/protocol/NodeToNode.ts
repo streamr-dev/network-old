@@ -1,11 +1,10 @@
 import { EventEmitter } from 'events'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
-import getLogger from '../helpers/logger'
+import { Logger } from '../helpers/Logger'
 import { decode } from '../helpers/MessageEncoder'
 import { WebRtcEndpoint, Event as WebRtcEndpointEvent } from '../connection/WebRtcEndpoint'
 import { PeerInfo } from '../connection/PeerInfo'
 import { ResendRequest, ResendResponse, Rtts } from '../identifiers'
-import pino from 'pino'
 
 export enum Event {
     NODE_CONNECTED = 'streamr:node-node:node-connected',
@@ -41,7 +40,7 @@ export interface NodeToNode {
 
 export class NodeToNode extends EventEmitter {
     private readonly endpoint: WebRtcEndpoint
-    private readonly logger: pino.Logger
+    private readonly logger: Logger
 
     constructor(endpoint: WebRtcEndpoint) {
         super()
@@ -51,16 +50,17 @@ export class NodeToNode extends EventEmitter {
         endpoint.on(WebRtcEndpointEvent.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
         endpoint.on(WebRtcEndpointEvent.LOW_BACK_PRESSURE, (peerInfo) => this.onLowBackPressure(peerInfo))
         endpoint.on(WebRtcEndpointEvent.HIGH_BACK_PRESSURE, (peerInfo) => this.onHighBackPressure(peerInfo))
-        this.logger = getLogger(`streamr:NodeToNode:${endpoint.getAddress()}`)
+        this.logger = new Logger(['protocol', 'NodeToNode'], endpoint.getPeerInfo())
     }
 
     connectToNode(
         receiverNodeId: string,
         trackerAddress: string,
         isOffering?: boolean,
-        trackerInstructed = true
+        trackerInstructed = true,
+        force = false
     ): Promise<string> {
-        return this.endpoint.connect(receiverNodeId, trackerAddress, isOffering, trackerInstructed)
+        return this.endpoint.connect(receiverNodeId, trackerAddress, isOffering, trackerInstructed, force)
     }
 
     sendData(receiverNodeId: string, streamMessage: MessageLayer.StreamMessage): Promise<ControlLayer.BroadcastMessage> {
@@ -78,6 +78,9 @@ export class NodeToNode extends EventEmitter {
         this.endpoint.close(receiverNodeId, reason)
     }
 
+    /**
+     * @deprecated
+     */
     getAddress(): string {
         return this.endpoint.getAddress()
     }
@@ -104,7 +107,7 @@ export class NodeToNode extends EventEmitter {
             if (message != null) {
                 this.emit(eventPerType[message.type], message, peerInfo.peerId)
             } else {
-                this.logger.warn('NodeToNode: invalid message from %s: %s', peerInfo, rawMessage)
+                this.logger.warn('invalid message from %s: %s', peerInfo, rawMessage)
             }
         }
     }
