@@ -3,11 +3,10 @@
     <img alt="Streamr" src="https://raw.githubusercontent.com/streamr-dev/streamr-client-javascript/master/readme-header-img.png" width="1320" />
   </a>
 </p>
-<h1 align="left">
 
 # streamr-network
 
-An extendable implementation of the server-side
+An extendible implementation of the server-side
 [Streamr Protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) logic written in TypeScript.
 The package mostly acts as a library for other packages wishing to implement a broker node, but additionally
 provides a full tracker executable, and a stripped-down network node executable.
