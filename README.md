@@ -6,6 +6,12 @@
 
 # streamr-network
 
+[![Build Status](https://travis-ci.com/streamr-dev/network.svg?branch=master&style=flat)](https://travis-ci.com/streamr-dev/network)
+[![GitHub release](https://img.shields.io/github/release/streamr-dev/network.svg?style=flat)](https://github.com/streamr-dev/network/releases/)
+[![GitHub stars](https://img.shields.io/github/stars/streamr-dev/network.svg?style=flat&label=Star&maxAge=2592000)](https://github.com/streamr-dev/network/)
+[![Discord Chat](https://img.shields.io/discord/801574432350928907.svg?label=Discord&logo=Discord&colorB=7289da)](https://discord.gg/FVtAph9cvz)
+
+
 An extendible implementation of the server-side
 [Streamr Protocol](https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md) logic written in TypeScript.
 The package mostly acts as a library for other packages wishing to implement a broker node, but additionally
