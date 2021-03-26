@@ -3,7 +3,6 @@ module.exports = {
         'src/composition.ts',
     ],
     tsconfig: 'tsconfig.json',
-    readme: false,
     excludeInternal: true,
     includeVersion: true,
 }
