@@ -21,6 +21,8 @@ The [wiki](https://github.com/streamr-dev/network/wiki) outlines the technical a
 decisions of the project. It provides thorough explanations of some the more involved features.
 A glossary is also included.
 
+[API Documentation](https://streamr-dev.github.io/network/)
+
 ## Table of Contents
 - [Install](#install)
 - [Run](#run)
