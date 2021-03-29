@@ -123,6 +123,7 @@ export class Connection {
     }
 
     connect(): void {
+        this.logger.info('connecting')
         this.connection = new nodeDataChannel.PeerConnection(this.selfId, {
             iceServers: this.stunUrls
         })
@@ -196,6 +197,7 @@ export class Connection {
     }
 
     close(err?: Error): void {
+        this.logger.info('closing connection, reason: %s', err)
         if (this.dataChannel) {
             try {
                 this.dataChannel.close()
@@ -229,6 +231,7 @@ export class Connection {
             this.onError(err)
         }
         this.onClose()
+        this.logger.info('connection closed')
     }
 
     ping(): void {
@@ -339,6 +342,7 @@ export class Connection {
         this.dataChannel = dataChannel
         setImmediate(() => this.attemptToFlushMessages())
         this.onOpen()
+        this.logger.info('connected')
     }
 
     private attemptToFlushMessages(): void {
