@@ -1,0 +1,273 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>streamr-network - v24.1.1</title>
+	<meta name="description" content="Documentation for streamr-network - v24.1.1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+	<script async src="assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">streamr-network - v24.1.1</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<h1>streamr-network - v24.1.1</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<p align="center">
+					<a href="https://streamr.network">
+						<img alt="Streamr" src="https://raw.githubusercontent.com/streamr-dev/streamr-client-javascript/master/readme-header-img.png" width="1320" />
+					</a>
+				</p>
+				<a href="#streamr-network" id="streamr-network" style="color: inherit; text-decoration: none;">
+					<h1>streamr-network</h1>
+				</a>
+				<p><a href="https://github.com/streamr-dev/network/actions"><img src="https://img.shields.io/github/workflow/status/streamr-dev/network/nodejs/master" alt="Build Status"></a>
+					<a href="https://www.npmjs.com/package/streamr-network"><img src="https://img.shields.io/npm/v/streamr-network?style=flat" alt="npm release"></a>
+					<a href="https://github.com/streamr-dev/network/"><img src="https://img.shields.io/github/stars/streamr-dev/network.svg?style=flat&label=Star&maxAge=2592000" alt="GitHub stars"></a>
+				<a href="https://discord.gg/FVtAph9cvz"><img src="https://img.shields.io/discord/801574432350928907.svg?label=Discord&logo=Discord&colorB=7289da" alt="Discord Chat"></a></p>
+				<p>An extendible implementation of the server-side
+					<a href="https://github.com/streamr-dev/streamr-specs/blob/master/PROTOCOL.md">Streamr Protocol</a> logic written in TypeScript.
+					The package mostly acts as a library for other packages wishing to implement a broker node, but additionally
+				provides a full tracker executable, and a stripped-down network node executable.</p>
+				<p>The primary executable for running a broker node in the Streamr Network resides in the
+					<a href="https://github.com/streamr-dev/broker">streamr-broker</a> package. Although <em>streamr-network</em> contains a
+					fully-operational minimal network node implementation, we recommend running the node executable found in
+				<em>streamr-broker</em> as it includes useful client-facing features for interacting with the Streamr Network.</p>
+				<p>The <a href="https://github.com/streamr-dev/network/wiki">wiki</a> outlines the technical and architectural
+					decisions of the project. It provides thorough explanations of some the more involved features.
+				A glossary is also included.</p>
+				<p><a href="https://streamr-dev.github.io/network/">API Documentation</a></p>
+				<a href="#table-of-contents" id="table-of-contents" style="color: inherit; text-decoration: none;">
+					<h2>Table of Contents</h2>
+				</a>
+				<ul>
+					<li><a href="#install">Install</a></li>
+					<li><a href="#run">Run</a></li>
+					<li><a href="#develop">Develop</a></li>
+					<li><a href="#release">Release</a></li>
+				</ul>
+				<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+					<h2>Install</h2>
+				</a>
+				<p>Prerequisites are <a href="https://nodejs.org/">Node.js</a> <code>14.x</code> and npm version <code>&gt;=6.14</code>.</p>
+				<p>You can install streamr-network as a library in your project using npm:</p>
+				<pre><code class="language-bash"><span style="color: #000000">npm install streamr-network --save</span>
+</code></pre>
+				<p>To install streamr-network system-wide:</p>
+				<pre><code class="language-bash"><span style="color: #000000">npm install streamr-network --global</span>
+</code></pre>
+				<a href="#run" id="run" style="color: inherit; text-decoration: none;">
+					<h2>Run</h2>
+				</a>
+				<p>Run an example network of 100 nodes (locally):</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">network</span>
+</code></pre>
+				<a href="#develop" id="develop" style="color: inherit; text-decoration: none;">
+					<h2>Develop</h2>
+				</a>
+				<p>Install dependencies:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">ci</span>
+</code></pre>
+				<p>Run the tests:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">test</span>
+</code></pre>
+				<p>To build project:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">build</span>
+</code></pre>
+				<p>We use <a href="https://github.com/eslint/eslint">eslint</a> for code formatting:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">eslint</span>
+</code></pre>
+				<p>Code coverage:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">coverage</span>
+</code></pre>
+				<a href="#debug" id="debug" style="color: inherit; text-decoration: none;">
+					<h3>Debug</h3>
+				</a>
+				<p>To get all debug messages:</p>
+				<pre><code><span style="color: #0070C1">LOG_LEVEL</span><span style="color: #000000">=</span><span style="color: #001080">debug</span>
+</code></pre>
+				<p>... or adjust debugging to desired level:</p>
+				<pre><code><span style="color: #0070C1">LOG_LEVEL</span><span style="color: #000000">=[</span><span style="color: #001080">debug</span><span style="color: #000000">|</span><span style="color: #001080">info</span><span style="color: #000000">|</span><span style="color: #001080">warn</span><span style="color: #000000">|</span><span style="color: #001080">error</span><span style="color: #000000">]</span>
+</code></pre>
+				<p>To disable all logs</p>
+				<pre><code><span style="color: #0070C1">NOLOG</span><span style="color: #000000">=</span><span style="color: #0000FF">true</span>
+</code></pre>
+				<a href="#regenerate-self-signed-certificate-fixture" id="regenerate-self-signed-certificate-fixture" style="color: inherit; text-decoration: none;">
+					<h3>Regenerate self-signed certificate fixture</h3>
+				</a>
+				<p>To regenerate self signed certificate in <code>./test/fixtures</code> run:</p>
+				<pre><code class="language-bash"><span style="color: #000000">openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 36500 -nodes -subj </span><span style="color: #A31515">&quot;/CN=localhost&quot;</span>
+</code></pre>
+				<a href="#release" id="release" style="color: inherit; text-decoration: none;">
+					<h2>Release</h2>
+				</a>
+				<p>Publishing to NPM is automated via Github Actions. Follow the steps below to publish stable (<code>latest</code>) or <code>beta</code>.</p>
+				<a href="#publishing-stable-latest" id="publishing-stable-latest" style="color: inherit; text-decoration: none;">
+					<h3>Publishing stable (latest)</h3>
+				</a>
+				<ol>
+					<li><code>git checkout master &amp;&amp; git pull</code></li>
+					<li>Update version with either <code>npm version [patch|minor|major]</code>. Use semantic versioning
+					<a href="https://semver.org/">https://semver.org/</a>. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.</li>
+					<li><code>git push --follow-tags</code></li>
+					<li>Wait for Github Actions to run tests</li>
+					<li>If tests passed, Github Actions will publish the new version to NPM</li>
+				</ol>
+				<a href="#publishing-beta" id="publishing-beta" style="color: inherit; text-decoration: none;">
+					<h3>Publishing beta</h3>
+				</a>
+				<ol>
+					<li>Update version with either <code>npm version [prepatch|preminor|premajor] --preid=beta</code>. Use semantic versioning
+					<a href="https://semver.org/">https://semver.org/</a>. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.</li>
+					<li><code>git push --follow-tags</code></li>
+					<li>Wait for Github Actions to run tests</li>
+					<li>If tests passed, Github Actions will publish the new version to NPM</li>
+				</ol>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="modules.html">Exports</a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Externals</span>
+					</li>
+					<li class=" tsd-kind-namespace tsd-is-external">
+						<a href="modules/protocol.html">Protocol</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.controllayer.html">Protocol.<wbr>Control<wbr>Layer</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.errors.html">Protocol.<wbr>Errors</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.messagelayer.html">Protocol.<wbr>Message<wbr>Layer</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.trackerlayer.html">Protocol.<wbr>Tracker<wbr>Layer</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.utils.html">Protocol.<wbr>Utils</a>
+					</li>
+					<li class=" tsd-kind-namespace tsd-parent-kind-namespace tsd-is-external">
+						<a href="modules/protocol.utils.timestamputil.html">Protocol.<wbr>Utils.<wbr>Timestamp<wbr>Util</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="classes/metricscontext.html" class="tsd-kind-icon">Metrics<wbr>Context</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/networknode.html" class="tsd-kind-icon">Network<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/tracker.html" class="tsd-kind-icon">Tracker</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/location.html" class="tsd-kind-icon">Location</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/networknodeoptions.html" class="tsd-kind-icon">Network<wbr>Node<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/storage.html" class="tsd-kind-icon">Storage</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/storagenodeoptions.html" class="tsd-kind-icon">Storage<wbr>Node<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/trackeroptions.html" class="tsd-kind-icon">Tracker<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#startnetworknode" class="tsd-kind-icon">start<wbr>Network<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#startstoragenode" class="tsd-kind-icon">start<wbr>Storage<wbr>Node</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="modules.html#starttracker" class="tsd-kind-icon">start<wbr>Tracker</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
