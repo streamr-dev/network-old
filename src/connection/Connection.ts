@@ -58,7 +58,7 @@ export class Connection {
     private flushTimeoutRef: NodeJS.Timeout | null
     private connectionTimeoutRef: NodeJS.Timeout | null
     private pingTimeoutRef: NodeJS.Timeout | null
-    private sendRef: NodeJS.Immediate | null
+    private flushRef: NodeJS.Immediate | null
     private pingAttempts = 0
     private rtt: number | null
     private respondedPong: boolean
@@ -108,7 +108,7 @@ export class Connection {
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
         this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingInterval)
-        this.sendRef = null
+        this.flushRef = null
 
         this.rtt = null
         this.respondedPong = true
@@ -193,11 +193,17 @@ export class Connection {
     }
 
     send(message: string): Promise<void> {
-        this.sendRef = setImmediate(() => {
-            this.sendRef = null
-            this.attemptToFlushMessages()
-        })
+        this.setFlushRef()
         return this.messageQueue.add(message)
+    }
+
+    private setFlushRef() {
+        if (this.flushRef === null) {
+            this.flushRef = setImmediate(() => {
+                this.flushRef = null
+                this.attemptToFlushMessages()
+            })
+        }
     }
 
     close(err?: Error): void {
@@ -229,7 +235,7 @@ export class Connection {
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
         this.pingTimeoutRef = null
-        this.sendRef = null
+        this.flushRef = null
 
         if (err) {
             this.onError(err)
@@ -321,10 +327,7 @@ export class Connection {
         dataChannel.onBufferedAmountLow(() => {
             if (this.paused) {
                 this.paused = false
-                this.sendRef = setImmediate(() => {
-                    this.sendRef = null
-                    this.attemptToFlushMessages()
-                })
+                this.setFlushRef()
                 this.onBufferLow()
             }
         })
@@ -346,10 +349,7 @@ export class Connection {
             clearInterval(this.connectionTimeoutRef)
         }
         this.dataChannel = dataChannel
-        this.sendRef = setImmediate(() => {
-            this.sendRef = null
-            this.attemptToFlushMessages()
-        })
+        this.setFlushRef()
         this.onOpen()
     }
 
@@ -359,10 +359,7 @@ export class Connection {
             // Max 10 messages sent in busy-loop, then relinquish control for a moment, in case `dc.send` is blocking
             // (is it?)
             if (numOfSuccessSends >= 10) {
-                this.sendRef = setImmediate(() => {
-                    this.sendRef = null
-                    this.attemptToFlushMessages()
-                })
+                this.setFlushRef()
                 return
             }
 
