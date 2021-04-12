@@ -154,7 +154,9 @@ export class Connection {
             this.logger.debug('conn.onStateChange: %s', state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close()
-            } if (state === 'connecting' && !this.connectionTimeoutRef) {
+            } else if (state === 'failed') {
+                this.close(new Error('connection failed'))
+            } else if (state === 'connecting' && !this.connectionTimeoutRef) {
                 this.connectionTimeoutRef = setTimeout(() => {
                     this.logger.warn('connection timed out')
                     this.close(new Error('timed out'))
