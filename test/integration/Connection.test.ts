@@ -1,7 +1,9 @@
 import { DescriptionType } from 'node-datachannel'
 import { waitForCondition, wait } from 'streamr-test-utils'
 
+import { MessageQueue } from '../../src/connection/MessageQueue'
 import { Connection } from '../../src/connection/Connection'
+import { Logger } from '../../src/helpers/Logger'
 
 interface ConnectionFunctions {
     onOpen: (data?: any) => void
@@ -79,6 +81,8 @@ describe('Connection', () => {
                 throw err
             }
         }
+        const messageQueueOne = new MessageQueue<string>(new Logger(['test']))
+        const messageQueueTwo = new MessageQueue<string>(new Logger(['test']))
         connectionOne = new Connection({
             selfId: 'one',
             targetPeerId: 'two',
@@ -92,7 +96,8 @@ describe('Connection', () => {
             onClose: (...args) => oneFunctions.onClose(...args),
             onError: (...args) => oneFunctions.onError(...args),
             onBufferLow: () => {},
-            onBufferHigh: () => {}
+            onBufferHigh: () => {},
+            messageQueue: messageQueueOne,
         })
         connectionTwo = new Connection({
             selfId: 'two',
@@ -107,7 +112,8 @@ describe('Connection', () => {
             onClose: (...args) => twoFunctions.onClose(...args),
             onError: (...args) => twoFunctions.onError(...args),
             onBufferLow: () => {},
-            onBufferHigh: () => {}
+            onBufferHigh: () => {},
+            messageQueue: messageQueueTwo,
         })
     })
 

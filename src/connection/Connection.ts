@@ -26,6 +26,7 @@ export interface ConstructorOptions {
     onError: (err: Error) => void
     onBufferLow: () => void
     onBufferHigh: () => void
+    messageQueue: MessageQueue<string>
 }
 
 let ID = 0
@@ -76,6 +77,7 @@ export class Connection {
         routerId,
         isOffering,
         stunUrls,
+        messageQueue,
         bufferThresholdHigh = 2 ** 17,
         bufferThresholdLow = 2 ** 15,
         newConnectionTimeout = 8000,
@@ -109,7 +111,7 @@ export class Connection {
         this.logger = new Logger(['connection', this.id, `${this.selfId}-->${this.getPeerId()}`])
         this.isFinished = false
 
-        this.messageQueue = new MessageQueue<string>(this.logger)
+        this.messageQueue = messageQueue
         this.connection = null
         this.dataChannel = null
         this.paused = false

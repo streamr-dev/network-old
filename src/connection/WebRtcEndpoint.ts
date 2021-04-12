@@ -14,6 +14,8 @@ import {
 } from '../logic/RtcSignaller'
 import { Rtts } from '../identifiers'
 
+import { MessageQueue } from './MessageQueue'
+
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
     PEER_DISCONNECTED = 'streamr:peer:disconnect',
@@ -44,6 +46,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private readonly stunUrls: string[]
     private readonly rtcSignaller: RtcSignaller
     private connections: { [key: string]: Connection }
+    private messageQueues: { [key: string]: MessageQueue<string> }
     private readonly newConnectionTimeout: number
     private readonly pingInterval: number
     private readonly logger: Logger
@@ -51,6 +54,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private stopped = false
     private readonly bufferThresholdLow: number
     private readonly bufferThresholdHigh: number
+    private maxMessageSize
 
     constructor(
         peerInfo: PeerInfo,
@@ -60,18 +64,21 @@ export class WebRtcEndpoint extends EventEmitter {
         newConnectionTimeout = 5000,
         pingInterval = 2 * 1000,
         webrtcDatachannelBufferThresholdLow = 2 ** 15,
-        webrtcDatachannelBufferThresholdHigh = 2 ** 17
+        webrtcDatachannelBufferThresholdHigh = 2 ** 17,
+        maxMessageSize = 1048576
     ) {
         super()
         this.peerInfo = peerInfo
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
         this.connections = {}
+        this.messageQueues = {}
         this.newConnectionTimeout = newConnectionTimeout
         this.pingInterval = pingInterval
         this.logger = new Logger(['connection', 'WebRtcEndpoint'], peerInfo)
         this.bufferThresholdLow = webrtcDatachannelBufferThresholdLow
         this.bufferThresholdHigh = webrtcDatachannelBufferThresholdHigh
+        this.maxMessageSize = maxMessageSize
 
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description } : OfferOptions) => {
             const { peerId } = originatorInfo
@@ -155,6 +162,7 @@ export class WebRtcEndpoint extends EventEmitter {
             return Promise.resolve(targetPeerId)
         }
         const offering = force ? true : isOffering
+        const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.logger, this.maxMessageSize)
         const connection = new Connection({
             selfId: this.peerInfo.peerId,
             targetPeerId,
@@ -163,6 +171,7 @@ export class WebRtcEndpoint extends EventEmitter {
             stunUrls: this.stunUrls,
             bufferThresholdHigh: this.bufferThresholdHigh,
             bufferThresholdLow: this.bufferThresholdLow,
+            messageQueue,
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
             onLocalDescription: (type, description) => {
@@ -183,11 +192,13 @@ export class WebRtcEndpoint extends EventEmitter {
                 this.metrics.record('msgInSpeed', 1)
             },
             onClose: () => {
+                if (this.connections[targetPeerId] === connection) {
+                    delete this.connections[targetPeerId]
+                }
                 this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
                 const err = new Error(`disconnected ${connection.getPeerId()}`)
                 this.emit(`disconnected:${connection.getPeerId()}`, err)
                 this.metrics.record('close', 1)
-                delete this.connections[targetPeerId]
             },
             onError: (err) => {
                 this.emit(`errored:${connection.getPeerId()}`, err)
@@ -262,6 +273,9 @@ export class WebRtcEndpoint extends EventEmitter {
         this.stopped = true
         Object.values(this.connections).forEach((connection) => connection.close())
         this.connections = {}
+
+        Object.values(this.messageQueues).forEach((queue) => queue.clear())
+        this.messageQueues = {}
         this.rtcSignaller.setOfferListener(() => {})
         this.rtcSignaller.setAnswerListener(() => {})
         this.rtcSignaller.setRemoteCandidateListener(() => {})
