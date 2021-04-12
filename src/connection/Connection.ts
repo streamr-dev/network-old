@@ -359,7 +359,7 @@ export class Connection {
 
     private openDataChannel(dataChannel: DataChannel): void {
         if (this.connectionTimeoutRef !== null) {
-            clearInterval(this.connectionTimeoutRef)
+            clearTimeout(this.connectionTimeoutRef)
         }
         this.dataChannel = dataChannel
         this.setFlushRef()
