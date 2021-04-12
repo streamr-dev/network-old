@@ -172,7 +172,7 @@ describe('Connection', () => {
         expect(connectionTwo.getRtt()).toBeGreaterThanOrEqual(0)
     })
 
-    it('messages delivered again on temporary loss of connectivity', async () => {
+    it.skip('messages delivered again on temporary loss of connectivity', async () => {
         connectionOne.connect()
         connectionTwo.connect()
 
@@ -243,5 +243,52 @@ describe('Connection', () => {
 
         expect(connectionOne.isOpen()).toEqual(false)
         expect(connectionTwo.isOpen()).toEqual(false)
+    })
+
+    it('can not connect if closed then opened again in series', async () => {
+        // open
+        const t1 = Promise.allSettled([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+        connectionOne.connect()
+        connectionTwo.connect()
+        await t1
+        expect(connectionOne.isOpen()).toEqual(true)
+        expect(connectionTwo.isOpen()).toEqual(true)
+        const t2 = Promise.allSettled([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
+        // then close
+        connectionOne.close()
+        connectionTwo.close()
+        await t2
+        expect(connectionOne.isOpen()).toEqual(false)
+        expect(connectionTwo.isOpen()).toEqual(false)
+
+        await expect(async () => {
+            connectionOne.connect()
+        }).rejects.toThrow('closed')
+
+        await expect(async () => {
+            connectionTwo.connect()
+        }).rejects.toThrow('closed')
+
+        expect(connectionOne.isOpen()).toEqual(false)
+        expect(connectionTwo.isOpen()).toEqual(false)
+    })
+
+    it('can not connect if closed then opened again in parallel', async () => {
+        const connectResolved = jest.fn()
+        const onConnect = onConnectPromise(oneFunctions).finally(connectResolved)
+        const onClose = onClosePromise(oneFunctions)
+        connectionOne.connect()
+        connectionTwo.connect()
+        connectionOne.close()
+        expect(() => {
+            connectionOne.connect()
+        }).toThrow('closed')
+        await Promise.race([
+            onConnect,
+            wait(3000),
+        ])
+        await onClose // close should resolve
+        expect(connectResolved).not.toHaveBeenCalled()
+        expect(connectionOne.isOpen()).toEqual(false)
     })
 })
