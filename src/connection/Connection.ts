@@ -150,8 +150,8 @@ export class Connection {
                 return
             }
 
+            this.logger.debug('conn.onStateChange: %s -> %s', this.lastState, state)
             this.lastState = state
-            this.logger.debug('conn.onStateChange: %s', state)
             if (state === 'disconnected' || state === 'closed') {
                 this.close()
             } else if (state === 'failed') {
@@ -167,7 +167,6 @@ export class Connection {
             if (this.isFinished) { return }
             this.logger.debug('conn.onGatheringStateChange: %s -> %s', this.lastGatheringState, state)
             this.lastGatheringState = state
-            this.logger.debug('conn.onGatheringStateChange: %s', state)
         })
         this.connection.onLocalDescription((description, type: DescriptionType) => {
             if (this.isFinished) { return }
@@ -184,6 +183,7 @@ export class Connection {
         } else {
             this.connection.onDataChannel((dataChannel) => {
                 if (this.isFinished) {
+                    // need to close datachannel if opened after we already closed this connection
                     try {
                         dataChannel.close()
                     } catch (err) {
