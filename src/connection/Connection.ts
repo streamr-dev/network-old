@@ -72,7 +72,7 @@ export class Connection {
         stunUrls,
         bufferThresholdHigh = 2 ** 17,
         bufferThresholdLow = 2 ** 15,
-        newConnectionTimeout = 15000,
+        newConnectionTimeout = 18000,
         maxPingPongAttempts = 5,
         pingInterval = 2 * 1000,
         flushRetryTimeout = 500,
