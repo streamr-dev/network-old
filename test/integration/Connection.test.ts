@@ -208,7 +208,7 @@ describe('Connection', () => {
     })
 
     it('connection timeouts if other end does not connect too', (done) => {
-        connectionOne.newConnectionTimeout = 200 // would be better to pass via constructor
+        connectionOne.newConnectionTimeout = 3000 // would be better to pass via constructor
         connectionOne.connect()
         oneFunctions.onError = (err: Error) => {
             expect(err).toEqual(new Error('timed out'))
@@ -219,7 +219,7 @@ describe('Connection', () => {
 
     it('connection does not timeout if connection succeeds', async () => {
         // this test ensures failed connection timeout has been cleared
-        const TIMEOUT = 300
+        const TIMEOUT = 3000
         connectionOne.newConnectionTimeout = TIMEOUT
         connectionTwo.newConnectionTimeout = TIMEOUT
         connectionOne.connect()

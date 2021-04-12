@@ -94,7 +94,7 @@ describe('Signalling error scenarios', () => {
         expect(Object.keys(nodeOne.nodeToNode.endpoint.connections)).toEqual(['node-2'])
         // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
-    })
+    }, 20000)
 
     it('nodes recover if both signaller connections fail during signalling', async () => {
         nodeOne.subscribe('stream-id', 0)

@@ -80,7 +80,7 @@ export class Connection {
         messageQueue,
         bufferThresholdHigh = 2 ** 17,
         bufferThresholdLow = 2 ** 15,
-        newConnectionTimeout = 8000,
+        newConnectionTimeout = 15000,
         maxPingPongAttempts = 5,
         pingInterval = 2 * 1000,
         flushRetryTimeout = 500,
