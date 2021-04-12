@@ -111,7 +111,7 @@ export class Node extends EventEmitter {
         this.bufferTimeoutInMs = opts.bufferTimeoutInMs || 60 * 1000
         this.bufferMaxSize = opts.bufferMaxSize || 10000
         this.disconnectionWaitTime = opts.disconnectionWaitTime || 30 * 1000
-        this.nodeConnectTimeout = opts.nodeConnectTimeout || 6000
+        this.nodeConnectTimeout = opts.nodeConnectTimeout || 10000
         this.instructionRetryInterval = opts.instructionRetryInterval || 60000
         this.started = new Date().toLocaleString()
         this.logger = new Logger(['logic', 'Node'], this.peerInfo)
