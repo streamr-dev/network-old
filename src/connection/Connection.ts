@@ -266,7 +266,7 @@ export class Connection {
         if (this.pingTimeoutRef) {
             clearTimeout(this.pingTimeoutRef)
         }
-        setTimeout(() => this.ping(), this.pingInterval)
+        this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingInterval)
     }
 
     pong(): void {
