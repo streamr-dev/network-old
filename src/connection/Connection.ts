@@ -23,8 +23,8 @@ export interface ConstructorOptions {
     onOpen: () => void
     onMessage: (msg: string)  => void
     onClose: (err?: Error) => void
-    onError: (err: Error) => void,
-    onBufferLow: () => void,
+    onError: (err: Error) => void
+    onBufferLow: () => void
     onBufferHigh: () => void
 }
 
@@ -34,7 +34,7 @@ export class Connection {
     public readonly id: string
     private readonly selfId: string
     private peerInfo: PeerInfo
-    private isClosed: boolean
+    private isFinished: boolean
     private readonly routerId: string
     private readonly isOffering: boolean
     private readonly stunUrls: string[]
@@ -107,7 +107,7 @@ export class Connection {
         this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
         this.logger = new Logger(['connection', this.id, `${this.selfId}-->${this.getPeerId()}`])
-        this.isClosed = false
+        this.isFinished = false
 
         this.messageQueue = new MessageQueue<string>(this.logger)
         this.connection = null
@@ -137,7 +137,7 @@ export class Connection {
 
     connect(): void {
         this.logger.info('connect()')
-        if (this.isClosed) {
+        if (this.isFinished) {
             throw new Error('Connection already closed.')
         }
 
@@ -146,7 +146,7 @@ export class Connection {
             maxMessageSize: this.maxMessageSize
         })
         this.connection.onStateChange((state) => {
-            if (this.isClosed) {
+            if (this.isFinished) {
                 return
             }
 
@@ -164,16 +164,17 @@ export class Connection {
             }
         })
         this.connection.onGatheringStateChange((state) => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
+            this.logger.debug('conn.onGatheringStateChange: %s -> %s', this.lastGatheringState, state)
             this.lastGatheringState = state
             this.logger.debug('conn.onGatheringStateChange: %s', state)
         })
         this.connection.onLocalDescription((description, type: DescriptionType) => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.onLocalDescription(type, description)
         })
         this.connection.onLocalCandidate((candidate, mid) => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.onLocalCandidate(candidate, mid)
         })
 
@@ -182,7 +183,7 @@ export class Connection {
             this.setupDataChannel(dataChannel)
         } else {
             this.connection.onDataChannel((dataChannel) => {
-                if (this.isClosed) {
+                if (this.isFinished) {
                     try {
                         dataChannel.close()
                     } catch (err) {
@@ -198,7 +199,7 @@ export class Connection {
         }
 
         this.connectionTimeoutRef = setTimeout(() => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.logger.warn('connection timed out')
             this.close(new Error('timed out'))
         }, this.newConnectionTimeout)
@@ -243,11 +244,11 @@ export class Connection {
     }
 
     close(err?: Error): void {
-        if (this.isClosed) {
+        if (this.isFinished) {
             // already closed, noop
             return
         }
-        this.isClosed = true
+        this.isFinished = true
 
         if (err) {
             this.logger.warn('conn.close(): %s', err)
@@ -370,22 +371,22 @@ export class Connection {
         dataChannel.setBufferedAmountLowThreshold(this.bufferThresholdLow)
         if (this.isOffering) {
             dataChannel.onOpen(() => {
-                if (this.isClosed) { return }
+                if (this.isFinished) { return }
                 this.logger.debug('dc.onOpen')
                 this.openDataChannel(dataChannel)
             })
         }
         dataChannel.onClosed(() => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.logger.debug('dc.onClosed')
             this.close()
         })
         dataChannel.onError((e) => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.logger.warn('dc.onError: %s', e)
         })
         dataChannel.onBufferedAmountLow(() => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             if (this.paused) {
                 this.paused = false
                 this.setFlushRef()
@@ -393,7 +394,7 @@ export class Connection {
             }
         })
         dataChannel.onMessage((msg) => {
-            if (this.isClosed) { return }
+            if (this.isFinished) { return }
             this.logger.debug('dc.onmessage')
             if (msg === 'ping') {
                 this.pong()
@@ -417,7 +418,7 @@ export class Connection {
 
     private attemptToFlushMessages(): void {
         let numOfSuccessSends = 0
-        while (!this.messageQueue.empty() && this.dataChannel != null) {
+        while (!this.isFinished && !this.messageQueue.empty() && this.dataChannel != null) {
             // Max 10 messages sent in busy-loop, then relinquish control for a moment, in case `dc.send` is blocking
             // (is it?)
             if (numOfSuccessSends >= 10) {
