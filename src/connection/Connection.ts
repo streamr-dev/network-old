@@ -2,8 +2,8 @@ import nodeDataChannel, {
     DataChannel,
     DescriptionType,
     LogLevel,
-    PeerConnection,
-    SctpSettings} from 'node-datachannel'
+    PeerConnection
+} from 'node-datachannel'
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
 import { MessageQueue, QueueItem } from './MessageQueue'
