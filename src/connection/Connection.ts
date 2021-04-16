@@ -1,4 +1,9 @@
-import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection } from 'node-datachannel'
+import nodeDataChannel, {
+    DataChannel,
+    DescriptionType,
+    LogLevel,
+    PeerConnection,
+    SctpSettings} from 'node-datachannel'
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
 import { MessageQueue, QueueItem } from './MessageQueue'
@@ -13,6 +18,7 @@ export interface ConstructorOptions {
     stunUrls: string[]
     bufferThresholdLow?: number
     bufferThresholdHigh?: number
+    maxMessageSize?: number
     newConnectionTimeout?: number
     maxPingPongAttempts?: number
     pingInterval?: number
@@ -27,7 +33,10 @@ export interface ConstructorOptions {
     onBufferHigh: () => void
 }
 
+let ID = 0
+
 export class Connection {
+    public readonly id: string
     private readonly selfId: string
     private peerInfo: PeerInfo
     private readonly routerId: string
@@ -35,6 +44,7 @@ export class Connection {
     private readonly stunUrls: string[]
     private readonly bufferThresholdHigh: number
     private readonly bufferThresholdLow: number
+    private readonly maxMessageSize: number
     private readonly newConnectionTimeout: number
     private readonly maxPingPongAttempts: number
     private readonly pingInterval: number
@@ -83,8 +93,11 @@ export class Connection {
         onClose,
         onError,
         onBufferLow,
-        onBufferHigh
+        onBufferHigh,
+        maxMessageSize = 1048576
     }: ConstructorOptions) {
+        ID += 1
+        this.id = `Connection${ID}`
         this.selfId = selfId
         this.peerInfo = PeerInfo.newUnknown(targetPeerId)
         this.routerId = routerId
@@ -92,11 +105,12 @@ export class Connection {
         this.stunUrls = stunUrls
         this.bufferThresholdHigh = bufferThresholdHigh
         this.bufferThresholdLow = bufferThresholdLow
+        this.maxMessageSize = maxMessageSize
         this.newConnectionTimeout = newConnectionTimeout
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
-        this.logger = new Logger(['connection', 'Connection', `${this.selfId}-->${this.getPeerId()}`])
+        this.logger = new Logger(['connection', this.id, `${this.selfId}-->${this.getPeerId()}`])
 
         this.messageQueue = new MessageQueue<string>(this.logger)
         this.connection = null
@@ -122,11 +136,16 @@ export class Connection {
         this.onError = onError
         this.onBufferLow = onBufferLow
         this.onBufferHigh = onBufferHigh
+        nodeDataChannel.setSctpSettings({
+            recvBufferSize: 2 ** 16,
+            sendBufferSize: 2 ** 16,
+        })
     }
 
     connect(): void {
         this.connection = new nodeDataChannel.PeerConnection(this.selfId, {
-            iceServers: this.stunUrls
+            iceServers: this.stunUrls,
+            maxMessageSize: this.maxMessageSize
         })
         this.connection.onStateChange((state) => {
             this.lastState = state
@@ -261,7 +280,7 @@ export class Connection {
         if (this.pingTimeoutRef) {
             clearTimeout(this.pingTimeoutRef)
         }
-        setTimeout(() => this.ping(), this.pingInterval)
+        this.pingTimeoutRef = setTimeout(() => this.ping(), this.pingInterval)
     }
 
     pong(): void {
@@ -354,7 +373,7 @@ export class Connection {
 
     private openDataChannel(dataChannel: DataChannel): void {
         if (this.connectionTimeoutRef !== null) {
-            clearInterval(this.connectionTimeoutRef)
+            clearTimeout(this.connectionTimeoutRef)
         }
         this.dataChannel = dataChannel
         this.setFlushRef()

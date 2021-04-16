@@ -1,6 +1,6 @@
 {
   "name": "streamr-network",
-  "version": "24.1.8-emu.3",
+  "version": "24.1.9-emu.1",
   "description": "Minimal and extendable implementation of the Streamr Network network node.",
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     "test-unit": "jest test/unit",
     "coverage": "jest --coverage",
     "test-integration": "jest test/integration",
+    "test-types": "tsc --noEmit --project ./tsconfig.json ",
     "eslint": "eslint .",
     "network": "node $NODE_DEBUG_OPTION bin/network.js",
     "docs": "typedoc --options typedoc.js"
@@ -42,7 +43,7 @@
     "heap": "^0.2.6",
     "lodash": "^4.17.21",
     "lru-cache": "^6.0.0",
-    "node-datachannel": "^0.1.0",
+    "node-datachannel": "^0.1.2",
     "pino": "^6.11.2",
     "pino-pretty": "^4.7.1",
     "speedometer": "^1.1.0",
