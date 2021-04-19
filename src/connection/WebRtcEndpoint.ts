@@ -268,6 +268,7 @@ export class WebRtcEndpoint extends EventEmitter {
         this.logger.debug('close connection to %s due to %s', receiverNodeId, reason)
         const connection = this.connections[receiverNodeId]
         if (connection) {
+            delete this.connections[receiverNodeId]
             connection.close()
         }
     }
