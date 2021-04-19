@@ -297,10 +297,8 @@ export class WebRtcEndpoint extends EventEmitter {
 
     stop(): void {
         this.stopped = true
-        Object.values(this.connections).forEach((connection) => connection.close())
+        const { connections, messageQueues } = this
         this.connections = {}
-
-        Object.values(this.messageQueues).forEach((queue) => queue.clear())
         this.messageQueues = {}
         this.rtcSignaller.setOfferListener(() => {})
         this.rtcSignaller.setAnswerListener(() => {})
@@ -308,6 +306,8 @@ export class WebRtcEndpoint extends EventEmitter {
         this.rtcSignaller.setErrorListener(() => {})
         this.rtcSignaller.setConnectListener(() => {})
         this.removeAllListeners()
+        Object.values(connections).forEach((connection) => connection.close())
+        Object.values(messageQueues).forEach((queue) => queue.clear())
         nodeDataChannel.cleanup()
     }
 }
