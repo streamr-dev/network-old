@@ -61,7 +61,7 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
-        newConnectionTimeout = 5000,
+        newConnectionTimeout = 15000,
         pingInterval = 2 * 1000,
         webrtcDatachannelBufferThresholdLow = 2 ** 15,
         webrtcDatachannelBufferThresholdHigh = 2 ** 17,
