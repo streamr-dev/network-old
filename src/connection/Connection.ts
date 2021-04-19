@@ -60,7 +60,7 @@ export class Connection {
     private connection: PeerConnection | null
     private dataChannel: DataChannel | null
     private paused: boolean
-    private lastState: string | null
+    public lastState: string | null
     private lastGatheringState: string | null
     private flushTimeoutRef: NodeJS.Timeout | null
     private connectionTimeoutRef: NodeJS.Timeout | null

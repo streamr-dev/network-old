@@ -147,7 +147,7 @@ export class WebRtcEndpoint extends EventEmitter {
             })
     }
 
-    connect(
+    async connect(
         targetPeerId: string,
         routerId: string,
         isOffering = this.peerInfo.peerId < targetPeerId,
@@ -158,9 +158,21 @@ export class WebRtcEndpoint extends EventEmitter {
         if (this.stopped) {
             return Promise.reject(new WebRtcError('WebRtcEndpoint has been stopped'))
         }
+
         if (this.connections[targetPeerId]) {
-            return Promise.resolve(targetPeerId)
+            this.logger.debug('Already connection for %s. state: %s', targetPeerId, this.connections[targetPeerId].lastState)
+            const { lastState } = this.connections[targetPeerId]
+            if (['connected', 'failed', 'closed'].includes(lastState as string)) {
+                return Promise.resolve(targetPeerId)
+            }
+
+            return new Promise((resolve, reject) => {
+                this.once(`connected:${targetPeerId}`, resolve)
+                this.once(`errored:${targetPeerId}`, reject)
+                this.once(`disconnected:${targetPeerId}`, reject)
+            })
         }
+
         const offering = force ? true : isOffering
         const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.logger, this.maxMessageSize)
         const connection = new Connection({
@@ -210,6 +222,7 @@ export class WebRtcEndpoint extends EventEmitter {
                 this.emit(Event.HIGH_BACK_PRESSURE, connection.getPeerInfo())
             }
         })
+
         this.connections[targetPeerId] = connection
         connection.connect()
         if (!trackerInstructed) {
