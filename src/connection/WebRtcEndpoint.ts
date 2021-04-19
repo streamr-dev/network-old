@@ -187,17 +187,29 @@ export class WebRtcEndpoint extends EventEmitter {
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
             onLocalDescription: (type, description) => {
+                if (this.connections[targetPeerId] !== connection) {
+                    return
+                }
                 this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
             },
             onLocalCandidate: (candidate, mid) => {
+                if (this.connections[targetPeerId] !== connection) {
+                    return
+                }
                 this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
             },
             onOpen: () => {
+                if (this.connections[targetPeerId] !== connection) {
+                    return
+                }
                 this.emit(Event.PEER_CONNECTED, connection.getPeerInfo())
                 this.emit(`connected:${connection.getPeerId()}`, connection.getPeerId())
                 this.metrics.record('open', 1)
             },
             onMessage: (message) => {
+                if (this.connections[targetPeerId] !== connection) {
+                    return
+                }
                 this.emit(Event.MESSAGE_RECEIVED, connection.getPeerInfo(), message)
                 this.metrics.record('inSpeed', message.length)
                 this.metrics.record('msgSpeed', 1)
