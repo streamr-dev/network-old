@@ -383,52 +383,57 @@ export class Node extends EventEmitter {
 
         const subscribers = this.streams.getOutboundNodesForStream(streamIdAndPartition).filter((n) => n !== source)
 
-        if (subscribers.length) {
-            subscribers.forEach(async (subscriber) => {
-                try {
-                    await this.nodeToNode.sendData(subscriber, streamMessage)
-                    this.consecutiveDeliveryFailures[subscriber] = 0
-                } catch (e) {
-                    const serializedMsgId = streamMessage.getMessageID().serialize()
-                    this.logger.warn('failed to propagate %s (consecutiveFails=%d) to subscriber %s, reason: %s',
-                        serializedMsgId,
-                        this.consecutiveDeliveryFailures[subscriber] || 0,
-                        subscriber,
-                        e)
-                    this.emit(Event.MESSAGE_PROPAGATION_FAILED, streamMessage.getMessageID(), subscriber, e)
-
-                    // TODO: this is hack to get around the issue where `StreamStateManager` believes that we are
-                    //  connected to a neighbor whilst `WebRtcEndpoint` knows that we are not. In this situation, the
-                    //  Node will continuously attempt to propagate messages to the neighbor but will not actually ever
-                    //  (re-)attempt a connection unless as a side-effect of something else (e.g. subscribing to another
-                    //  stream, and the neighbor in question happens to get assigned to us via the other stream.)
-                    //
-                    // This hack basically counts consecutive delivery failures, and upon hitting 100 such failures,
-                    // decides to forcefully disconnect the neighbor.
-                    //
-                    // Ideally this hack would not be needed, but alas, it seems like with the current event-system,
-                    // we don't end up with an up-to-date state in the logic layer. I believe something like the
-                    // ConnectionManager-model could help us solve the issue for good.
-                    if (this.consecutiveDeliveryFailures[subscriber] === undefined) {
-                        this.consecutiveDeliveryFailures[subscriber] = 0
-                    }
-                    this.consecutiveDeliveryFailures[subscriber] += 1
-                    if (this.consecutiveDeliveryFailures[subscriber] >= 100) {
-                        this.logger.warn(`disconnecting from ${subscriber} due to 100 consecutive delivery failures`)
-                        this.onNodeDisconnected(subscriber) // force disconnect
-                        this.consecutiveDeliveryFailures[subscriber] = 0
-                    }
-                }
-            })
-
-            this.seenButNotPropagatedSet.delete(streamMessage)
-            this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
-        } else {
-            this.logger.debug('put %j back to buffer because could not propagate to %d nodes or more',
-                streamMessage.messageId, MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION)
+        if (!subscribers.length) {
+            this.logger.warn('put back to buffer because could not propagate to %d nodes or more: %j',
+                MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION, streamMessage.messageId)
+            this.logger.debug('streams: %j', this.streams)
             this.seenButNotPropagatedSet.add(streamMessage)
             this.messageBuffer.put(streamIdAndPartition.key(), [streamMessage, source])
+            return
         }
+
+        this.logger.info('propagating to subscribers: %s', subscribers.join(', '))
+        subscribers.forEach(async (subscriber) => {
+            try {
+                this.logger.info('propagating to %s >', subscriber)
+                await this.nodeToNode.sendData(subscriber, streamMessage)
+                this.logger.info('propagating to %s <', subscriber)
+                this.consecutiveDeliveryFailures[subscriber] = 0
+            } catch (e) {
+                const serializedMsgId = streamMessage.getMessageID().serialize()
+                this.logger.warn('failed to propagate %s (consecutiveFails=%d) to subscriber %s, reason: %s',
+                    serializedMsgId,
+                    this.consecutiveDeliveryFailures[subscriber] || 0,
+                    subscriber,
+                    e)
+                this.emit(Event.MESSAGE_PROPAGATION_FAILED, streamMessage.getMessageID(), subscriber, e)
+
+                // TODO: this is hack to get around the issue where `StreamStateManager` believes that we are
+                //  connected to a neighbor whilst `WebRtcEndpoint` knows that we are not. In this situation, the
+                //  Node will continuously attempt to propagate messages to the neighbor but will not actually ever
+                //  (re-)attempt a connection unless as a side-effect of something else (e.g. subscribing to another
+                //  stream, and the neighbor in question happens to get assigned to us via the other stream.)
+                //
+                // This hack basically counts consecutive delivery failures, and upon hitting 100 such failures,
+                // decides to forcefully disconnect the neighbor.
+                //
+                // Ideally this hack would not be needed, but alas, it seems like with the current event-system,
+                // we don't end up with an up-to-date state in the logic layer. I believe something like the
+                // ConnectionManager-model could help us solve the issue for good.
+                if (this.consecutiveDeliveryFailures[subscriber] === undefined) {
+                    this.consecutiveDeliveryFailures[subscriber] = 0
+                }
+                this.consecutiveDeliveryFailures[subscriber] += 1
+                if (this.consecutiveDeliveryFailures[subscriber] >= 100) {
+                    this.logger.warn(`disconnecting from ${subscriber} due to 100 consecutive delivery failures`)
+                    this.onNodeDisconnected(subscriber) // force disconnect
+                    this.consecutiveDeliveryFailures[subscriber] = 0
+                }
+            }
+        })
+
+        this.seenButNotPropagatedSet.delete(streamMessage)
+        this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
     }
 
     stop(): Promise<unknown> {
