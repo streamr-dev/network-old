@@ -320,8 +320,11 @@ export class Node extends EventEmitter {
         this.logger.debug('subscribed to %j and unsubscribed from %j (streamId=%s, counter=%d)',
             subscribeNodeIds, unsubscribeNodeIds, streamId, counter)
 
-        if (subscribeNodeIds.length !== nodeIds.length) {
+        if (JSON.stringify(subscribeNodeIds.slice().sort()) !== JSON.stringify(nodeIds.slice().sort())) {
             this.logger.debug('error: failed to fulfill all tracker instructions (streamId=%s, counter=%d)',
+                streamId, counter)
+        } else {
+            this.logger.debug('Tracker instructions fulfilled (streamId=%s, counter=%d)',
                 streamId, counter)
         }
     }
