@@ -137,7 +137,7 @@ export class Connection {
         this.onBufferLow = onBufferLow
         this.onBufferHigh = onBufferHigh
         nodeDataChannel.setSctpSettings({
-            maxChunksOnQueue: 512
+            delayedSackTime: 5
         })
     }
 
