@@ -138,7 +138,7 @@ export class Connection {
     }
 
     connect(): void {
-        this.logger.info('connect()')
+        this.logger.debug('connect()')
         if (this.isFinished) {
             throw new Error('Connection already closed.')
         }
@@ -255,7 +255,7 @@ export class Connection {
         if (err) {
             this.logger.warn('conn.close(): %s', err)
         } else {
-            this.logger.info('conn.close()')
+            this.logger.debug('conn.close()')
         }
 
         if (this.dataChannel) {
