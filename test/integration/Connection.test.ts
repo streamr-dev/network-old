@@ -178,35 +178,6 @@ describe('Connection', () => {
         expect(connectionTwo.getRtt()).toBeGreaterThanOrEqual(0)
     })
 
-    it.skip('messages delivered again on temporary loss of connectivity', async () => {
-        connectionOne.connect()
-        connectionTwo.connect()
-
-        await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
-
-        const msgsReceivedByConnectionTwo: string[] = []
-        twoFunctions.onMessage = (msg: string) => msgsReceivedByConnectionTwo.push(msg)
-
-        for (let i = 1; i <= 10; ++i) {
-            connectionOne.send(`msg-${i}`)
-            if (i % 5 === 0) {
-                // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => msgsReceivedByConnectionTwo.length === 5)
-                connectionTwo.close()
-            }
-        }
-        await wait(50)
-        connectionOne.connect()
-        connectionTwo.connect()
-
-        await waitForCondition(() => msgsReceivedByConnectionTwo.length >= 10, undefined, undefined, () => {
-            return `expected msgsReceivedByConnectionTwo.length >= 10 but was ${msgsReceivedByConnectionTwo.length}`
-        })
-        expect(msgsReceivedByConnectionTwo).toEqual([
-            'msg-1', 'msg-2', 'msg-3', 'msg-4', 'msg-5', 'msg-6', 'msg-7', 'msg-8', 'msg-9', 'msg-10'
-        ])
-    })
-
     it('connection timeouts if other end does not connect too', (done) => {
         connectionOne.newConnectionTimeout = 3000 // would be better to pass via constructor
         connectionOne.connect()
