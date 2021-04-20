@@ -3,7 +3,7 @@ import { startEndpoint } from '../../src/connection/WsEndpoint'
 import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { Tracker, Event as TrackerEvent } from '../../src/logic/Tracker'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
+import { wait, waitForCondition, waitForEvent } from 'streamr-test-utils'
 import { Event as EndpointEvent, WebRtcEndpoint } from '../../src/connection/WebRtcEndpoint'
 import { RtcSignaller } from '../../src/logic/RtcSignaller'
 
@@ -172,7 +172,7 @@ describe('WebRtcEndpoint', () => {
                 hello: 'world'
             }))
         }
-        
+
         for (let i = 1; i <= 10; ++i) {
             sendFrom1To2()
             if (i % 5 === 0) {
@@ -181,7 +181,7 @@ describe('WebRtcEndpoint', () => {
                 endpoint2.close('node-1', 'test')
             }
         }
-
+        await wait(50)
         endpoint1.connect('node-2', 'tracker', true)
 
         await waitForCondition(() => ep2NumOfReceivedMessages === 10)
