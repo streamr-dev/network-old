@@ -151,7 +151,6 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
-
         let ep1NumOfReceivedMessages = 0
         let ep2NumOfReceivedMessages = 0
 
