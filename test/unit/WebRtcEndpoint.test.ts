@@ -134,4 +134,50 @@ describe('WebRtcEndpoint', () => {
             done()
         })
     })
+    it('can handle fast paced reconnects', async () => {
+        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
+        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+
+        await Promise.all([
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
+        ])
+
+        endpoint1.close('node-2', 'test')
+        endpoint1.connect('node-2', 'tracker', true)
+
+        await Promise.all([
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
+        ])
+
+
+        let ep1NumOfReceivedMessages = 0
+        let ep2NumOfReceivedMessages = 0
+
+        endpoint1.on(EndpointEvent.MESSAGE_RECEIVED, () => {
+            ep1NumOfReceivedMessages += 1
+        })
+        endpoint2.on(EndpointEvent.MESSAGE_RECEIVED, () => {
+            ep2NumOfReceivedMessages += 1
+        })
+
+        const sendFrom1To2 = () => {
+            endpoint1.send('node-2', JSON.stringify({
+                hello: 'world'
+            }))
+        }
+        const sendFrom2To1 = () => {
+            endpoint2.send('node-1', JSON.stringify({
+                hello: 'world'
+            }))
+        }
+        for (let i = 0; i < 10; ++i) {
+            setTimeout(sendFrom1To2, 10 * i)
+            setTimeout(sendFrom2To1, 10 * i + 5)
+        }
+
+        await waitForCondition(() => ep1NumOfReceivedMessages === 10)
+        await waitForCondition(() => ep2NumOfReceivedMessages === 10)
+    })
 })
