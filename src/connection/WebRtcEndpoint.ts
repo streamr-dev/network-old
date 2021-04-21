@@ -247,21 +247,21 @@ export class WebRtcEndpoint extends EventEmitter {
         })
     }
 
-    send(targetPeerId: string, message: string): Promise<void> {
+    async send(targetPeerId: string, message: string): Promise<void> {
         if (!this.connections[targetPeerId]) {
-            return Promise.reject(new WebRtcError(`Not connected to ${targetPeerId}.`))
+            throw new WebRtcError(`Not connected to ${targetPeerId}.`)
         }
-        return this.connections[targetPeerId].send(message)
-            .then(() => {
-                this.metrics.record('outSpeed', message.length)
-                this.metrics.record('msgSpeed', 1)
-                this.metrics.record('msgOutSpeed', 1)
-                return undefined
-            })
-            .catch((err) => {
-                this.metrics.record('sendFailed', 1)
-                throw err
-            })
+
+        try {
+            await this.connections[targetPeerId].send(message)
+        } catch (err) {
+            this.metrics.record('sendFailed', 1)
+            throw err
+        }
+
+        this.metrics.record('outSpeed', message.length)
+        this.metrics.record('msgSpeed', 1)
+        this.metrics.record('msgOutSpeed', 1)
     }
 
     close(receiverNodeId: string, reason: string): void {
