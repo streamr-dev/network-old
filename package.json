@@ -1,6 +1,6 @@
 {
   "name": "streamr-network",
-  "version": "24.1.9-emu.10",
+  "version": "24.1.9-emu.11",
   "description": "Minimal and extendable implementation of the Streamr Network network node.",
   "repository": {
     "type": "git",
