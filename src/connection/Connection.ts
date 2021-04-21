@@ -200,8 +200,9 @@ export class Connection {
             this.close(new Error('connection failed'))
         } else if (state === 'connecting' && !this.connectionTimeoutRef) {
             this.connectionTimeoutRef = setTimeout(() => {
-                this.logger.warn('connection timed out')
-                this.close(new Error('timed out'))
+                if (this.isFinished) { return }
+                this.logger.warn(`connection timed out after ${this.newConnectionTimeout}ms`)
+                this.close(new Error(`timed out after ${this.newConnectionTimeout}ms`))
             }, this.newConnectionTimeout)
         }
     }
@@ -252,8 +253,8 @@ export class Connection {
 
         this.connectionTimeoutRef = setTimeout(() => {
             if (this.isFinished) { return }
-            this.logger.warn('connection timed out')
-            this.close(new Error('timed out'))
+            this.logger.warn(`connection timed out after ${this.newConnectionTimeout}ms`)
+            this.close(new Error(`timed out after ${this.newConnectionTimeout}ms`))
         }, this.newConnectionTimeout)
     }
 
