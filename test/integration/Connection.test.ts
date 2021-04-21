@@ -37,8 +37,8 @@ function onClosePromise(functions: ConnectionFunctions) {
  * is "abstracted away" by local functions.
  */
 describe('Connection', () => {
-    let connectionOne: any
-    let connectionTwo: any
+    let connectionOne: Connection
+    let connectionTwo: Connection
     let oneFunctions: any
     let twoFunctions: any
 
@@ -117,9 +117,17 @@ describe('Connection', () => {
         })
     })
 
-    afterEach(() => {
-        connectionOne.close()
-        connectionTwo.close()
+    afterEach(async () => {
+        if (connectionOne.isOpen()) {
+            const onClose1 = onClosePromise(oneFunctions)
+            connectionOne.close()
+            await onClose1
+        }
+        if (connectionTwo.isOpen()) {
+            const onClose2 = onClosePromise(twoFunctions)
+            connectionTwo.close()
+            await onClose2
+        }
     })
 
     it('connection can be established', async () => {
@@ -179,6 +187,7 @@ describe('Connection', () => {
     })
 
     it('connection timeouts if other end does not connect too', (done) => {
+        // @ts-expect-error access private, only in test
         connectionOne.newConnectionTimeout = 3000 // would be better to pass via constructor
         connectionOne.connect()
         oneFunctions.onError = (err: Error) => {
@@ -191,7 +200,9 @@ describe('Connection', () => {
     it('connection does not timeout if connection succeeds', async () => {
         // this test ensures failed connection timeout has been cleared
         const TIMEOUT = 3000
+        // @ts-expect-error access private, only in test
         connectionOne.newConnectionTimeout = TIMEOUT
+        // @ts-expect-error access private, only in test
         connectionTwo.newConnectionTimeout = TIMEOUT
         connectionOne.connect()
         connectionTwo.connect()
@@ -211,6 +222,7 @@ describe('Connection', () => {
         await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
 
         connectionTwo.pong = () => {} // hacky: prevent connectionTwo from responding
+        // @ts-expect-error access private, only in test
         // eslint-disable-next-line require-atomic-updates
         connectionOne.pingPongTimeout = 50 // would be better to pass via constructor
         connectionOne.ping()
@@ -255,7 +267,6 @@ describe('Connection', () => {
         const onConnect = onConnectPromise(oneFunctions).finally(connectResolved)
         const onClose = onClosePromise(oneFunctions)
         connectionOne.connect()
-        connectionTwo.connect()
         connectionOne.close()
         expect(() => {
             connectionOne.connect()
