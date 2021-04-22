@@ -152,14 +152,17 @@ describe('WebRtcEndpoint', () => {
         ])
     })
 
-    it('messages are delivered on temprary loss of connectivity', async () => {
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
-        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+    it('messages are delivered on temporary loss of connectivity', async () => {
 
-        await Promise.all([
+        const t = Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
+
+        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
+        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+
+        await t
 
         let ep2NumOfReceivedMessages = 0
 
@@ -184,6 +187,6 @@ describe('WebRtcEndpoint', () => {
         await wait(50)
         endpoint1.connect('node-2', 'tracker', true)
 
-        await waitForCondition(() => ep2NumOfReceivedMessages === 10)
+        await waitForCondition(() => ep2NumOfReceivedMessages === 10, 5000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
     })
 })
