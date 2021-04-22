@@ -67,7 +67,7 @@ describe('Signalling error scenarios', () => {
         nodeOne.subscribe(streamId, 0)
         nodeTwo.subscribe(streamId, 0)
 
-        await Promise.race([
+        await Promise.all([
             // @ts-expect-error private field
             waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
             // @ts-expect-error private field
@@ -99,7 +99,7 @@ describe('Signalling error scenarios', () => {
         nodeOne.subscribe('stream-id', 0)
         nodeTwo.subscribe('stream-id', 0)
 
-        await Promise.race([
+        await Promise.all([
             // @ts-expect-error private field
             waitForEvent(nodeOne.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED),
             // @ts-expect-error private field
