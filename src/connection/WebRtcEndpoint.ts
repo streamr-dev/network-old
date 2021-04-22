@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events'
+import { EventEmitter, once } from 'events'
 import nodeDataChannel, { DescriptionType } from 'node-datachannel'
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
@@ -123,7 +123,11 @@ export class WebRtcEndpoint extends EventEmitter {
 
         rtcSignaller.setErrorListener(({ targetNode, errorCode }: ErrorOptions) => {
             const error = new WebRtcError(`RTC error ${errorCode} while attempting to signal with ${targetNode}`)
-            this.emit(`errored:${targetNode}`, error)
+            const connection = this.connections[targetNode]
+            // treat rtcSignaller errors as connection errors
+            if (connection) {
+                connection.close(error)
+            }
         })
 
         this.metrics = metricsContext.create('WebRtcEndpoint')
@@ -167,11 +171,13 @@ export class WebRtcEndpoint extends EventEmitter {
                 return Promise.resolve(targetPeerId)
             }
 
-            return new Promise((resolve, reject) => {
-                this.once(`connected:${targetPeerId}`, resolve)
-                this.once(`errored:${targetPeerId}`, reject)
-                this.once(`disconnected:${targetPeerId}`, reject)
-            })
+            await Promise.race([
+                once(connection, 'open'),
+                once(connection, 'close').then(() => {
+                    throw new Error(`disconnected ${connection.getPeerId()}`)
+                }),
+            ])
+            return connection.getPeerId()
         }
 
         const offering = force ? true : isOffering
@@ -196,7 +202,6 @@ export class WebRtcEndpoint extends EventEmitter {
         })
         connection.once('open', () => {
             this.emit(Event.PEER_CONNECTED, connection.getPeerInfo())
-            this.emit(`connected:${connection.getPeerId()}`, connection.getPeerId())
             this.metrics.record('open', 1)
         })
         connection.on('message', (message) => {
@@ -213,14 +218,9 @@ export class WebRtcEndpoint extends EventEmitter {
                 delete this.connections[targetPeerId]
             }
 
-            connection.removeAllListeners()
             this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
-            const err = new Error(`disconnected ${connection.getPeerId()}`)
-            this.emit(`disconnected:${connection.getPeerId()}`, err)
+            connection.removeAllListeners()
             this.metrics.record('close', 1)
-        })
-        connection.on('error', (err) => {
-            this.emit(`errored:${connection.getPeerId()}`, err)
         })
         connection.on('bufferLow', () => {
             this.emit(Event.LOW_BACK_PRESSURE, connection.getPeerInfo())
@@ -234,11 +234,14 @@ export class WebRtcEndpoint extends EventEmitter {
         if (!trackerInstructed) {
             this.rtcSignaller.onConnectionNeeded(routerId, connection.getPeerId(), force)
         }
-        return new Promise((resolve, reject) => {
-            this.once(`connected:${connection.getPeerId()}`, resolve)
-            this.once(`errored:${connection.getPeerId()}`, reject)
-            this.once(`disconnected:${connection.getPeerId()}`, reject)
-        })
+
+        await Promise.race([
+            once(connection, 'open'),
+            once(connection, 'close').then(() => {
+                throw new Error(`disconnected ${connection.getPeerId()}`)
+            }),
+        ])
+        return connection.getPeerId()
     }
 
     async send(targetPeerId: string, message: string): Promise<void> {

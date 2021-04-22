@@ -395,12 +395,9 @@ export class Node extends EventEmitter {
             return
         }
 
-        this.logger.info('propagating to subscribers: %s', subscribers.join(', '))
         subscribers.forEach(async (subscriber) => {
             try {
-                this.logger.info('propagating to %s >', subscriber)
                 await this.nodeToNode.sendData(subscriber, streamMessage)
-                this.logger.info('propagating to %s <', subscriber)
                 this.consecutiveDeliveryFailures[subscriber] = 0
             } catch (e) {
                 const serializedMsgId = streamMessage.getMessageID().serialize()
