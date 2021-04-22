@@ -104,7 +104,7 @@ export class Connection {
     private dataChannelEmitter?: ReturnType<typeof DataChannelEmitter>
     private connectionEmitter?: ReturnType<typeof PeerConnectionEmitter>
     private paused: boolean
-    public lastState: string | null
+    private lastState: string | null
     private lastGatheringState: string | null
     private flushTimeoutRef: NodeJS.Timeout | null
     private connectionTimeoutRef: NodeJS.Timeout | null
@@ -399,6 +399,10 @@ export class Connection {
 
     getRtt(): number | null {
         return this.rtt
+    }
+
+    getLastState(): string | null {
+        return this.lastState
     }
 
     getBufferedAmount(): number {

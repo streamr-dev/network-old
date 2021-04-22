@@ -160,8 +160,9 @@ export class WebRtcEndpoint extends EventEmitter {
         }
 
         if (this.connections[targetPeerId]) {
-            this.logger.debug('Already connection for %s. state: %s', targetPeerId, this.connections[targetPeerId].lastState)
-            const { lastState } = this.connections[targetPeerId]
+            const connection = this.connections[targetPeerId]
+            const lastState = connection.getLastState()
+            this.logger.debug('Already connection for %s. state: %s', targetPeerId, lastState)
             if (['connected', 'failed', 'closed'].includes(lastState as string)) {
                 return Promise.resolve(targetPeerId)
             }
