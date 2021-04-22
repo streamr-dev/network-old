@@ -83,7 +83,7 @@ export class WebRtcEndpoint extends EventEmitter {
         rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description } : OfferOptions) => {
             const { peerId } = originatorInfo
             this.connect(peerId, routerId).catch((err) => {
-                this.logger.warn('offerListener induced connection failed, reason %s', err)
+                this.logger.warn('offerListener induced connection from %s failed, reason %s', peerId, err)
             })
             const connection = this.connections[peerId]
             if (connection) {
@@ -99,7 +99,7 @@ export class WebRtcEndpoint extends EventEmitter {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'answer' as DescriptionType.Answer)
             } else {
-                this.logger.warn('unexpected rtcAnswer from %s: %s', originatorInfo, description)
+                this.logger.warn('unexpected rtcAnswer from %s: %s', peerId, description)
             }
         })
 
@@ -109,7 +109,7 @@ export class WebRtcEndpoint extends EventEmitter {
             if (connection) {
                 connection.addRemoteCandidate(candidate, mid)
             } else {
-                this.logger.warn('unexpected remoteCandidate from %s: [%s, %s]', originatorInfo, candidate, mid)
+                this.logger.warn('unexpected remoteCandidate from %s: [%s, %s]', peerId, candidate, mid)
             }
         })
 
@@ -117,7 +117,7 @@ export class WebRtcEndpoint extends EventEmitter {
             const { peerId } = originatorInfo
             const isOffering = force ? false : this.peerInfo.peerId < peerId
             this.connect(peerId, routerId, isOffering).catch((err) => {
-                this.logger.warn('connectListener induced connection failed, reason %s', err)
+                this.logger.warn('connectListener induced connection from %s failed, reason %s', peerId, err)
             })
         })
 
