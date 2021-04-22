@@ -302,12 +302,12 @@ export class Node extends EventEmitter {
         }
 
         // Log success / failures
-        const subscribeNodeIds: string[] = []
-        const unsubscribeNodeIds: string[] = []
+        const subscribedNodeIds: string[] = []
+        const unsubscribedNodeIds: string[] = []
         let failedInstructions = false
         results.forEach((res) => {
             if (res.status === 'fulfilled') {
-                subscribeNodeIds.push(res.value)
+                subscribedNodeIds.push(res.value)
             } else {
                 failedInstructions = true
                 this.logger.debug('failed to subscribe (or connect) to node, reason: %s', res.reason)
@@ -318,9 +318,9 @@ export class Node extends EventEmitter {
         }
 
         this.logger.debug('subscribed to %j and unsubscribed from %j (streamId=%s, counter=%d)',
-            subscribeNodeIds, unsubscribeNodeIds, streamId, counter)
+            subscribedNodeIds, unsubscribedNodeIds, streamId, counter)
 
-        if (JSON.stringify(subscribeNodeIds.slice().sort()) !== JSON.stringify(nodeIds.slice().sort())) {
+        if (subscribedNodeIds.length !== nodeIds.length) {
             this.logger.debug('error: failed to fulfill all tracker instructions (streamId=%s, counter=%d)',
                 streamId, counter)
         } else {
