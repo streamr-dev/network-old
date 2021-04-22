@@ -195,9 +195,11 @@ export class Connection extends ConnectionEmitter {
         this.connectionEmitter.on('localCandidate', this.onLocalCandidate)
 
         if (this.isOffering) {
+            this.logger.debug('creating data channel')
             const dataChannel = this.connection.createDataChannel('streamrDataChannel')
             this.setupDataChannel(dataChannel)
         } else {
+            this.logger.debug('waiting for data channel')
             this.connectionEmitter.on('dataChannel', this.onDataChannel)
         }
 
@@ -392,7 +394,9 @@ export class Connection extends ConnectionEmitter {
             this.close()
         } else if (state === 'failed') {
             this.close(new Error('connection failed'))
-        } else if (state === 'connecting' && !this.connectionTimeoutRef) {
+        } else if (state === 'connecting') {
+            // reset timeout on connecting
+            clearTimeout(this.connectionTimeoutRef!)
             this.connectionTimeoutRef = setTimeout(() => {
                 if (this.isFinished) { return }
                 this.logger.warn(`connection timed out after ${this.newConnectionTimeout}ms`)

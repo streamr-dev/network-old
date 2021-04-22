@@ -57,11 +57,13 @@ describe('Signalling error scenarios', () => {
         await waitForEvent(nodeTwo.trackerNode, TrackerNodeEvent.RELAY_MESSAGE_RECEIVED)
 
         // @ts-expect-error private field
+        nodeTwo.nodeToNode.endpoint.connections['node-1'].logger.debug('closing via test...')
+        // @ts-expect-error private field
         nodeTwo.nodeToNode.endpoint.connections['node-1'].close()
-        await waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED, 10000)
+        await waitForEvent(nodeTwo, NodeEvent.NODE_CONNECTED, 30000)
         // @ts-expect-error private field
         expect(Object.keys(nodeTwo.nodeToNode.endpoint.connections)).toEqual(['node-1'])
-    })
+    }, 60000)
 
     it('connection recovers after timeout if both endpoint close during signalling', async () => {
         nodeOne.subscribe(streamId, 0)
