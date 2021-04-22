@@ -1,36 +1,10 @@
+import { once } from 'events'
 import { DescriptionType } from 'node-datachannel'
 import { waitForCondition, wait } from 'streamr-test-utils'
 
 import { MessageQueue } from '../../src/connection/MessageQueue'
 import { Connection } from '../../src/connection/Connection'
 import { Logger } from '../../src/helpers/Logger'
-
-interface ConnectionFunctions {
-    onOpen: (data?: any) => void
-    onClose: (data?: any) => void
-    onError: () => void
-    onMessage: (msg: string) => void
-    onLocalDescription: (type: DescriptionType, description: string) => void
-    onLocalCandidate: (candidate: string, mid: string) => void
-}
-
-function onConnectPromise(functions: ConnectionFunctions) {
-    return new Promise((resolve, reject) => {
-        // eslint-disable-next-line no-param-reassign
-        functions.onOpen = jest.fn(resolve)
-        // eslint-disable-next-line no-param-reassign
-        functions.onError = jest.fn(reject)
-    })
-}
-
-function onClosePromise(functions: ConnectionFunctions) {
-    return new Promise((resolve, reject) => {
-        // eslint-disable-next-line no-param-reassign
-        functions.onClose = jest.fn(resolve)
-        // eslint-disable-next-line no-param-reassign
-        functions.onError = jest.fn(reject)
-    })
-}
 
 /**
  * Test that Connections can be established and message sent between them successfully. Tracker
@@ -42,6 +16,10 @@ describe('Connection', () => {
     let oneFunctions: any
     let twoFunctions: any
 
+    let expectErrors = false // set to true in a test to disable 'no error' assertion
+    let oneErrors: Error[] = []
+    let twoErrors: Error[] = []
+
     beforeEach(async () => {
         oneFunctions = {
             onLocalDescription: (type: DescriptionType, description: string) => {
@@ -52,15 +30,6 @@ describe('Connection', () => {
                 // Simulate tracker relay behaviour
                 connectionTwo.addRemoteCandidate(candidate, mid)
             },
-            onOpen: () => {
-            },
-            onMessage: () => {
-            },
-            onClose: () => {
-            },
-            onError: (err: Error) => {
-                throw err
-            }
         }
         twoFunctions = {
             onLocalDescription: (type: DescriptionType, description: string) => {
@@ -71,15 +40,6 @@ describe('Connection', () => {
                 // Simulate tracker relay behaviour
                 connectionOne.addRemoteCandidate(candidate, mid)
             },
-            onOpen: () => {
-            },
-            onMessage: () => {
-            },
-            onClose: () => {
-            },
-            onError: (err: Error) => {
-                throw err
-            }
         }
         const messageQueueOne = new MessageQueue<string>(new Logger(['test']))
         const messageQueueTwo = new MessageQueue<string>(new Logger(['test']))
@@ -89,42 +49,48 @@ describe('Connection', () => {
             routerId: 'routerId',
             stunUrls: [],
             isOffering: true,
-            onLocalDescription: (...args) => oneFunctions.onLocalDescription(...args),
-            onLocalCandidate: (...args) => oneFunctions.onLocalCandidate(...args),
-            onOpen: (...args) => oneFunctions.onOpen(...args),
-            onMessage: (...args) => oneFunctions.onMessage(...args),
-            onClose: (...args) => oneFunctions.onClose(...args),
-            onError: (...args) => oneFunctions.onError(...args),
-            onBufferLow: () => {},
-            onBufferHigh: () => {},
             messageQueue: messageQueueOne,
         })
+        connectionOne.on('localDescription', (...args) => oneFunctions.onLocalDescription(...args))
+        connectionOne.on('localCandidate', (...args) => oneFunctions.onLocalCandidate(...args))
+
         connectionTwo = new Connection({
             selfId: 'two',
             targetPeerId: 'one',
             routerId: 'routerId',
             stunUrls: [],
             isOffering: false,
-            onLocalDescription: (...args) => twoFunctions.onLocalDescription(...args),
-            onLocalCandidate: (...args) => twoFunctions.onLocalCandidate(...args),
-            onOpen: (...args) => twoFunctions.onOpen(...args),
-            onMessage: (...args) => twoFunctions.onMessage(...args),
-            onClose: (...args) => twoFunctions.onClose(...args),
-            onError: (...args) => twoFunctions.onError(...args),
-            onBufferLow: () => {},
-            onBufferHigh: () => {},
             messageQueue: messageQueueTwo,
         })
+
+        connectionTwo.on('localDescription', (...args) => twoFunctions.onLocalDescription(...args))
+        connectionTwo.on('localCandidate', (...args) => twoFunctions.onLocalCandidate(...args))
+    })
+
+    beforeEach(() => {
+        // capture errors
+        oneErrors = []
+        twoErrors = []
+        expectErrors = false
+        connectionTwo.on('error', (err) => oneErrors.push(err))
+        connectionTwo.on('error', (err) => twoErrors.push(err))
+    })
+
+    afterEach(() => {
+        if (expectErrors === false) {
+            expect(oneErrors).toEqual([])
+            expect(twoErrors).toEqual([])
+        }
     })
 
     afterEach(async () => {
         if (connectionOne.isOpen()) {
-            const onClose1 = onClosePromise(oneFunctions)
+            const onClose1 = once(connectionOne, 'close')
             connectionOne.close()
             await onClose1
         }
         if (connectionTwo.isOpen()) {
-            const onClose2 = onClosePromise(twoFunctions)
+            const onClose2 = once(connectionTwo, 'close')
             connectionTwo.close()
             await onClose2
         }
@@ -134,42 +100,30 @@ describe('Connection', () => {
         connectionOne.connect()
         connectionTwo.connect()
 
-        await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+        await Promise.all([once(connectionOne, 'open'), once(connectionTwo, 'open')])
 
         expect(connectionOne.isOpen()).toEqual(true)
         expect(connectionTwo.isOpen()).toEqual(true)
     })
 
     it('can send messages to each other', async () => {
-        const p1 = new Promise((resolve) => {
-            oneFunctions.onMessage = (message: string) => {
-                resolve(message)
-            }
-        })
-        const p2 = new Promise((resolve) => {
-            twoFunctions.onMessage = (message: string) => {
-                resolve(message)
-            }
-        })
-        oneFunctions.onOpen = () => {
-            connectionOne.send('hello, world!')
-        }
-        twoFunctions.onOpen = () => {
-            connectionTwo.send('lorem ipsum dolor sit amet')
-        }
+        connectionOne.once('open', () => connectionOne.send('hello, world!'))
+        connectionTwo.once('open', () => connectionTwo.send('lorem ipsum dolor sit amet'))
 
+        const p1 = once(connectionOne, 'message')
+        const p2 = once(connectionTwo, 'message')
         connectionOne.connect()
         connectionTwo.connect()
         const [connectionOneReceivedMsg, connectionTwoReceivedMsg] = await Promise.all([p1, p2])
-        expect(connectionOneReceivedMsg).toEqual('lorem ipsum dolor sit amet')
-        expect(connectionTwoReceivedMsg).toEqual('hello, world!')
+        expect(connectionOneReceivedMsg[0]).toEqual('lorem ipsum dolor sit amet')
+        expect(connectionTwoReceivedMsg[0]).toEqual('hello, world!')
     })
 
     it('ping-pong functionality', async () => {
         connectionOne.connect()
         connectionTwo.connect()
 
-        await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+        await Promise.all([once(connectionOne, 'open'), once(connectionTwo, 'open')])
 
         expect(connectionOne.getRtt()).toEqual(null)
         expect(connectionTwo.getRtt()).toEqual(null)
@@ -186,15 +140,14 @@ describe('Connection', () => {
         expect(connectionTwo.getRtt()).toBeGreaterThanOrEqual(0)
     })
 
-    it('connection timeouts if other end does not connect too', (done) => {
+    it('connection timeouts if other end does not connect too', async () => {
+        expectErrors = true
         // @ts-expect-error access private, only in test
         connectionOne.newConnectionTimeout = 3000 // would be better to pass via constructor
         connectionOne.connect()
-        oneFunctions.onError = (err: Error) => {
-            expect(err).toEqual(new Error('timed out'))
-            expect(connectionOne.isOpen()).toEqual(false)
-            done()
-        }
+        await expect(async () => (
+            once(connectionOne, 'open')
+        )).rejects.toThrow('timed out')
     })
 
     it('connection does not timeout if connection succeeds', async () => {
@@ -207,19 +160,17 @@ describe('Connection', () => {
         connectionOne.connect()
         connectionTwo.connect()
         await Promise.all([
-            onConnectPromise(oneFunctions),
-            onConnectPromise(twoFunctions),
-            wait(TIMEOUT * 2), // give enough time to time out
+            once(connectionOne, 'open'),
+            once(connectionTwo, 'open'),
         ])
-        expect(oneFunctions.onError).not.toHaveBeenCalled()
-        expect(twoFunctions.onError).not.toHaveBeenCalled()
+        await wait(TIMEOUT * 2) // give enough time to time out
     })
 
     it('connection gets closed if other end does not respond to pings', async () => {
         connectionOne.connect()
         connectionTwo.connect()
 
-        await Promise.all([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+        await Promise.all([once(connectionOne, 'open'), once(connectionTwo, 'open')])
 
         connectionTwo.pong = () => {} // hacky: prevent connectionTwo from responding
         // @ts-expect-error access private, only in test
@@ -228,7 +179,7 @@ describe('Connection', () => {
         connectionOne.ping()
         connectionOne.ping()
 
-        await Promise.allSettled([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
+        await Promise.allSettled([once(connectionOne, 'close'), once(connectionTwo, 'close')])
 
         expect(connectionOne.isOpen()).toEqual(false)
         expect(connectionTwo.isOpen()).toEqual(false)
@@ -236,13 +187,13 @@ describe('Connection', () => {
 
     it('can not connect if closed then opened again in series', async () => {
         // open
-        const t1 = Promise.allSettled([onConnectPromise(oneFunctions), onConnectPromise(twoFunctions)])
+        const t1 = Promise.allSettled([once(connectionOne, 'open'), once(connectionTwo, 'open')])
         connectionOne.connect()
         connectionTwo.connect()
         await t1
         expect(connectionOne.isOpen()).toEqual(true)
         expect(connectionTwo.isOpen()).toEqual(true)
-        const t2 = Promise.allSettled([onClosePromise(oneFunctions), onClosePromise(twoFunctions)])
+        const t2 = Promise.allSettled([once(connectionOne, 'close'), once(connectionTwo, 'close')])
         // then close
         connectionOne.close()
         connectionTwo.close()
@@ -264,8 +215,8 @@ describe('Connection', () => {
 
     it('can not connect if closed then opened again in parallel', async () => {
         const connectResolved = jest.fn()
-        const onConnect = onConnectPromise(oneFunctions).finally(connectResolved)
-        const onClose = onClosePromise(oneFunctions)
+        const onConnect = once(connectionOne, 'open').finally(connectResolved)
+        const onClose = once(connectionOne, 'close')
         connectionOne.connect()
         connectionOne.close()
         expect(() => {

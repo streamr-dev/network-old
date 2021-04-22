@@ -187,53 +187,46 @@ export class WebRtcEndpoint extends EventEmitter {
             messageQueue,
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
-            onLocalDescription: (type, description) => {
-                if (this.connections[targetPeerId] !== connection) {
-                    return
-                }
-                this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
-            },
-            onLocalCandidate: (candidate, mid) => {
-                if (this.connections[targetPeerId] !== connection) {
-                    return
-                }
-                this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
-            },
-            onOpen: () => {
-                if (this.connections[targetPeerId] !== connection) {
-                    return
-                }
-                this.emit(Event.PEER_CONNECTED, connection.getPeerInfo())
-                this.emit(`connected:${connection.getPeerId()}`, connection.getPeerId())
-                this.metrics.record('open', 1)
-            },
-            onMessage: (message) => {
-                if (this.connections[targetPeerId] !== connection) {
-                    return
-                }
-                this.emit(Event.MESSAGE_RECEIVED, connection.getPeerInfo(), message)
-                this.metrics.record('inSpeed', message.length)
-                this.metrics.record('msgSpeed', 1)
-                this.metrics.record('msgInSpeed', 1)
-            },
-            onClose: () => {
-                if (this.connections[targetPeerId] === connection) {
-                    delete this.connections[targetPeerId]
-                }
-                this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
-                const err = new Error(`disconnected ${connection.getPeerId()}`)
-                this.emit(`disconnected:${connection.getPeerId()}`, err)
-                this.metrics.record('close', 1)
-            },
-            onError: (err) => {
-                this.emit(`errored:${connection.getPeerId()}`, err)
-            },
-            onBufferLow: () => {
-                this.emit(Event.LOW_BACK_PRESSURE, connection.getPeerInfo())
-            },
-            onBufferHigh: () => {
-                this.emit(Event.HIGH_BACK_PRESSURE, connection.getPeerInfo())
+        })
+        connection.once('localDescription', (type, description) => {
+            this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
+        })
+        connection.once('localCandidate', (candidate, mid) => {
+            this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
+        })
+        connection.once('open', () => {
+            this.emit(Event.PEER_CONNECTED, connection.getPeerInfo())
+            this.emit(`connected:${connection.getPeerId()}`, connection.getPeerId())
+            this.metrics.record('open', 1)
+        })
+        connection.on('message', (message) => {
+            this.emit(Event.MESSAGE_RECEIVED, connection.getPeerInfo(), message)
+            this.metrics.record('inSpeed', message.length)
+            this.metrics.record('msgSpeed', 1)
+            this.metrics.record('msgInSpeed', 1)
+        })
+        connection.once('close', () => {
+            if (this.connections[targetPeerId] === connection) {
+                // if endpoint.close() was called, connection has already been
+                // removed and possibly replaced. This check avoids deleting new
+                // connection.
+                delete this.connections[targetPeerId]
             }
+
+            connection.removeAllListeners()
+            this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
+            const err = new Error(`disconnected ${connection.getPeerId()}`)
+            this.emit(`disconnected:${connection.getPeerId()}`, err)
+            this.metrics.record('close', 1)
+        })
+        connection.on('error', (err) => {
+            this.emit(`errored:${connection.getPeerId()}`, err)
+        })
+        connection.on('bufferLow', () => {
+            this.emit(Event.LOW_BACK_PRESSURE, connection.getPeerInfo())
+        })
+        connection.on('bufferHigh', () => {
+            this.emit(Event.HIGH_BACK_PRESSURE, connection.getPeerInfo())
         })
 
         this.connections[targetPeerId] = connection
