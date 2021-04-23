@@ -2,8 +2,6 @@ import { EventEmitter } from 'events'
 import { MessageLayer, TrackerLayer, Utils } from 'streamr-client-protocol'
 import { NodeToNode, Event as NodeToNodeEvent } from '../protocol/NodeToNode'
 import { TrackerNode, Event as TrackerNodeEvent } from '../protocol/TrackerNode'
-import { MessageBuffer } from '../helpers/MessageBuffer'
-import { SeenButNotPropagatedSet } from '../helpers/SeenButNotPropagatedSet'
 import { ResendHandler, Strategy } from '../resend/ResendHandler'
 import { ResendRequest, Status, StreamIdAndPartition } from '../identifiers'
 import { DisconnectionReason } from '../connection/WsEndpoint'
@@ -42,14 +40,10 @@ export interface NodeOptions {
     metricsContext?: MetricsContext
     connectToBootstrapTrackersInterval?: number
     sendStatusToAllTrackersInterval?: number
-    bufferTimeoutInMs?: number
-    bufferMaxSize?: number
     disconnectionWaitTime?: number
     nodeConnectTimeout?: number
     instructionRetryInterval?: number
 }
-
-const MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION = 1
 
 export interface Node {
     on(event: Event.NODE_CONNECTED, listener: (nodeId: string) => void): this
@@ -69,8 +63,6 @@ export class Node extends EventEmitter {
     private readonly peerInfo: PeerInfo
     private readonly connectToBootstrapTrackersInterval: number
     private readonly sendStatusToAllTrackersInterval: number
-    private readonly bufferTimeoutInMs: number
-    private readonly bufferMaxSize: number
     private readonly disconnectionWaitTime: number
     private readonly nodeConnectTimeout: number
     private readonly instructionRetryInterval: number
@@ -79,8 +71,6 @@ export class Node extends EventEmitter {
     private readonly logger: Logger
     private readonly disconnectionTimers: { [key: string]: NodeJS.Timeout }
     private readonly streams: StreamManager
-    private readonly messageBuffer: MessageBuffer<[MessageLayer.StreamMessage, string | null]>
-    private readonly seenButNotPropagatedSet: SeenButNotPropagatedSet
     private readonly resendHandler: ResendHandler
     private readonly trackerRegistry: Utils.TrackerRegistry<string>
     private readonly trackerBook: { [key: string]: string } // address => id
@@ -90,7 +80,6 @@ export class Node extends EventEmitter {
     private readonly perStreamMetrics: PerStreamMetrics
     private readonly metrics: Metrics
     private connectToBoostrapTrackersInterval?: NodeJS.Timeout | null
-    private handleBufferedMessagesTimeoutRef?: NodeJS.Timeout | null
 
     constructor(opts: NodeOptions) {
         super()
@@ -108,8 +97,6 @@ export class Node extends EventEmitter {
 
         this.connectToBootstrapTrackersInterval = opts.connectToBootstrapTrackersInterval || 5000
         this.sendStatusToAllTrackersInterval = opts.sendStatusToAllTrackersInterval || 1000
-        this.bufferTimeoutInMs = opts.bufferTimeoutInMs || 60 * 1000
-        this.bufferMaxSize = opts.bufferMaxSize || 10000
         this.disconnectionWaitTime = opts.disconnectionWaitTime || 30 * 1000
         this.nodeConnectTimeout = opts.nodeConnectTimeout || 4000
         this.instructionRetryInterval = opts.instructionRetryInterval || 60000
@@ -120,10 +107,6 @@ export class Node extends EventEmitter {
 
         this.disconnectionTimers = {}
         this.streams = new StreamManager()
-        this.messageBuffer = new MessageBuffer(this.bufferTimeoutInMs, this.bufferMaxSize, (streamId) => {
-            this.logger.debug(`failed to deliver buffered messages of stream ${streamId}`)
-        })
-        this.seenButNotPropagatedSet = new SeenButNotPropagatedSet()
         this.resendHandler = new ResendHandler(
             opts.resendStrategies,
             (errorCtx) => this.logger.warn('resendHandler reported error, %j', errorCtx),
@@ -171,8 +154,6 @@ export class Node extends EventEmitter {
         this.perStreamMetrics = new PerStreamMetrics()
         // .addQueriedMetric('perStream', () => this.perStreamMetrics.report()) NET-122
         this.metrics = metricsContext.create('node')
-            .addQueriedMetric('messageBufferSize', () => this.messageBuffer.size())
-            .addQueriedMetric('seenButNotPropagatedSetSize', () => this.seenButNotPropagatedSet.size())
             .addRecordedMetric('resendRequests')
             .addRecordedMetric('unexpectedTrackerInstructions')
             .addRecordedMetric('trackerInstructions')
@@ -362,8 +343,6 @@ export class Node extends EventEmitter {
 
         if (isUnseen) {
             this.emit(Event.UNSEEN_MESSAGE_RECEIVED, streamMessage, source)
-        }
-        if (isUnseen || this.seenButNotPropagatedSet.has(streamMessage)) {
             this.logger.debug('received from %s data %j', source, streamMessage.messageId)
             this.propagateMessage(streamMessage, source)
         } else {
@@ -383,52 +362,44 @@ export class Node extends EventEmitter {
 
         const subscribers = this.streams.getOutboundNodesForStream(streamIdAndPartition).filter((n) => n !== source)
 
-        if (subscribers.length) {
-            subscribers.forEach(async (subscriber) => {
-                try {
-                    await this.nodeToNode.sendData(subscriber, streamMessage)
+        subscribers.forEach(async (subscriber) => {
+            try {
+                await this.nodeToNode.sendData(subscriber, streamMessage)
+                this.consecutiveDeliveryFailures[subscriber] = 0
+            } catch (e) {
+                const serializedMsgId = streamMessage.getMessageID().serialize()
+                this.logger.warn('failed to propagate %s (consecutiveFails=%d) to subscriber %s, reason: %s',
+                    serializedMsgId,
+                    this.consecutiveDeliveryFailures[subscriber] || 0,
+                    subscriber,
+                    e)
+                this.emit(Event.MESSAGE_PROPAGATION_FAILED, streamMessage.getMessageID(), subscriber, e)
+
+                // TODO: this is hack to get around the issue where `StreamStateManager` believes that we are
+                //  connected to a neighbor whilst `WebRtcEndpoint` knows that we are not. In this situation, the
+                //  Node will continuously attempt to propagate messages to the neighbor but will not actually ever
+                //  (re-)attempt a connection unless as a side-effect of something else (e.g. subscribing to another
+                //  stream, and the neighbor in question happens to get assigned to us via the other stream.)
+                //
+                // This hack basically counts consecutive delivery failures, and upon hitting 100 such failures,
+                // decides to forcefully disconnect the neighbor.
+                //
+                // Ideally this hack would not be needed, but alas, it seems like with the current event-system,
+                // we don't end up with an up-to-date state in the logic layer. I believe something like the
+                // ConnectionManager-model could help us solve the issue for good.
+                if (this.consecutiveDeliveryFailures[subscriber] === undefined) {
                     this.consecutiveDeliveryFailures[subscriber] = 0
-                } catch (e) {
-                    const serializedMsgId = streamMessage.getMessageID().serialize()
-                    this.logger.warn('failed to propagate %s (consecutiveFails=%d) to subscriber %s, reason: %s',
-                        serializedMsgId,
-                        this.consecutiveDeliveryFailures[subscriber] || 0,
-                        subscriber,
-                        e)
-                    this.emit(Event.MESSAGE_PROPAGATION_FAILED, streamMessage.getMessageID(), subscriber, e)
-
-                    // TODO: this is hack to get around the issue where `StreamStateManager` believes that we are
-                    //  connected to a neighbor whilst `WebRtcEndpoint` knows that we are not. In this situation, the
-                    //  Node will continuously attempt to propagate messages to the neighbor but will not actually ever
-                    //  (re-)attempt a connection unless as a side-effect of something else (e.g. subscribing to another
-                    //  stream, and the neighbor in question happens to get assigned to us via the other stream.)
-                    //
-                    // This hack basically counts consecutive delivery failures, and upon hitting 100 such failures,
-                    // decides to forcefully disconnect the neighbor.
-                    //
-                    // Ideally this hack would not be needed, but alas, it seems like with the current event-system,
-                    // we don't end up with an up-to-date state in the logic layer. I believe something like the
-                    // ConnectionManager-model could help us solve the issue for good.
-                    if (this.consecutiveDeliveryFailures[subscriber] === undefined) {
-                        this.consecutiveDeliveryFailures[subscriber] = 0
-                    }
-                    this.consecutiveDeliveryFailures[subscriber] += 1
-                    if (this.consecutiveDeliveryFailures[subscriber] >= 100) {
-                        this.logger.warn(`disconnecting from ${subscriber} due to 100 consecutive delivery failures`)
-                        this.onNodeDisconnected(subscriber) // force disconnect
-                        this.consecutiveDeliveryFailures[subscriber] = 0
-                    }
                 }
-            })
+                this.consecutiveDeliveryFailures[subscriber] += 1
+                if (this.consecutiveDeliveryFailures[subscriber] >= 100) {
+                    this.logger.warn(`disconnecting from ${subscriber} due to 100 consecutive delivery failures`)
+                    this.onNodeDisconnected(subscriber) // force disconnect
+                    this.consecutiveDeliveryFailures[subscriber] = 0
+                }
+            }
+        })
 
-            this.seenButNotPropagatedSet.delete(streamMessage)
-            this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
-        } else {
-            this.logger.debug('put %j back to buffer because could not propagate to %d nodes or more',
-                streamMessage.messageId, MIN_NUM_OF_OUTBOUND_NODES_FOR_PROPAGATION)
-            this.seenButNotPropagatedSet.add(streamMessage)
-            this.messageBuffer.put(streamIdAndPartition.key(), [streamMessage, source])
-        }
+        this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
     }
 
     stop(): Promise<unknown> {
@@ -441,14 +412,9 @@ export class Node extends EventEmitter {
             clearInterval(this.connectToBoostrapTrackersInterval)
             this.connectToBoostrapTrackersInterval = null
         }
-        if (this.handleBufferedMessagesTimeoutRef) {
-            clearTimeout(this.handleBufferedMessagesTimeoutRef)
-            this.handleBufferedMessagesTimeoutRef = null
-        }
 
         Object.values(this.disconnectionTimers).forEach((timeout) => clearTimeout(timeout))
 
-        this.messageBuffer.clear()
         return Promise.all([
             this.trackerNode.stop(),
             this.nodeToNode.stop(),
@@ -507,7 +473,6 @@ export class Node extends EventEmitter {
     private subscribeToStreamOnNode(node: string, streamId: StreamIdAndPartition, sendStatus = true): string {
         this.streams.addInboundNode(streamId, node)
         this.streams.addOutboundNode(streamId, node)
-        this.handleBufferedMessages(streamId)
         if (sendStatus) {
             this.prepareAndSendStreamStatus(streamId)
         }
@@ -560,13 +525,6 @@ export class Node extends EventEmitter {
 
     onTrackerDisconnected(tracker: string): void {
         this.logger.debug('disconnected from tracker %s', tracker)
-    }
-
-    private handleBufferedMessages(streamId: StreamIdAndPartition): void {
-        this.messageBuffer.popAll(streamId.key())
-            .forEach(([streamMessage, source]) => {
-                this.onDataReceived(streamMessage, source)
-            })
     }
 
     private connectToBootstrapTrackers(): void {
