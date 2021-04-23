@@ -105,8 +105,8 @@ export class Connection extends ConnectionEmitter {
 
     private connection: PeerConnection | null
     private dataChannel: DataChannel | null
-    private dataChannelEmitter?: ReturnType<typeof DataChannelEmitter>
-    private connectionEmitter?: ReturnType<typeof PeerConnectionEmitter>
+    private dataChannelEmitter?: EventEmitter
+    private connectionEmitter?: EventEmitter
     private paused: boolean
     private lastState: string | null
     private lastGatheringState: string | null
