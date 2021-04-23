@@ -33,6 +33,15 @@ let ID = 0
  */
 type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameters<T>[0]>
 
+interface PeerConnectionEvents {
+    stateChange: (...args: HandlerParameters<PeerConnection['onStateChange']>) => void
+    gatheringStateChange: (...args: HandlerParameters<PeerConnection['onGatheringStateChange']>) => void
+    localDescription: (...args: HandlerParameters<PeerConnection['onLocalDescription']>) => void
+    localCandidate: (...args: HandlerParameters<PeerConnection['onLocalCandidate']>) => void
+    dataChannel: (...args: HandlerParameters<PeerConnection['onDataChannel']>) => void
+    error: (err: Error) => void
+}
+
 /**
  * Create an EventEmitter that fires appropriate events for
  * each peerConnection.onEvent handler.
@@ -43,7 +52,7 @@ type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameter
  * Replacing handlers with noops doesn't work reliably, it can still fire the old handlers.
  */
 function PeerConnectionEmitter(connection: PeerConnection) {
-    const emitter = new EventEmitter()
+    const emitter: StrictEventEmitter<EventEmitter, PeerConnectionEvents> = new EventEmitter()
     emitter.on('error', () => {}) // noop to prevent unhandled error event
     connection.onStateChange((...args: HandlerParameters<PeerConnection['onStateChange']>) => emitter.emit('stateChange', ...args))
     connection.onGatheringStateChange((...args: HandlerParameters<PeerConnection['onGatheringStateChange']>) => (
@@ -55,8 +64,16 @@ function PeerConnectionEmitter(connection: PeerConnection) {
     return emitter
 }
 
+interface DataChannelEvents {
+    open: (...args: HandlerParameters<DataChannel['onOpen']>) => void
+    closed: (...args: HandlerParameters<DataChannel['onClosed']>) => void
+    error: (...args: HandlerParameters<DataChannel['onError']>) => void
+    bufferedAmountLow: (...args: HandlerParameters<DataChannel['onBufferedAmountLow']>) => void
+    message: (...args: HandlerParameters<DataChannel['onMessage']>) => void
+}
+
 function DataChannelEmitter(dataChannel: DataChannel) {
-    const emitter = new EventEmitter()
+    const emitter: StrictEventEmitter<EventEmitter, DataChannelEvents> = new EventEmitter()
     emitter.on('error', () => {}) // noop to prevent unhandled error event
     dataChannel.onOpen((...args: HandlerParameters<DataChannel['onOpen']>) => emitter.emit('open', ...args))
     dataChannel.onClosed((...args: HandlerParameters<DataChannel['onClosed']>) => emitter.emit('closed', ...args))
