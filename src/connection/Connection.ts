@@ -133,7 +133,6 @@ export class Connection extends ConnectionEmitter {
     private flushRef: NodeJS.Immediate | null
     private pingAttempts = 0
     private rtt: number | null
-    private respondedPong: boolean
     private rttStart: number | null
 
     constructor({
@@ -182,7 +181,6 @@ export class Connection extends ConnectionEmitter {
         this.flushRef = null
 
         this.rtt = null
-        this.respondedPong = true
         this.rttStart = null
 
         this.onStateChange = this.onStateChange.bind(this)
