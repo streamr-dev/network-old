@@ -153,7 +153,6 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('messages are delivered on temporary loss of connectivity', async () => {
-
         const t = Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
@@ -176,17 +175,19 @@ describe('WebRtcEndpoint', () => {
             }))
         }
 
-        for (let i = 1; i <= 10; ++i) {
+        for (let i = 1; i <= 6; ++i) {
             sendFrom1To2()
-            if (i % 5 === 0) {
+            if (i === 3) {
                 // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => ep2NumOfReceivedMessages === 5)
+                await waitForCondition(() => ep2NumOfReceivedMessages === 3)
                 endpoint2.close('node-1', 'test')
             }
         }
         await wait(50)
         endpoint1.connect('node-2', 'tracker', true)
 
-        await waitForCondition(() => ep2NumOfReceivedMessages === 10, 5000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
-    })
+        await waitForCondition(() => (
+            ep2NumOfReceivedMessages === 6
+        ), 10000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
+    }, 15000)
 })
