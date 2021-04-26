@@ -33,7 +33,16 @@ export class NetworkNode extends Node {
     }
 
     publish(streamMessage: MessageLayer.StreamMessage): void {
+        const streamId = streamMessage.getStreamId()
+        const partition = streamMessage.getStreamPartition()
+        if (this.isSubscribedTo(streamId, partition)) {
+            throw new Error(`Must be subscribed to stream ${streamId}::${partition} first!`)
+        }
         this.onDataReceived(streamMessage)
+    }
+
+    isSubscribedTo(streamId: string, streamPartition: number): boolean {
+        return this.getStreams().includes(`${streamId}::${streamPartition}`)
     }
 
     addMessageListener(cb: (msg: MessageLayer.StreamMessage) => void): void {
