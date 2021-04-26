@@ -98,7 +98,7 @@ export class Node extends EventEmitter {
         this.connectToBootstrapTrackersInterval = opts.connectToBootstrapTrackersInterval || 5000
         this.sendStatusToAllTrackersInterval = opts.sendStatusToAllTrackersInterval || 1000
         this.disconnectionWaitTime = opts.disconnectionWaitTime || 30 * 1000
-        this.nodeConnectTimeout = opts.nodeConnectTimeout || 4000
+        this.nodeConnectTimeout = opts.nodeConnectTimeout || 15000
         this.instructionRetryInterval = opts.instructionRetryInterval || 60000
         this.started = new Date().toLocaleString()
         this.logger = new Logger(['logic', 'Node'], this.peerInfo)
@@ -283,12 +283,12 @@ export class Node extends EventEmitter {
         }
 
         // Log success / failures
-        const subscribeNodeIds: string[] = []
-        const unsubscribeNodeIds: string[] = []
+        const subscribedNodeIds: string[] = []
+        const unsubscribedNodeIds: string[] = []
         let failedInstructions = false
         results.forEach((res) => {
             if (res.status === 'fulfilled') {
-                subscribeNodeIds.push(res.value)
+                subscribedNodeIds.push(res.value)
             } else {
                 failedInstructions = true
                 this.logger.debug('failed to subscribe (or connect) to node, reason: %s', res.reason)
@@ -299,10 +299,13 @@ export class Node extends EventEmitter {
         }
 
         this.logger.debug('subscribed to %j and unsubscribed from %j (streamId=%s, counter=%d)',
-            subscribeNodeIds, unsubscribeNodeIds, streamId, counter)
+            subscribedNodeIds, unsubscribedNodeIds, streamId, counter)
 
-        if (subscribeNodeIds.length !== nodeIds.length) {
+        if (subscribedNodeIds.length !== nodeIds.length) {
             this.logger.debug('error: failed to fulfill all tracker instructions (streamId=%s, counter=%d)',
+                streamId, counter)
+        } else {
+            this.logger.debug('Tracker instructions fulfilled (streamId=%s, counter=%d)',
                 streamId, counter)
         }
     }
