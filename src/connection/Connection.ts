@@ -519,7 +519,7 @@ export class Connection extends ConnectionEmitter {
                 try {
                     // Checking `this.open()` is left out on purpose. We want the message to be discarded if it was not
                     // sent after MAX_TRIES regardless of the reason.
-                    sent = this.dataChannel!.sendMessage(queueItem.getMessage())
+                    sent = this.dataChannel!.sendMessage(queueItem.getMessage()) && this.isOpen()
                     numOfSuccessSends += 1
                 } catch (e) {
                     this.processFailedMessage(queueItem, e)
