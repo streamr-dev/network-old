@@ -521,7 +521,6 @@ export class Connection extends ConnectionEmitter {
                     // this.isOpen() returns false after a "successful" send, the message is lost with a near 100% chance.
                     // This does not work as expected if this.isOpen() is checked before sending a message
                     sent = this.dataChannel!.sendMessage(queueItem.getMessage()) && this.isOpen()
-                    numOfSuccessSends += 1
                 } catch (e) {
                     this.processFailedMessage(queueItem, e)
                     return // method rescheduled by `this.flushTimeoutRef`
@@ -530,6 +529,7 @@ export class Connection extends ConnectionEmitter {
                 if (sent) {
                     this.messageQueue.pop()
                     queueItem.delivered()
+                    numOfSuccessSends += 1
                 } else {
                     this.processFailedMessage(queueItem, new Error('sendMessage returned false'))
                 }
