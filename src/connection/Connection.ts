@@ -517,8 +517,9 @@ export class Connection extends ConnectionEmitter {
             } else {
                 let sent = false
                 try {
-                    // Checking `this.open()` is left out on purpose. We want the message to be discarded if it was not
-                    // sent after MAX_TRIES regardless of the reason.
+                    // this.isOpen() is checked immediately after the call to node-datachannel.sendMessage() as if
+                    // this.isOpen() returns false after a "successful" send, the message is lost with a near 100% chance.
+                    // This does not work as expected if this.isOpen() is checked before sending a message
                     sent = this.dataChannel!.sendMessage(queueItem.getMessage()) && this.isOpen()
                     numOfSuccessSends += 1
                 } catch (e) {
