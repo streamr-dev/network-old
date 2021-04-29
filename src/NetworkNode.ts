@@ -102,4 +102,40 @@ export class NetworkNode extends Node {
         })
         return this.requestResend(request, null)
     }
+
+    public getNumberOfNeighbors(streamId: string, streamPartition: number): number {
+        const streamIdAndPartition = new StreamIdAndPartition(streamId, streamPartition)
+        return this.getNeighborsFor(streamIdAndPartition).length
+    }
+
+    public waitForNeighbors(
+        streamId: string,
+        streamPartition: number,
+        minNeighbors = 1,
+        timeoutInMs = 8000
+    ): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const hasEnoughNeighbors = () => this.getNumberOfNeighbors(streamId, streamPartition) >= minNeighbors
+            const resolveWithNeighborCount = () => resolve(this.getNumberOfNeighbors(streamId, streamPartition))
+            if (hasEnoughNeighbors()) {
+                resolveWithNeighborCount()
+            } else {
+                const clear = () => {
+                    this.removeListener(Event.NODE_SUBSCRIBED, eventHandlerFn)
+                    clearTimeout(timeoutRef)
+                }
+                const eventHandlerFn = (_nodeId: string, s: StreamIdAndPartition) => {
+                    if (s.id === streamId && s.partition === streamPartition && hasEnoughNeighbors()) {
+                        clear()
+                        resolveWithNeighborCount()
+                    }
+                }
+                const timeoutRef = setTimeout(() => {
+                    clear()
+                    reject(new Error(`waitForNeighbors: timed out in ${timeoutInMs} ms`))
+                }, timeoutInMs)
+                this.on(Event.NODE_SUBSCRIBED, eventHandlerFn)
+            }
+        })
+    }
 }

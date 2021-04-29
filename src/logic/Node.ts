@@ -363,7 +363,8 @@ export class Node extends EventEmitter {
             streamMessage.getStreamPartition()
         )
 
-        const subscribers = this.streams.getOutboundNodesForStream(streamIdAndPartition).filter((n) => n !== source)
+        const subscribers = this.streams.getOutboundNodesForStream(streamIdAndPartition)
+            .filter((n) => n !== source)
 
         subscribers.forEach(async (subscriber) => {
             try {
@@ -401,6 +402,10 @@ export class Node extends EventEmitter {
                 }
             }
         })
+
+        if (subscribers.length === 0) {
+            this.logger.warn('no neighbors to propagate message %o to', streamMessage.getMessageID().toArray())
+        }
 
         this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
     }
@@ -528,6 +533,12 @@ export class Node extends EventEmitter {
 
     onTrackerDisconnected(tracker: string): void {
         this.logger.debug('disconnected from tracker %s', tracker)
+    }
+
+    protected getNeighborsFor(streamIdAndPartition: StreamIdAndPartition): ReadonlyArray<string> {
+        return this.streams.isSetUp(streamIdAndPartition)
+            ? this.streams.getOutboundNodesForStream(streamIdAndPartition)
+            : []
     }
 
     private connectToBootstrapTrackers(): void {

@@ -64,16 +64,8 @@ describe('storage node', () => {
             storages: [storage as Storage],
             storageConfig: config
         })
-
-        // @ts-expect-error private field
-        const t1 = waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         relayNode.start()
-        await t1
-
-        // @ts-expect-error private field
-        const t2 = waitForEvent(tracker.trackerServer, TrackerServerEvent.NODE_STATUS_RECEIVED)
         storageNode.start()
-        await t2
     }, 15000)
 
     afterEach(async () => {
@@ -84,7 +76,7 @@ describe('storage node', () => {
 
     it('initial stream', async () => {
         const message = createMockMessage(initialStream)
-        relayNode.publish(message)
+        await relayNode.publish(message, 1)
         await waitForCondition(() => (storage.store as any).mock.calls.length > 0)
         expect(storage.store).toHaveBeenCalledWith(createStreamMessageMatcher(message))
     })
@@ -93,7 +85,7 @@ describe('storage node', () => {
         const stream = createMockStream()
         config.addStream(stream)
         const message = createMockMessage(stream)
-        relayNode.publish(message)
+        await relayNode.publish(message, 1)
         await waitForCondition(() => (storage.store as any).mock.calls.length > 0)
         expect(storage.store).toHaveBeenCalledWith(createStreamMessageMatcher(message))
     })
