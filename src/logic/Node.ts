@@ -310,7 +310,7 @@ export class Node extends EventEmitter {
         }
     }
 
-    onDataReceived(streamMessage: MessageLayer.StreamMessage, source: string | null = null): void | never {
+    onDataReceived(streamMessage: MessageLayer.StreamMessage, source: string | null = null): number {
         this.metrics.record('onDataReceived', 1)
         this.perStreamMetrics.recordDataReceived(streamMessage.getStreamId())
         const streamIdAndPartition = new StreamIdAndPartition(
@@ -333,13 +333,13 @@ export class Node extends EventEmitter {
             if (e instanceof InvalidNumberingError) {
                 this.logger.debug('received from %s data %j with invalid numbering', source, streamMessage.messageId)
                 this.metrics.record('onDataReceived:invalidNumber', 1)
-                return
+                return 0
             }
             if (e instanceof GapMisMatchError) {
                 this.logger.warn('received from %s data %j with gap mismatch detected: %j',
                     source, streamMessage.messageId, e)
                 this.metrics.record('onDataReceived:gapMismatch', 1)
-                return
+                return 0
             }
             throw e
         }
@@ -347,15 +347,16 @@ export class Node extends EventEmitter {
         if (isUnseen) {
             this.emit(Event.UNSEEN_MESSAGE_RECEIVED, streamMessage, source)
             this.logger.debug('received from %s data %j', source, streamMessage.messageId)
-            this.propagateMessage(streamMessage, source)
+            return this.propagateMessage(streamMessage, source).length
         } else {
             this.logger.debug('ignoring duplicate data %j (from %s)', streamMessage.messageId, source)
             this.metrics.record('onDataReceived:ignoredDuplicate', 1)
             this.perStreamMetrics.recordIgnoredDuplicate(streamMessage.getStreamId())
+            return 0
         }
     }
 
-    private propagateMessage(streamMessage: MessageLayer.StreamMessage, source: string | null): void {
+    private propagateMessage(streamMessage: MessageLayer.StreamMessage, source: string | null): Array<string> {
         this.metrics.record('propagateMessage', 1)
         this.perStreamMetrics.recordPropagateMessage(streamMessage.getStreamId())
         const streamIdAndPartition = new StreamIdAndPartition(
@@ -408,6 +409,7 @@ export class Node extends EventEmitter {
         }
 
         this.emit(Event.MESSAGE_PROPAGATED, streamMessage)
+        return subscribers
     }
 
     stop(): Promise<unknown> {

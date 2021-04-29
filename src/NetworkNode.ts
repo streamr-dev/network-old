@@ -32,8 +32,20 @@ export class NetworkNode extends Node {
         })
     }
 
-    publish(streamMessage: MessageLayer.StreamMessage): void {
-        this.onDataReceived(streamMessage)
+    publish(streamMessage: MessageLayer.StreamMessage): number {
+        return this.onDataReceived(streamMessage)
+    }
+
+    async asyncPublish(
+        streamMessage: MessageLayer.StreamMessage,
+        minNeighbors = 1,
+        timeoutInMs = 8000
+    ): Promise<number> {
+        const streamId = streamMessage.getStreamId()
+        const partition = streamMessage.getStreamPartition()
+        this.subscribe(streamId, partition)
+        await this.waitForNeighbors(streamId, partition, minNeighbors, timeoutInMs)
+        return this.publish(streamMessage)
     }
 
     addMessageListener(cb: (msg: MessageLayer.StreamMessage) => void): void {
@@ -104,8 +116,7 @@ export class NetworkNode extends Node {
     }
 
     public getNumberOfNeighbors(streamId: string, streamPartition: number): number {
-        const streamIdAndPartition = new StreamIdAndPartition(streamId, streamPartition)
-        return this.getNeighborsFor(streamIdAndPartition).length
+        return this.getNeighborsFor(new StreamIdAndPartition(streamId, streamPartition)).length
     }
 
     public waitForNeighbors(
@@ -121,7 +132,7 @@ export class NetworkNode extends Node {
                 resolveWithNeighborCount()
             } else {
                 const clear = () => {
-                    this.removeListener(Event.NODE_SUBSCRIBED, eventHandlerFn)
+                    this.removeListener(NodeEvent.NODE_SUBSCRIBED, eventHandlerFn)
                     clearTimeout(timeoutRef)
                 }
                 const eventHandlerFn = (_nodeId: string, s: StreamIdAndPartition) => {
@@ -134,7 +145,7 @@ export class NetworkNode extends Node {
                     clear()
                     reject(new Error(`waitForNeighbors: timed out in ${timeoutInMs} ms`))
                 }, timeoutInMs)
-                this.on(Event.NODE_SUBSCRIBED, eventHandlerFn)
+                this.on(NodeEvent.NODE_SUBSCRIBED, eventHandlerFn)
             }
         })
     }

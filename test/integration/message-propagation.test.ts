@@ -106,13 +106,13 @@ describe('message propagation in network', () => {
         ])
 
         for (let i = 1; i <= 5; ++i) {
-            await n1.publish(new StreamMessage({
+            await n1.asyncPublish(new StreamMessage({
                 messageId: new MessageID('stream-1', 0, i, 0, 'publisherId', 'msgChainId'),
                 prevMsgRef: i === 1 ? null : new MessageRef(i - 1, 0),
                 content: {
                     messageNo: i
                 },
-            }), 1)
+            }))
 
             await n4.publish(new StreamMessage({
                 messageId: new MessageID('stream-2', 0, i * 100, 0, 'publisherId', 'msgChainId'),

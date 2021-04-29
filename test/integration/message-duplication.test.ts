@@ -92,13 +92,13 @@ describe('duplicate message detection and avoidance', () => {
         }
 
         // Produce data
-        await contactNode.publish(new StreamMessage({
+        await contactNode.asyncPublish(new StreamMessage({
             messageId: new MessageID('stream-id', 0, 100, 0, 'publisher', 'session'),
             content: {
                 hello: 'world'
             },
         }), 2)
-        await contactNode.publish(new StreamMessage({
+        await contactNode.asyncPublish(new StreamMessage({
             messageId: new MessageID('stream-id', 0, 120, 0, 'publisher', 'session'),
             content: {
                 hello: 'world'
