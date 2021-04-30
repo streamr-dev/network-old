@@ -183,7 +183,7 @@ describe('WebRtcEndpoint', () => {
                 endpoint2.close('node-1', 'test')
             }
         }
-        await wait(100)
+        await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
         endpoint1.connect('node-2', 'tracker', true)
 
         await waitForCondition(() => (
