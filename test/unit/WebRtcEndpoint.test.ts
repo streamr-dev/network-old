@@ -34,9 +34,9 @@ describe('WebRtcEndpoint', () => {
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
         endpoint1 = new WebRtcEndpoint(peerInfo1, [],
-            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), 2500)
+            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), 4000)
         endpoint2 = new WebRtcEndpoint(peerInfo2, [],
-            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), 2500)
+            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), 4000)
     })
 
     afterEach(async () => {
@@ -183,7 +183,6 @@ describe('WebRtcEndpoint', () => {
                 endpoint2.close('node-1', 'test')
             }
         }
-        await wait(50)
         endpoint1.connect('node-2', 'tracker', true)
 
         await waitForCondition(() => (
