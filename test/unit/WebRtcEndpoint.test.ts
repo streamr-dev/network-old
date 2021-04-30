@@ -188,6 +188,6 @@ describe('WebRtcEndpoint', () => {
 
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
-        ), 10000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
-    }, 15000)
+        ), 20000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
+    }, 30000)
 })
