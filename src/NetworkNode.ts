@@ -137,7 +137,6 @@ export class NetworkNode extends Node {
         return this.requestResend(request, null)
     }
 
-
     /**
      * Get number of neighbors for a given StreamPart
      * @param streamId
