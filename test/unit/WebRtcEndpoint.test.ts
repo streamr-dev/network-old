@@ -158,8 +158,8 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
-        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+        endpoint1.connect('node-2', 'tracker').catch(() => null)
+        endpoint2.connect('node-1', 'tracker').catch(() => null)
 
         await t
 
@@ -184,7 +184,7 @@ describe('WebRtcEndpoint', () => {
             }
         }
         await wait(200)
-        endpoint1.connect('node-2', 'tracker', true)
+        endpoint1.connect('node-2', 'tracker')
 
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
