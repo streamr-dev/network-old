@@ -3,7 +3,7 @@ import { startEndpoint } from '../../src/connection/WsEndpoint'
 import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { Tracker, Event as TrackerEvent } from '../../src/logic/Tracker'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
+import { wait, waitForCondition, waitForEvent } from 'streamr-test-utils'
 import { Event as EndpointEvent, WebRtcEndpoint } from '../../src/connection/WebRtcEndpoint'
 import { RtcSignaller } from '../../src/logic/RtcSignaller'
 
@@ -34,9 +34,9 @@ describe('WebRtcEndpoint', () => {
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
         endpoint1 = new WebRtcEndpoint(peerInfo1, [],
-            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), 5000)
+            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), 2500)
         endpoint2 = new WebRtcEndpoint(peerInfo2, [],
-            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), 5000)
+            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), 2500)
     })
 
     afterEach(async () => {
@@ -158,8 +158,8 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
-        endpoint1.connect('node-2', 'tracker').catch(() => null)
-        endpoint2.connect('node-1', 'tracker').catch(() => null)
+        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
+        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
 
         await t
 
@@ -183,14 +183,11 @@ describe('WebRtcEndpoint', () => {
                 endpoint2.close('node-1', 'test')
             }
         }
-
-        await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
-
-        endpoint1.connect('node-2', 'tracker')
-        endpoint2.connect('node-2', 'tracker')
+        await wait(200)
+        endpoint1.connect('node-2', 'tracker', true)
 
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
-        ), 15000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
-    }, 25000)
+        ), 10000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
+    }, 15000)
 })
