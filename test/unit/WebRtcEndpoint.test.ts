@@ -183,9 +183,9 @@ describe('WebRtcEndpoint', () => {
                 endpoint2.close('node-1', 'test')
             }
         }
-        await wait(200)
+        await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
         endpoint1.connect('node-2', 'tracker')
-
+        endpoint2.connect('node-1', 'tracker')
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
         ), 10000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
