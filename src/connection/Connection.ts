@@ -520,7 +520,7 @@ export class Connection extends ConnectionEmitter {
                     // this.isOpen() is checked immediately after the call to node-datachannel.sendMessage() as if
                     // this.isOpen() returns false after a "successful" send, the message is lost with a near 100% chance.
                     // This does not work as expected if this.isOpen() is checked before sending a message
-                    sent = this.dataChannel!.sendMessage(queueItem.getMessage()) && this.isOpen()
+                    sent = this.dataChannel!.sendMessage(queueItem.getMessage())
                 } catch (e) {
                     this.processFailedMessage(queueItem, e)
                     return // method rescheduled by `this.flushTimeoutRef`
