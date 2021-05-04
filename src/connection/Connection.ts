@@ -4,6 +4,7 @@ import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
 import { MessageQueue, QueueItem } from './MessageQueue'
+import { Node } from "../logic/Node"
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
@@ -130,7 +131,7 @@ export class Connection extends ConnectionEmitter {
     private flushTimeoutRef: NodeJS.Timeout | null
     private connectionTimeoutRef: NodeJS.Timeout | null
     private pingTimeoutRef: NodeJS.Timeout | null
-    private flushRef: NodeJS.Immediate | null
+    private flushRef: NodeJS.Timeout | NodeJS.Immediate | null
     private pingAttempts = 0
     private rtt: number | null
     private rttStart: number | null
@@ -254,12 +255,19 @@ export class Connection extends ConnectionEmitter {
         return this.messageQueue.add(message)
     }
 
-    private setFlushRef() {
+    private setFlushRef(timeout = 0) {
         if (this.flushRef === null) {
-            this.flushRef = setImmediate(() => {
-                this.flushRef = null
-                this.attemptToFlushMessages()
-            })
+            if (timeout > 0) {
+                this.flushRef = setTimeout(() => {
+                    this.flushRef = null
+                    this.attemptToFlushMessages()
+                }, timeout)
+            } else {
+                this.flushRef = setImmediate(() => {
+                    this.flushRef = null
+                    this.attemptToFlushMessages()
+                })
+            }
         }
     }
 
@@ -483,7 +491,7 @@ export class Connection extends ConnectionEmitter {
             clearTimeout(this.connectionTimeoutRef)
         }
         this.dataChannel = dataChannel
-        this.setFlushRef()
+        this.setFlushRef(5)
         this.emit('open')
     }
 
