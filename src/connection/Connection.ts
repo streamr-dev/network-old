@@ -301,6 +301,9 @@ export class Connection extends ConnectionEmitter {
             }
         }
 
+        if (this.flushRef) {
+            clearImmediate(this.flushRef)
+        }
         if (this.flushTimeoutRef) {
             clearTimeout(this.flushTimeoutRef)
         }
