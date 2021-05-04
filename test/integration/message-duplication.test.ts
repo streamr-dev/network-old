@@ -1,9 +1,11 @@
 import { NetworkNode } from '../../src/NetworkNode'
 import { Tracker } from '../../src/logic/Tracker'
 import { MessageLayer } from 'streamr-client-protocol'
-import { waitForCondition } from 'streamr-test-utils'
+import { waitForCondition, waitForEvent } from 'streamr-test-utils'
 
 import { startNetworkNode, startTracker } from '../../src/composition'
+import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
+import { Event as NodeEvent } from "../../src/logic/Node"
 
 const { StreamMessage, MessageID } = MessageLayer
 
@@ -26,7 +28,8 @@ describe('duplicate message detection and avoidance', () => {
             host: '127.0.0.1',
             port: 30351,
             id: 'node-0',
-            trackers: [tracker.getAddress()]
+            trackers: [tracker.getAddress()],
+            stunUrls: []
         })
         contactNode.start()
 
@@ -35,31 +38,36 @@ describe('duplicate message detection and avoidance', () => {
                 host: '127.0.0.1',
                 port: 30352,
                 id: 'node-1',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                stunUrls: []
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 30353,
                 id: 'node-2',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                stunUrls: []
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 30354,
                 id: 'node-3',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                stunUrls: []
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 30355,
                 id: 'node-4',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                stunUrls: []
             }),
             startNetworkNode({
                 host: '127.0.0.1',
                 port: 30356,
                 id: 'node-5',
-                trackers: [tracker.getAddress()]
+                trackers: [tracker.getAddress()],
+                stunUrls: []
             }),
         ])
 
