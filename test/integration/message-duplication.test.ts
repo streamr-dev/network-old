@@ -1,13 +1,8 @@
 import { NetworkNode } from '../../src/NetworkNode'
 import { Tracker } from '../../src/logic/Tracker'
-import { MessageLayer } from 'streamr-client-protocol'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
-
+import { StreamMessage, MessageID } from 'streamr-client-protocol'
+import { waitForCondition } from 'streamr-test-utils'
 import { startNetworkNode, startTracker } from '../../src/composition'
-import { Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
-import { Event as NodeEvent } from "../../src/logic/Node"
-
-const { StreamMessage, MessageID } = MessageLayer
 
 /**
  * This test verifies that on receiving a duplicate message, it is not re-emitted to the node's subscribers.
