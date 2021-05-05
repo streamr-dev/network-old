@@ -1,9 +1,9 @@
 import { Tracker } from '../../src/logic/Tracker'
 import WebSocket from 'ws'
-import { wait, waitForEvent } from 'streamr-test-utils'
+import { waitForEvent, wait } from 'streamr-test-utils'
 
-import { DisconnectionCode, Event, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
-import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
+import { Event, DisconnectionCode, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 import { startTracker } from '../../src/composition'
 
 describe('ws-endpoint', () => {
@@ -59,8 +59,8 @@ describe('ws-endpoint', () => {
         const endpointOneArguments = await e1
         const endpointTwoArguments = await e2
 
-        expect(endpointOneArguments).toEqual([new PeerInfo('endpointTwo', PeerType.Node, [2], [32])])
-        expect(endpointTwoArguments).toEqual([new PeerInfo('endpointOne', PeerType.Node, [2], [32])])
+        expect(endpointOneArguments).toEqual([PeerInfo.newNode('endpointTwo')])
+        expect(endpointTwoArguments).toEqual([PeerInfo.newNode('endpointOne')])
 
         await endpointOne.stop()
         await endpointTwo.stop()

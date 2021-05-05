@@ -1,5 +1,5 @@
-import { Event, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
-import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
+import { startEndpoint, Event, WsEndpoint } from '../../src/connection/WsEndpoint'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 
 describe('WsEndpoint: back pressure handling', () => {
     let ep1: WsEndpoint
@@ -22,7 +22,7 @@ describe('WsEndpoint: back pressure handling', () => {
         let hitHighBackPressure = false
         ep1.on(Event.HIGH_BACK_PRESSURE, (peerInfo) => {
             hitHighBackPressure = true
-            expect(peerInfo).toEqual(new PeerInfo('ep2', PeerType.Node, [2], [32]))
+            expect(peerInfo).toEqual(PeerInfo.newNode('ep2'))
             done()
         })
         while (!hitHighBackPressure) {
@@ -40,7 +40,7 @@ describe('WsEndpoint: back pressure handling', () => {
             sendInterval = setInterval(() => ep1.send('ep2', 'aaaa'), 30)
 
             ep1.on(Event.LOW_BACK_PRESSURE, (peerInfo) => {
-                expect(peerInfo).toEqual(new PeerInfo('ep2', PeerType.Node, [2], [32]))
+                expect(peerInfo).toEqual(PeerInfo.newNode('ep2'))
                 clearInterval(sendInterval!)
                 done()
             })

@@ -1,8 +1,7 @@
 import { startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
-import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
+import { PeerInfo } from '../../src/connection/PeerInfo'
 import { MetricsContext } from '../../src/helpers/MetricsContext'
 import { waitForCondition } from 'streamr-test-utils'
-
 async function setUpEndpoint(peerId: string, peerType: string, city: string, port: number): Promise<WsEndpoint> {
     const peerInfo = PeerInfo.fromObject({
         peerId,
@@ -120,8 +119,18 @@ describe('WsEndpoint with connections', () => {
 
     it('getPeerInfos() is empty', () => {
         expect(wsEndpoint.getPeerInfos()).toEqual([
-            new PeerInfo('otherPeerId', PeerType.Node, [2], [32]),
-            new PeerInfo('thirdPeerId', PeerType.Node, [2], [32])
+            PeerInfo.newNode('otherPeerId', null, {
+                latitude: null,
+                longitude: null,
+                country: null,
+                city: null
+            }),
+            PeerInfo.newNode('thirdPeerId', null, {
+                latitude: null,
+                longitude: null,
+                country: null,
+                city: null
+            })
         ])
     })
 

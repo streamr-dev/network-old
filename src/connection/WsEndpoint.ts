@@ -40,8 +40,8 @@ interface Connection {
     address?: string
     peerId?: string
     peerType?: PeerType
-    controlLayerVersions?: number[]
-    messageLayerVersions?: number[]
+    controlLayerVersions?: string
+    messageLayerVersions?: string
 
     peerInfo: PeerInfo
     highBackPressure: boolean
@@ -418,17 +418,7 @@ export class WsEndpoint extends EventEmitter {
                         const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
                         const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
 
-                        let controlLayerVersion
-                        let messageLayerVersion
-
-                        try {
-                            [controlLayerVersion, messageLayerVersion] = this.peerInfo.validateProtocolVersions(controlLayerVersionsArray, messageLayerVersionsArray)
-                        } catch (e) {
-                            this.logger.error(e)
-                            ws.close(DisconnectionCode.UNSUPPORTED_VERSION, e.toString())
-                            return
-                        }
-                        serverPeerInfo = new PeerInfo(peerId, peerType, [controlLayerVersion], [messageLayerVersion])
+                        serverPeerInfo = new PeerInfo(peerId, peerType, controlLayerVersionsArray, messageLayerVersionsArray)
                     } else {
                         this.logger.debug('Invalid message headers received on upgrade: ' + res)
                     }
@@ -541,6 +531,7 @@ export class WsEndpoint extends EventEmitter {
 
     private onIncomingConnection(ws: WsConnection | UWSConnection): void {
         const { address, peerId, peerType, controlLayerVersions, messageLayerVersions } = ws
+
         try {
             if (!address) {
                 throw new Error('address not given')
@@ -557,18 +548,10 @@ export class WsEndpoint extends EventEmitter {
             if (!messageLayerVersions) {
                 throw new Error('messageLayerVersions not given')
             }
+            const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
+            const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
 
-            let controlLayerVersion
-            let messageLayerVersion
-
-            try {
-                [controlLayerVersion, messageLayerVersion] = this.peerInfo.validateProtocolVersions(controlLayerVersions, messageLayerVersions)
-            } catch (e) {
-                this.logger.error(e.toString())
-                ws.close(DisconnectionCode.UNSUPPORTED_VERSION, e.toString())
-                return
-            }
-            const clientPeerInfo = new PeerInfo(peerId, peerType, [controlLayerVersion], [messageLayerVersion])
+            const clientPeerInfo = new PeerInfo(peerId, peerType, controlLayerVersionsArray, messageLayerVersionsArray)
             if (this.isConnected(address)) {
                 this.metrics.record('open:duplicateSocket', 1)
                 ws.close(DisconnectionCode.DUPLICATE_SOCKET, DisconnectionReason.DUPLICATE_SOCKET)

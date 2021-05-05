@@ -54,9 +54,8 @@ describe('check and kill dead connections', () => {
         // @ts-expect-error private method
         expect(node1.onClose).toBeCalledTimes(1)
         // @ts-expect-error private method
-        expect(node1.onClose).toBeCalledWith('ws://127.0.0.1:43972', {
-            peerId: 'node2', peerName: null, peerType: 'node', location: defaultLocation, controlLayerVersions: [2], messageLayerVersions: [32]
-        }, DisconnectionCode.DEAD_CONNECTION, DisconnectionReason.DEAD_CONNECTION)
+        expect(node1.onClose).toBeCalledWith('ws://127.0.0.1:43972', PeerInfo.newNode('node2'),
+            DisconnectionCode.DEAD_CONNECTION, DisconnectionReason.DEAD_CONNECTION)
 
         // @ts-expect-error private method
         node1.onClose.mockRestore()
@@ -64,6 +63,6 @@ describe('check and kill dead connections', () => {
         node1.pingConnections()
 
         const [peerInfo] = await waitForEvent(node1, Event.PEER_DISCONNECTED)
-        expect(peerInfo).toEqual(new PeerInfo('node2', PeerType.Node, [2], [32],  null, defaultLocation))
+        expect(peerInfo).toEqual(PeerInfo.newNode('node2'))
     })
 })

@@ -9,7 +9,6 @@ export class NotFoundInPeerBookError extends Error {
 
 export class PeerBook {
     private readonly peerInfos: { [key: string]: PeerInfo }
-
     constructor() {
         this.peerInfos = {}
     }
