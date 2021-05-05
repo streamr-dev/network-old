@@ -14,6 +14,7 @@ import { NodeToNode } from './protocol/NodeToNode'
 import { NetworkNode } from './NetworkNode'
 import { Readable } from 'stream'
 import { StorageConfig } from './logic/StorageConfig'
+import { NegotiatedProtocolVersions } from "./connection/NegotiatedProtocolVersions"
 
 export {
     Location,
@@ -170,15 +171,17 @@ function startNode({
     return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
+        const negotiatedProtocolVersions = new NegotiatedProtocolVersions()
         const nodeToNode = new NodeToNode(new WebRtcEndpoint(
             peerInfo,
             stunUrls,
             webRtcSignaller, 
             metricsContext,
+            negotiatedProtocolVersions,
             newWebrtcConnectionTimeout,
             pingInterval,
             webrtcDatachannelBufferThresholdLow,
-            webrtcDatachannelBufferThresholdHigh
+            webrtcDatachannelBufferThresholdHigh,
         ))
         return new NetworkNode({
             peerInfo,

@@ -15,6 +15,7 @@ import {
 import { Rtts } from '../identifiers'
 
 import { MessageQueue } from './MessageQueue'
+import { NegotiatedProtocolVersions } from "./NegotiatedProtocolVersions"
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
@@ -45,6 +46,7 @@ export class WebRtcEndpoint extends EventEmitter {
     private readonly peerInfo: PeerInfo
     private readonly stunUrls: string[]
     private readonly rtcSignaller: RtcSignaller
+    private readonly negotiatedProtocolVersions: NegotiatedProtocolVersions
     private connections: { [key: string]: Connection }
     private messageQueues: { [key: string]: MessageQueue<string> }
     private readonly newConnectionTimeout: number
@@ -61,6 +63,7 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
+        negotiatedProtocolVersions: NegotiatedProtocolVersions,
         newConnectionTimeout = 15000,
         pingInterval = 2 * 1000,
         webrtcDatachannelBufferThresholdLow = 2 ** 15,
@@ -71,6 +74,7 @@ export class WebRtcEndpoint extends EventEmitter {
         this.peerInfo = peerInfo
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
+        this.negotiatedProtocolVersions = negotiatedProtocolVersions
         this.connections = {}
         this.messageQueues = {}
         this.newConnectionTimeout = newConnectionTimeout
@@ -98,6 +102,8 @@ export class WebRtcEndpoint extends EventEmitter {
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'answer' as DescriptionType.Answer)
+                const [control, message] = this.peerInfo.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
+                this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
             } else {
                 this.logger.warn('unexpected rtcAnswer from %s: %s', peerId, description)
             }
@@ -196,6 +202,8 @@ export class WebRtcEndpoint extends EventEmitter {
         })
         connection.once('localDescription', (type, description) => {
             this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
+            const [control, message] = this.peerInfo.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
+            this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
         })
         connection.once('localCandidate', (candidate, mid) => {
             this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
