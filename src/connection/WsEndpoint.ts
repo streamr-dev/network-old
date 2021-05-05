@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import uWS from 'uWebSockets.js'
 import WebSocket from 'ws'
 import { PeerBook } from './PeerBook'
-import {PeerInfo, PeerType} from './PeerInfo'
+import { PeerInfo, PeerType } from './PeerInfo'
 import { Metrics, MetricsContext } from '../helpers/MetricsContext'
 import { Logger } from '../helpers/Logger'
 import { Rtts } from '../identifiers'
@@ -22,7 +22,8 @@ export enum DisconnectionCode {
     DUPLICATE_SOCKET = 1002,
     NO_SHARED_STREAMS = 1000,
     MISSING_REQUIRED_PARAMETER = 1002,
-    DEAD_CONNECTION = 1002
+    DEAD_CONNECTION = 1002,
+    UNSUPPORTED_VERSION = 1002
 }
 
 export enum DisconnectionReason {
@@ -30,7 +31,8 @@ export enum DisconnectionReason {
     DUPLICATE_SOCKET = 'streamr:endpoint:duplicate-connection',
     NO_SHARED_STREAMS = 'streamr:node:no-shared-streams',
     MISSING_REQUIRED_PARAMETER = 'streamr:node:missing-required-parameter',
-    DEAD_CONNECTION = 'streamr:endpoint:dead-connection'
+    DEAD_CONNECTION = 'streamr:endpoint:dead-connection',
+    UNSUPPORTED_VERSION = 'streamr:endpoint:dead-connection'
 }
 
 interface Connection {
@@ -38,6 +40,8 @@ interface Connection {
     address?: string
     peerId?: string
     peerType?: PeerType
+    controlLayerVersions?: number[]
+    messageLayerVersions?: number[]
 
     peerInfo: PeerInfo
     highBackPressure: boolean
@@ -98,7 +102,9 @@ function terminateWs(ws: WsConnection | UWSConnection, logger: Logger): void {
 function toHeaders(peerInfo: PeerInfo): { [key: string]: string } {
     return {
         'streamr-peer-id': peerInfo.peerId,
-        'streamr-peer-type': peerInfo.peerType
+        'streamr-peer-type': peerInfo.peerType,
+        'control-layer-versions': peerInfo.controlLayerVersions.join(','),
+        'message-layer-versions': peerInfo.messageLayerVersions.join(',')
     }
 }
 
@@ -169,12 +175,16 @@ export class WsEndpoint extends EventEmitter {
                 res.writeStatus('101 Switching Protocols')
                     .writeHeader('streamr-peer-id', this.peerInfo.peerId)
                     .writeHeader('streamr-peer-type', this.peerInfo.peerType)
+                    .writeHeader('control-layer-versions', this.peerInfo.controlLayerVersions.join(','))
+                    .writeHeader('message-layer-versions', this.peerInfo.messageLayerVersions.join(','))
 
                 /* This immediately calls open handler, you must not use res after this call */
                 res.upgrade({
                     address: req.getQuery('address'),
                     peerId: req.getHeader('streamr-peer-id'),
                     peerType: req.getHeader('streamr-peer-type'),
+                    controlLayerVersions: req.getHeader('control-layer-versions'),
+                    messageLayerVersions: req.getHeader('message-layer-versions')
                 },
                 /* Spell these correctly */
                 req.getHeader('sec-websocket-key'),
@@ -401,9 +411,26 @@ export class WsEndpoint extends EventEmitter {
                 ws.on('upgrade', (res) => {
                     const peerId = res.headers['streamr-peer-id'] as string
                     const peerType = res.headers['streamr-peer-type'] as PeerType
+                    const controlLayerVersions = res.headers['control-layer-versions'] as string
+                    const messageLayerVersions = res.headers['message-layer-versions'] as string
 
-                    if (peerId && peerType) {
-                        serverPeerInfo = new PeerInfo(peerId, peerType)
+                    if (peerId && peerType && controlLayerVersions && messageLayerVersions) {
+                        const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
+                        const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
+
+                        let controlLayerVersion
+                        let messageLayerVersion
+
+                        try {
+                            [controlLayerVersion, messageLayerVersion] = this.peerInfo.validateProtocolVersions(controlLayerVersionsArray, messageLayerVersionsArray)
+                        } catch (e) {
+                            this.logger.error(e)
+                            ws.close(DisconnectionCode.UNSUPPORTED_VERSION, e.toString())
+                            return
+                        }
+                        serverPeerInfo = new PeerInfo(peerId, peerType, [controlLayerVersion], [messageLayerVersion])
+                    } else {
+                        this.logger.debug('Invalid message headers received on upgrade: ' + res)
                     }
                 })
 
@@ -513,8 +540,7 @@ export class WsEndpoint extends EventEmitter {
     }
 
     private onIncomingConnection(ws: WsConnection | UWSConnection): void {
-        const { address, peerId, peerType } = ws
-
+        const { address, peerId, peerType, controlLayerVersions, messageLayerVersions } = ws
         try {
             if (!address) {
                 throw new Error('address not given')
@@ -525,8 +551,24 @@ export class WsEndpoint extends EventEmitter {
             if (!peerType) {
                 throw new Error('peerType not given')
             }
+            if (!controlLayerVersions) {
+                throw new Error('controlLayerVersions not given')
+            }
+            if (!messageLayerVersions) {
+                throw new Error('messageLayerVersions not given')
+            }
 
-            const clientPeerInfo = new PeerInfo(peerId, peerType)
+            let controlLayerVersion
+            let messageLayerVersion
+
+            try {
+                [controlLayerVersion, messageLayerVersion] = this.peerInfo.validateProtocolVersions(controlLayerVersions, messageLayerVersions)
+            } catch (e) {
+                this.logger.error(e.toString())
+                ws.close(DisconnectionCode.UNSUPPORTED_VERSION, e.toString())
+                return
+            }
+            const clientPeerInfo = new PeerInfo(peerId, peerType, [controlLayerVersion], [messageLayerVersion])
             if (this.isConnected(address)) {
                 this.metrics.record('open:duplicateSocket', 1)
                 ws.close(DisconnectionCode.DUPLICATE_SOCKET, DisconnectionReason.DUPLICATE_SOCKET)

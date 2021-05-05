@@ -1,5 +1,5 @@
 import { startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
-import { PeerInfo } from '../../src/connection/PeerInfo'
+import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
 import { MetricsContext } from '../../src/helpers/MetricsContext'
 import { waitForCondition } from 'streamr-test-utils'
 
@@ -13,7 +13,9 @@ async function setUpEndpoint(peerId: string, peerType: string, city: string, por
             longitude: null,
             country: 'Finland',
             city
-        }
+        },
+        controlLayerVersions: null,
+        messageLayerVersions: null
     })
     const metricsContext = new MetricsContext(peerId)
     const wsEndpoint = await startEndpoint(
@@ -118,18 +120,8 @@ describe('WsEndpoint with connections', () => {
 
     it('getPeerInfos() is empty', () => {
         expect(wsEndpoint.getPeerInfos()).toEqual([
-            PeerInfo.newNode('otherPeerId', null, {
-                latitude: null,
-                longitude: null,
-                country: null,
-                city: null
-            }),
-            PeerInfo.newNode('thirdPeerId', null, {
-                latitude: null,
-                longitude: null,
-                country: null,
-                city: null
-            })
+            new PeerInfo('otherPeerId', PeerType.Node, [2], [32]),
+            new PeerInfo('thirdPeerId', PeerType.Node, [2], [32])
         ])
     })
 

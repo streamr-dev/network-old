@@ -1,9 +1,9 @@
 import { Tracker } from '../../src/logic/Tracker'
 import WebSocket from 'ws'
-import { waitForEvent, wait } from 'streamr-test-utils'
+import { wait, waitForEvent } from 'streamr-test-utils'
 
-import { Event, DisconnectionCode, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
-import { PeerInfo } from '../../src/connection/PeerInfo'
+import { DisconnectionCode, Event, startEndpoint, WsEndpoint } from '../../src/connection/WsEndpoint'
+import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
 import { startTracker } from '../../src/composition'
 
 describe('ws-endpoint', () => {
@@ -59,8 +59,8 @@ describe('ws-endpoint', () => {
         const endpointOneArguments = await e1
         const endpointTwoArguments = await e2
 
-        expect(endpointOneArguments).toEqual([PeerInfo.newNode('endpointTwo')])
-        expect(endpointTwoArguments).toEqual([PeerInfo.newNode('endpointOne')])
+        expect(endpointOneArguments).toEqual([new PeerInfo('endpointTwo', PeerType.Node, [2], [32])])
+        expect(endpointTwoArguments).toEqual([new PeerInfo('endpointOne', PeerType.Node, [2], [32])])
 
         await endpointOne.stop()
         await endpointTwo.stop()
@@ -110,6 +110,8 @@ describe('ws-endpoint', () => {
                     headers: {
                         'streamr-peer-id': 'peerId',
                         'streamr-peer-type': 'typiii',
+                        'control-layer-versions': "2",
+                        'message-layer-versions': "32"
                     }
                 })
             close = await waitForEvent(ws, 'close')
