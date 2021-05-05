@@ -33,15 +33,15 @@ export interface IWsEndpoint {
     on(event: Event.HIGH_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
     on(event: Event.LOW_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
 
-    connect(peerAddress: string): Promise<string>;
-    send(recipientId: string, message: string): Promise<string>;
-    close(recipientId: string, reason: DisconnectionReason): void;
-    getRtts(): Rtts;
-    getPeerInfo(): Readonly<PeerInfo>;
-    getAddress(): string;
-    stop(): Promise<void>;
+    connect(peerAddress: string): Promise<string>
+    send(recipientId: string, message: string): Promise<string>
+    close(recipientId: string, reason: DisconnectionReason): void
+    getRtts(): Rtts
+    getPeerInfo(): Readonly<PeerInfo>
+    getAddress(): string
+    stop(): Promise<void>
 
-    isConnected(address: string): boolean;
-    getPeerInfos(): PeerInfo[];
-    resolveAddress(peerId: string): string | never;
+    isConnected(address: string): boolean
+    getPeerInfos(): PeerInfo[]
+    resolveAddress(peerId: string): string | never
 }
