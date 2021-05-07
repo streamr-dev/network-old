@@ -10,7 +10,7 @@ import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { NegotiatedProtocolVersions } from "../../src/connection/NegotiatedProtocolVersions"
 import { NodeToNode } from "../../src/protocol/NodeToNode"
 import { MessageID, StreamMessage } from "streamr-client-protocol"
-import { waitForCondition, waitForEvent } from "streamr-test-utils"
+import { waitForEvent } from "streamr-test-utils"
 
 describe('Node-to-Node protocol version negotiation', () => {
     let tracker: Tracker
