@@ -10,7 +10,7 @@ import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { NegotiatedProtocolVersions } from "../../src/connection/NegotiatedProtocolVersions"
 import { Event as ntnEvent, NodeToNode } from "../../src/protocol/NodeToNode"
 import { MessageID, StreamMessage } from "streamr-client-protocol"
-import { waitForEvent } from "streamr-test-utils"
+import { wait, waitForCondition, waitForEvent } from "streamr-test-utils"
 
 describe('Node-to-Node protocol version negotiation', () => {
     let tracker: Tracker
@@ -123,7 +123,10 @@ describe('Node-to-Node protocol version negotiation', () => {
 
     it('if there are no shared versions the connection is closed', async () => {
         ep3.connect('node-endpoint1', 'tracker').catch((err) => {
-            expect(err).toEqual(new Error("disconnected ep3"))
+            expect(err).toEqual(new Error('disconnected node-endpoint1'))
+        })
+        ep1.connect('node-endpoint3', 'tracker').catch((err) => {
+            expect(err).toEqual(new Error('disconnected node-endpoint3'))
         })
     })
 })
