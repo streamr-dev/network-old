@@ -98,11 +98,12 @@ describe('Node-to-Node protocol version negotiation', () => {
         expect(nodeToNode2.getNegotiatedMessageLayerProtocolVersionOnNode('node-endpoint1')).toEqual(31)
     })
 
-    it('messages are sent with the negotiated protocol version',async () => {
+    it('messages are sent with the negotiated protocol version',async (done) => {
         ep2.on(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
             expect(parsedData[3][0]).toEqual(31)
+            done()
         })
         const i = 1
         const msg1 = new StreamMessage({
@@ -113,7 +114,6 @@ describe('Node-to-Node protocol version negotiation', () => {
             },
         })
         nodeToNode1.sendData('node-endpoint2', msg1)
-        await waitForEvent(nodeToNode2, ntnEvent.DATA_RECEIVED)
     })
 
     it('negotiated protocol is removed once node is disconnected', async () => {
