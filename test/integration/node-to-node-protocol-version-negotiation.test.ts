@@ -103,7 +103,7 @@ describe('Node-to-Node protocol version negotiation', () => {
         })
         const i = 1
         const msg1 = new StreamMessage({
-            messageId: new MessageID('stream-1', 0, i, 0, 'ep1', 'msgChainId'),
+            messageId: new MessageID('stream-1', 0, i, 0, 'node-endpoint1', 'msgChainId'),
             prevMsgRef: null,
             content: {
                 messageNo: i
@@ -122,11 +122,12 @@ describe('Node-to-Node protocol version negotiation', () => {
     })
 
     it('if there are no shared versions the connection is closed', async () => {
-        ep3.connect('node-endpoint1', 'tracker').catch((err) => {
-            expect(err).toEqual(new Error('disconnected node-endpoint1'))
-        })
-        ep1.connect('node-endpoint3', 'tracker').catch((err) => {
-            expect(err).toEqual(new Error('disconnected node-endpoint3'))
-        })
+        let errors = 0
+        try {
+            await ep3.connect('node-endpoint1', 'tracker')
+        } catch (err) {
+            errors += 1
+        }
+        expect(errors).toEqual(1)
     })
 })
