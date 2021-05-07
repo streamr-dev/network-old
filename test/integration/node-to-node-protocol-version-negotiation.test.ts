@@ -131,6 +131,6 @@ describe('Node-to-Node protocol version negotiation', () => {
         } catch (err) {
             errors += 1
         }
-        await waitForCondition(() => errors === 1)
+        expect(errors).toEqual(1)
     })
 })
