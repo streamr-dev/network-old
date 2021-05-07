@@ -72,10 +72,10 @@ export class PeerInfo {
         if (!Object.values(PeerType).includes(peerType)) {
             throw new Error(`peerType ${peerType} not in peerTypes list`)
         }
-        if (!controlLayerVersions || controlLayerVersions === []) {
+        if (!controlLayerVersions || controlLayerVersions.length === 0) {
             throw new Error('controlLayerVersions not given')
         }
-        if (!messageLayerVersions || messageLayerVersions === []) {
+        if (!messageLayerVersions || messageLayerVersions.length === 0) {
             throw new Error('messageLayerVersions not given')
         }
 
