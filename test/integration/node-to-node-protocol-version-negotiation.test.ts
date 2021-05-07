@@ -92,14 +92,12 @@ describe('Node-to-Node protocol version negotiation', () => {
     })
 
     it('protocol versions are correctly negotiated',  () => {
-        expect(nodeToNode1.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint2')).toEqual(2)
-        expect(nodeToNode2.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint1')).toEqual(2)
-        expect(nodeToNode1.getNegotiatedMessageLayerProtocolVersionOnNode('node-endpoint2')).toEqual(31)
-        expect(nodeToNode2.getNegotiatedMessageLayerProtocolVersionOnNode('node-endpoint1')).toEqual(31)
+        expect(nodeToNode1.getNegotiatedProtocolVersionsOnNode('node-endpoint2')).toEqual([2,31])
+        expect(nodeToNode2.getNegotiatedProtocolVersionsOnNode('node-endpoint1')).toEqual([2,31])
     })
 
     it('messages are sent with the negotiated protocol version', (done) => {
-        ep2.on(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
+        ep2.once(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
             expect(parsedData[3][0]).toEqual(31)

@@ -71,8 +71,7 @@ export class NodeToNode extends EventEmitter {
     }
 
     send<T>(receiverNodeId: string, message: T & ControlLayer.ControlMessage): Promise<T> {
-        const controlLayerVersion = this.getNegotiatedControlLayerProtocolVersionOnNode(receiverNodeId)
-        const messageLayerVersion = this.getNegotiatedMessageLayerProtocolVersionOnNode(receiverNodeId)
+        const [controlLayerVersion, messageLayerVersion] = this.getNegotiatedProtocolVersionsOnNode(receiverNodeId)
         return this.endpoint.send(receiverNodeId, message.serialize(controlLayerVersion, messageLayerVersion)).then(() => message)
     }
 
@@ -130,12 +129,11 @@ export class NodeToNode extends EventEmitter {
         return this.endpoint.getRtts()
     }
 
-    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number {
-        return this.endpoint.getNegotiatedMessageLayerProtocolVersionOnNode(peerId)
-            || Math.max(...this.endpoint.getPeerInfo().messageLayerVersions)
-    }
-    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number {
-        return this.endpoint.getNegotiatedControlLayerProtocolVersionOnNode(peerId)
-            || Math.max(...this.endpoint.getPeerInfo().controlLayerVersions)
+    getNegotiatedProtocolVersionsOnNode(peerId: string): number[] {
+        const messageLayerVersion = this.endpoint.getNegotiatedMessageLayerProtocolVersionOnNode(peerId)
+            || Math.max(0, ...this.endpoint.getPeerInfo().messageLayerVersions)
+        const controlLayerVersion = this.endpoint.getNegotiatedControlLayerProtocolVersionOnNode(peerId)
+            || Math.max(0, ...this.endpoint.getPeerInfo().controlLayerVersions)
+        return [controlLayerVersion, messageLayerVersion]
     }
 }

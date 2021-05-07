@@ -381,8 +381,8 @@ export class WsEndpoint extends EventEmitter implements IWsEndpoint {
                     const messageLayerVersions = res.headers['message-layer-versions'] as string
 
                     if (peerId && peerType && controlLayerVersions && messageLayerVersions) {
-                        const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version))
-                        const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version))
+                        const controlLayerVersionsArray = controlLayerVersions.split(',').map((version) => parseInt(version, 10))
+                        const messageLayerVersionsArray = messageLayerVersions.split(',').map((version) => parseInt(version, 10))
 
                         serverPeerInfo = new PeerInfo(peerId, peerType, controlLayerVersionsArray, messageLayerVersionsArray)
                     } else {

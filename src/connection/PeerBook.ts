@@ -34,10 +34,10 @@ export class PeerBook {
     }
 
     getPeerId(address: string): string | never {
-        const peerId = this.peerInfos[address]
-        if (!peerId) {
+        const peerInfo = this.peerInfos[address]
+        if (!peerInfo) {
             throw new NotFoundInPeerBookError(`Address ${address} not found in peer book`)
         }
-        return peerId.peerId
+        return peerInfo.peerId
     }
 }
