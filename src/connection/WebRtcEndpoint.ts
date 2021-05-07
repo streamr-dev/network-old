@@ -225,7 +225,7 @@ export class WebRtcEndpoint extends EventEmitter {
                 // connection.
                 delete this.connections[targetPeerId]
             }
-
+            this.negotiatedProtocolVersions.removeNegotiatedProtocolVersion(targetPeerId)
             this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
             connection.removeAllListeners()
             this.metrics.record('close', 1)
@@ -291,6 +291,14 @@ export class WebRtcEndpoint extends EventEmitter {
 
     getPeerInfo(): Readonly<PeerInfo> {
         return this.peerInfo
+    }
+
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.messageLayerVersion || null
+    }
+
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.controlLayerVersion || null
     }
 
     /**

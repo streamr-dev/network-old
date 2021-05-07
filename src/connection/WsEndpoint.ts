@@ -529,6 +529,14 @@ export class WsEndpoint extends EventEmitter {
         return this.peerBook.getAddress(peerId)
     }
 
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number {
+        return Math.max(...this.peerInfo.messageLayerVersions)
+    }
+
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number {
+        return Math.max(...this.peerInfo.controlLayerVersions)
+    }
+
     private onIncomingConnection(ws: WsConnection | UWSConnection): void {
         const { address, peerId, peerType, controlLayerVersions, messageLayerVersions } = ws
 
