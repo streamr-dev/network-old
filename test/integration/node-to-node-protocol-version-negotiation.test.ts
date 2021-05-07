@@ -94,10 +94,10 @@ describe('Node-to-Node protocol version negotiation', () => {
     it('messages are sent with the negotiated protocol version', async () => {
         let numOfReceivedMessages = 0
         ep2.on(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
-            numOfReceivedMessages +=1
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
             expect(parsedData[3][0]).toEqual(31)
+            numOfReceivedMessages +=1
         })
         const i = 1
         const msg1 = new StreamMessage({
