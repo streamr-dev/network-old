@@ -42,13 +42,15 @@ describe('PeerInfo', () => {
     })
 
     it('PeerInfo constructor throws if invalid peerType', () => {
-        expect(() => new PeerInfo('peerId', 'invalidPeerType' as any)).toThrow()
+        expect(() => new PeerInfo('peerId', 'invalidPeerType' as any, [2], [32])).toThrow()
     })
 
     it('fromObject', () => {
         const peerInfo = PeerInfo.fromObject({
             peerId: 'peerId',
-            peerType: 'tracker'
+            peerType: 'tracker',
+            controlLayerVersions: [2],
+            messageLayerVersions: [32]
         })
         expect(peerInfo.peerId).toEqual('peerId')
         expect(peerInfo.isTracker()).toEqual(true)

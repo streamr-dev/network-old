@@ -16,8 +16,10 @@ describe('Node-to-Node protocol version negotiation', () => {
     let tracker: Tracker
     let trackerNode1: TrackerNode
     let trackerNode2: TrackerNode
+    let trackerNode3: TrackerNode
     let ep1: WebRtcEndpoint
     let ep2: WebRtcEndpoint
+    let ep3: WebRtcEndpoint
     let nodeToNode1: NodeToNode
     let nodeToNode2: NodeToNode
 
@@ -30,14 +32,19 @@ describe('Node-to-Node protocol version negotiation', () => {
 
         const peerInfo1 = new PeerInfo('ep1', PeerType.Node, [1, 2, 3], [29, 30, 31])
         const peerInfo2 = new PeerInfo('ep2', PeerType.Node, [1, 2], [31, 32, 33])
+        const peerInfo3 = new PeerInfo('ep3', PeerType.Node, [1, 2], [32])
 
         // Need to set up TrackerNodes and WsEndpoint(s) to exchange RelayMessage(s) via tracker
         const wsEp1 = await startEndpoint('127.0.0.1', 28681, peerInfo1, null, new MetricsContext(peerInfo1.peerId))
         const wsEp2 = await startEndpoint('127.0.0.1', 28682, peerInfo2, null, new MetricsContext(peerInfo2.peerId))
+        const wsEp3 = await startEndpoint('127.0.0.1', 28683, peerInfo3, null, new MetricsContext(peerInfo2.peerId))
         trackerNode1 = new TrackerNode(wsEp1)
         trackerNode2 = new TrackerNode(wsEp2)
+        trackerNode3 = new TrackerNode(wsEp3)
+
         await trackerNode1.connectToTracker(tracker.getAddress())
         await trackerNode2.connectToTracker(tracker.getAddress())
+        await trackerNode3.connectToTracker(tracker.getAddress())
 
         // Set up WebRTC endpoints
         ep1 = new WebRtcEndpoint(
@@ -51,8 +58,15 @@ describe('Node-to-Node protocol version negotiation', () => {
             peerInfo2,
             [],
             new RtcSignaller(peerInfo2, trackerNode2),
-            new MetricsContext('ep'),
+            new MetricsContext('ep2'),
             new NegotiatedProtocolVersions(peerInfo2)
+        )
+        ep3 = new WebRtcEndpoint(
+            peerInfo3,
+            [],
+            new RtcSignaller(peerInfo3, trackerNode3),
+            new MetricsContext('ep3'),
+            new NegotiatedProtocolVersions(peerInfo3)
         )
         nodeToNode1 = new NodeToNode(ep1)
         nodeToNode2 = new NodeToNode(ep2)
@@ -103,5 +117,11 @@ describe('Node-to-Node protocol version negotiation', () => {
 
         expect(ep1.getNegotiatedControlLayerProtocolVersionOnNode('ep2')).toEqual(null)
         expect(ep2.getNegotiatedControlLayerProtocolVersionOnNode('ep1')).toEqual(null)
+    })
+
+    it('if there are no shared versions the connection is closed', async () => {
+        ep3.connect('ep1', 'tracker').catch((err) => {
+            expect(err).toEqual(new Error("disconnected ep3"))
+        })
     })
 })
