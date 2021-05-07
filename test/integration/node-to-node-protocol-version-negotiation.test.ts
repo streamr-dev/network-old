@@ -1,4 +1,5 @@
-import { Event as wrtcEvent, WebRtcEndpoint } from '../../src/connection/WebRtcEndpoint'
+import { Event as wrtcEvent } from '../../src/connection/IWebRtcEndpoint'
+import { WebRtcEndpoint } from "../../src/connection/WebRtcEndpoint"
 import { PeerInfo, PeerType } from '../../src/connection/PeerInfo'
 import { MetricsContext } from '../../src/helpers/MetricsContext'
 import { RtcSignaller } from '../../src/logic/RtcSignaller'
@@ -7,7 +8,7 @@ import { startTracker } from '../../src/composition'
 import { startEndpoint } from '../../src/connection/WsEndpoint'
 import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { NegotiatedProtocolVersions } from "../../src/connection/NegotiatedProtocolVersions"
-import { Event as NodeToNodeEvent, NodeToNode } from "../../src/protocol/NodeToNode"
+import { NodeToNode } from "../../src/protocol/NodeToNode"
 import { MessageID, StreamMessage } from "streamr-client-protocol"
 import { waitForCondition, waitForEvent } from "streamr-test-utils"
 

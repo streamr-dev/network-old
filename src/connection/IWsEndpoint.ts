@@ -44,4 +44,6 @@ export interface IWsEndpoint {
     isConnected(address: string): boolean
     getPeerInfos(): PeerInfo[]
     resolveAddress(peerId: string): string | never
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null
 }
