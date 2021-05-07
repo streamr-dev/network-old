@@ -91,8 +91,7 @@ describe('Node-to-Node protocol version negotiation', () => {
         expect(nodeToNode2.getNegotiatedMessageLayerProtocolVersionOnNode('ep1')).toEqual(31)
     })
 
-    it('messages are sent with the negotiated protocol version', async () => {
-        let numOfReceivedMessages = 0
+    it('messages are sent with the negotiated protocol version', () => {
         ep2.on(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
