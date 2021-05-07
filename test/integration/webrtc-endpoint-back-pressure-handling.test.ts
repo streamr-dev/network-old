@@ -41,14 +41,14 @@ describe('WebRtcEndpoint: back pressure handling', () => {
             ['stun:stun.l.google.com:19302'],
             new RtcSignaller(peerInfo1, trackerNode1),
             new MetricsContext('ep1'),
-            new NegotiatedProtocolVersions()
+            new NegotiatedProtocolVersions(peerInfo1)
         )
         ep2 = new WebRtcEndpoint(
             peerInfo2,
             ['stun:stun.l.google.com:19302'],
             new RtcSignaller(peerInfo2, trackerNode2),
             new MetricsContext('ep'),
-            new NegotiatedProtocolVersions()
+            new NegotiatedProtocolVersions(peerInfo2)
         )
         await ep1.connect('ep2', 'tracker')
     })

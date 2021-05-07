@@ -107,28 +107,4 @@ export class PeerInfo {
     toString(): string {
         return (this.peerName ? `${this.peerName}` : '') + `<${this.peerId.slice(0, 8)}>`
     }
-
-    validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): number[] {
-        if (controlLayerVersions === undefined || messageLayerVersions === undefined || controlLayerVersions === [] || messageLayerVersions === []) {
-            throw new Error('Missing version negotiation! Must give controlLayerVersions and messageLayerVersions as query parameters!')
-        }
-
-        const controlLayerVersion = Math.max(...this.controlLayerVersions.filter((version) => controlLayerVersions.includes(version)))
-        const messageLayerVersion = Math.max(...this.messageLayerVersions.filter((version) => messageLayerVersions.includes(version)))
-
-        // Validate that the requested versions are supported
-        if (controlLayerVersion < 0) {
-            throw new Error(`Supported ControlLayer versions: ${
-                JSON.stringify(defaultControlLayerVersions)
-            }. Are you using an outdated library?`)
-        }
-
-        if (messageLayerVersion < 0) {
-            throw new Error(`Supported MessageLayer versions: ${
-                JSON.stringify(defaultMessageLayerVersions)
-            }. Are you using an outdated library?`)
-        }
-
-        return [controlLayerVersion, messageLayerVersion]
-    }
 }

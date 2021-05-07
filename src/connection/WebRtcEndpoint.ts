@@ -86,7 +86,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'answer' as DescriptionType.Answer)
-                const [control, message] = this.peerInfo.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
+                const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
                 this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
             } else {
                 this.logger.warn('unexpected rtcAnswer from %s: %s', peerId, description)
@@ -186,7 +186,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         })
         connection.once('localDescription', (type, description) => {
             this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
-            const [control, message] = this.peerInfo.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
+            const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
             this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
         })
         connection.once('localCandidate', (candidate, mid) => {

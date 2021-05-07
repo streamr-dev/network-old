@@ -45,14 +45,14 @@ describe('Node-to-Node protocol version negotiation', () => {
             [],
             new RtcSignaller(peerInfo1, trackerNode1),
             new MetricsContext('ep1'),
-            new NegotiatedProtocolVersions()
+            new NegotiatedProtocolVersions(peerInfo1)
         )
         ep2 = new WebRtcEndpoint(
             peerInfo2,
             [],
             new RtcSignaller(peerInfo2, trackerNode2),
             new MetricsContext('ep'),
-            new NegotiatedProtocolVersions()
+            new NegotiatedProtocolVersions(peerInfo2)
         )
         nodeToNode1 = new NodeToNode(ep1)
         nodeToNode2 = new NodeToNode(ep2)

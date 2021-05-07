@@ -171,7 +171,7 @@ function startNode({
     return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)
-        const negotiatedProtocolVersions = new NegotiatedProtocolVersions()
+        const negotiatedProtocolVersions = new NegotiatedProtocolVersions(peerInfo)
         const nodeToNode = new NodeToNode(new WebRtcEndpoint(
             peerInfo,
             stunUrls,
