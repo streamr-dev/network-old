@@ -495,11 +495,13 @@ export class WsEndpoint extends EventEmitter implements IWsEndpoint {
         return this.peerBook.getAddress(peerId)
     }
 
-    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null {
         return Math.max(...this.peerInfo.messageLayerVersions)
     }
 
-    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null {
         return Math.max(...this.peerInfo.controlLayerVersions)
     }
 
