@@ -97,7 +97,6 @@ describe('Node-to-Node protocol version negotiation', () => {
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
             expect(parsedData[3][0]).toEqual(31)
-            numOfReceivedMessages +=1
         })
         const i = 1
         const msg1 = new StreamMessage({
@@ -108,7 +107,6 @@ describe('Node-to-Node protocol version negotiation', () => {
             },
         })
         nodeToNode1.sendData('ep2', msg1)
-        await waitForCondition(() => numOfReceivedMessages === 1)
     })
 
     it('negotiated protocol is removed once node is disconnected', async () => {
