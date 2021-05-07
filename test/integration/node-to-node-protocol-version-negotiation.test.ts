@@ -8,7 +8,7 @@ import { startTracker } from '../../src/composition'
 import { startEndpoint } from '../../src/connection/WsEndpoint'
 import { TrackerNode } from '../../src/protocol/TrackerNode'
 import { NegotiatedProtocolVersions } from "../../src/connection/NegotiatedProtocolVersions"
-import { NodeToNode } from "../../src/protocol/NodeToNode"
+import { Event as ntnEvent, NodeToNode } from "../../src/protocol/NodeToNode"
 import { MessageID, StreamMessage } from "streamr-client-protocol"
 import { waitForEvent } from "streamr-test-utils"
 
@@ -71,7 +71,11 @@ describe('Node-to-Node protocol version negotiation', () => {
         nodeToNode1 = new NodeToNode(ep1)
         nodeToNode2 = new NodeToNode(ep2)
 
-        await nodeToNode1.connectToNode('node-endpoint2', 'tracker')
+        nodeToNode1.connectToNode('node-endpoint2', 'tracker')
+        await Promise.all([
+            waitForEvent(nodeToNode1, ntnEvent.NODE_CONNECTED),
+            waitForEvent(nodeToNode2, ntnEvent.NODE_CONNECTED)
+        ])
     })
 
     afterEach(async () => {
