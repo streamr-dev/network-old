@@ -51,21 +51,21 @@ describe('Node-to-Node protocol version negotiation', () => {
             peerInfo1,
             [],
             new RtcSignaller(peerInfo1, trackerNode1),
-            new MetricsContext('ep1'),
+            new MetricsContext('node-endpoint1'),
             new NegotiatedProtocolVersions(peerInfo1)
         )
         ep2 = new WebRtcEndpoint(
             peerInfo2,
             [],
             new RtcSignaller(peerInfo2, trackerNode2),
-            new MetricsContext('ep2'),
+            new MetricsContext('node-endpoint2'),
             new NegotiatedProtocolVersions(peerInfo2)
         )
         ep3 = new WebRtcEndpoint(
             peerInfo3,
             [],
             new RtcSignaller(peerInfo3, trackerNode3),
-            new MetricsContext('ep3'),
+            new MetricsContext('node-endpoint3'),
             new NegotiatedProtocolVersions(peerInfo3)
         )
         nodeToNode1 = new NodeToNode(ep1)
@@ -95,7 +95,7 @@ describe('Node-to-Node protocol version negotiation', () => {
         expect(nodeToNode2.getNegotiatedMessageLayerProtocolVersionOnNode('node-endpoint1')).toEqual(31)
     })
 
-    it('messages are sent with the negotiated protocol version', () => {
+    it('messages are sent with the negotiated protocol version',async () => {
         ep2.on(wrtcEvent.MESSAGE_RECEIVED, (peerInfo, data) => {
             const parsedData = JSON.parse(data)
             expect(parsedData[0]).toEqual(2)
@@ -110,6 +110,7 @@ describe('Node-to-Node protocol version negotiation', () => {
             },
         })
         nodeToNode1.sendData('node-endpoint2', msg1)
+        await waitForEvent(nodeToNode2, ntnEvent.DATA_RECEIVED)
     })
 
     it('negotiated protocol is removed once node is disconnected', async () => {
