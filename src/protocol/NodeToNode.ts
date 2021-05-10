@@ -129,11 +129,11 @@ export class NodeToNode extends EventEmitter {
         return this.endpoint.getRtts()
     }
 
-    getNegotiatedProtocolVersionsOnNode(peerId: string): number[] {
+    getNegotiatedProtocolVersionsOnNode(peerId: string): [number, number] {
         const messageLayerVersion = this.endpoint.getNegotiatedMessageLayerProtocolVersionOnNode(peerId)
-            || Math.max(0, ...this.endpoint.getPeerInfo().messageLayerVersions)
+            || this.endpoint.getDefaultMessageLayerProtocolVersion()
         const controlLayerVersion = this.endpoint.getNegotiatedControlLayerProtocolVersionOnNode(peerId)
-            || Math.max(0, ...this.endpoint.getPeerInfo().controlLayerVersions)
+            || this.endpoint.getDefaultControlLayerProtocolVersion()
         return [controlLayerVersion, messageLayerVersion]
     }
 }

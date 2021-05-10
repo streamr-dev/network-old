@@ -10,10 +10,14 @@ export class NegotiatedProtocolVersions {
 
     private readonly peerInfo: PeerInfo
     private readonly negotiatedProtocolVersions: { [key: string]: NegotiatedProtocolVersion }
-
+    private readonly defaultProtocolVersions: NegotiatedProtocolVersion
     constructor(peerInfo: PeerInfo) {
         this.negotiatedProtocolVersions = Object.create(null)
         this.peerInfo = peerInfo
+        this.defaultProtocolVersions = {
+            controlLayerVersion: Math.max(0, ...defaultControlLayerVersions),
+            messageLayerVersion: Math.max(0, ...defaultMessageLayerVersions)
+        }
     }
 
     negotiateProtocolVersion(peerId: string, controlLayerVersions: number[], messageLayerVersions: number[]): void | never {
@@ -32,8 +36,12 @@ export class NegotiatedProtocolVersions {
         delete this.negotiatedProtocolVersions[peerId]
     }
 
-    getNegotiatedProtocolVersion(peerId: string): NegotiatedProtocolVersion | null {
-        return this.negotiatedProtocolVersions[peerId] || null
+    getNegotiatedProtocolVersions(peerId: string): NegotiatedProtocolVersion | undefined {
+        return this.negotiatedProtocolVersions[peerId]
+    }
+
+    getDefaultProtocolVersions(): NegotiatedProtocolVersion {
+        return this.defaultProtocolVersions
     }
 
     private validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): [number, number] | never {

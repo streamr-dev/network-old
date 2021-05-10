@@ -289,11 +289,19 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
     }
 
     getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | undefined {
-        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.messageLayerVersion
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersions(peerId)?.messageLayerVersion
     }
 
     getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | undefined {
-        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.controlLayerVersion
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersions(peerId)?.controlLayerVersion
+    }
+
+    getDefaultMessageLayerProtocolVersion(): number {
+        return this.negotiatedProtocolVersions.getDefaultProtocolVersions().messageLayerVersion
+    }
+
+    getDefaultControlLayerProtocolVersion(): number {
+        return this.negotiatedProtocolVersions.getDefaultProtocolVersions().controlLayerVersion
     }
 
     /**
