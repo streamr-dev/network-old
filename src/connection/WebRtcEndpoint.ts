@@ -253,11 +253,11 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
 
     private attemptProtocolVersionValidation(connection: Connection): void {
         try {
-            const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(
+            this.negotiatedProtocolVersions.negotiateProtocolVersion(
+                connection.getPeerId(),
                 connection.getPeerInfo().controlLayerVersions,
                 connection.getPeerInfo().messageLayerVersions
             )
-            this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
         } catch (err) {
             this.logger.debug(err)
             this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)

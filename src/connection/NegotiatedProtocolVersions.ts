@@ -16,10 +16,15 @@ export class NegotiatedProtocolVersions {
         this.peerInfo = peerInfo
     }
 
-    addNegotiatedProtocolVersion(peerId: string, controlLayerVersion: number, messageLayerVersion: number): void {
-        this.negotiatedProtocolVersions[peerId] = {
-            controlLayerVersion,
-            messageLayerVersion
+    negotiateProtocolVersion(peerId: string, controlLayerVersions: number[], messageLayerVersions: number[]): void | never {
+        try {
+            const [controlLayerVersion, messageLayerVersion] = this.validateProtocolVersions(controlLayerVersions, messageLayerVersions)
+            this.negotiatedProtocolVersions[peerId] = {
+                controlLayerVersion,
+                messageLayerVersion
+            }
+        } catch (err) {
+            throw err
         }
     }
 
@@ -31,7 +36,7 @@ export class NegotiatedProtocolVersions {
         return this.negotiatedProtocolVersions[peerId] || null
     }
 
-    validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): [number, number] {
+    private validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): [number, number] | never {
         if (!controlLayerVersions || !messageLayerVersions || controlLayerVersions.length === 0 || messageLayerVersions.length === 0) {
             throw new Error('Missing version negotiation! Must give controlLayerVersions and messageLayerVersions as query parameters!')
         }
