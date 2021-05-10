@@ -97,8 +97,8 @@ export class PeerInfo {
     constructor(
         peerId: string,
         peerType: PeerType,
-        controlLayerVersions: number[],
-        messageLayerVersions: number[],
+        controlLayerVersions?: number[],
+        messageLayerVersions?: number[],
         peerName?: string | null | undefined,
         location?: Location | null | undefined
     ) {
