@@ -18,6 +18,7 @@ import { Logger } from '../helpers/Logger'
 import { PeerInfo } from '../connection/PeerInfo'
 import { Readable } from 'stream'
 import { InstructionRetryManager } from "./InstructionRetryManager"
+import { NameDirectory } from '../NameDirectory'
 
 export enum Event {
     NODE_CONNECTED = 'streamr:node:node-connected',
@@ -538,7 +539,7 @@ export class Node extends EventEmitter {
             this.disconnectionTimers[node] = setTimeout(() => {
                 delete this.disconnectionTimers[node]
                 if (!this.streams.isNodePresent(node)) {
-                    this.logger.info('no shared streams with node %s, disconnecting', node)
+                    this.logger.info('No shared streams with %s, disconnecting', NameDirectory.getName(node))
                     this.nodeToNode.disconnectFromNode(node, DisconnectionReason.NO_SHARED_STREAMS)
                 }
             }, this.disconnectionWaitTime)

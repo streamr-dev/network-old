@@ -4,6 +4,7 @@ import nodeDataChannel, { DataChannel, DescriptionType, LogLevel, PeerConnection
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
 import { MessageQueue, QueueItem } from './MessageQueue'
+import { NameDirectory } from '../NameDirectory'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
@@ -165,7 +166,7 @@ export class Connection extends ConnectionEmitter {
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
-        this.logger = new Logger(module, `${this.getPeerId()}/${ID}`)
+        this.logger = new Logger(module, `${NameDirectory.getName(this.getPeerId())}/${ID}`)
         this.isFinished = false
 
         this.messageQueue = messageQueue

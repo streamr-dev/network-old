@@ -15,6 +15,7 @@ import {
 import { Rtts } from '../identifiers'
 
 import { MessageQueue } from './MessageQueue'
+import { NameDirectory } from '../NameDirectory'
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
@@ -166,7 +167,7 @@ export class WebRtcEndpoint extends EventEmitter {
         if (this.connections[targetPeerId]) {
             const connection = this.connections[targetPeerId]
             const lastState = connection.getLastState()
-            this.logger.debug('Already connection for %s. state: %s', targetPeerId, lastState)
+            this.logger.debug('Already connection for %s. state: %s', NameDirectory.getName(targetPeerId), lastState)
             if (['connected', 'failed', 'closed'].includes(lastState as string)) {
                 return Promise.resolve(targetPeerId)
             }
@@ -262,7 +263,7 @@ export class WebRtcEndpoint extends EventEmitter {
     }
 
     close(receiverNodeId: string, reason: string): void {
-        this.logger.debug('close connection to %s due to %s', receiverNodeId, reason)
+        this.logger.debug('close connection to %s due to %s', NameDirectory.getName(receiverNodeId), reason)
         const connection = this.connections[receiverNodeId]
         if (connection) {
             delete this.connections[receiverNodeId]
