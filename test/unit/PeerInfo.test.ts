@@ -62,7 +62,7 @@ describe('PeerInfo', () => {
     })
 
     it('use default location if not given', () => {
-        const peerInfo = PeerInfo.newNode('nodeId', 'nodeName', null)
+        const peerInfo = PeerInfo.newNode('nodeId', 'nodeName',undefined , undefined, null)
         expect(peerInfo.location).toEqual({
             city: null,
             country: null,
