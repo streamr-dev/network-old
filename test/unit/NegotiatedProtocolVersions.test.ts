@@ -1,11 +1,8 @@
 import { NegotiatedProtocolVersions } from '../../src/connection/NegotiatedProtocolVersions'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { ControlLayer, MessageLayer } from "streamr-client-protocol"
 
 describe('NegotiatedProtocolVersions', () => {
     let negotiatedProtocolVersions: NegotiatedProtocolVersions
-    const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVersions()
-    const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
 
     beforeEach(() => {
         const peerInfo = PeerInfo.newNode('node', null, [1,2], [30,31,32])
