@@ -7,6 +7,7 @@ import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
 import { StreamIdAndPartition } from '../identifiers'
 import { PeerInfo } from '../connection/PeerInfo'
 import { RtcSubTypes } from '../logic/RtcMessage'
+import { getMessageTypeName } from '../helpers/messageType'
 import { NameDirectory } from '../NameDirectory'
 
 export enum Event {
@@ -140,7 +141,7 @@ export class TrackerServer extends EventEmitter {
     }
 
     send<T>(receiverNodeId: string, message: T & TrackerLayer.TrackerMessage): Promise<T> {
-        this.logger.debug(`Send ${message.type} to ${NameDirectory.getName(receiverNodeId)}`)
+        this.logger.debug(`Send ${getMessageTypeName(message)} to ${NameDirectory.getName(receiverNodeId)}`)
         return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
     }
 

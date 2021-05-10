@@ -16,6 +16,7 @@ import { Readable } from 'stream'
 import { StorageConfig } from './logic/StorageConfig'
 import { Logger } from './helpers/Logger'
 import { NameDirectory } from './NameDirectory'
+import { getMessageTypeName } from './helpers/messageType'
 
 export {
     Location,
@@ -24,7 +25,8 @@ export {
     Protocol,
     Tracker,
     Logger,
-    NameDirectory
+    NameDirectory,
+    getMessageTypeName
 }
 
 export interface Storage {
