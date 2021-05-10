@@ -86,13 +86,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'answer' as DescriptionType.Answer)
-                try {
-                    const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
-                    this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(peerId, control, message)
-                } catch (err) {
-                    this.logger.debug(err)
-                    this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)
-                }
+                this.attemptProtocolVersionValidation(connection)
             } else {
                 this.logger.warn('unexpected rtcAnswer from %s: %s', peerId, description)
             }
@@ -191,13 +185,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         })
         connection.once('localDescription', (type, description) => {
             this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
-            try {
-                const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(connection.getPeerInfo().controlLayerVersions, connection.getPeerInfo().messageLayerVersions)
-                this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
-            } catch (err) {
-                this.logger.debug(err)
-                this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)
-            }
+            this.attemptProtocolVersionValidation(connection)
         })
         connection.once('localCandidate', (candidate, mid) => {
             this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
@@ -263,6 +251,19 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         this.metrics.record('msgOutSpeed', 1)
     }
 
+    private attemptProtocolVersionValidation(connection: Connection): void {
+        try {
+            const [control, message] = this.negotiatedProtocolVersions.validateProtocolVersions(
+                connection.getPeerInfo().controlLayerVersions,
+                connection.getPeerInfo().messageLayerVersions
+            )
+            this.negotiatedProtocolVersions.addNegotiatedProtocolVersion(connection.getPeerId(), control, message)
+        } catch (err) {
+            this.logger.debug(err)
+            this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)
+        }
+    }
+
     close(receiverNodeId: string, reason: string): void {
         this.logger.debug('close connection to %s due to %s', receiverNodeId, reason)
         const connection = this.connections[receiverNodeId]
@@ -287,12 +288,12 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         return this.peerInfo
     }
 
-    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null {
-        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.messageLayerVersion || null
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | undefined {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.messageLayerVersion
     }
 
-    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null {
-        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.controlLayerVersion || null
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | undefined {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersion(peerId)?.controlLayerVersion
     }
 
     /**

@@ -31,7 +31,7 @@ export class NegotiatedProtocolVersions {
         return this.negotiatedProtocolVersions[peerId] || null
     }
 
-    validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): number[] {
+    validateProtocolVersions(controlLayerVersions: number[], messageLayerVersions: number[]): [number, number] {
         if (!controlLayerVersions || !messageLayerVersions || controlLayerVersions.length === 0 || messageLayerVersions.length === 0) {
             throw new Error('Missing version negotiation! Must give controlLayerVersions and messageLayerVersions as query parameters!')
         }

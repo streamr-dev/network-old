@@ -25,6 +25,6 @@ export interface IWebRtcEndpoint {
     getPeerInfo(): Readonly<PeerInfo>
     getAddress(): string
     stop(): void
-    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null
-    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | undefined
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | undefined
 }

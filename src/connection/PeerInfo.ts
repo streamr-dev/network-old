@@ -21,16 +21,55 @@ const defaultControlLayerVersions = ControlLayer.ControlMessage.getSupportedVers
 const defaultMessageLayerVersions = MessageLayer.StreamMessage.getSupportedVersions()
 
 export class PeerInfo {
-    static newTracker(peerId: string, peerName?: string | null | undefined, location?: Location | null | undefined): PeerInfo {
-        return new PeerInfo(peerId, PeerType.Tracker, defaultControlLayerVersions, defaultMessageLayerVersions, peerName, location)
+    static newTracker(
+        peerId: string,
+        peerName?: string | null | undefined,
+        controlLayerVersions?: number[],
+        messageLayerVersions?: number[],
+        location?: Location | null | undefined
+    ): PeerInfo {
+        return new PeerInfo(
+            peerId,
+            PeerType.Tracker,
+            controlLayerVersions || defaultControlLayerVersions,
+            messageLayerVersions || defaultMessageLayerVersions,
+            peerName,
+            location
+        )
     }
 
-    static newNode(peerId: string, peerName?: string | null | undefined, location?: Location | null | undefined): PeerInfo  {
-        return new PeerInfo(peerId, PeerType.Node, defaultControlLayerVersions, defaultMessageLayerVersions, peerName, location)
+    static newNode(
+        peerId: string,
+        peerName?: string | null | undefined,
+        controlLayerVersions?: number[] | undefined,
+        messageLayerVersions?: number[] | undefined,
+        location?: Location | null | undefined
+    ): PeerInfo  {
+        return new PeerInfo(
+            peerId,
+            PeerType.Node,
+            controlLayerVersions || defaultControlLayerVersions,
+            messageLayerVersions || defaultMessageLayerVersions,
+            peerName,
+            location
+        )
     }
 
-    static newStorage(peerId: string, peerName?: string | null | undefined, location?: Location | null | undefined): PeerInfo  {
-        return new PeerInfo(peerId, PeerType.Storage, defaultControlLayerVersions, defaultMessageLayerVersions, peerName, location)
+    static newStorage(
+        peerId: string,
+        peerName?: string | null | undefined,
+        controlLayerVersions?: number[] | undefined,
+        messageLayerVersions?: number[] | undefined,
+        location?: Location | null | undefined
+    ): PeerInfo  {
+        return new PeerInfo(
+            peerId,
+            PeerType.Storage,
+            controlLayerVersions || defaultControlLayerVersions,
+            messageLayerVersions || defaultMessageLayerVersions,
+            peerName,
+            location
+        )
     }
 
     static newUnknown(peerId: string): PeerInfo  {

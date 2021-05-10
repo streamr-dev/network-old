@@ -105,7 +105,7 @@ export function startTracker({
     privateKeyFileName,
     certFileName,
 }: TrackerOptions): Promise<Tracker> {
-    const peerInfo = PeerInfo.newTracker(id, name, location)
+    const peerInfo = PeerInfo.newTracker(id, name, undefined, undefined, location)
     return startEndpoint(
         host,
         port,
@@ -166,8 +166,8 @@ function startNode({
     webrtcDatachannelBufferThresholdLow,
     webrtcDatachannelBufferThresholdHigh,
     stunUrls = ['stun:stun.l.google.com:19302']
-}: NetworkNodeOptions, peerInfoFn: (id: string, name: string | undefined, location: Location | null | undefined) => PeerInfo): Promise<NetworkNode> {
-    const peerInfo = peerInfoFn(id, name, location)
+}: NetworkNodeOptions, peerInfoFn: (id: string, name: string | undefined, controlLayerVersion?: number[], messageLayerVersion?: number[], location?: Location | null | undefined) => PeerInfo): Promise<NetworkNode> {
+    const peerInfo = peerInfoFn(id, name, undefined, undefined, location)
     return startEndpoint(host, port, peerInfo, advertisedWsUrl, metricsContext, pingInterval).then((endpoint) => {
         const trackerNode = new TrackerNode(endpoint)
         const webRtcSignaller = new RtcSignaller(peerInfo, trackerNode)

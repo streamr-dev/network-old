@@ -114,12 +114,12 @@ describe('Node-to-Node protocol version negotiation', () => {
         nodeToNode1.sendData('node-endpoint2', msg1)
     })
 
-    it('negotiated protocol is removed once node is disconnected', async () => {
+    it('negotiated version is removed once node is disconnected', async () => {
         ep1.close('node-endpoint2', 'test')
         await waitForEvent(ep2, wrtcEvent.PEER_DISCONNECTED)
 
-        expect(ep1.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint2')).toEqual(null)
-        expect(ep2.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint1')).toEqual(null)
+        expect(ep1.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint2')).toEqual(undefined)
+        expect(ep2.getNegotiatedControlLayerProtocolVersionOnNode('node-endpoint1')).toEqual(undefined)
     })
 
     it('if there are no shared versions the connection is closed', async () => {

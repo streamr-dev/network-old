@@ -495,16 +495,6 @@ export class WsEndpoint extends EventEmitter implements IWsEndpoint {
         return this.peerBook.getAddress(peerId)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | null {
-        return Math.max(...this.peerInfo.messageLayerVersions)
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | null {
-        return Math.max(...this.peerInfo.controlLayerVersions)
-    }
-
     private onIncomingConnection(ws: WsConnection | UWSConnection): void {
         const { address, peerId, peerType, controlLayerVersions, messageLayerVersions } = ws
 
