@@ -14,13 +14,15 @@ import { NodeToNode } from './protocol/NodeToNode'
 import { NetworkNode } from './NetworkNode'
 import { Readable } from 'stream'
 import { StorageConfig } from './logic/StorageConfig'
+import { Logger } from './helpers/Logger'
 
 export {
     Location,
     MetricsContext,
     NetworkNode,
     Protocol,
-    Tracker
+    Tracker,
+    Logger,
 }
 
 export interface Storage {

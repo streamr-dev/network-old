@@ -165,7 +165,7 @@ export class Connection extends ConnectionEmitter {
         this.maxPingPongAttempts = maxPingPongAttempts
         this.pingInterval = pingInterval
         this.flushRetryTimeout = flushRetryTimeout
-        this.logger = new Logger(['connection', this.id, `${this.selfId}-->${this.getPeerId()}`])
+        this.logger = new Logger(module, `${this.getPeerId()}/${ID}`)
         this.isFinished = false
 
         this.messageQueue = messageQueue

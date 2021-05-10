@@ -114,7 +114,7 @@ export class Node extends EventEmitter {
         this.nodeConnectTimeout = opts.nodeConnectTimeout || 15000
         this.instructionRetryInterval = opts.instructionRetryInterval || 60000
         this.started = new Date().toLocaleString()
-        this.logger = new Logger(['logic', 'Node'], this.peerInfo)
+        this.logger = new Logger(module)
 
         const metricsContext = opts.metricsContext || new MetricsContext('')
 
@@ -131,9 +131,8 @@ export class Node extends EventEmitter {
         )
         this.trackerRegistry = Utils.createTrackerRegistry(opts.trackers)
         this.trackerBook = {}
-        this.instructionThrottler = new InstructionThrottler(this.logger, this.handleTrackerInstruction.bind(this))
+        this.instructionThrottler = new InstructionThrottler(this.handleTrackerInstruction.bind(this))
         this.instructionRetryManager = new InstructionRetryManager(
-            this.logger,
             this.handleTrackerInstruction.bind(this),
             this.instructionRetryInterval
         )

@@ -39,7 +39,7 @@ export class TrackerServer extends EventEmitter {
         endpoint.on(WsEndpointEvent.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
         endpoint.on(WsEndpointEvent.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
         endpoint.on(WsEndpointEvent.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
-        this.logger = new Logger(['protocol', 'TrackerServer'], endpoint.getPeerInfo())
+        this.logger = new Logger(module)
     }
 
     sendInstruction(

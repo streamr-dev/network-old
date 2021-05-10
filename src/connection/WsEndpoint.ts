@@ -7,7 +7,7 @@ import { Metrics, MetricsContext } from '../helpers/MetricsContext'
 import { Logger } from '../helpers/Logger'
 import { Rtts } from '../identifiers'
 
-const staticLogger = new Logger(['connection', 'WsEndpoint'])
+const staticLogger = new Logger(module)
 
 export enum Event {
     PEER_CONNECTED = 'streamr:peer:connect',
@@ -155,7 +155,7 @@ export class WsEndpoint extends EventEmitter {
         this.peerInfo = peerInfo
         this.advertisedWsUrl = advertisedWsUrl
 
-        this.logger = new Logger(['connection', 'WsEndpoint'], peerInfo)
+        this.logger = new Logger(module)
         this.connections = new Map()
         this.pendingConnections = new Map()
         this.peerBook = new PeerBook()

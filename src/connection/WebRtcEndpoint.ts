@@ -75,7 +75,7 @@ export class WebRtcEndpoint extends EventEmitter {
         this.messageQueues = {}
         this.newConnectionTimeout = newConnectionTimeout
         this.pingInterval = pingInterval
-        this.logger = new Logger(['connection', 'WebRtcEndpoint'], peerInfo)
+        this.logger = new Logger(module)
         this.bufferThresholdLow = webrtcDatachannelBufferThresholdLow
         this.bufferThresholdHigh = webrtcDatachannelBufferThresholdHigh
         this.maxMessageSize = maxMessageSize
@@ -181,7 +181,7 @@ export class WebRtcEndpoint extends EventEmitter {
         }
 
         const offering = force ? true : isOffering
-        const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.logger, this.maxMessageSize)
+        const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.maxMessageSize)
         const connection = new Connection({
             selfId: this.peerInfo.peerId,
             targetPeerId,

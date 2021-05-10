@@ -43,7 +43,7 @@ export class TrackerNode extends EventEmitter {
         this.endpoint.on(WsEndpointEvent.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
         this.endpoint.on(WsEndpointEvent.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
         this.endpoint.on(WsEndpointEvent.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
-        this.logger = new Logger(['protocol', 'TrackerNode'], endpoint.getPeerInfo())
+        this.logger = new Logger(module)
     }
 
     sendStatus(trackerId: string, status: Status): Promise<TrackerLayer.StatusMessage> {
