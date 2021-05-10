@@ -1,6 +1,5 @@
 import { NegotiatedProtocolVersions } from '../../src/connection/NegotiatedProtocolVersions'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { networkInterfaces } from "os"
 
 describe('NegotiatedProtocolVersions', () => {
     let negotiatedProtocolVersions: NegotiatedProtocolVersions
@@ -35,5 +34,4 @@ describe('NegotiatedProtocolVersions', () => {
         negotiatedProtocolVersions.removeNegotiatedProtocolVersion('peer2')
         expect(negotiatedProtocolVersions.getNegotiatedProtocolVersion('peer2')).toEqual(null)
     })
-    
 })
