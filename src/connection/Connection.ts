@@ -193,7 +193,7 @@ export class Connection extends ConnectionEmitter {
     }
 
     connect(): void {
-        this.logger.debug('connect()')
+        this.logger.trace('connect()')
         if (this.isFinished) {
             throw new Error('Connection already closed.')
         }
@@ -211,11 +211,11 @@ export class Connection extends ConnectionEmitter {
         this.connectionEmitter.on('localCandidate', this.onLocalCandidate)
 
         if (this.isOffering) {
-            this.logger.debug('creating data channel')
+            this.logger.trace('creating data channel')
             const dataChannel = this.connection.createDataChannel('streamrDataChannel')
             this.setupDataChannel(dataChannel)
         } else {
-            this.logger.debug('waiting for data channel')
+            this.logger.trace('waiting for data channel')
             this.connectionEmitter.on('dataChannel', this.onDataChannel)
         }
 
@@ -275,7 +275,7 @@ export class Connection extends ConnectionEmitter {
         if (err) {
             this.logger.warn('conn.close(): %s', err)
         } else {
-            this.logger.debug('conn.close()')
+            this.logger.trace('conn.close()')
         }
 
         if (this.connectionEmitter) {
@@ -402,7 +402,7 @@ export class Connection extends ConnectionEmitter {
     }
 
     private onStateChange(state: string): void {
-        this.logger.debug('conn.onStateChange: %s -> %s', this.lastState, state)
+        this.logger.trace('conn.onStateChange: %s -> %s', this.lastState, state)
 
         this.lastState = state
 
@@ -422,13 +422,13 @@ export class Connection extends ConnectionEmitter {
     }
 
     private onGatheringStateChange(state: string): void {
-        this.logger.debug('conn.onGatheringStateChange: %s -> %s', this.lastGatheringState, state)
+        this.logger.trace('conn.onGatheringStateChange: %s -> %s', this.lastGatheringState, state)
         this.lastGatheringState = state
     }
 
     private onDataChannel(dataChannel: DataChannel): void {
         this.setupDataChannel(dataChannel)
-        this.logger.debug('connection.onDataChannel')
+        this.logger.trace('connection.onDataChannel')
         this.openDataChannel(dataChannel)
     }
 
@@ -446,12 +446,12 @@ export class Connection extends ConnectionEmitter {
         dataChannel.setBufferedAmountLowThreshold(this.bufferThresholdLow)
         if (this.isOffering) {
             this.dataChannelEmitter.on('open', () => {
-                this.logger.debug('dc.onOpen')
+                this.logger.trace('dc.onOpen')
                 this.openDataChannel(dataChannel)
             })
         }
         this.dataChannelEmitter.on('closed', () => {
-            this.logger.debug('dc.onClosed')
+            this.logger.trace('dc.onClosed')
             this.close()
         })
 
@@ -467,7 +467,7 @@ export class Connection extends ConnectionEmitter {
         })
 
         this.dataChannelEmitter.on('message', (msg) => {
-            this.logger.debug('dc.onmessage')
+            this.logger.trace('dc.onmessage')
             if (msg === 'ping') {
                 this.pong()
             } else if (msg === 'pong') {
