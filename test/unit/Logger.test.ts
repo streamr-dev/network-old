@@ -1,3 +1,4 @@
+import path from 'path'
 import { Logger } from "../../src/helpers/Logger"
 import Mock = jest.Mock
 
@@ -54,5 +55,32 @@ describe(Logger, () => {
     it('delegates call to trace to pino.Logger#trace', () => {
         logger.trace('tracing %s...', 123)
         expect(traceFn).toBeCalledTimes(1)
+    })
+
+    describe('name', () => {
+        it('short', () => {
+            // @ts-expect-error private method
+            expect(Logger.createName(module)).toBe('Logger.test         ')
+        })
+        it('short with context', () => {
+            // @ts-expect-error private method
+            expect(Logger.createName(module, 'foobar')).toBe('Logger.test:foobar  ')
+        })
+        it('long with context', () => {
+            // @ts-expect-error private method
+            expect(Logger.createName(module, 'loremipsum')).toBe('Logger.test:loremips')    
+        })
+        it('application id', () => {
+            process.env.STREAMR_APPLICATION_ID = 'APP'
+            // @ts-expect-error private method
+            expect(Logger.createName(module)).toBe('APP:Logger.test     ')
+            delete process.env.STREAMR_APPLICATION_ID
+        })
+        it('index', () => {
+            // @ts-expect-error private method
+            expect(Logger.createName({
+                filename: ['foo', 'bar', 'mock', 'index'].join(path.sep)
+            } as any)).toBe('mock                ') 
+        })
     })
 })
