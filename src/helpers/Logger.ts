@@ -72,7 +72,7 @@ export class Logger {
         this.logger.trace(msg, ...args)
     }
     
-    getFinalLogger() {
+    getFinalLogger(): { error: (error: any, origin?: string) => void } {
         const finalLogger = pino.final(this.logger)
         return {
             error: (error: any, origin?: string) => finalLogger.error(error, origin)
