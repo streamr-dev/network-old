@@ -1,13 +1,12 @@
 import { EventEmitter } from 'events'
 import { v4 as uuidv4 } from 'uuid'
-import { TrackerLayer } from 'streamr-client-protocol'
+import { TrackerLayer, TrackerMessageType } from 'streamr-client-protocol'
 import { Logger } from '../helpers/Logger'
 import { decode } from '../helpers/MessageEncoder'
 import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
 import { StreamIdAndPartition } from '../identifiers'
 import { PeerInfo } from '../connection/PeerInfo'
 import { RtcSubTypes } from '../logic/RtcMessage'
-import { getMessageTypeName } from '../helpers/messageType'
 import { NameDirectory } from '../NameDirectory'
 
 export enum Event {
@@ -141,7 +140,7 @@ export class TrackerServer extends EventEmitter {
     }
 
     send<T>(receiverNodeId: string, message: T & TrackerLayer.TrackerMessage): Promise<T> {
-        this.logger.debug(`Send ${getMessageTypeName(message)} to ${NameDirectory.getName(receiverNodeId)}`)
+        this.logger.debug(`Send ${TrackerMessageType[message.type]} to ${NameDirectory.getName(receiverNodeId)}`)
         return this.endpoint.send(receiverNodeId, message.serialize()).then(() => message)
     }
 
