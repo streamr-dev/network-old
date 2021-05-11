@@ -2,6 +2,19 @@ import pino from 'pino'
 import path from 'path'
 import _ from 'lodash'
 
+const parseBoolean = (value: string|undefined) => {
+    switch (value) {
+    case 'true':
+        return true
+    case 'false':
+        return false
+    case undefined:
+        return undefined
+    default:
+        throw new Error('Invalid boolean value: ${value}')
+    }
+}
+
 export class Logger {
 
     static NAME_LENGTH = 20
@@ -14,7 +27,7 @@ export class Logger {
             enabled: !process.env.NOLOG,
             level: process.env.LOG_LEVEL || 'info',
             prettyPrint: process.env.NODE_ENV === 'production' ? false : {
-                colorize: false,
+                colorize: parseBoolean(process.env.LOG_COLORS) ?? true,
                 translateTime: 'yyyy-mm-dd"T"HH:MM:ss.l',
                 ignore: 'pid,hostname',
                 levelFirst: true,
