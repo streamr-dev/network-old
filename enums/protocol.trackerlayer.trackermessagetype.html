@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Originator | streamr-network - v24.2.3</title>
+	<title>TrackerMessageType | streamr-network - v24.2.3</title>
 	<meta name="description" content="Documentation for streamr-network - v24.2.3">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -61,101 +61,93 @@
 					<a href="../modules/protocol.trackerlayer.html">TrackerLayer</a>
 				</li>
 				<li>
-					<a href="protocol.trackerlayer.originator.html">Originator</a>
+					<a href="protocol.trackerlayer.trackermessagetype.html">TrackerMessageType</a>
 				</li>
 			</ul>
-			<h1>Interface Originator</h1>
+			<h1>Enumeration TrackerMessageType</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">Originator</span>
-					</li>
-				</ul>
-			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section tsd-is-external">
-							<h3>Properties</h3>
+							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#controllayerversions" class="tsd-kind-icon">control<wbr>Layer<wbr>Versions</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#location" class="tsd-kind-icon">location</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#messagelayerversions" class="tsd-kind-icon">message<wbr>Layer<wbr>Versions</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#peerid" class="tsd-kind-icon">peer<wbr>Id</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#peername" class="tsd-kind-icon">peer<wbr>Name</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="protocol.trackerlayer.originator.html#peertype" class="tsd-kind-icon">peer<wbr>Type</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#errormessage" class="tsd-kind-icon">Error<wbr>Message</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#instructionmessage" class="tsd-kind-icon">Instruction<wbr>Message</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#relaymessage" class="tsd-kind-icon">Relay<wbr>Message</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#statusmessage" class="tsd-kind-icon">Status<wbr>Message</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#storagenodesrequest" class="tsd-kind-icon">Storage<wbr>Nodes<wbr>Request</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external"><a href="protocol.trackerlayer.trackermessagetype.html#storagenodesresponse" class="tsd-kind-icon">Storage<wbr>Nodes<wbr>Response</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group tsd-is-external">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="controllayerversions" class="tsd-anchor"></a>
-					<h3>control<wbr>Layer<wbr>Versions</h3>
-					<div class="tsd-signature tsd-kind-icon">control<wbr>Layer<wbr>Versions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+				<h2>Enumeration members</h2>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="errormessage" class="tsd-anchor"></a>
+					<h3>Error<wbr>Message</h3>
+					<div class="tsd-signature tsd-kind-icon">Error<wbr>Message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 6</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:4</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:8</li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="location" class="tsd-anchor"></a>
-					<h3>location</h3>
-					<div class="tsd-signature tsd-kind-icon">location<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="instructionmessage" class="tsd-anchor"></a>
+					<h3>Instruction<wbr>Message</h3>
+					<div class="tsd-signature tsd-kind-icon">Instruction<wbr>Message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 2</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:7</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:4</li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="messagelayerversions" class="tsd-anchor"></a>
-					<h3>message<wbr>Layer<wbr>Versions</h3>
-					<div class="tsd-signature tsd-kind-icon">message<wbr>Layer<wbr>Versions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="relaymessage" class="tsd-anchor"></a>
+					<h3>Relay<wbr>Message</h3>
+					<div class="tsd-signature tsd-kind-icon">Relay<wbr>Message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 5</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:5</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:7</li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="peerid" class="tsd-anchor"></a>
-					<h3>peer<wbr>Id</h3>
-					<div class="tsd-signature tsd-kind-icon">peer<wbr>Id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="statusmessage" class="tsd-anchor"></a>
+					<h3>Status<wbr>Message</h3>
+					<div class="tsd-signature tsd-kind-icon">Status<wbr>Message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 1</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:2</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:3</li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="peername" class="tsd-anchor"></a>
-					<h3>peer<wbr>Name</h3>
-					<div class="tsd-signature tsd-kind-icon">peer<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="storagenodesrequest" class="tsd-anchor"></a>
+					<h3>Storage<wbr>Nodes<wbr>Request</h3>
+					<div class="tsd-signature tsd-kind-icon">Storage<wbr>Nodes<wbr>Request<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 3</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:6</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:5</li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-					<a name="peertype" class="tsd-anchor"></a>
-					<h3>peer<wbr>Type</h3>
-					<div class="tsd-signature tsd-kind-icon">peer<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+					<a name="storagenodesresponse" class="tsd-anchor"></a>
+					<h3>Storage<wbr>Nodes<wbr>Response</h3>
+					<div class="tsd-signature tsd-kind-icon">Storage<wbr>Nodes<wbr>Response<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> = 4</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/Originator.d.ts:3</li>
+							<li>Defined in node_modules/streamr-client-protocol/dist/src/protocol/tracker_layer/TrackerMessage.d.ts:6</li>
 						</ul>
 					</aside>
 				</section>
@@ -192,9 +184,33 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-namespace tsd-is-external">
-						<a href="../enums/protocol.trackerlayer.trackermessagetype.html" class="tsd-kind-icon">Tracker<wbr>Message<wbr>Type</a>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-enum tsd-parent-kind-namespace tsd-is-external">
+						<a href="protocol.trackerlayer.trackermessagetype.html" class="tsd-kind-icon">Tracker<wbr>Message<wbr>Type</a>
+						<ul>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#errormessage" class="tsd-kind-icon">Error<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#instructionmessage" class="tsd-kind-icon">Instruction<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#relaymessage" class="tsd-kind-icon">Relay<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#statusmessage" class="tsd-kind-icon">Status<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#storagenodesrequest" class="tsd-kind-icon">Storage<wbr>Nodes<wbr>Request</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum tsd-is-external">
+								<a href="protocol.trackerlayer.trackermessagetype.html#storagenodesresponse" class="tsd-kind-icon">Storage<wbr>Nodes<wbr>Response</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-class tsd-parent-kind-namespace tsd-is-external">
 						<a href="../classes/protocol.trackerlayer.errormessage.html" class="tsd-kind-icon">Error<wbr>Message</a>
 					</li>
@@ -216,33 +232,9 @@
 					<li class=" tsd-kind-class tsd-parent-kind-namespace tsd-is-external">
 						<a href="../classes/protocol.trackerlayer.trackermessage.html" class="tsd-kind-icon">Tracker<wbr>Message</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-namespace tsd-is-external">
-						<a href="protocol.trackerlayer.originator.html" class="tsd-kind-icon">Originator</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#controllayerversions" class="tsd-kind-icon">control<wbr>Layer<wbr>Versions</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#location" class="tsd-kind-icon">location</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#messagelayerversions" class="tsd-kind-icon">message<wbr>Layer<wbr>Versions</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#peerid" class="tsd-kind-icon">peer<wbr>Id</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#peername" class="tsd-kind-icon">peer<wbr>Name</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
-								<a href="protocol.trackerlayer.originator.html#peertype" class="tsd-kind-icon">peer<wbr>Type</a>
-							</li>
-						</ul>
+					<li class=" tsd-kind-interface tsd-parent-kind-namespace tsd-is-external">
+						<a href="../interfaces/protocol.trackerlayer.originator.html" class="tsd-kind-icon">Originator</a>
 					</li>
-				</ul>
-				<ul class="after-current">
 				</ul>
 			</nav>
 		</div>
