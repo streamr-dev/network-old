@@ -4,14 +4,14 @@ import _ from 'lodash'
 
 const parseBoolean = (value: string|undefined) => {
     switch (value) {
-    case 'true':
-        return true
-    case 'false':
-        return false
-    case undefined:
-        return undefined
-    default:
-        throw new Error('Invalid boolean value: ${value}')
+        case 'true':
+            return true
+        case 'false':
+            return false
+        case undefined:
+            return undefined
+        default:
+            throw new Error('Invalid boolean value: ${value}')
     }
 }
 
