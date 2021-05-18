@@ -1,4 +1,5 @@
 import { EventEmitter, once } from 'events'
+import { Event, IWebRtcEndpoint } from './IWebRtcEndpoint'
 import nodeDataChannel, { DescriptionType } from 'node-datachannel'
 import { Logger } from '../helpers/Logger'
 import { PeerInfo } from './PeerInfo'
@@ -13,16 +14,9 @@ import {
     RtcSignaller
 } from '../logic/RtcSignaller'
 import { Rtts } from '../identifiers'
-
 import { MessageQueue } from './MessageQueue'
-
-export enum Event {
-    PEER_CONNECTED = 'streamr:peer:connect',
-    PEER_DISCONNECTED = 'streamr:peer:disconnect',
-    MESSAGE_RECEIVED = 'streamr:message-received',
-    HIGH_BACK_PRESSURE = 'streamr:high-back-pressure',
-    LOW_BACK_PRESSURE = 'streamr:low-back-pressure'
-}
+import { NameDirectory } from '../NameDirectory'
+import { NegotiatedProtocolVersions } from "./NegotiatedProtocolVersions"
 
 class WebRtcError extends Error {
     constructor(msg: string) {
@@ -32,19 +26,11 @@ class WebRtcError extends Error {
     }
 }
 
-// Declare event handlers
-export declare interface WebRtcEndpoint {
-    on(event: Event.PEER_CONNECTED, listener: (peerInfo: PeerInfo) => void): this
-    on(event: Event.PEER_DISCONNECTED, listener: (peerInfo: PeerInfo) => void): this
-    on(event: Event.MESSAGE_RECEIVED, listener: (peerInfo: PeerInfo, message: string) => void): this
-    on(event: Event.HIGH_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
-    on(event: Event.LOW_BACK_PRESSURE, listener: (peerInfo: PeerInfo) => void): this
-}
-
-export class WebRtcEndpoint extends EventEmitter {
+export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
     private readonly peerInfo: PeerInfo
     private readonly stunUrls: string[]
     private readonly rtcSignaller: RtcSignaller
+    private readonly negotiatedProtocolVersions: NegotiatedProtocolVersions
     private connections: { [key: string]: Connection }
     private messageQueues: { [key: string]: MessageQueue<string> }
     private readonly newConnectionTimeout: number
@@ -61,6 +47,7 @@ export class WebRtcEndpoint extends EventEmitter {
         stunUrls: string[],
         rtcSignaller: RtcSignaller,
         metricsContext: MetricsContext,
+        negotiatedProtocolVersions: NegotiatedProtocolVersions,
         newConnectionTimeout = 15000,
         pingInterval = 2 * 1000,
         webrtcDatachannelBufferThresholdLow = 2 ** 15,
@@ -71,16 +58,17 @@ export class WebRtcEndpoint extends EventEmitter {
         this.peerInfo = peerInfo
         this.stunUrls = stunUrls
         this.rtcSignaller = rtcSignaller
+        this.negotiatedProtocolVersions = negotiatedProtocolVersions
         this.connections = {}
         this.messageQueues = {}
         this.newConnectionTimeout = newConnectionTimeout
         this.pingInterval = pingInterval
-        this.logger = new Logger(['connection', 'WebRtcEndpoint'], peerInfo)
+        this.logger = new Logger(module)
         this.bufferThresholdLow = webrtcDatachannelBufferThresholdLow
         this.bufferThresholdHigh = webrtcDatachannelBufferThresholdHigh
         this.maxMessageSize = maxMessageSize
 
-        rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description } : OfferOptions) => {
+        rtcSignaller.setOfferListener(async ({ routerId, originatorInfo, description }: OfferOptions) => {
             const { peerId } = originatorInfo
             this.connect(peerId, routerId).catch((err) => {
                 this.logger.warn('offerListener induced connection from %s failed, reason %s', peerId, err)
@@ -98,6 +86,7 @@ export class WebRtcEndpoint extends EventEmitter {
             if (connection) {
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'answer' as DescriptionType.Answer)
+                this.attemptProtocolVersionValidation(connection)
             } else {
                 this.logger.warn('unexpected rtcAnswer from %s: %s', peerId, description)
             }
@@ -166,7 +155,7 @@ export class WebRtcEndpoint extends EventEmitter {
         if (this.connections[targetPeerId]) {
             const connection = this.connections[targetPeerId]
             const lastState = connection.getLastState()
-            this.logger.debug('Already connection for %s. state: %s', targetPeerId, lastState)
+            this.logger.debug('Already connection for %s. state: %s', NameDirectory.getName(targetPeerId), lastState)
             if (['connected', 'failed', 'closed'].includes(lastState as string)) {
                 return Promise.resolve(targetPeerId)
             }
@@ -181,7 +170,7 @@ export class WebRtcEndpoint extends EventEmitter {
         }
 
         const offering = force ? true : isOffering
-        const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.logger, this.maxMessageSize)
+        const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.maxMessageSize)
         const connection = new Connection({
             selfId: this.peerInfo.peerId,
             targetPeerId,
@@ -196,6 +185,7 @@ export class WebRtcEndpoint extends EventEmitter {
         })
         connection.once('localDescription', (type, description) => {
             this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
+            this.attemptProtocolVersionValidation(connection)
         })
         connection.once('localCandidate', (candidate, mid) => {
             this.rtcSignaller.onLocalCandidate(routerId, connection.getPeerId(), candidate, mid)
@@ -217,7 +207,7 @@ export class WebRtcEndpoint extends EventEmitter {
                 // connection.
                 delete this.connections[targetPeerId]
             }
-
+            this.negotiatedProtocolVersions.removeNegotiatedProtocolVersion(targetPeerId)
             this.emit(Event.PEER_DISCONNECTED, connection.getPeerInfo())
             connection.removeAllListeners()
             this.metrics.record('close', 1)
@@ -261,8 +251,21 @@ export class WebRtcEndpoint extends EventEmitter {
         this.metrics.record('msgOutSpeed', 1)
     }
 
+    private attemptProtocolVersionValidation(connection: Connection): void {
+        try {
+            this.negotiatedProtocolVersions.negotiateProtocolVersion(
+                connection.getPeerId(),
+                connection.getPeerInfo().controlLayerVersions,
+                connection.getPeerInfo().messageLayerVersions
+            )
+        } catch (err) {
+            this.logger.debug(err)
+            this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)
+        }
+    }
+
     close(receiverNodeId: string, reason: string): void {
-        this.logger.debug('close connection to %s due to %s', receiverNodeId, reason)
+        this.logger.debug('close connection to %s due to %s', NameDirectory.getName(receiverNodeId), reason)
         const connection = this.connections[receiverNodeId]
         if (connection) {
             delete this.connections[receiverNodeId]
@@ -283,6 +286,22 @@ export class WebRtcEndpoint extends EventEmitter {
 
     getPeerInfo(): Readonly<PeerInfo> {
         return this.peerInfo
+    }
+
+    getNegotiatedMessageLayerProtocolVersionOnNode(peerId: string): number | undefined {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersions(peerId)?.messageLayerVersion
+    }
+
+    getNegotiatedControlLayerProtocolVersionOnNode(peerId: string): number | undefined {
+        return this.negotiatedProtocolVersions.getNegotiatedProtocolVersions(peerId)?.controlLayerVersion
+    }
+
+    getDefaultMessageLayerProtocolVersion(): number {
+        return this.negotiatedProtocolVersions.getDefaultProtocolVersions().messageLayerVersion
+    }
+
+    getDefaultControlLayerProtocolVersion(): number {
+        return this.negotiatedProtocolVersions.getDefaultProtocolVersions().controlLayerVersion
     }
 
     /**

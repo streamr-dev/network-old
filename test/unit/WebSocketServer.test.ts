@@ -47,6 +47,7 @@ describe('test starting startWebSocketServer', () => {
             ws.on('error', (err) => {
                 done(err)
             })
+            return true
         }).catch((err) => done(err))
 
     })
@@ -76,6 +77,7 @@ describe('test starting startWebSocketServer', () => {
             ws.on('error', (err) => {
                 done(err)
             })
+            return true
         }).catch((err) => done(err))
 
     })
@@ -133,6 +135,8 @@ describe('test starting startWebSocketServer', () => {
                     headers: {
                         'streamr-peer-id': 'clientId',
                         'streamr-peer-type': 'node',
+                        'control-layer-versions': "2",
+                        'message-layer-versions': "32"
                     }
                 })
             ws.on('message', async (msg) => {
@@ -148,6 +152,7 @@ describe('test starting startWebSocketServer', () => {
             ws.on('open', () => {
                 endpoint.send('clientId', 'Hello, World!')
             })
+            return true
         }).catch((err) => done(err))
     })
 })

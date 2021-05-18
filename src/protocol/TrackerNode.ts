@@ -3,11 +3,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { TrackerLayer } from 'streamr-client-protocol'
 import { Logger } from '../helpers/Logger'
 import { decode } from '../helpers/MessageEncoder'
-import { WsEndpoint, Event as WsEndpointEvent } from '../connection/WsEndpoint'
+import { IWsEndpoint, Event as WsEndpointEvent } from '../connection/IWsEndpoint'
 import { RelayMessage, Status, StreamIdAndPartition } from '../identifiers'
 import { PeerInfo } from '../connection/PeerInfo'
 import { RtcSubTypes } from '../logic/RtcMessage'
 import { DescriptionType } from 'node-datachannel'
+import { NameDirectory } from '../NameDirectory'
 
 export enum Event {
     CONNECTED_TO_TRACKER = 'streamr:tracker-node:send-status',
@@ -34,16 +35,16 @@ export interface TrackerNode {
 }
 
 export class TrackerNode extends EventEmitter {
-    private readonly endpoint: WsEndpoint
+    private readonly endpoint: IWsEndpoint
     private readonly logger: Logger
 
-    constructor(endpoint: WsEndpoint) {
+    constructor(endpoint: IWsEndpoint) {
         super()
         this.endpoint = endpoint
         this.endpoint.on(WsEndpointEvent.PEER_CONNECTED, (peerInfo) => this.onPeerConnected(peerInfo))
         this.endpoint.on(WsEndpointEvent.PEER_DISCONNECTED, (peerInfo) => this.onPeerDisconnected(peerInfo))
         this.endpoint.on(WsEndpointEvent.MESSAGE_RECEIVED, (peerInfo, message) => this.onMessageReceived(peerInfo, message))
-        this.logger = new Logger(['protocol', 'TrackerNode'], endpoint.getPeerInfo())
+        this.logger = new Logger(module)
     }
 
     sendStatus(trackerId: string, status: Status): Promise<TrackerLayer.StatusMessage> {
@@ -139,6 +140,7 @@ export class TrackerNode extends EventEmitter {
     }
 
     onPeerConnected(peerInfo: PeerInfo): void {
+        this.logger.debug(`Peer connected: ${NameDirectory.getName(peerInfo.peerId)}`)
         if (peerInfo.isTracker()) {
             this.emit(Event.CONNECTED_TO_TRACKER, peerInfo.peerId)
         }
