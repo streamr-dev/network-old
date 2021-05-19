@@ -39,6 +39,7 @@ jobs:
       - run: npm test
         env:
           CI: true
+          LOG_LEVEL: debug
 
   publish:
     needs: [test]
