@@ -42,9 +42,9 @@ describe('WebRtcEndpoint', () => {
 
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
-        endpoint1 = new WebRtcEndpoint(peerInfo1, ['stun:stun.l.google.com:19302'],
+        endpoint1 = new WebRtcEndpoint(peerInfo1, [],
             new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo1))
-        endpoint2 = new WebRtcEndpoint(peerInfo2, ['stun:stun.l.google.com:19302'],
+        endpoint2 = new WebRtcEndpoint(peerInfo2, [],
             new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo2))
 
     })
@@ -213,6 +213,7 @@ describe('WebRtcEndpoint', () => {
         }
         await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
         endpoint1.connect('node-2', 'tracker')
+
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
         ), 30 * 1000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)

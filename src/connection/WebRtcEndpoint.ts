@@ -102,7 +102,11 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             const { peerId } = originatorInfo
             const connection = this.connections[peerId]
             if (connection) {
-                connection.addRemoteCandidate(candidate, mid)
+                if (connection.isRemoteDescriptionSet()) {
+                    connection.addRemoteCandidate(candidate, mid)
+                } else {
+                    connection.enqueueRemoteCandidate({ candidate, mid })
+                }
             } else {
                 this.logger.warn('unexpected remoteCandidate from %s: [%s, %s]', peerId, candidate, mid)
             }

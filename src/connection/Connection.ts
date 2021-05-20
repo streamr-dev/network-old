@@ -34,6 +34,7 @@ let ID = 0
  */
 type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameters<T>[0]>
 
+type RemoteCandidate = { candidate: string, mid: string }
 interface PeerConnectionEvents {
     stateChange: (...args: HandlerParameters<PeerConnection['onStateChange']>) => void
     gatheringStateChange: (...args: HandlerParameters<PeerConnection['onGatheringStateChange']>) => void
@@ -136,6 +137,7 @@ export class Connection extends ConnectionEmitter {
     private pingAttempts = 0
     private rtt: number | null
     private rttStart: number | null
+    private enqueuedRemoteCandidate: RemoteCandidate | null
 
     constructor({
         selfId,
@@ -184,6 +186,7 @@ export class Connection extends ConnectionEmitter {
 
         this.rtt = null
         this.rttStart = null
+        this.enqueuedRemoteCandidate = null
 
         this.onStateChange = this.onStateChange.bind(this)
         this.onLocalCandidate = this.onLocalCandidate.bind(this)
@@ -232,6 +235,10 @@ export class Connection extends ConnectionEmitter {
             try {
                 this.connection.setRemoteDescription(description, type)
                 this.remoteDescriptionSet = true
+                if (this.enqueuedRemoteCandidate) {
+                    this.connection.addRemoteCandidate(this.enqueuedRemoteCandidate.candidate, this.enqueuedRemoteCandidate.mid)
+                    this.enqueuedRemoteCandidate = null
+                }
             } catch (err) {
                 this.logger.warn('setRemoteDescription failed, reason: %s', err)
             }
@@ -250,6 +257,10 @@ export class Connection extends ConnectionEmitter {
         } else {
             this.logger.warn('skipped addRemoteCandidate, connection is null')
         }
+    }
+
+    enqueueRemoteCandidate(remoteCandidate: RemoteCandidate): void {
+        this.enqueuedRemoteCandidate = remoteCandidate
     }
 
     send(message: string): Promise<void> {
@@ -318,6 +329,7 @@ export class Connection extends ConnectionEmitter {
         }
         this.dataChannel = null
         this.connection = null
+        this.enqueuedRemoteCandidate = null
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
         this.pingTimeoutRef = null
