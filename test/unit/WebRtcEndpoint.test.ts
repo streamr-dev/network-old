@@ -208,11 +208,11 @@ describe('WebRtcEndpoint', () => {
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => ep2NumOfReceivedMessages === 3)
                 endpoint2.close('node-1', 'test')
-                await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
-                endpoint1.connect('node-2', 'tracker')
+
             }
         }
-
+        await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
+        endpoint1.connect('node-2', 'tracker')
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
         ), 30 * 1000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
