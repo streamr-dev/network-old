@@ -91,7 +91,7 @@ describe('WebRtcEndpoint', () => {
         await waitForCondition(() => ep2NumOfReceivedMessages > 9)
     })
 
-    it('connection between nodes is established when only one node invokes connect()', async () => {
+    it('connection between nodes is established when only offerer invokes connect()', async () => {
         endpoint1.connect('node-2', 'tracker').catch(() => null)
 
         await Promise.all([
@@ -129,6 +129,15 @@ describe('WebRtcEndpoint', () => {
         await waitForCondition(() => ep2NumOfReceivedMessages === 10)
     })
 
+    // it('connection is formed when only non-offerer invokes connect()', async () => {
+    //     await endpoint2.connect('node-1', 'tracker')
+    //
+    //     await Promise.all([
+    //         waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
+    //         waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
+    //     ])
+    // })
+
     it('cannot send too large of a payload', (done) => {
         const payload = new Array(2 ** 21).fill('X').join('')
         endpoint1.connect('node-2', 'tracker')
@@ -137,9 +146,10 @@ describe('WebRtcEndpoint', () => {
             done()
         })
     })
+
     it('can handle fast paced reconnects', async () => {
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
-        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+        endpoint1.connect('node-2', 'tracker').catch(() => null)
+        endpoint2.connect('node-1', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
@@ -147,7 +157,15 @@ describe('WebRtcEndpoint', () => {
         ])
 
         endpoint1.close('node-2', 'test')
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
+        endpoint1.connect('node-2', 'tracker').catch(() => null)
+
+        await Promise.all([
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
+        ])
+
+        endpoint2.close('node-1', 'test')
+        endpoint2.connect('node-1', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),

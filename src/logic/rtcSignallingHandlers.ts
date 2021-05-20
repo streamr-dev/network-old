@@ -47,7 +47,7 @@ export function attachRtcSignalling(trackerServer: TrackerServer): void {
         })
     }
 
-    function handleRtcConnect({ requestId, originator, targetNode, data }: RtcConnectMessage & RelayMessage) {
+    function handleRtcConnect({ requestId, originator, targetNode }: RtcConnectMessage & RelayMessage) {
         trackerServer.sendRtcConnect(targetNode, requestId, originator).catch((err: Error) => {
             logger.debug('Failed to sendRtcConnect to %s due to %s', targetNode, err) // TODO: better?
         })
