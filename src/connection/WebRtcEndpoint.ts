@@ -108,12 +108,11 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
 
         rtcSignaller.setConnectListener(async ({ originatorInfo, routerId }: ConnectOptions) => {
             const { peerId } = originatorInfo
-            const isOffering = this.peerInfo.peerId < peerId
             const existingConnection = this.connections[peerId]
             if (existingConnection && existingConnection.isRemoteDescriptionSet()) {
                 this.close(peerId, 'rtcConnect message received for a new connection')
             }
-            this.connect(peerId, routerId, isOffering).catch((err) => {
+            this.connect(peerId, routerId).catch((err) => {
                 this.logger.warn('connectListener induced connection from %s failed, reason %s', peerId, err)
             })
         })

@@ -1,9 +1,9 @@
 import { MetricsContext, startTracker } from '../../src/composition'
 import { startEndpoint } from '../../src/connection/WsEndpoint'
-import { TrackerNode } from '../../src/protocol/TrackerNode'
+import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 import { Tracker, Event as TrackerEvent } from '../../src/logic/Tracker'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
+import { wait, waitForCondition, waitForEvent } from 'streamr-test-utils'
 import { Event as EndpointEvent } from '../../src/connection/IWebRtcEndpoint'
 import { WebRtcEndpoint } from '../../src/connection/WebRtcEndpoint'
 import { RtcSignaller } from '../../src/logic/RtcSignaller'
@@ -29,9 +29,16 @@ describe('WebRtcEndpoint', () => {
         trackerNode2 = new TrackerNode(ep2)
 
         trackerNode1.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker, TrackerEvent.NODE_CONNECTED)
+        await Promise.all([
+            waitForEvent(tracker, TrackerEvent.NODE_CONNECTED),
+            waitForEvent(trackerNode1, TrackerNodeEvent.CONNECTED_TO_TRACKER)
+        ])
+
         trackerNode2.connectToTracker(tracker.getAddress())
-        await waitForEvent(tracker, TrackerEvent.NODE_CONNECTED)
+        await Promise.all([
+            waitForEvent(tracker, TrackerEvent.NODE_CONNECTED),
+            waitForEvent(trackerNode2, TrackerNodeEvent.CONNECTED_TO_TRACKER)
+        ])
 
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
@@ -129,14 +136,14 @@ describe('WebRtcEndpoint', () => {
         await waitForCondition(() => ep2NumOfReceivedMessages === 10)
     })
 
-    // it('connection is formed when only non-offerer invokes connect()', async () => {
-    //     await endpoint2.connect('node-1', 'tracker')
-    //
-    //     await Promise.all([
-    //         waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
-    //         waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
-    //     ])
-    // })
+    it('connection is formed when only non-offerer invokes connect()', async () => {
+        endpoint2.connect('node-1', 'tracker').catch(() => null)
+
+        await Promise.all([
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
+        ])
+    })
 
     it('cannot send too large of a payload', (done) => {
         const payload = new Array(2 ** 21).fill('X').join('')
