@@ -36,9 +36,9 @@ describe('WebRtcEndpoint', () => {
         const peerInfo1 = PeerInfo.newNode('node-1')
         const peerInfo2 = PeerInfo.newNode('node-2')
         endpoint1 = new WebRtcEndpoint(peerInfo1, [],
-            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo1))
+            new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo1), 30 * 1000)
         endpoint2 = new WebRtcEndpoint(peerInfo2, [],
-            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo2))
+            new RtcSignaller(peerInfo2, trackerNode2), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo2), 30 * 1000)
 
     })
 
@@ -142,8 +142,8 @@ describe('WebRtcEndpoint', () => {
         await Promise.all([
             endpoint1.connect('node-2', 'tracker', true).catch(() => null),
             endpoint2.connect('node-1', 'tracker', false).catch(() => null),
-            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 25 * 1000),
-            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 25 * 1000)
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
         console.info("FAST PACE #2")
@@ -152,11 +152,11 @@ describe('WebRtcEndpoint', () => {
         console.info("FAST PACE #3")
         await Promise.all([
             endpoint1.connect('node-2', 'tracker', true),
-            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 25 * 1000),
-            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 25 * 1000)
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 45 * 1000),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 45 * 1000)
         ])
         console.info("FAST PACE #4")
-    }, 30 * 1000)
+    }, 60 * 1000)
 
     it('messages are delivered on temporary loss of connectivity', async () => {
         console.info("TEMP LOSS CONNECTIVITY #1")
