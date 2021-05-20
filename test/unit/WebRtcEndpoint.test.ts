@@ -138,20 +138,19 @@ describe('WebRtcEndpoint', () => {
         })
     })
     it('can handle fast paced reconnects', async () => {
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
-        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
-
         await Promise.all([
-            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
-            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
+            endpoint1.connect('node-2', 'tracker', true).catch(() => null),
+            endpoint2.connect('node-1', 'tracker', false).catch(() => null),
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 25 * 1000),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 25 * 1000)
         ])
 
         endpoint1.close('node-2', 'test')
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
 
         await Promise.all([
-            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
-            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
+            endpoint1.connect('node-2', 'tracker', true).catch(() => null),
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 25 * 1000),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 25 * 1000)
         ])
     }, 30 * 1000)
 
