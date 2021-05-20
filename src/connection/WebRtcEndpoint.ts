@@ -81,6 +81,8 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
                 }
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'offer' as DescriptionType.Offer)
+            } else {
+                this.logger.warn('unexpected rtcOffer from %s: %s', peerId, description)
             }
         })
 
