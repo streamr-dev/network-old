@@ -3,7 +3,7 @@ import { startEndpoint } from '../../src/connection/WsEndpoint'
 import { TrackerNode, Event as TrackerNodeEvent } from '../../src/protocol/TrackerNode'
 import { Tracker, Event as TrackerEvent } from '../../src/logic/Tracker'
 import { PeerInfo } from '../../src/connection/PeerInfo'
-import { waitForCondition, waitForEvent } from 'streamr-test-utils'
+import { wait, waitForCondition, waitForEvent } from 'streamr-test-utils'
 import { Event as EndpointEvent } from '../../src/connection/IWebRtcEndpoint'
 import { WebRtcEndpoint } from '../../src/connection/WebRtcEndpoint'
 import { RtcSignaller } from '../../src/logic/RtcSignaller'
@@ -187,7 +187,6 @@ describe('WebRtcEndpoint', () => {
         ])
 
         endpoint1.connect('node-2', 'tracker').catch(() => null)
-        endpoint2.connect('node-1', 'tracker').catch(() => null)
 
         await t
 
@@ -204,6 +203,9 @@ describe('WebRtcEndpoint', () => {
         }
 
         for (let i = 1; i <= 6; ++i) {
+            if (i === 4) {
+                await wait(50)
+            }
             sendFrom1To2()
             if (i === 3) {
                 // eslint-disable-next-line no-await-in-loop
