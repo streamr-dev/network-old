@@ -75,6 +75,10 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             })
             const connection = this.connections[peerId]
             if (connection) {
+                if (connection.isRemoteDescriptionSet()) {
+                    this.close(peerId, 'rtcOffer message received for a new connection')
+                    this.connect(peerId, routerId)
+                }
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'offer' as DescriptionType.Offer)
             }
@@ -102,9 +106,13 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             }
         })
 
-        rtcSignaller.setConnectListener(async ({ originatorInfo, routerId, force }: ConnectOptions) => {
+        rtcSignaller.setConnectListener(async ({ originatorInfo, routerId }: ConnectOptions) => {
             const { peerId } = originatorInfo
-            const isOffering = force ? false : this.peerInfo.peerId < peerId
+            const isOffering = this.peerInfo.peerId < peerId
+            const existingConnection = this.connections[peerId]
+            if (existingConnection && existingConnection.isRemoteDescriptionSet()) {
+                this.close(peerId, 'rtcConnect message received for a new connection')
+            }
             this.connect(peerId, routerId, isOffering).catch((err) => {
                 this.logger.warn('connectListener induced connection from %s failed, reason %s', peerId, err)
             })
@@ -143,9 +151,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
     async connect(
         targetPeerId: string,
         routerId: string,
-        isOffering = this.peerInfo.peerId < targetPeerId,
-        trackerInstructed = true,
-        force = false
+        isOffering = this.peerInfo.peerId < targetPeerId
     ): Promise<string> {
         // Prevent new connections from being opened when WebRtcEndpoint has been closed
         if (this.stopped) {
@@ -169,13 +175,12 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             return connection.getPeerId()
         }
 
-        const offering = force ? true : isOffering
         const messageQueue = this.messageQueues[targetPeerId] = this.messageQueues[targetPeerId] || new MessageQueue(this.maxMessageSize)
         const connection = new Connection({
             selfId: this.peerInfo.peerId,
             targetPeerId,
             routerId,
-            isOffering: offering,
+            isOffering,
             stunUrls: this.stunUrls,
             bufferThresholdHigh: this.bufferThresholdHigh,
             bufferThresholdLow: this.bufferThresholdLow,
@@ -221,8 +226,8 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
 
         this.connections[targetPeerId] = connection
         connection.connect()
-        if (!trackerInstructed) {
-            this.rtcSignaller.onConnectionNeeded(routerId, connection.getPeerId(), force)
+        if (!isOffering) {
+            this.rtcSignaller.onConnectionNeeded(routerId, connection.getPeerId())
         }
 
         await Promise.race([

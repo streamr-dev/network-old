@@ -108,6 +108,7 @@ export class Connection extends ConnectionEmitter {
     private readonly selfId: string
     private peerInfo: PeerInfo
     private isFinished: boolean
+    private remoteDescriptionSet = false
     private readonly routerId: string
     private readonly isOffering: boolean
     private readonly stunUrls: string[]
@@ -230,6 +231,7 @@ export class Connection extends ConnectionEmitter {
         if (this.connection) {
             try {
                 this.connection.setRemoteDescription(description, type)
+                this.remoteDescriptionSet = true
             } catch (err) {
                 this.logger.warn('setRemoteDescription failed, reason: %s', err)
             }
@@ -402,6 +404,10 @@ export class Connection extends ConnectionEmitter {
         } catch (err) {
             return false
         }
+    }
+
+    isRemoteDescriptionSet(): boolean {
+        return this.remoteDescriptionSet
     }
 
     private onStateChange(state: string): void {
