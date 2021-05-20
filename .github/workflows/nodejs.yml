@@ -36,10 +36,9 @@ jobs:
       - run: npm run eslint
       - run: npm run test-types
       - run: npm run build --if-present
-      - run: npm test -- test/unit/WebRtcEndpoint
+      - run: npm test
         env:
           CI: true
-          LOG_LEVEL: debug
 
   publish:
     needs: [test]

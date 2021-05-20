@@ -146,10 +146,8 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
-        console.info("FAST PACE #2")
         endpoint1.close('node-2', 'test')
 
-        console.info("FAST PACE #3")
         await Promise.all([
             endpoint1.connect('node-2', 'tracker', true),
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 45 * 1000),
@@ -159,7 +157,6 @@ describe('WebRtcEndpoint', () => {
     }, 60 * 1000)
 
     it('messages are delivered on temporary loss of connectivity', async () => {
-        console.info("TEMP LOSS CONNECTIVITY #1")
         const t = Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
@@ -168,7 +165,6 @@ describe('WebRtcEndpoint', () => {
         endpoint1.connect('node-2', 'tracker').catch(() => null)
         endpoint2.connect('node-1', 'tracker').catch(() => null)
 
-        console.info("TEMP LOSS CONNECTIVITY #2")
         await t
 
         let ep2NumOfReceivedMessages = 0
@@ -183,22 +179,17 @@ describe('WebRtcEndpoint', () => {
             }))
         }
 
-        console.info("TEMP LOSS CONNECTIVITY #3")
         for (let i = 1; i <= 6; ++i) {
             sendFrom1To2()
             if (i === 3) {
-                console.info("TEMP LOSS CONNECTIVITY #4")
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => ep2NumOfReceivedMessages === 3)
                 endpoint2.close('node-1', 'test')
-                console.info("TEMP LOSS CONNECTIVITY #5")
             }
         }
-        console.info("TEMP LOSS CONNECTIVITY #6")
         await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
         endpoint1.connect('node-2', 'tracker')
         endpoint2.connect('node-1', 'tracker')
-        console.info("TEMP LOSS CONNECTIVITY #7")
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
         ), 45 * 1000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
