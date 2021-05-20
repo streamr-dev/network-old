@@ -138,7 +138,6 @@ describe('WebRtcEndpoint', () => {
         })
     })
     it('can handle fast paced reconnects', async () => {
-        console.info("FAST PACE #1")
         await Promise.all([
             endpoint1.connect('node-2', 'tracker', true).catch(() => null),
             endpoint2.connect('node-1', 'tracker', false).catch(() => null),
@@ -153,7 +152,6 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 45 * 1000),
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 45 * 1000)
         ])
-        console.info("FAST PACE #4")
     }, 60 * 1000)
 
     it('messages are delivered on temporary loss of connectivity', async () => {
