@@ -171,13 +171,13 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
         ])
 
-        // endpoint2.close('node-1', 'test')
-        // endpoint2.connect('node-1', 'tracker').catch(() => null)
-        //
-        // await Promise.all([
-        //     waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
-        //     waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
-        // ])
+        endpoint2.close('node-1', 'test')
+        endpoint2.connect('node-1', 'tracker').catch(() => null)
+
+        await Promise.all([
+            waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
+            waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
+        ])
     }, 30 * 1000)
 
     it('messages are delivered on temporary loss of connectivity', async () => {
