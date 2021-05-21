@@ -35,6 +35,9 @@ let ID = 0
 type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameters<T>[0]>
 
 type RemoteCandidate = { candidate: string, mid: string }
+type RemoteDescription = { description: string, type: DescriptionType }
+
+
 interface PeerConnectionEvents {
     stateChange: (...args: HandlerParameters<PeerConnection['onStateChange']>) => void
     gatheringStateChange: (...args: HandlerParameters<PeerConnection['onGatheringStateChange']>) => void
@@ -138,6 +141,7 @@ export class Connection extends ConnectionEmitter {
     private rtt: number | null
     private rttStart: number | null
     private enqueuedRemoteCandidate: RemoteCandidate | null
+    private enqueuedRemoteDescription: RemoteDescription | null
 
     constructor({
         selfId,
@@ -187,6 +191,7 @@ export class Connection extends ConnectionEmitter {
         this.rtt = null
         this.rttStart = null
         this.enqueuedRemoteCandidate = null
+        this.enqueuedRemoteDescription = null
 
         this.onStateChange = this.onStateChange.bind(this)
         this.onLocalCandidate = this.onLocalCandidate.bind(this)
@@ -242,8 +247,10 @@ export class Connection extends ConnectionEmitter {
             } catch (err) {
                 this.logger.warn('setRemoteDescription failed, reason: %s', err)
             }
+        } else if (this.isFinished) {
+            this.logger.warn('skipped setRemoteDescription, connection is closed')
         } else {
-            this.logger.warn('skipped setRemoteDescription, connection is null')
+            this.enqueuedRemoteDescription = { description, type }
         }
     }
 
@@ -330,6 +337,7 @@ export class Connection extends ConnectionEmitter {
         this.dataChannel = null
         this.connection = null
         this.enqueuedRemoteCandidate = null
+        this.enqueuedRemoteDescription = null
         this.flushTimeoutRef = null
         this.connectionTimeoutRef = null
         this.pingTimeoutRef = null
@@ -455,6 +463,10 @@ export class Connection extends ConnectionEmitter {
 
     private onLocalDescription(description: string, type: DescriptionType): void {
         this.emit('localDescription', type, description)
+        if (this.enqueuedRemoteDescription) {
+            this.setRemoteDescription(this.enqueuedRemoteDescription.description, this.enqueuedRemoteDescription.type)
+            this.enqueuedRemoteDescription = null
+        }
     }
 
     private onLocalCandidate(candidate: string, mid: string): void {
