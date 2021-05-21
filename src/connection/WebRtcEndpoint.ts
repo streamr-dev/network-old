@@ -76,6 +76,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             const connection = this.connections[peerId]
             if (connection) {
                 if (connection.isRemoteDescriptionSet() || connection.isClosed()) {
+                    console.log(connection.isRemoteDescriptionSet(), connection.isClosed(), "RECONNECT")
                     this.close(peerId, 'rtcOffer message received for a new connection')
                     this.connect(peerId, routerId)
                 }
