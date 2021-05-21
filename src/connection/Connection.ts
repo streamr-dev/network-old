@@ -37,7 +37,6 @@ type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameter
 type RemoteCandidate = { candidate: string, mid: string }
 type RemoteDescription = { description: string, type: DescriptionType }
 
-
 interface PeerConnectionEvents {
     stateChange: (...args: HandlerParameters<PeerConnection['onStateChange']>) => void
     gatheringStateChange: (...args: HandlerParameters<PeerConnection['onGatheringStateChange']>) => void
