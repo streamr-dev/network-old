@@ -464,6 +464,7 @@ export class Connection extends ConnectionEmitter {
     private onLocalDescription(description: string, type: DescriptionType): void {
         this.emit('localDescription', type, description)
         if (this.enqueuedRemoteDescription) {
+            console.log("HERE")
             this.setRemoteDescription(this.enqueuedRemoteDescription.description, this.enqueuedRemoteDescription.type)
             this.enqueuedRemoteDescription = null
         }
