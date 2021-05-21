@@ -75,8 +75,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             })
             const connection = this.connections[peerId]
             if (connection) {
-                if (connection.isRemoteDescriptionSet() || connection.isClosed()) {
-                    console.log(connection.isRemoteDescriptionSet(), connection.isClosed(), "RECONNECT")
+                if (connection.isRemoteDescriptionSet()) {
                     this.close(peerId, 'rtcOffer message received for a new connection')
                     this.connect(peerId, routerId)
                 }
@@ -194,6 +193,15 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
         })
+        connection.once('reconnectionRequired', (originatorInfo, routerId, description, type) => {
+            console.log("RECONNECTION REQUIRED")
+            const { peerId } = originatorInfo
+            this.close(peerId, 'reconnection required')
+            this.connect(peerId, routerId)
+            connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
+            connection.setRemoteDescription(description, type)
+        })
+
         connection.once('localDescription', (type, description) => {
             this.rtcSignaller.onLocalDescription(routerId, connection.getPeerId(), type, description)
             this.attemptProtocolVersionValidation(connection)

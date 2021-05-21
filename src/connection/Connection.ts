@@ -93,6 +93,7 @@ function DataChannelEmitter(dataChannel: DataChannel) {
 interface Events {
     localDescription: (type: DescriptionType, description: string) => void
     localCandidate: (candidate: string, mid: string) => void
+    reconnectionRequired: (peerInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => void
     open: () => void
     message: (msg: string)  => void
     close: (err?: Error) => void
@@ -205,7 +206,6 @@ export class Connection extends ConnectionEmitter {
         if (this.isFinished) {
             throw new Error('Connection already closed.')
         }
-
         this.connection = new nodeDataChannel.PeerConnection(this.selfId, {
             iceServers: this.stunUrls,
             maxMessageSize: this.maxMessageSize
@@ -247,7 +247,8 @@ export class Connection extends ConnectionEmitter {
                 this.logger.warn('setRemoteDescription failed, reason: %s', err)
             }
         } else if (this.isFinished) {
-            this.logger.warn('skipped setRemoteDescription, connection is closed')
+            this.logger.warn('Reconnection Required')
+            this.emit('reconnectionRequired', this.peerInfo, this.routerId, description, type)
         } else {
             this.logger.debug('connection is not initiated yet, enqueueing remoteDescription')
             this.enqueuedRemoteDescription = { description, type }
