@@ -23,8 +23,8 @@ describe('WebRtcEndpoint', () => {
             id: 'tracker'
         })
 
-        const ep1 = await startEndpoint('127.0.0.1', 28701, PeerInfo.newNode('node-1'), null, new MetricsContext(''))
-        const ep2 = await startEndpoint('127.0.0.1', 28702, PeerInfo.newNode('node-2'), null, new MetricsContext(''))
+        const ep1 = await startEndpoint('127.0.0.1', 28701, PeerInfo.newNode('WebRTCEndpoint-1'), null, new MetricsContext(''))
+        const ep2 = await startEndpoint('127.0.0.1', 28702, PeerInfo.newNode('WebRTCEndpoint-2'), null, new MetricsContext(''))
         trackerNode1 = new TrackerNode(ep1)
         trackerNode2 = new TrackerNode(ep2)
 
@@ -40,8 +40,8 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(trackerNode2, TrackerNodeEvent.CONNECTED_TO_TRACKER)
         ])
 
-        const peerInfo1 = PeerInfo.newNode('node-1')
-        const peerInfo2 = PeerInfo.newNode('node-2')
+        const peerInfo1 = PeerInfo.newNode('WebRTCEndpoint-1')
+        const peerInfo2 = PeerInfo.newNode('WebRTCEndpoint-2')
         endpoint1 = new WebRtcEndpoint(peerInfo1, [],
             new RtcSignaller(peerInfo1, trackerNode1), new MetricsContext(''), new NegotiatedProtocolVersions(peerInfo1))
         endpoint2 = new WebRtcEndpoint(peerInfo2, [],
@@ -60,8 +60,8 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('connection between nodes is established when both nodes invoke connect()', async () => {
-        endpoint1.connect('node-2', 'tracker', true).catch(() => null)
-        endpoint2.connect('node-1', 'tracker', false).catch(() => null)
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker', true).catch(() => null)
+        endpoint2.connect('WebRTCEndpoint-1', 'tracker', false).catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
@@ -79,12 +79,12 @@ describe('WebRtcEndpoint', () => {
         })
 
         const sendFrom1To2 = () => {
-            endpoint1.send('node-2', JSON.stringify({
+            endpoint1.send('WebRTCEndpoint-2', JSON.stringify({
                 hello: 'world'
             }))
         }
         const sendFrom2To1 = () => {
-            endpoint2.send('node-1', JSON.stringify({
+            endpoint2.send('WebRTCEndpoint-1', JSON.stringify({
                 hello: 'world'
             }))
         }
@@ -99,7 +99,7 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('connection between nodes is established when only offerer invokes connect()', async () => {
-        endpoint1.connect('node-2', 'tracker').catch(() => null)
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
@@ -117,12 +117,12 @@ describe('WebRtcEndpoint', () => {
         })
 
         const sendFrom1To2 = () => {
-            endpoint1.send('node-2', JSON.stringify({
+            endpoint1.send('WebRTCEndpoint-2', JSON.stringify({
                 hello: 'world'
             }))
         }
         const sendFrom2To1 = () => {
-            endpoint2.send('node-1', JSON.stringify({
+            endpoint2.send('WebRTCEndpoint-1', JSON.stringify({
                 hello: 'world'
             }))
         }
@@ -137,7 +137,7 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('connection is formed when only non-offerer invokes connect()', async () => {
-        endpoint2.connect('node-1', 'tracker').catch(() => null)
+        endpoint2.connect('WebRTCEndpoint-1', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED),
@@ -147,8 +147,8 @@ describe('WebRtcEndpoint', () => {
 
     it('cannot send too large of a payload', (done) => {
         const payload = new Array(2 ** 21).fill('X').join('')
-        endpoint1.connect('node-2', 'tracker')
-        endpoint1.send('node-2', payload).catch((err) => {
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker')
+        endpoint1.send('WebRTCEndpoint-2', payload).catch((err) => {
             expect(err.message).toMatch(/Dropping message due to size 2097152 exceeding the limit of \d+/)
             done()
         })
@@ -156,8 +156,8 @@ describe('WebRtcEndpoint', () => {
 
     it('can handle fast paced reconnects', async () => {
         console.log("Starting")
-        endpoint1.connect('node-2', 'tracker').catch(() => null)
-        endpoint2.connect('node-1', 'tracker').catch(() => null)
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker').catch(() => null)
+        endpoint2.connect('WebRTCEndpoint-1', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
@@ -165,8 +165,8 @@ describe('WebRtcEndpoint', () => {
         ])
 
         console.log("First DC")
-        endpoint1.close('node-2', 'test')
-        endpoint1.connect('node-2', 'tracker').catch(() => null)
+        endpoint1.close('WebRTCEndpoint-2', 'test')
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
@@ -174,8 +174,8 @@ describe('WebRtcEndpoint', () => {
         ])
 
         console.log("Second DC")
-        endpoint2.close('node-1', 'test')
-        endpoint2.connect('node-1', 'tracker').catch(() => null)
+        endpoint2.close('WebRTCEndpoint-1', 'test')
+        endpoint2.connect('WebRTCEndpoint-1', 'tracker').catch(() => null)
 
         await Promise.all([
             waitForEvent(endpoint1, EndpointEvent.PEER_CONNECTED, 30 * 1000),
@@ -189,7 +189,7 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED)
         ])
 
-        endpoint1.connect('node-2', 'tracker').catch(() => null)
+        endpoint1.connect('WebRTCEndpoint-2', 'tracker').catch(() => null)
 
         await t
 
@@ -200,7 +200,7 @@ describe('WebRtcEndpoint', () => {
         })
 
         const sendFrom1To2 = () => {
-            endpoint1.send('node-2', JSON.stringify({
+            endpoint1.send('WebRTCEndpoint-2', JSON.stringify({
                 hello: 'world'
             }))
         }
@@ -210,9 +210,9 @@ describe('WebRtcEndpoint', () => {
             if (i === 3) {
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => ep2NumOfReceivedMessages === 3)
-                endpoint2.close('node-1', 'test')
+                endpoint2.close('WebRTCEndpoint-1', 'test')
                 await waitForEvent(endpoint1, EndpointEvent.PEER_DISCONNECTED)
-                endpoint1.connect('node-2', 'tracker')
+                endpoint1.connect('WebRTCEndpoint-2', 'tracker')
             }
         }
 
