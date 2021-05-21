@@ -93,7 +93,7 @@ function DataChannelEmitter(dataChannel: DataChannel) {
 interface Events {
     localDescription: (type: DescriptionType, description: string) => void
     localCandidate: (candidate: string, mid: string) => void
-    reconnectionRequired: (peerInfo: PeerInfo, routerId: string) => void
+    reconnectionRequired: (peerInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => void
     open: () => void
     message: (msg: string)  => void
     close: (err?: Error) => void
@@ -248,7 +248,7 @@ export class Connection extends ConnectionEmitter {
             }
         } else if (this.isFinished) {
             this.logger.warn('Reconnection Required')
-            this.emit('reconnectionRequired', this.peerInfo, this.routerId)
+            this.emit('reconnectionRequired', this.peerInfo, this.routerId, description, type)
         } else {
             this.logger.debug('connection is not initiated yet, enqueueing remoteDescription')
             this.enqueuedRemoteDescription = { description, type }
