@@ -77,7 +77,9 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             if (connection) {
                 if (connection.isRemoteDescriptionSet()) {
                     this.close(peerId, 'rtcOffer message received for a new connection')
-                    this.connect(peerId, routerId)
+                    this.connect(peerId, routerId).catch((err) => {
+                        this.logger.warn('offerListener induced reconnection from %s failed, reason %s', peerId, err)
+                    })
                 }
                 connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
                 connection.setRemoteDescription(description, 'offer' as DescriptionType.Offer)
