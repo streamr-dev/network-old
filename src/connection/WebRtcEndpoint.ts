@@ -75,6 +75,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             })
             const connection = this.connections[peerId]
             if (connection) {
+                // receiving rtcOffer after remoteDescription indicates a new connection being formed
                 if (connection.isRemoteDescriptionSet()) {
                     this.close(peerId, 'rtcOffer message received for a new connection')
                     this.connect(peerId, routerId).catch((err) => {
