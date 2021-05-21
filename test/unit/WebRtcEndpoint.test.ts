@@ -212,7 +212,7 @@ describe('WebRtcEndpoint', () => {
                 endpoint1.connect('node-2', 'tracker')
             }
         }
-        
+
         await waitForCondition(() => (
             ep2NumOfReceivedMessages === 6
         ), 30 * 1000, undefined, () => `ep2NumOfReceivedMessages = ${ep2NumOfReceivedMessages}`)
