@@ -193,13 +193,11 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
         })
-        connection.once('reconnectionRequired', (originatorInfo, routerId, description, type) => {
+        connection.once('reconnectionRequired', (originatorInfo, routerId) => {
             console.log("RECONNECTION REQUIRED")
             const { peerId } = originatorInfo
             this.close(peerId, 'reconnection required')
             this.connect(peerId, routerId)
-            connection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
-            connection.setRemoteDescription(description, type)
         })
 
         connection.once('localDescription', (type, description) => {
