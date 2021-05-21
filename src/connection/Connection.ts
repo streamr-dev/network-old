@@ -418,6 +418,10 @@ export class Connection extends ConnectionEmitter {
         return this.messageQueue.size()
     }
 
+    isClosed(): boolean {
+        return this.isFinished
+    }
+
     isOpen(): boolean {
         try {
             return this.dataChannel!.isOpen()
