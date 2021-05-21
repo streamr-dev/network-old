@@ -249,6 +249,7 @@ export class Connection extends ConnectionEmitter {
         } else if (this.isFinished) {
             this.logger.warn('skipped setRemoteDescription, connection is closed')
         } else {
+            this.logger.debug('connection is not initiated yet, enqueueing remoteDescription')
             this.enqueuedRemoteDescription = { description, type }
         }
     }
