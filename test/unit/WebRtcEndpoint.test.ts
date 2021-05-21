@@ -155,6 +155,7 @@ describe('WebRtcEndpoint', () => {
     })
 
     it('can handle fast paced reconnects', async () => {
+        console.log("Starting")
         endpoint1.connect('node-2', 'tracker').catch(() => null)
         endpoint2.connect('node-1', 'tracker').catch(() => null)
 
@@ -163,6 +164,7 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
         ])
 
+        console.log("First DC")
         endpoint1.close('node-2', 'test')
         endpoint1.connect('node-2', 'tracker').catch(() => null)
 
@@ -171,6 +173,7 @@ describe('WebRtcEndpoint', () => {
             waitForEvent(endpoint2, EndpointEvent.PEER_CONNECTED, 30 * 1000)
         ])
 
+        console.log("Second DC")
         endpoint2.close('node-1', 'test')
         endpoint2.connect('node-1', 'tracker').catch(() => null)
 
