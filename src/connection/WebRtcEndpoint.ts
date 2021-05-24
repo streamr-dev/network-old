@@ -283,11 +283,17 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         console.log("RECONNECTION REQUIRED")
         const { peerId } = originatorInfo
         this.close(peerId, 'Reconnection Required')
-        await Promise.race([
-            once(this.connections[peerId], 'close'),
-            once(this.connections[peerId], 'error'),
-            setTimeout(() => {this.logger.warn("TIMED OUT")}, 5000)
-        ])
+        if (this.connections[peerId]) {
+            await Promise.race([
+                once(this.connections[peerId], 'close'),
+                once(this.connections[peerId], 'error'),
+                setTimeout(() => {
+                    this.logger.warn("TIMED OUT")
+                }, 5000)
+            ])
+        } else {
+            this.logger.warn('Connection closed')
+        }
         this.connect(peerId, routerId).catch(() => (this.logger.warn('Reconnection failed')))
         // const newConnection = this.connections[peerId]
         // newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
