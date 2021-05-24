@@ -18,7 +18,7 @@ type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameter
 
 type RemoteCandidate = { candidate: string, mid: string }
 type RemoteDescription = { description: string, type: DescriptionType }
-type ReconnectionRequiredFn = (originatorInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => void
+type ReconnectionRequiredFn = (originatorInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => Promise<void>
 
 export interface ConstructorOptions {
     selfId: string
@@ -251,7 +251,7 @@ export class Connection extends ConnectionEmitter {
             }
         } else if (this.isFinished) {
             this.logger.warn('Reconnection Required')
-            this.reconnectionRequiredFn(this.peerInfo, this.routerId, description, type)
+            this.reconnectionRequiredFn(this.peerInfo, this.routerId, description, type).catch(() => null)
         } else {
             this.logger.debug('connection is not initiated yet, enqueueing remoteDescription')
             this.enqueuedRemoteDescription = { description, type }
