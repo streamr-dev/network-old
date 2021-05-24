@@ -283,6 +283,9 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
         console.log("RECONNECTION REQUIRED")
         const { peerId } = originatorInfo
         this.close(peerId, 'reconnection required')
+        if (this.connections[peerId]) {
+            delete this.connections[peerId]
+        }
         this.connect(peerId, routerId).catch(() => (this.logger.warn('Reconnection failed')))
         const newConnection = this.connections[peerId]
         newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
