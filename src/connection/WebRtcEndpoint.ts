@@ -195,15 +195,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             messageQueue,
             newConnectionTimeout: this.newConnectionTimeout,
             pingInterval: this.pingInterval,
-        })
-        connection.on('reconnectionRequired', (originatorInfo, routerId, description, type) => {
-            console.log("RECONNECTION REQUIRED")
-            const { peerId } = originatorInfo
-            this.close(peerId, 'reconnection required')
-            this.connect(peerId, routerId).catch(() => (this.logger.warn('Reconnection failed')))
-            const newConnection = this.connections[peerId]
-            newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
-            newConnection.setRemoteDescription(description, type)
+            reconnectionRequiredFn: this.reconnectionRequired
         })
 
         connection.once('localDescription', (type, description) => {
@@ -285,6 +277,16 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             this.logger.debug(err)
             this.close(connection.getPeerId(), `No shared protocol versions with node: ${connection.getPeerId()}`)
         }
+    }
+
+    private reconnectionRequired(originatorInfo: PeerInfo, routerId: string, description: string, type: DescriptionType): void {
+        console.log("RECONNECTION REQUIRED")
+        const { peerId } = originatorInfo
+        this.close(peerId, 'reconnection required')
+        this.connect(peerId, routerId).catch(() => (this.logger.warn('Reconnection failed')))
+        const newConnection = this.connections[peerId]
+        newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
+        newConnection.setRemoteDescription(description, type)
     }
 
     close(receiverNodeId: string, reason: string): void {

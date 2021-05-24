@@ -8,6 +8,18 @@ import { NameDirectory } from '../NameDirectory'
 
 nodeDataChannel.initLogger("Error" as LogLevel)
 
+/**
+ * Parameters that would be passed to an event handler function
+ * e.g.
+ * HandlerParameters<SomeClass['onSomeEvent']> will map to the list of
+ * parameters that would be passed to `fn` in: `someClass.onSomeEvent(fn)`
+ */
+type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameters<T>[0]>
+
+type RemoteCandidate = { candidate: string, mid: string }
+type RemoteDescription = { description: string, type: DescriptionType }
+type ReconnectionRequiredFn = (originatorInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => void
+
 export interface ConstructorOptions {
     selfId: string
     targetPeerId: string
@@ -21,21 +33,11 @@ export interface ConstructorOptions {
     maxPingPongAttempts?: number
     pingInterval?: number
     flushRetryTimeout?: number
-    messageQueue: MessageQueue<string>
+    messageQueue: MessageQueue<string>,
+    reconnectionRequiredFn: ReconnectionRequiredFn
 }
 
 let ID = 0
-
-/**
- * Parameters that would be passed to an event handler function
- * e.g.
- * HandlerParameters<SomeClass['onSomeEvent']> will map to the list of
- * parameters that would be passed to `fn` in: `someClass.onSomeEvent(fn)`
- */
-type HandlerParameters<T extends (...args: any[]) => any> = Parameters<Parameters<T>[0]>
-
-type RemoteCandidate = { candidate: string, mid: string }
-type RemoteDescription = { description: string, type: DescriptionType }
 
 interface PeerConnectionEvents {
     stateChange: (...args: HandlerParameters<PeerConnection['onStateChange']>) => void
@@ -125,6 +127,7 @@ export class Connection extends ConnectionEmitter {
     private readonly flushRetryTimeout: number
     private readonly logger: Logger
     private readonly messageQueue: MessageQueue<string>
+    private readonly reconnectionRequiredFn: ReconnectionRequiredFn
 
     private connection: PeerConnection | null
     private dataChannel: DataChannel | null
@@ -150,6 +153,7 @@ export class Connection extends ConnectionEmitter {
         isOffering,
         stunUrls,
         messageQueue,
+        reconnectionRequiredFn,
         bufferThresholdHigh = 2 ** 17,
         bufferThresholdLow = 2 ** 15,
         newConnectionTimeout = 15000,
@@ -175,6 +179,7 @@ export class Connection extends ConnectionEmitter {
         this.flushRetryTimeout = flushRetryTimeout
         this.logger = new Logger(module, `${NameDirectory.getName(this.getPeerId())}/${ID}`)
         this.isFinished = false
+        this.reconnectionRequiredFn = reconnectionRequiredFn
 
         this.messageQueue = messageQueue
         this.connection = null
@@ -247,7 +252,7 @@ export class Connection extends ConnectionEmitter {
             }
         } else if (this.isFinished) {
             this.logger.warn('Reconnection Required')
-            this.emit('reconnectionRequired', this.peerInfo, this.routerId, description, type)
+            this.reconnectionRequiredFn(this.peerInfo, this.routerId, description, type)
         } else {
             this.logger.debug('connection is not initiated yet, enqueueing remoteDescription')
             this.enqueuedRemoteDescription = { description, type }
