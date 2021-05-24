@@ -296,7 +296,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             delete this.connections[receiverNodeId]
             connection.close()
         } else {
-            console.warn(receiverNodeId, 'closed already')
+            this.logger.warn(receiverNodeId, 'closed already')
         }
     }
 
