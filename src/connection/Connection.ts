@@ -289,10 +289,10 @@ export class Connection extends ConnectionEmitter {
     }
 
     close(err?: Error): void {
-        if (this.isFinished) {
-            // already closed, noop
-            return
-        }
+        // if (this.isFinished) {
+        //     // already closed, noop
+        //     return
+        // }
 
         this.isFinished = true
 
