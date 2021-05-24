@@ -280,7 +280,7 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
     }
 
     private async reconnectionRequired(originatorInfo: PeerInfo, routerId: string, description: string, type: DescriptionType): Promise<void> {
-        console.log("RECONNECTION REQUIRED")
+        this.logger.warn("RECONNECTION REQUIRED")
         const { peerId } = originatorInfo
         this.close(peerId, 'Reconnection Required')
         if (this.connections[peerId]) {
