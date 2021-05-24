@@ -95,7 +95,6 @@ function DataChannelEmitter(dataChannel: DataChannel) {
 interface Events {
     localDescription: (type: DescriptionType, description: string) => void
     localCandidate: (candidate: string, mid: string) => void
-    reconnectionRequired: (peerInfo: PeerInfo, routerId: string, description: string, type: DescriptionType) => void
     open: () => void
     message: (msg: string)  => void
     close: (err?: Error) => void
