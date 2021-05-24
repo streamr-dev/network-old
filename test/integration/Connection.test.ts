@@ -49,7 +49,7 @@ describe('Connection', () => {
             stunUrls: [],
             isOffering: true,
             messageQueue: messageQueueOne,
-            reconnectionRequiredFn: () => {}
+            reconnectionRequiredFn: async () => {}
         })
         connectionOne.on('localDescription', (...args) => oneFunctions.onLocalDescription(...args))
         connectionOne.on('localCandidate', (...args) => oneFunctions.onLocalCandidate(...args))
@@ -61,7 +61,7 @@ describe('Connection', () => {
             stunUrls: [],
             isOffering: false,
             messageQueue: messageQueueTwo,
-            reconnectionRequiredFn: () => {}
+            reconnectionRequiredFn: async () => {}
         })
 
         connectionTwo.on('localDescription', (...args) => twoFunctions.onLocalDescription(...args))
