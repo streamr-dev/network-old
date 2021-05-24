@@ -295,9 +295,9 @@ export class WebRtcEndpoint extends EventEmitter implements IWebRtcEndpoint {
             this.logger.warn('Connection closed')
         }
         this.connect(peerId, routerId).catch(() => (this.logger.warn('Reconnection failed')))
-        // const newConnection = this.connections[peerId]
-        // newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
-        // newConnection.setRemoteDescription(description, type)
+        const newConnection = this.connections[peerId]
+        newConnection.setPeerInfo(PeerInfo.fromObject(originatorInfo))
+        newConnection.setRemoteDescription(description, type)
     }
 
     close(receiverNodeId: string, reason: string): void {
