@@ -48,8 +48,7 @@ describe('Connection', () => {
             routerId: 'routerId',
             stunUrls: [],
             isOffering: true,
-            messageQueue: messageQueueOne,
-            reconnectionRequiredFn: async () => {}
+            messageQueue: messageQueueOne
         })
         connectionOne.on('localDescription', (...args) => oneFunctions.onLocalDescription(...args))
         connectionOne.on('localCandidate', (...args) => oneFunctions.onLocalCandidate(...args))
@@ -60,8 +59,7 @@ describe('Connection', () => {
             routerId: 'routerId',
             stunUrls: [],
             isOffering: false,
-            messageQueue: messageQueueTwo,
-            reconnectionRequiredFn: async () => {}
+            messageQueue: messageQueueTwo
         })
 
         connectionTwo.on('localDescription', (...args) => twoFunctions.onLocalDescription(...args))
