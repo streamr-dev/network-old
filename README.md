@@ -1,3 +1,5 @@
+# NOTICE! This repository has been moved under [network monorepo](https://github.com/streamr-dev/network-monorepo)
+
 <p align="center">
   <a href="https://streamr.network">
     <img alt="Streamr" src="https://raw.githubusercontent.com/streamr-dev/streamr-client-javascript/master/readme-header-img.png" width="1320" />
